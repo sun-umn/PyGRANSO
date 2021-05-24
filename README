@@ -1,0 +1,51 @@
+GRANSO: GRadient-based Algorithm for Non-Smooth Optimization
+Version 1.6.4
+Licensed under the AGPLv3, Copyright (C) 2016-2020 Tim Mitchell
+
+GRANSO is an optimization package implemented in Matlab, intended to be
+efficient for constrained nonsmooth optimization problems, without any
+special structure or assumptions imposed on the objective or constraint
+functions. It can handle problems involving functions that are any or all
+of the following: smooth or nonsmooth, convex or nonconvex, and locally
+Lipschitz or non-locally Lipschitz.
+
+GRANSO is AGPL licensed.  See the LICENSE_INFO folder for more
+information.
+
+
+IMPORTANT USAGE NOTES:
+
+GRANSO only requires that gradients are provided for the objective and
+constraint functions.  Gradients should be numerically assessed with a
+finite difference utility to ensure that they are correct.
+
+GRANSO should be initialized at points where the objective and constraint
+functions are differentiable.  As this can often be difficult to assess, in
+the absence of other information, it is recommended to initialize GRANSO
+from randomly generated points (which GRANSO will do automatically if no
+explicit initial point is provided by the user).
+
+GRANSO requires that a quadprog-compatible quadratic program solver, that
+is, a QP solver that is callable via The MathWorks quadprog interface (such
+as quadprog.m from Matlab's Optimization Toolbox or MOSEK) is installed.
+GRANSO's performance is highly dependent upon the performance of the
+available quadprog solver.  The user is expected to ensure that it is
+working correctly.
+
+
+DOCUMENTATION:
+
+For documentation, in Matlab type:
+
+> help granso
+> help gransoOptions
+> help gransoOptionsAdvanced
+
+and/or see:
+
+http://www.timmitchell.com/software/GRANSO/
+
+For demos, see the examples directory in the GRANSO installation folder.
+
+For utility routines for handling bound and/or linear constraints, see the 
+utils subfolder.
