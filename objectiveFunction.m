@@ -47,17 +47,9 @@ function [f,f_grad] = objectiveFunction(x)
 % =========================================================================
 
     % OBJECTIVE VALUE AT X
-    % nonsmooth Rosenbrock example with constant 8 embedded 
-    f           = 8*abs(x(1)^2 - x(2)) + (1 - x(1))^2;
+    % Linear Programming
+    f           = -5*x(1) - 3*x(2);
    
     % GRADIENT AT X
-    % Compute the 2nd term
-    f_grad      = [-2*(1-x(1)); 0];
-    % Add in the 1st term, where we must handle the sign due to the 
-    % absolute value
-    if x(1)^2 - x(2) >= 0
-      f_grad    = f_grad + 8*[ 2*x(1); -1];
-    else
-      f_grad    = f_grad + 8*[-2*x(1);  1];
-    end
+    f_grad      = [-5; -3];
 end

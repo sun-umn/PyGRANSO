@@ -1,36 +1,29 @@
-function [ci,ci_grad] = inequalityConstraint(x)
-%   inequalityConstraint: (examples/ex1)
-%       Encodes a simple 2-variable inequality constraint and its gradient.  
+function [f,f_grad] = objectiveFunction(x)
+%   objectiveFunction: (examples/ex1)
+%       Encodes a simple objective function and its gradient.
 %       
-%       GRANSO's convention is that the inequality constraints must be less
-%       than or equal to zero to be satisfied.  For equality constraints,
-%       GRANSO's convention is that they must be equal to zero.
-%
-%       GRANSO requires that gradients are column vectors.  For example, if
-%       there was a second inequality constraint, its gradient would be
-%       stored in the 2nd column of ci_grad.
-%
+%       GRANSO will minimize the objective function.  The gradient must be
+%       a column vector.
+% 
 %   USAGE:
-%       [ci,ci_grad] = inequalityConstraint(x);
+%       [f,f_grad] = objectiveFunction(x);
 % 
 %   INPUT:
 %       x           optimization variables
 %                   real-valued column vector, 2 by 1 
 %   
 %   OUTPUT:
-%       ci          values of the inequality constraints at x.
-%                   real-valued column vector, 2 by 1, where the jth entry 
-%                   is the value of jth constraint
-%                 
-%       ci_grad     gradient of the inequality constraint at x.
-%                   real-valued matrix, 2 by 2, where the jth column is the
-%                   gradient of the jth constraint
+%       f           value of the objective function at x
+%                   scalar real value
+% 
+%       f_grad      gradient of the objective function at x.
+%                   real-valued column vector, 2 by 1
 % 
 %
 %   For comments/bug reports, please visit the GRANSO GitLab webpage:
 %   https://gitlab.com/timmitchell/GRANSO
 %
-%   examples/ex1/inequalityConstraint.m introduced in GRANSO Version 1.5.
+%   examples/ex1/objectiveFunction.m introduced in GRANSO Version 1.5.
 %
 % =========================================================================
 % |  GRANSO: GRadient-based Algorithm for Non-Smooth Optimization         |
@@ -53,10 +46,18 @@ function [ci,ci_grad] = inequalityConstraint(x)
 % |  <http://www.gnu.org/licenses/agpl.html>.                             |
 % =========================================================================
 
-    % INEQUALITY CONSTRAINTS
-    ci      = [2 2; 2 -4; -2 1 ] * [x(1);x(2)] - [33;8; 5 ];
-
-    % GRADIENTS OF THE TWO INEQUALITY CONSTRAINTS
-    ci_grad = [ [2;2;-2 ] [2;-4;1 ] ];
-    
+    % OBJECTIVE VALUE AT X
+    % nonsmooth Rosenbrock example with constant 8 embedded 
+    f           = 8*abs(x(1)^2 - x(2)) + (1 - x(1))^2;
+   
+    % GRADIENT AT X
+    % Compute the 2nd term
+    f_grad      = [-2*(1-x(1)); 0];
+    % Add in the 1st term, where we must handle the sign due to the 
+    % absolute value
+    if x(1)^2 - x(2) >= 0
+      f_grad    = f_grad + 8*[ 2*x(1); -1];
+    else
+      f_grad    = f_grad + 8*[-2*x(1);  1];
+    end
 end
