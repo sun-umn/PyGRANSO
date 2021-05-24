@@ -54,9 +54,9 @@ function [ci,ci_grad] = inequalityConstraint(x)
 % =========================================================================
 
     % INEQUALITY CONSTRAINTS
-    ci      = [2 2; 2 -4; -2 1 ] * [x(1);x(2)] - [33;8; 5 ];
+    ci      = [2 2; 2 -4; -2 1; 0 -1; 0 1 ] * [x(1);x(2)] - [33;8; 5; -1; 8 ];
 
     % GRADIENTS OF THE TWO INEQUALITY CONSTRAINTS
-    ci_grad = [ [2;2;-2 ] [2;-4;1 ] ];
+    ci_grad = [ [2;2;-2; 0 ;0  ] [2;-4;1 ; -1 ;1 ] ]';
     
 end
