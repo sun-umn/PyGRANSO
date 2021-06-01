@@ -1,35 +1,36 @@
-function soln = runExample()
-%   runExample: (examples/ex1)
-%       Run GRANSO on a 2-variable nonsmooth Rosenbrock objective function,
-%       subject to simple bound constraints, with GRANSO's default
-%       parameters.
-%    
-%       Read this source code.
-%   
-%       This tutorial example shows:
-%
-%           - how to call GRANSO using objective and constraint functions
-%             defined in .m files 
+function [ci,ci_grad] = inequalityConstraint(x)
+%   inequalityConstraint: (examples/ex1)
+%       Encodes a simple 2-variable inequality constraint and its gradient.  
 %       
-%           - how to set GRANSO's inputs when there aren't any 
-%             equality constraint functions (which also applies when there
-%             aren't any inequality constraints)
+%       GRANSO's convention is that the inequality constraints must be less
+%       than or equal to zero to be satisfied.  For equality constraints,
+%       GRANSO's convention is that they must be equal to zero.
+%
+%       GRANSO requires that gradients are column vectors.  For example, if
+%       there was a second inequality constraint, its gradient would be
+%       stored in the 2nd column of ci_grad.
 %
 %   USAGE:
-%       soln = runExample();
+%       [ci,ci_grad] = inequalityConstraint(x);
 % 
-%   INPUT: [none]
+%   INPUT:
+%       x           optimization variables
+%                   real-valued column vector, 2 by 1 
 %   
 %   OUTPUT:
-%       soln        GRANSO's output struct
-%
-%   See also objectiveFunction, inequalityConstraint. 
+%       ci          values of the inequality constraints at x.
+%                   real-valued column vector, 2 by 1, where the jth entry 
+%                   is the value of jth constraint
+%                 
+%       ci_grad     gradient of the inequality constraint at x.
+%                   real-valued matrix, 2 by 2, where the jth column is the
+%                   gradient of the jth constraint
 % 
 %
 %   For comments/bug reports, please visit the GRANSO GitLab webpage:
 %   https://gitlab.com/timmitchell/GRANSO
 %
-%   examples/ex1/runExample.m introduced in GRANSO Version 1.5.
+%   examples/ex1/inequalityConstraint.m introduced in GRANSO Version 1.5.
 %
 % =========================================================================
 % |  GRANSO: GRadient-based Algorithm for Non-Smooth Optimization         |
@@ -51,16 +52,12 @@ function soln = runExample()
 % |  License along with this program.  If not, see                        |
 % |  <http://www.gnu.org/licenses/agpl.html>.                             |
 % =========================================================================
-    
-    % Call GRANSO using its "separate" format, where objective and
-    % constraint functions are computed by separate .m files.
-    % By default, GRANSO will generate an initial point via randn() .
-    
-    nvar    = 2;    % the number of optimization variables is 2
-    eq_fn   = [];   % use [] when (in)equality constraints aren't present
-    soln    = granso(nvar,@objectiveFunction,@inequalityConstraint,eq_fn);
-    
-    % Alternatively, without the eq_fn variable:
-    % soln    = granso(nvar,@objectiveFunction,@inequalityConstraint,[]);
-    
+
+    % INEQUALITY CONSTRAINTS
+%     ci      = [sqrt(2)*x(1); 2*x(2)] - 1;
+    ci = -x;
+
+    % GRADIENTS OF THE TWO INEQUALITY CONSTRAINTS
+%     ci_grad = [ [sqrt(2); 0] [0; 2] ];
+    ci_grad = -eye(8);
 end
