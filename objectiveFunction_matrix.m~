@@ -1,14 +1,34 @@
 function [f,f_grad] = objectiveFunction_matrix(X)
 
-    U = X.U;
-    V = X.V;
- 
-    D = [1 1;1 1;1 1];
-    
-    f = .5*norm(D - U*V', 'fro')^2;
 
-    f_grad.U = -(D - U*V') * V; 
-    f_grad.V = -(D - U*V')' * U; 
+    x1 = X.x1;
+    x2 = X.x2;
+ 
+
+    f = 8*abs(x1^2 - x2) + (1 - x1)^2;
+
+    % GRADIENT AT X
+    % Compute the 2nd term
+    f_grad.x1      = -2*(1-x(1));
+    f_grad.x2 = 0;
+    % Add in the 1st term, where we must handle the sign due to the 
+    % absolute value
+    if x1^2 - x2 >= 0
+      f_grad.x1    = f_grad.x1 + 8*2*x(1);
+      f_grad.x2    = f_grad.x2 + 8*(-1);
+    else
+      f_grad.x1    = f_grad.x1 + 8*[-2*x(1);  1];
+    end
+    
+%     U = X.U;
+%     V = X.V;
+%  
+%     D = [1 1;1 1;1 1];
+%     
+%     f = .5*norm(D - U*V', 'fro')^2;
+% 
+%     f_grad.U = -(D - U*V') * V; 
+%     f_grad.V = -(D - U*V')' * U; 
 
 
 %     U = X.U;
