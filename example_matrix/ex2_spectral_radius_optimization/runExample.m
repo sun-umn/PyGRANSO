@@ -67,9 +67,10 @@ for idx = 1:length(varDim)
 end
 
 %% call mat2vec to enable GRANSO using matrix input
+tic
 combined_fn = @(x) mat2vec(x,inputVarMap, nvar );
 soln = granso(nvar,combined_fn,opts);
-    
+toc 
 end
 
 

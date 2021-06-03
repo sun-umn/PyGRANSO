@@ -65,6 +65,7 @@
 % |  License along with this program.  If not, see                        |
 % |  <http://www.gnu.org/licenses/agpl.html>.                             |
 % =========================================================================
+% Update (Buyun): replace quadprog with qpalm
 
     persistent requests;
     persistent errors;
@@ -93,8 +94,20 @@
     end
     try
         requests = requests + 1;
-        [X,~,flag,output,LAMBDA] = quadprog(varargin{:});
-        varargout = {X,LAMBDA};
+%         [X,~,flag,output,LAMBDA] = quadprog(varargin{:});%% Solve with qpalm
+%         varargout = {X,LAMBDA};
+        % Solve with qpalm
+        solver = qpalm;
+        settings = solver.default_settings();
+        %IMPORTANT: set nonconvex to true for nonconvex QPs
+        settings.nonconvex = true;
+
+        solver.setup(varargin{:}); 
+        res = solver.solve();
+        % NOTE: the info of LAMBDA/res.y is not used in the GRANSO package
+        varargout = {res.x,res.y};
+        X = res.x;
+
     catch err
         errors = errors + 1;
         ME = MException('GRANSO:quadprogError','quadprog threw an error.');

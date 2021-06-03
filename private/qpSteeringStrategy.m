@@ -109,6 +109,8 @@ function [d,mu,reduction] = qpSteeringStrategy( penaltyfn_at_x,         ...
 % |  License along with this program.  If not, see                        |
 % |  <http://www.gnu.org/licenses/agpl.html>.                             |
 % =========================================================================
+% Update (Buyun): change the input args for solveQP
+
 
     mu                  = penaltyfn_at_x.mu;
     f_grad              = penaltyfn_at_x.f_grad;
@@ -133,6 +135,7 @@ function [d,mu,reduction] = qpSteeringStrategy( penaltyfn_at_x,         ...
     violation_tol       = sqrt(eps)*max(violation,1);
      
     % Set up arguments for quadprog interface
+    % Update (Buyun): Set up arguments for QPALM interface
     c_grads             = [eq_grad ineq_grad];
     Hinv_c_grads        = apply_Hinv(c_grads);
     H                   = c_grads' * Hinv_c_grads;
@@ -142,6 +145,8 @@ function [d,mu,reduction] = qpSteeringStrategy( penaltyfn_at_x,         ...
     f                   = c_grads' * mu_Hinv_f_grad - [eq; ineq];
     LB                  = [-ones(n_eq,1); zeros(n_ineq,1)];
     UB                  = ones(n_eq + n_ineq, 1);
+    % Identity matrix: compatible with the constraint form in QPALM
+    A                   = speye(n_eq + n_ineq);
    
     % Check predicted violation reduction for search direction
     % given by current penalty parameter
@@ -212,7 +217,8 @@ function [d,mu,reduction] = qpSteeringStrategy( penaltyfn_at_x,         ...
     % throws an error if QP solver failed somehow
     function d = solveSteeringDualQP()
         try 
-            y = solveQP(H,f,[],[],[],[],LB,UB,[],quadprog_options); 
+%             y = solveQP(H,f,[],[],[],[],LB,UB,[],quadprog_options); 
+            y = solveQP(H,f,A,LB,UB,quadprog_options);
         catch err
             ME = MException(                                            ...
                 'GRANSO:steeringQuadprogFailure',                       ...

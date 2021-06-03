@@ -481,15 +481,20 @@ function opts = gransoOptions(n,varargin)
             opts.H0 = speye(n);
         end
         
-        % By default, suppress quadprog's console printing and warnings
-        if ~isfield(opts.quadprog_opts,'Display')
-            opts.quadprog_opts.Display = 'off';
-        end
-        % Technically the following is a solveQP option, not a quadprog one
-        if ~isfield(opts.quadprog_opts,'suppress_warnings')
-            opts.quadprog_opts.suppress_warnings = true;
-        end
+%         % By default, suppress quadprog's console printing and warnings
+%         if ~isfield(opts.quadprog_opts,'Display')
+%             opts.quadprog_opts.Display = 'off';
+%         end
         
+%         % Technically the following is a solveQP option, not a quadprog one
+%         if ~isfield(opts.quadprog_opts,'suppress_warnings')
+%             opts.quadprog_opts.suppress_warnings = true;
+%         end
+        
+        % Update: By default, suppress qpalm's console printing and warnings
+%         if ~isfield(opts.quadprog_opts,'print_iter')
+%             opts.quadprog_opts.print_iter = 0;
+%         end
     end
 
 end
