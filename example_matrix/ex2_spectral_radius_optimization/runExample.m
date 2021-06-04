@@ -40,7 +40,7 @@ function soln = runExample()
 %       soln        GRANSO's output struct
 
 
-[~,~,~,p,m] = loadExample('ex4_data_n=200.mat');
+[A,B,C,p,m] = loadExample('ex4_data_n=200.mat');
 nvar        = m*p;
 x0          = zeros(nvar,1);
 opts.x0     = x0;
@@ -51,6 +51,7 @@ if feasibility_bias
     opts.steering_c_viol = 0.9;         % default is 0.1
     opts.steering_c_mu = 0.1;           % default is 0.9
 end
+stab_margin = 1; 
 
 %% specify input variables 
 % key: input variables
@@ -66,11 +67,50 @@ for idx = 1:length(varDim)
     nvar = nvar + curDim{1,1}(1)*curDim{1,1}(2);
 end
 
+
+
+
+%% FOR PLOTTING THE SPECTRUM
+org_color   = [255 174 54]/255;
+opt_color   = [57 71 198]/255;
+
+clf
+plotSpectrum(opts.x0,org_color);
+hold on
+fprintf('Initial spectrum represented by orange dots.\n');
+fprintf('Press any key to begin A+BXC optimization.\n');
+pause
+
+
+% SET UP THE ANONYMOUS FUNCTION HANDLE AND OPTIMIZE
 %% call mat2vec to enable GRANSO using matrix input
 tic
 combined_fn = @(x) mat2vec(x,inputVarMap, nvar );
 soln = granso(nvar,combined_fn,opts);
 toc 
+
+% PLOT THE OPTIMIZED SPECTRUM
+hold on
+[~,mi]      = plotSpectrum(soln.final.x,opt_color);
+x_lim       = xlim();
+y_lim       = ylim();
+plot(x_lim,mi*[1 1],'--','Color',0.5*[1 1 1]);
+plot(x_lim,-mi*[1 1],'--','Color',0.5*[1 1 1]);
+plot(-stab_margin*[1 1],y_lim,'--','Color',0.5*[1 1 1]);
+
+fprintf('\n\nInitial spectrum represented by orange dots.\n');
+fprintf('Optimized spectrum represented by blue dots.\n');
+fprintf('Stability margin represented by dashed vertical line.\n');
+fprintf('The minimized band containing the spectrum represented by dashed horizontal lines.\n');
+
+% NESTED HELPER FUNCTION FOR PLOTTING THE SPECTRUM
+    function [absc,mi] = plotSpectrum(x,color)
+        X       = reshape(x,p,m);
+        d       = eig(A+B*X*C);
+        absc    = max(real(d));
+        mi      = max(imag(d));
+        plot(real(d),imag(d),'.','MarkerSize',10,'Color',color);
+    end
 end
 
 
