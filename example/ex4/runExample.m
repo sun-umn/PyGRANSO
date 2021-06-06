@@ -1,5 +1,5 @@
 function soln = runExample()
-%   runExample: (example_mat/ex2_spectral_radius_optimization)
+%   runExample: (example_mat/ex4)
 %       Run GRANSO on an eigenvalue optimization problem of a 
 %       static-output-feedback (SOF) plant:
 %       

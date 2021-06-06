@@ -1,31 +1,29 @@
 function soln = runExample()
-%   runExample: (example_mat/ex1_smoothNMF)
-%       Run GRANSO on an smooth nonnegative matrix factorization optimization problem:
-%
-%           f(U,V) = || D - UV' ||_F^2,
-%           s.t., U >= O, V >= O
-%
-%       where D is fixed real-valued matrices
-%           - D is m by n
-%       and U and V are real-valued matrix of the optimization variables
-%           - U is m by k
-%           - V is n by k
-%
-%       This example has the following properties:
-%           - D = ones(m,n)
-%           - m = 4
-%           - n = 3
-%           - k = 2
-%
+%   runExample: (examples/ex5)
+%       Run GRANSO on a 2-variable nonsmooth Rosenbrock objective function,
+%       subject to simple bound constraints, with GRANSO's default
+%       parameters.
+%    
 %       Read this source code.
+%   
+%       This tutorial example shows:
+%
+%           - how to call GRANSO using objective and constraint functions
+%             defined in .m files 
+%       
+%           - how to set GRANSO's inputs when there aren't any 
+%             equality constraint functions (which also applies when there
+%             aren't any inequality constraints)
 %
 %   USAGE:
 %       soln = runExample();
-%
+% 
 %   INPUT: [none]
-%
+%   
 %   OUTPUT:
 %       soln        GRANSO's output struct
+%
+%   See also objectiveFunction, inequalityConstraint. 
 
 %% specify input variables 
 % key: input variables
