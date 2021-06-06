@@ -1,5 +1,5 @@
-function [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X)
-%   combinedFunction: (examples/ex1)
+function [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X,parameters)
+%   combinedFunction: (examples/ex2)
 %       Defines objective and inequality constraint functions, with their
 %       respective gradients.
 %       
@@ -7,9 +7,13 @@ function [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X)
 %       a column vector.
 % 
 %   USAGE:
-%       [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X);
+%       [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(w,X);
 %
 %   INPUT:
+%       parameters           
+%                           strcut of constant for nonsmooth Rosenbrock function 
+%                           parameters.w is a real finite scalar value
+%
 %       X                   struct of optimization variables
 %                           X.x1 is a scalar (real-valued matrix, 1 by 1)
 %                           X.x2 is a scalar (real-valued matrix, 1 by 1)
@@ -39,11 +43,13 @@ function [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X)
 %                           [], since there aren't any equality constraints
 %
 
+    w = parameters.w;
+    
     x1 = X.x1;
     x2 = X.x2;
  
 
-    f = 8*abs(x1^2 - x2) + (1 - x1)^2;
+    f = w*abs(x1^2 - x2) + (1 - x1)^2;
 
     % GRADIENT AT X
     % Compute the 2nd term
@@ -52,11 +58,11 @@ function [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X)
     % Add in the 1st term, where we must handle the sign due to the 
     % absolute value
     if x1^2 - x2 >= 0
-      f_grad.x1    = f_grad.x1 + 8*2*x1;
-      f_grad.x2    = f_grad.x2 - 8;
+      f_grad.x1    = f_grad.x1 + w*2*x1;
+      f_grad.x2    = f_grad.x2 - w;
     else
-      f_grad.x1    = f_grad.x1 - 8*2*x1;
-      f_grad.x2    = f_grad.x2 + 8;
+      f_grad.x1    = f_grad.x1 - w*2*x1;
+      f_grad.x2    = f_grad.x2 + w;
     end
     
     

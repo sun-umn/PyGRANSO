@@ -1,4 +1,4 @@
-function [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = mat2vec(x,var_dim_map,nvar)
+function [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = mat2vec(x,var_dim_map,nvar,parameters)
 %   mat2vec:
 %       Transform user provided objective and constraint function from
 %       matrix form to vector form, which is supported by GRANSO package.
@@ -19,6 +19,7 @@ function [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = mat2vec(x,va
 %
 %       nvar          total number of scalar variables in x
 %
+%       parameters      struct of parameters used in the combinedFunction
 %
 %   OUTPUT:
 %       f_vec           value of the objective function at x
@@ -45,6 +46,11 @@ function [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = mat2vec(x,va
 %                       real-valued matrix, n by m, where the jth column is the
 %                       gradient of the jth constraint
 
+% Handle missing arguments
+if nargin == 3
+    parameters = {}; % empty struct
+end
+
 % input variables (matrix form), e.g., {'U','V'};
 var = keys(var_dim_map);
 % corresponding dimensions (matrix form), e.g., {[3,2],[4,2]};
@@ -67,8 +73,11 @@ end
 %% obtain objective and constraint function and their corresponding gradient
 
 % matrix form functions
-[f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X);
-
+if isempty(parameters)
+    [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X);
+else
+    [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X,parameters);
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % obj function is a scalar form
 f_vec = f;
