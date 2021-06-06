@@ -123,9 +123,9 @@
         errors = errors + 1;
         error(  'GRANSO:quadprogAnswerNumericallyInvalid',  ...
                 'quadprog returned numerically invalid answer.');
-    elseif nnz(X) < 1 
-        errors = errors + 1;
-        error(  'GRANSO:quadprogReturnedExactlyZero',       ...
-                'quadprog returned exactly zero.');
+%     elseif nnz(X) < 1 
+%         errors = errors + 1;
+%         error(  'GRANSO:quadprogReturnedExactlyZero',       ...
+%                 'quadprog returned exactly zero.');
     end
  end
