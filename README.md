@@ -49,7 +49,7 @@ gransoOptions.m: update the quadprog options to QPALM options.
 
 ./private/qpTerminationCondition.m: provided the input args required by QPALM solver.
 
-./example_matrix/*: examples of several optimization problems.
+./example/*: examples of several optimization problems.
 
 ## Usage
 
