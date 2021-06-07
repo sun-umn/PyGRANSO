@@ -1,6 +1,3 @@
-[submodule "qpalm4gransp"]
-	path = qpalm4gransp
-	url = ./qpalm4gransp/
 [submodule "qpalm4granso"]
 	path = qpalm4granso
 	url = ./qpalm4granso/
