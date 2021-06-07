@@ -51,13 +51,15 @@ gransoOptions.m: update the quadprog options to QPALM options.
 
 ./example/*: examples of several optimization problems.
 
+./QPALM4GRANSO: the modified QPALM solver for the GRANSO package.
+
 ## Usage
 
-1. Download the latest version of projects.
+1. Download the latest version of revamped GRANSO.
 
-2. Install the QPALM solver: https://benny44.github.io/QPALM_vLADEL/.
+2. Install the QPALM solver (to be modified in the future): Add ./QPALM4GRANSO and ./QPALM4GRANSO/interfaces/mex into the matlab path. Then run *qpalm_make.m* in the folder ./QPALM4GRANSO/interfaces/mex. Test whether QPALM is working using the ./QPALM4GRANSO/examples/qpalm_mex_demo.m and ./QPALM4GRANSO/examples/qpalm_mex_nonconvex_demo.m.
 
-3. Add the package to the search path of MATLAB.
+3. Add the revamped GRANSO package to the search path of MATLAB.
 
 4. Check the documentation by using command *help*, e.g., 
 ```bash

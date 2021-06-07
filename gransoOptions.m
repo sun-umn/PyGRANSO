@@ -491,10 +491,10 @@ function opts = gransoOptions(n,varargin)
 %             opts.quadprog_opts.suppress_warnings = true;
 %         end
         
-        % Update: By default, suppress qpalm's console printing and warnings
-%         if ~isfield(opts.quadprog_opts,'print_iter')
-%             opts.quadprog_opts.print_iter = 0;
-%         end
+%         Update: By default, suppress qpalm's console printing and warnings
+        if ~isfield(opts.quadprog_opts,'print_iter')
+            opts.quadprog_opts.verbose = false;
+        end
     end
 
 end
