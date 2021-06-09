@@ -66,26 +66,25 @@ x = x{:,:};
 x(isnan(x)) = 1;
 
 % input variable, matirx form
-w = X.w;
-xi = X.xi;
-b = X.b;
+alpha = X.alpha;
 
 % objective function
-f = .5*norm(w,2)^2 + C * sum( max(0, 1 - y .* ( (x*w) + b ) ) );
+yalphax = y .* alpha .* x; % N by p
+f = 0.5 * sum(sum(yalphax * yalphax')) - sum(alpha);
 
 % gradient of objective function, matrix form
-f_grad.w = w;
-f_grad.xi = C*ones(N,1);
-f_grad.b = 0;
+f_grad.alpha = sum((yalphax * yalphax') ./ alpha, 2) - 1;
 
 % inequality constraint, matrix form
-ci = [];
+ci.c1 = -alpha;
+ci.c2 = alpha - C;
 
 % gradient of inequality constraint, matrix form
-ci_grad = [];
+ci_grad.c1.alpha = -speye(N);
+ci_grad.c2.alpha = speye(N);
 
 % equality constraint 
-ce = [];
-ce_grad = [];
+ce = sum(y .* alpha);
+ce_grad = y;
 
 end
