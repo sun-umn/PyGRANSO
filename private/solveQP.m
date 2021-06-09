@@ -100,7 +100,7 @@
         solver = qpalm;
         settings = solver.default_settings();
         %IMPORTANT: set nonconvex to true for nonconvex QPs
-        settings.nonconvex = true;
+        settings.nonconvex = false;
 
         solver.setup(varargin{:}); 
         res = solver.solve();
