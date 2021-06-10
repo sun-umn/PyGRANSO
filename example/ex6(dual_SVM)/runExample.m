@@ -48,7 +48,27 @@ end
 parameters.C = 1;
 parameters.data = data;
 
-opts.maxit = 1;
+ 
+data.Var7 = str2double (data.Var7); 
+
+r = data(:,p+2); % label
+x = data(:,2:p+1); % input
+
+r = r{:,:};
+
+r(r == 2) = 0;
+r(r == 4) = 1;
+
+x = x{:,:};
+x(isnan(x)) = 1;
+
+% parameter
+% parameters.H = H;
+parameters.label_r = r;
+parameters.data_x = x;
+parameters.N = N;
+
+opts.maxit = 20;
 
 %% call mat2vec to enable GRANSO using matrix input
 combined_fn = @(x) mat2vec(x,var_dim_map,nvar,parameters);

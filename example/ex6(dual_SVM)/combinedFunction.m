@@ -50,20 +50,9 @@ function [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X,parameters)
 %
 
 C = parameters.C; % regularaization parameter
-data = parameters.data;
-data.Var7 = str2double (data.Var7);
-
-% data(data=='?') = 1;
-
-[N,p] = size(data);
-p = p - 2; % delete index and y
-y = data(:,p+2);
-x = data(:,2:p+1);
-
-
-y = y{:,:};
-x = x{:,:};
-x(isnan(x)) = 1;
+x = parameters.data_x;
+y = parameters.label_r;
+N = parameters.N;
 
 % input variable, matirx form
 alpha = X.alpha;
