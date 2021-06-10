@@ -100,54 +100,59 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % number of constraints
 nconstr = 0;
-arrConstr = fieldnames(ci);
-% get # of constraints
-for iconstr = 1: length(arrConstr)
-    % current constraint, e.g., c1, c2
-    tmpconstr = arrConstr{iconstr};
-    constrMatrix = ci.(tmpconstr);
-    
-    nconstr = nconstr + length(constrMatrix(:));
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% inquality constraints
-ci_vec = zeros(nconstr,1);
-curIdx = 0;
-for iconstr = 1: length(arrConstr)
-    % current constraint, e.g., c1, c2
-    tmpconstr = arrConstr{iconstr};
-    constrMatrix = ci.(tmpconstr);
-    curIdx = curIdx+1;
-    ci_vec(curIdx:curIdx+length(constrMatrix(:))-1) = constrMatrix(:);
-    curIdx = curIdx+length(constrMatrix(:))-1;
-end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% gradient of inquality constraints
-ci_grad_vec = zeros(nvar,nconstr);
-% iterate column: constraints
-colIdx = 0;
-for iconstr = 1: length(arrConstr)
-    % current constraint, e.g., c1, c2
-    tmpconstr = arrConstr{iconstr};
-    constrMatrix = ci.(tmpconstr);
-    rowIdx = 0;
-    colIdx = colIdx+1;
-    % iterate row: variables
-    for idx = 1:length(keys(var_dim_map))
-        % current variable, e.g., U
-        tmpVar = var{1,idx};
-        ciGradMatrix = ci_grad.(tmpconstr).(tmpVar);
-        % corresponding dimension of the variable, e.g, 3 by 2
-        tmpDim1 = dim{1,idx}(1);
-        tmpDim2 = dim{1,idx}(2);
-        rowIdx = rowIdx + 1;
-        ci_grad_vec(rowIdx:rowIdx+tmpDim1*tmpDim2-1,colIdx:colIdx+length(constrMatrix(:))-1) = ciGradMatrix;
-        rowIdx = rowIdx +tmpDim1*tmpDim2-1;
+if ~(isempty(ci))
+    arrConstr = fieldnames(ci);
+    % get # of constraints
+    for iconstr = 1: length(arrConstr)
+        % current constraint, e.g., c1, c2
+        tmpconstr = arrConstr{iconstr};
+        constrMatrix = ci.(tmpconstr);
+        
+        nconstr = nconstr + length(constrMatrix(:));
     end
-    colIdx = colIdx+length(constrMatrix(:))-1;
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % inquality constraints
+    ci_vec = zeros(nconstr,1);
+    curIdx = 0;
+    for iconstr = 1: length(arrConstr)
+        % current constraint, e.g., c1, c2
+        tmpconstr = arrConstr{iconstr};
+        constrMatrix = ci.(tmpconstr);
+        curIdx = curIdx+1;
+        ci_vec(curIdx:curIdx+length(constrMatrix(:))-1) = constrMatrix(:);
+        curIdx = curIdx+length(constrMatrix(:))-1;
+    end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % gradient of inquality constraints
+    ci_grad_vec = zeros(nvar,nconstr);
+    % iterate column: constraints
+    colIdx = 0;
+    for iconstr = 1: length(arrConstr)
+        % current constraint, e.g., c1, c2
+        tmpconstr = arrConstr{iconstr};
+        constrMatrix = ci.(tmpconstr);
+        rowIdx = 0;
+        colIdx = colIdx+1;
+        % iterate row: variables
+        for idx = 1:length(keys(var_dim_map))
+            % current variable, e.g., U
+            tmpVar = var{1,idx};
+            ciGradMatrix = ci_grad.(tmpconstr).(tmpVar);
+            % corresponding dimension of the variable, e.g, 3 by 2
+            tmpDim1 = dim{1,idx}(1);
+            tmpDim2 = dim{1,idx}(2);
+            rowIdx = rowIdx + 1;
+            ci_grad_vec(rowIdx:rowIdx+tmpDim1*tmpDim2-1,colIdx:colIdx+length(constrMatrix(:))-1) = ciGradMatrix;
+            rowIdx = rowIdx +tmpDim1*tmpDim2-1;
+        end
+        colIdx = colIdx+length(constrMatrix(:))-1;
+    end
+    
+else
+    ci_vec =[];
+    ci_grad_vec = [];
 end
-
 %% TODO: equality constraints
 ce_vec = ce;
 ce_grad_vec = ce_grad;
