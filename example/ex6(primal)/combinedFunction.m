@@ -35,10 +35,10 @@ function [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X,parameters)
 % 
 %       ci_grad             struct of gradient of the inequality constraint at x.
 %                           c.c1.w is a real-valued matrix, p by N
-%                           c.c1.xi is a real-valued matrix, N by 1
+%                           c.c1.xi is a real-valued matrix, N by N
 %                           c.c1.b is a real-valued matrix, N by 1
-%                           c.c2.w is a real-valued matrix, p by 1
-%                           c.c2.xi is a real-valued matrix, N by 1
+%                           c.c2.w is a real-valued matrix, p by N
+%                           c.c2.xi is a real-valued matrix, N by N
 %                           c.c2.b is a real-valued matrix, N by 1
 % 
 %       ce                  value of the equality constraint(s) at x.
@@ -50,20 +50,10 @@ function [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X,parameters)
 %
 
 C = parameters.C; % regularaization parameter
-data = parameters.data;
-data.Var7 = str2double (data.Var7);
-
-% data(data=='?') = 1;
-
-[N,p] = size(data);
-p = p - 2; % delete index and y
-y = data(:,p+2);
-x = data(:,2:p+1);
-
-
-y = y{:,:};
-x = x{:,:};
-x(isnan(x)) = 1;
+x = parameters.data_x;
+y = parameters.label_r;
+N = parameters.N;
+p = parameters.p;
 
 % input variable, matirx form
 w = X.w;
@@ -76,20 +66,20 @@ f = .5*norm(w,2)^2 + C * sum(xi);
 % gradient of objective function, matrix form
 f_grad.w = w;
 f_grad.xi = C*ones(N,1);
-f_grad.b = zeros(N,1);
+f_grad.b = 0;
 
 % inequality constraint, matrix form
-ci.c1 = 1 - xi - y .* ( (w' * x') + b );
+ci.c1 = 1 - xi - y .* ( (x*w) + b );
 ci.c2 = -xi;
 
 % gradient of inequality constraint, matrix form
-ci_grad.c1.w = - y .* x;
-ci_grad.c1.xi = -ones(N,1);
-ci_grad.c1.b = -y;
+ci_grad.c1.w = - y' .* x';
+ci_grad.c1.xi = -speye(N);
+ci_grad.c1.b = -y';
 
-ci_grad.c2.w = zeros(p,1);
-ci_grad.c2.xi = -ones(N,1);
-ci_grad.c2.b = zeros(N,1);
+ci_grad.c2.w = zeros(p,N);
+ci_grad.c2.xi = -speye(N);
+ci_grad.c2.b = 0;
 
 
 % equality constraint 

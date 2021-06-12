@@ -113,13 +113,20 @@ function [d,qps_solved,ME] = qpTerminationCondition(penaltyfn_at_x,     ...
     UB          = [ones(q,1); mu*ones(l,1); ones(p,1)];
     Aeq         = [zeros(1,q) ones(1,l) zeros(1,p)];
     beq         = mu;
-    % rewrite two constraints into one
+    
+    % QPALM: rewrite two constraints into one
     A_new = [speye(q+l+p);Aeq];
     lb_new = [LB;beq];
     ub_new = [UB;beq];
     
-%     solveQP_fn = @(H) solveQP(H,f,[],[],Aeq,beq,LB,UB,[],quadprog_options);
-    solveQP_fn = @(H) solveQP(H,f,A_new,lb_new,ub_new,quadprog_options);
+    % choose solver
+    if (strcmp(quadprog_options.QPsolver,'quadprog'))
+        solveQP_fn = @(H) solveQP(H,f,[],[],Aeq,beq,LB,UB,[],quadprog_options);
+    elseif (strcmp(quadprog_options.QPsolver,'qpalm'))
+        solveQP_fn = @(H) solveQP(H,f,A_new,lb_new,ub_new,quadprog_options);
+    end
+    
+    
     
     [y,~,qps_solved,ME] = solveQPRobust();
       

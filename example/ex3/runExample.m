@@ -110,6 +110,9 @@ combined_fn = @(x) mat2vec(x,var_dim_map,nvar,parameters);
 opts.halt_log_fn            = halt_log_fn;
 
 % Call GRANSO using its "combined" format, with logging enabled.
+opts.quadprog_opts.QPsolver = 'qpalm';
+% opts.quadprog_opts.QPsolver = 'quadprog';
+
 soln = granso(nvar,combined_fn,opts);
 
 % GET THE HISTORY OF ITERATES

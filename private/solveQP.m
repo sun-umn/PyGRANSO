@@ -81,33 +81,55 @@
     end
     
     suppress_warnings = true;
-    if nargin > 9
-        opts = varargin{10};
+%     if nargin > 9
+%         opts = varargin{10};
+%         if isfield(opts,'suppress_warnings')
+%             suppress_warnings = opts.suppress_warnings;
+%         end
+%         if isfield(opts,'QPsolver')
+%             QPsolver = opts.QPsolver;
+%         end
+%     end 
+
+    if isstruct(varargin{end})  
+        opts = varargin{end};
         if isfield(opts,'suppress_warnings')
             suppress_warnings = opts.suppress_warnings;
         end
-    end 
-       
+        if isfield(opts,'QPsolver')
+            QPsolver = opts.QPsolver;
+        end
+    end
+    
     if suppress_warnings
         warning_state = warning;
         warning off
     end
     try
         requests = requests + 1;
-%         [X,~,flag,output,LAMBDA] = quadprog(varargin{:});%% Solve with qpalm
-%         varargout = {X,LAMBDA};
-        % Solve with qpalm
-        solver = qpalm;
-        settings = solver.default_settings();
-        %IMPORTANT: set nonconvex to true for nonconvex QPs
-        settings.nonconvex = false;
-
-        solver.setup(varargin{:}); 
-        res = solver.solve();
-        % NOTE: the info of LAMBDA/res.y is not used in the GRANSO package
-        varargout = {res.x,res.y};
-        X = res.x;
-
+        
+        % MATLAB default solver
+        if (strcmp(QPsolver,'quadprog'))
+%             newvarargin = varargin{:};
+%             newvarargin = rmfield(newvarargin{end},'QPsolver');
+            [X,~,flag,output,LAMBDA] = quadprog(varargin{1:end-1},rmfield(varargin{end},'QPsolver'));%% Solve with qpalm
+            varargout = {X,LAMBDA};
+        % QPALM solver
+        elseif (strcmp(QPsolver,'qpalm'))   
+%             newvarargin = varargin{:};
+%             newvarargin = rmfield(newvarargin{end},'QPsolver');
+            solver = qpalm;
+            settings = solver.default_settings();
+            %IMPORTANT: set nonconvex to true for nonconvex QPs
+            settings.nonconvex = false;
+            
+            solver.setup(varargin{1:end-1},rmfield(varargin{end},'QPsolver'));
+            res = solver.solve();
+            % NOTE: the info of LAMBDA/res.y is not used in the GRANSO package
+            varargout = {res.x,res.y};
+            X = res.x;
+        end
+        
     catch err
         errors = errors + 1;
         ME = MException('GRANSO:quadprogError','quadprog threw an error.');

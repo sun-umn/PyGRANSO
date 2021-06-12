@@ -31,6 +31,8 @@ function soln = runExample()
 %   See also combinedFunction.
 %
 
+opts.quadprog_opts.QPsolver = 'qpalm';
+% opts.quadprog_opts.QPsolver = 'quadprog';
 
 % key
 var = {'x1','x2'};
@@ -85,7 +87,7 @@ parameters.w = 8;
 % Embed the *current* value of w dynamically into the objective
 % call mat2vec to enable GRANSO using matrix input
 combined_fn = @(x) mat2vec(x,var_dim_map,nvar,parameters);
-soln = granso(nvar,combined_fn);
+soln = granso(nvar,combined_fn,opts);
 
 fprintf('\nPress any key to restart GRANSO from the last iterate for up to 100 more iterations.\n');
 pause
@@ -154,6 +156,7 @@ opts.scaleH0 = false;
 % RESTART GRANSO
 % Increase the maximum allowed iterations to 100
 opts.maxit = 100;
+
 
 % Restart GRANSO from the last iterate
 soln = granso(nvar,combined_fn,opts);

@@ -84,6 +84,8 @@ pause
 
 % SET UP THE ANONYMOUS FUNCTION HANDLE AND OPTIMIZE
 %% call mat2vec to enable GRANSO using matrix input
+opts.quadprog_opts.QPsolver = 'qpalm';
+% opts.quadprog_opts.QPsolver = 'quadprog';
 tic
 combined_fn = @(x) mat2vec(x,inputVarMap, nvar );
 soln = granso(nvar,combined_fn,opts);

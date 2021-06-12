@@ -68,11 +68,15 @@ parameters.label_r = r;
 parameters.data_x = x;
 parameters.N = N;
 
-opts.maxit = 20;
+opts.maxit = 10;
+
+opts.quadprog_opts.QPsolver = 'qpalm';
+% opts.quadprog_opts.QPsolver = 'quadprog';
 
 %% call mat2vec to enable GRANSO using matrix input
+tic
 combined_fn = @(x) mat2vec(x,var_dim_map,nvar,parameters);
 soln = granso(nvar,combined_fn,opts);
-
+toc
 
 end

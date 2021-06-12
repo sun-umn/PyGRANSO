@@ -145,6 +145,7 @@ function [d,mu,reduction] = qpSteeringStrategy( penaltyfn_at_x,         ...
     f                   = c_grads' * mu_Hinv_f_grad - [eq; ineq];
     LB                  = [-ones(n_eq,1); zeros(n_ineq,1)];
     UB                  = ones(n_eq + n_ineq, 1);
+    
     % Identity matrix: compatible with the constraint form in QPALM
     A                   = speye(n_eq + n_ineq);
    
@@ -217,8 +218,11 @@ function [d,mu,reduction] = qpSteeringStrategy( penaltyfn_at_x,         ...
     % throws an error if QP solver failed somehow
     function d = solveSteeringDualQP()
         try 
-%             y = solveQP(H,f,[],[],[],[],LB,UB,[],quadprog_options); 
-            y = solveQP(H,f,A,LB,UB,quadprog_options);
+            if (strcmp(quadprog_options.QPsolver,'quadprog'))
+                y = solveQP(H,f,[],[],[],[],LB,UB,[],quadprog_options);
+            elseif (strcmp(quadprog_options.QPsolver,'qpalm'))
+                y = solveQP(H,f,A,LB,UB,quadprog_options);
+            end
         catch err
             ME = MException(                                            ...
                 'GRANSO:steeringQuadprogFailure',                       ...

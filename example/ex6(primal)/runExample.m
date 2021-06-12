@@ -32,9 +32,9 @@ p = p - 2; % delete index and y
 
 %% specify input variables 
 % key: input variables
-var = {'alpha'};
+var = {'w','xi','b'};
 % value: dimension. e.g., 3 by 2 => [3,2]
-dim = { [N,1] };
+dim = {[p,1],[N,1],[1,1]};
 var_dim_map =  containers.Map(var, dim);
 
 % calculate total number of scalar variables
@@ -48,11 +48,34 @@ end
 parameters.C = 1;
 parameters.data = data;
 
+ 
+data.Var7 = str2double (data.Var7); 
+
+r = data(:,p+2); % label
+x = data(:,2:p+1); % input
+
+r = r{:,:};
+
+r(r == 2) = 0;
+r(r == 4) = 1;
+
+x = x{:,:};
+x(isnan(x)) = 1;
+parameters.label_r = r;
+parameters.data_x = x;
+parameters.N = N;
+parameters.p = p;
+
 opts.maxit = 10;
 
+% opts.quadprog_opts.QPsolver = 'qpalm';
+opts.quadprog_opts.QPsolver = 'quadprog';
+
 %% call mat2vec to enable GRANSO using matrix input
+tic
 combined_fn = @(x) mat2vec(x,var_dim_map,nvar,parameters);
-soln = granso(nvar,combined_fn);
+soln = granso(nvar,combined_fn,opts);
+toc
 
 
 end
