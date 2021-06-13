@@ -1,4 +1,4 @@
-# GRANSO-Enhancement-Translation
+# PyGRANSO
 
 Toward a user-friendly and scalable numerical package for nonsmooth, nonconvex, constrained optimization
 
