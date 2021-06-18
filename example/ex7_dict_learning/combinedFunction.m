@@ -1,4 +1,4 @@
-function [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X)
+function [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X,parameters)
 %   combinedFunction: (example_mat/ex1_smoothNMF)
 %       Defines objective and inequality constraint functions, with their
 %       respective gradients, for an smooth nonnegative matrix factorization optimization problem:
@@ -61,28 +61,54 @@ function [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X)
 U = X.U;
 V = X.V;
 
-D = [1 1 1 1;1 1 1 1;1 1 1 1];
+n_samples = parameters.n_samples;
+n_components = parameters.n_components;
+n_features = parameters.n_features;
+alpha = parameters.alpha;
+
+Y = parameters.Y;
 
 % objective function
-f = .5*norm(D - U*V', 'fro')^2;
+f = .5*norm(Y - U*V, 'fro')^2 + alpha * norm(U, 1);
 
-% gradient of objective function, matrix form
-f_grad.U = -(D - U*V') * V;
-f_grad.V = -(D - U*V')' * U;
+% first part of gradient of objective function, matrix form
+f_grad.U = -(Y - U*V) * V';
+f_grad.V = -(Y - U*V)' * U;
 
-% inequality constraint, matrix form
-ci.c1 = -U;
-ci.c2 = -V;
+% (sub)gradient of L1 norm
+g = ones(n_features, n_components);
+g(U < 0) = -1;
 
-% gradient of inequality constraint, matrix form
-ci_grad.c1.U = -diag([1 1 1 1 1 1]);
-ci_grad.c1.V = zeros(8,6);
+indicator = zeros(1,n_components);
 
-ci_grad.c2.U = zeros(6,8);
-ci_grad.c2.V = -diag([1 1 1 1 1 1 1 1]);
+for j = 1:n_components
+    if (norm(U, 1) == norm(U(:,j), 1))
+        indicator(j) = 1;
+        break;
+    end
+end
+
+f_grad.U = f_grad.U + indicator .* g;
+
+% % inequality constraint, matrix form
+% ci.c1 = -U;
+% ci.c2 = -V;
+% 
+ci = [];
+
+% % gradient of inequality constraint, matrix form
+% ci_grad.c1.U = -speye(n_features * n_components);
+% ci_grad.c1.V = zeros(n_components * n_samples,n_features * n_components);
+% 
+% ci_grad.c2.U = zeros(n_features * n_components,n_components * n_samples);
+% ci_grad.c2.V = -speye(n_components * n_samples);
+ci_grad = [];
 
 % equality constraint 
 ce = [];
+% for k = 1:n_components
+%     ce.(strcat('c',int2str(k)) ) = norm(V(k,:),2)-1;
+% end
 ce_grad = [];
 
 end
