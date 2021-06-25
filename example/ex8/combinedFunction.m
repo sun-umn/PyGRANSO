@@ -1,4 +1,4 @@
-function [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X,parameters)
+function [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X)
 %   combinedFunction: (examples/ex1)
 %       Defines objective and inequality constraint functions, with their
 %       respective gradients.
@@ -39,22 +39,14 @@ function [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X,parameters)
 %                           [], since there aren't any equality constraints
 %
 
-    u = X.u;
-    v = X.v;
-    a = parameters.a;
+    u = X.u; 
 
-    f = a*abs(u) + sum(v);
+    f = sum(u.^2)^0.5;
 
     % GRADIENT AT X
     % Compute the 2nd term
-    f_grad.v = ones(length(v),1);
-    % Add in the 1st term, where we must handle the sign due to the 
-    % absolute value
-    if u >= 0
-      f_grad.u    = a;
-    else
-      f_grad.u    = -a;
-    end
+    f_grad.u =  u/(sum(u.^2)^0.5);
+    
     
     
     ci = [];
