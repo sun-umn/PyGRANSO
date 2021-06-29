@@ -222,6 +222,8 @@ function [d,mu,reduction] = qpSteeringStrategy( penaltyfn_at_x,         ...
                 y = solveQP(H,f,[],[],[],[],LB,UB,[],quadprog_options);
             elseif (strcmp(quadprog_options.QPsolver,'qpalm'))
                 y = solveQP(H,f,A,LB,UB,quadprog_options);
+            elseif (strcmp(quadprog_options.QPsolver,'gurobi'))
+                y = solveQP(H,f,[],[],LB,UB,quadprog_options);
             end
         catch err
             ME = MException(                                            ...
