@@ -125,6 +125,7 @@ function [d,qps_solved,ME] = qpTerminationCondition(penaltyfn_at_x,     ...
     elseif (strcmp(quadprog_options.QPsolver,'qpalm'))
         solveQP_fn = @(H) solveQP(H,f,A_new,lb_new,ub_new,quadprog_options);
     elseif (strcmp(quadprog_options.QPsolver,'gurobi'))
+        % formulation of QP has no 1/2
         solveQP_fn = @(H) solveQP(H,f,Aeq,beq,LB,UB,quadprog_options);
     end
     

@@ -223,6 +223,7 @@ function [d,mu,reduction] = qpSteeringStrategy( penaltyfn_at_x,         ...
             elseif (strcmp(quadprog_options.QPsolver,'qpalm'))
                 y = solveQP(H,f,A,LB,UB,quadprog_options);
             elseif (strcmp(quadprog_options.QPsolver,'gurobi'))
+                % formulation of QP has no 1/2
                 y = solveQP(H,f,[],[],LB,UB,quadprog_options);
             end
         catch err

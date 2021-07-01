@@ -129,12 +129,13 @@
             varargout = {res.x,res.y};
             X = res.x;
         elseif (strcmp(QPsolver,'gurobi'))
-            % input is Q f Aeq,beq,LB,UB
+            % input is H f Aeq,beq,LB,UB
             
             nvar = length(varargin{2});
             
             if (~isempty(varargin{1}))
-                model.Q = sparse(varargin{1});
+                % formulation of QP has no 1/2
+                model.Q = sparse(varargin{1}/2);
             end
             
             if (~isempty(varargin{2}))
@@ -148,14 +149,14 @@
             else
                 % no constraint A*x < b
                 model.A = sparse(zeros(nvar,1));
-                model.sense = '<';
+                model.sense = '=';
             end
             
             if (~isempty(varargin{4}))
                 beq = varargin{4};
                 model.rhs = full(beq(:)); % rhs must be dense
             else
-                model.rhs = full(inf(nvar,1));
+                model.rhs = full(zeros(nvar,1));
             end
             
             if (~isempty(varargin{5}))
@@ -170,7 +171,7 @@
             params.outputflag = 0;
             
             results = gurobi(model,params);
-            varargout = {results.x};
+            varargout = {results.x,results.pi};
             X = results.x;
             
         end
