@@ -70,8 +70,9 @@ parameters.N = N;
 
 opts.maxit = 10;
 
-opts.quadprog_opts.QPsolver = 'qpalm';
+% opts.quadprog_opts.QPsolver = 'qpalm';
 % opts.quadprog_opts.QPsolver = 'quadprog';
+opts.quadprog_opts.QPsolver = 'gurobi';
 
 %% call mat2vec to enable GRANSO using matrix input
 tic

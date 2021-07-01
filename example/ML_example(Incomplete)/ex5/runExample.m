@@ -38,8 +38,9 @@ for idx = 1:length(dim)
     curDim = dim(idx);
     nvar = nvar + curDim{1,1}(1)*curDim{1,1}(2);
 end
-opts.quadprog_opts.QPsolver = 'qpalm';
+% opts.quadprog_opts.QPsolver = 'qpalm';
 % opts.quadprog_opts.QPsolver = 'quadprog';
+opts.quadprog_opts.QPsolver = 'gurobi';
 
 %% call mat2vec to enable GRANSO using matrix input
 combined_fn = @(x) mat2vec(x,var_dim_map,nvar);

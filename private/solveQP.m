@@ -139,7 +139,7 @@
             end
             
             if (~isempty(varargin{2}))
-                model.obj = varargin{2};
+                model.obj = (varargin{2}); % obj must be dense
             end
             
             if (~isempty(varargin{3}))
@@ -148,7 +148,7 @@
                 model.sense = repmat('=',size(Aeq,1),1);
             else
                 % no constraint A*x < b
-                model.A = sparse(zeros(nvar,1));
+                model.A = sparse(zeros(1,nvar));
                 model.sense = '=';
             end
             
@@ -156,7 +156,7 @@
                 beq = varargin{4};
                 model.rhs = full(beq(:)); % rhs must be dense
             else
-                model.rhs = full(zeros(nvar,1));
+                model.rhs = 0;
             end
             
             if (~isempty(varargin{5}))
