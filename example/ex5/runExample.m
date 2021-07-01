@@ -18,11 +18,13 @@ for idx = 1:length(dim)
 end
 
 % opts.quadprog_opts.QPsolver = 'qpalm';
-opts.quadprog_opts.QPsolver = 'quadprog';
+% opts.quadprog_opts.QPsolver = 'quadprog';
+opts.quadprog_opts.QPsolver = 'gurobi';
+
 opts.x0 = [1;1];
 
 % a >= (n-1)**0.5
-parameters.a = 2;
+parameters.a = 20;
 
 %% call mat2vec to enable GRANSO using matrix input
 combined_fn = @(x) mat2vec(x,var_dim_map,nvar,parameters);
