@@ -1,8 +1,10 @@
 from pygranso import pygranso
+from mat2vec import mat2vec
 
 # options for pygranso
-class opts():
-    pass
+class Options:
+    def __init__(self):
+        self.QPsolver = 'qpalm'
 
 # help(pygranso)
 
@@ -16,7 +18,10 @@ for dim in var_dim_map.values():
 
 print(nvar)
 
-# opts.quadprog_opts.QPsolver = 'qpalm'
-opts.quadprog_opts.QPsolver = 'gurobi'
+opts = Options()
+opts.QPsolver = 'gurobi'
 
-pygranso(1,2,3)
+# call mat2vec to enable GRANSO using matrix input
+combined_fn = lambda x: mat2vec(x,var_dim_map,nvar)
+
+pygranso(1,2,opts)

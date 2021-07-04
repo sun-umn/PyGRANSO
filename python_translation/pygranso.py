@@ -1,6 +1,6 @@
 from private import makePenaltyFunction 
 
-def pygranso(n,obj_fn,varargin):
+def pygranso(n,obj_fn,opts):
     """
     PyGRANSO: Python version GRadient-based Algorithm for Non-Smooth Optimization
     """
@@ -20,7 +20,7 @@ def pygranso(n,obj_fn,varargin):
     #  - evaluate functions at x0
 
     try: 
-        [problem_fns,opts] = processArguments(n,obj_fn,varargin)
+        [problem_fns,opts] = processArguments(n,obj_fn,opts)
         [bfgs_hess_inv_obj,opts] = getBfgsManager(opts)
       
         # construct the penalty function object and evaluate at x0
