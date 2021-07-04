@@ -1,6 +1,6 @@
 function soln = granso(n,obj_fn,varargin)
 %   GRANSO: GRadient-based Algorithm for Non-Smooth Optimization
-%
+% 
 %       Minimize a function, possibly subject to inequality and/or equality 
 %       constraints.  GRANSO is intended to be an efficient solver for 
 %       constrained nonsmooth optimization problems, without any special 
@@ -8,7 +8,7 @@ function soln = granso(n,obj_fn,varargin)
 %       functions.  It can handle problems involving functions that are any
 %       or all of the following: smooth or nonsmooth, convex or nonconvex, 
 %       and locally Lipschitz or non-locally Lipschitz.  
-%
+% 
 %       GRANSO only requires that gradients are provided for the objective
 %       and constraint functions.  Gradients should always be numerically
 %       assessed with a finite difference utility to ensure that they are
@@ -20,12 +20,12 @@ function soln = granso(n,obj_fn,varargin)
 %       free to shift/scale these internally in order to specify how 
 %       hard/soft each individual constraints are, provided that they
 %       respectively remain 'less than or equal' or 'equal' to zero.
-%
+% 
 %       The user must have a quadprog-compatible quadratic program solver,
 %       that is, a QP solver that is callable via The MathWorks quadprog 
 %       interface (such as quadprog.m from MATLAB's Optimization Toolbox or 
 %       MOSEK).  
-%
+% 
 %   NOTE: 
 %       On initialization, GRANSO will throw errors if it detects invalid
 %       user options or if the user-provided functions to optimize either 
@@ -35,7 +35,7 @@ function soln = granso(n,obj_fn,varargin)
 %       computed can be returned to the user.  This way, the error may be
 %       able to corrected by the user and GRANSO can be restarted from the
 %       last accepted iterate before the error occurred.
-%
+% 
 %       After GRANSO executes, the user is expected to check all of the
 %       following fields:
 %           - soln.termination_code
@@ -46,14 +46,14 @@ function soln = granso(n,obj_fn,varargin)
 %       performance, such as quadprog failing too frequently or a
 %       user-provided function throwing an error or returning an invalid
 %       result.
-%
+% 
 %   USAGE:
 %   - combined_fn evaluates objective and constraints simultaneously:
-%
+% 
 %       % "combined" format
 %       soln = GRANSO(n,combined_fn);
 %       soln = GRANSO(n,combined_fn,options);
-%
+% 
 %   OR, ALTERNATIVELY:
 %   - obj_fn evaluates the objective function while constraint functions 
 %     are provided separately via ineq_fn and eq_fn
@@ -61,16 +61,16 @@ function soln = granso(n,obj_fn,varargin)
 %       % "separate" format
 %       soln = GRANSO(n,obj_fn,ineq_fn,eq_fn);
 %       soln = GRANSO(n,obj_fn,ineq_fn,eq_fn,options);
-%
+% 
 %   The first usage may be both more convenient and efficient if computed
 %   values appear across the objective and various constraints.    
-%
+% 
 %   INPUT:
 %       n               Number of variables to optimize.
-%
+% 
 %       obj_fn          Function handle of single input x, a real-valued
 %                       n by 1 vector, for evaluating either:
-%
+% 
 %                       - The values and gradients of the objective and
 %                         constraints simultaneously:
 %                         [f,f_grad,ci,ci_grad,ce,ce_grad] = obj_fn(x)
@@ -83,14 +83,14 @@ function soln = granso(n,obj_fn,varargin)
 %                         In this case, ineq_fn and eq_fn must be provided.
 %                         If there are no (in)equality constraints,
 %                         (in)eq_fn should be set as [].
-%
+% 
 %       ineq_fn, eq_fn  Function handles for (in)equality constraints
 %                           [ci,ci_grad] = ineq_fn(x)
 %                           [ce,ce_grad] = eq_fn(x)
 %                       These are required when given obj_fn only evaluates
 %                       the objective; they should be respectively set as
 %                       [] if no (in)equality constraint is present.
-%
+% 
 %       NOTE: Each function handle returns the value of the function(s) 
 %             evaluated at x, as a column vector, along with its 
 %             corresponding gradient(s) as a matrix of column vectors.  
@@ -98,19 +98,19 @@ function soln = granso(n,obj_fn,varargin)
 %             constraints, then ci must be supplied as a column vector in 
 %             R^p while ci_grad must be given as an n by p matrix of p 
 %             gradients for the p inequality constraints.
-%
+% 
 %       options         Optional struct of settable parameters or [].
 %                       To see available parameters and their descriptions,
 %                       type:
 %                       >> help gransoOptions
 %                       >> help gransoOptionsAdvanced
-%
+% 
 %   OUTPUT:
 %       soln            Struct containing the computed solution(s) and
 %                       additional information about the computation.
 % 
 %       If the problem has been pre-scaled, soln will contain:
-%
+% 
 %       .scalings       Struct of pre-scaling multipliers of:
 %                         the objective          - soln.scalings.f
 %                         inequality constraints - soln.scalings.ci
@@ -122,12 +122,12 @@ function soln = granso(n,obj_fn,varargin)
 %                       has not been pre-scaled.  The absence of a 
 %                       subsubfield {f,ci,ce} indicates that none of the 
 %                       functions belonging to that group were pre-scaled.
-%
+% 
 %       The soln struct returns the optimization results in the following
 %       fields:
-%
+% 
 %       .final          Function values at the last accepted iterate
-%
+% 
 %       .best           Info for the point that most optimizes the 
 %                       objective over the set of iterates encountered
 %                       during optimization.  Note that this point may not
@@ -138,7 +138,7 @@ function soln = granso(n,obj_fn,varargin)
 %                       (opts.viol_ineq_tol and opts.viol_eq_tol).  If no 
 %                       points were deemed feasible to tolerances, then
 %                       this field WILL NOT BE present.
-%
+% 
 %       .most_feasible  Info for the best most feasible iterate.  If
 %                       iterates are encountered which have zero total
 %                       violation, then this holds the best iterate amongst
@@ -148,7 +148,7 @@ function soln = granso(n,obj_fn,varargin)
 %                       that is with the smallest total violation, 
 %                       regardless of the objective value.  NOTE: this 
 %                       field is only present in constrained problems.
-%
+% 
 %       Note that if the problem was pre-scaled, the above fields will only
 %       contain the pre-scaled values.  Furthermore, the solution to the
 %       pre-scaled problem may or may not be a solution to the unscaled
@@ -157,12 +157,12 @@ function soln = granso(n,obj_fn,varargin)
 %       .final_unscaled
 %       .best_unscaled
 %       .most_feasible_unscaled
-%
+% 
 %       For .final, .best, and .most_feasible (un)scaled variants, the 
 %       following subsubfields are always present:
 %       .x                  the computed iterate
 %       .f                  value of the objective at this x
-%
+% 
 %       If the problem is constrained, these subsubfields are also present:
 %       .ci                 inequality constraints at x
 %       .ce                 equality constraints at x
@@ -174,12 +174,12 @@ function soln = granso(n,obj_fn,varargin)
 %                           opts.viol_eq_tol
 %       .mu                 the value of the penalty parameter when this
 %                           this iterate was computed
-%
+% 
 %       NOTE: The above total violation measures are with respect to the
 %       infinity norm, since the infinity norm is used for determining
 %       whether or not a point is feasible.  Note however that GRANSO 
 %       optimizes an L1 penalty function.
-%
+% 
 %       The soln struct also has the following subfields:
 %       .H_final            Full-memory BFGS:
 %                           - The BFGS inverse Hessian approximation at
@@ -201,7 +201,7 @@ function soln = granso(n,obj_fn,varargin)
 %                           it will not be printed.  Thus, this value may 
 %                           sometimes appear to be greater by 1 compared to 
 %                           the last iterate printed.
-%
+% 
 %       .BFGS_updates       A struct of data about the number of BFGS 
 %                           updates that were requested and accepted.
 %                           Numerical issues may force updates to be
@@ -217,63 +217,63 @@ function soln = granso(n,obj_fn,varargin)
 %               current iterate is sufficiently close to the feasible 
 %               region (as determined by opts.viol_ineq_tol and 
 %               opts.viol_eq_tol).
-%
+% 
 %           1:  Relative decrease in penalty function <= opts.rel_tol and
 %               current iterate is sufficiently close to the feasible 
 %               region (as determined by opts.viol_ineq_tol and 
 %               opts.viol_eq_tol).
-%
+% 
 %           2:  Objective target value reached at an iterate
 %               sufficiently close to feasible region (determined by
 %               opts.fvalquit, opts.viol_ineq_tol and opts.viol_eq_tol).
-%
+% 
 %           3:  User requested termination via opts.halt_log_fn 
 %               returning true at this iterate.
-%
+% 
 %           4:  Max number of iterations reached (opts.maxit).
-%
+% 
 %           5:  Clock/wall time limit exceeded (opts.maxclocktime).
-%
+% 
 %           6:  Line search bracketed a minimizer but failed to satisfy
 %               Wolfe conditions at a feasible point (with respect to
 %               opts.viol_ineq_tol and opts.viol_eq_tol).  For 
 %               unconstrained problems, this is often an indication that a
 %               stationary point has been reached.
-%
+% 
 %           7:  Line search bracketed a minimizer but failed to satisfy
 %               Wolfe conditions at an infeasible point.
-%
+% 
 %           8:  Line search failed to bracket a minimizer indicating the
 %               objective function may be unbounded below.  For constrained
 %               problems, where the objective may only be unbounded off the
 %               feasible set, consider restarting GRANSO with opts.mu0 set
 %               lower than soln.mu_lowest (see its description below for 
 %               more details).
-%
+% 
 %           9:  GRANSO failed to produce a descent direction.
-%
+% 
 %           10: NO LONGER IN USE (Previously, it was used to indicate if
 %               any of the user-supplied functions returned inf/NaN at x0.
 %               Now, GRANSO throws an error back to the user if this
 %               occurs).
-%
+% 
 %           11: User-supplied functions threw an error which halted GRANSO.
-%
+% 
 %           12: A quadprog error forced the steering procedure to be 
 %               aborted and GRANSO was halted (either because there were no 
 %               available fallbacks or opts.halt_on_quadprog_error was set 
 %               to true).  Only relevant for constrained problems.
-%
+% 
 %           13: An unknown error occurred, forcing GRANSO to stop.  Please 
 %               report these errors to the developer.
-%
+% 
 %   .quadprog_failure_rate  Percent of the time quadprog threw an error or
 %                           returned an invalid result.  From 0 to 100.
-%
+% 
 %   .error                  Only present for soln.termination equal to 11, 
 %                           12, or 13.  Contains the thrown error that
 %                           caused GRANSO to halt optimization.
-%
+% 
 %   .mu_lowest              Only present for constrained problems where
 %                           the line search failed to bracket a minimizer 
 %                           (soln.termination_code == 7).  This contains
@@ -281,7 +281,7 @@ function soln = granso(n,obj_fn,varargin)
 %                           reattempts.  For more details, see the line
 %                           search user options by typing:
 %                           >> help gransoOptionsAdvanced
-%
+% 
 %   CONSOLE OUTPUT:
 %       When opts.print_level is at least 1, GRANSO will print out
 %       the following information for each iteration:
@@ -294,7 +294,7 @@ function soln = granso(n,obj_fn,varargin)
 %           
 %           where the penalty function is defined as
 %               Mu*objective + total_violation
-%
+% 
 %       Objective       Current value of the objective function
 %       
 %       Total Violation (only applicable if the problem is constrained)
@@ -303,7 +303,7 @@ function soln = granso(n,obj_fn,varargin)
 %       
 %           Both are l-infinity measures that are used to determine
 %           feasibility.
-%
+% 
 %       Line Search
 %           SD          Search direction type:
 %                           S   Steering with BFGS inverse Hessian
@@ -315,7 +315,7 @@ function soln = granso(n,obj_fn,varargin)
 %           
 %                       Note that S and SI are only applicable for
 %                       constrained problems.
-%
+% 
 %                       If the accepted search direction was obtained via a
 %                       fallback strategy instead of the standard strategy,
 %                       the search direction type will be printed in
@@ -331,7 +331,7 @@ function soln = granso(n,obj_fn,varargin)
 %           Evals       Number of points evaluated in line search
 %   
 %           t           Accepted length of line search step 
-%
+% 
 %       Stationarity    Approximate stationarity measure
 %           Grads       Number of gradients used to compute measure
 %       
@@ -344,38 +344,38 @@ function soln = granso(n,obj_fn,varargin)
 %                       indicates the number of requests to quadprog.  If
 %                       the value could not be computed at all, it will be
 %                       reported as Inf.
-%
+% 
 %                       The frequent use of fallbacks may indicate a
 %                       deficient or broken quadprog installation (or that 
 %                       the license is invalid or can't be verified).
-%
+% 
 %   See also gransoOptions, gransoOptionsAdvanced, makeHaltLogFunctions.
-%
-%
+% 
+% 
 %   If you publish work that uses or refers to GRANSO, please cite the 
 %   following paper: 
-%
+% 
 %   [1] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
 %       A BFGS-SQP method for nonsmooth, nonconvex, constrained 
 %       optimization and its evaluation using relative minimization 
 %       profiles, Optimization Methods and Software, 32(1):148-181, 2017.
 %       Available at https://dx.doi.org/10.1080/10556788.2016.1208749
-%
+% 
 %   NOTE: GRANSO in all capitals refers to the software package and is the
 %   form that should generally be used.  granso or granso.m in lowercase
 %   letters refers specifically to the GRANSO routine/command.
-%
+% 
 %   GRANSO uses modifed versions of the BFGS inverse Hessian approximation
 %   update formulas and the inexact weak Wolfe line search from HANSO v2.1.
 %   See the documentation of HANSO for more information on the use of
 %   quasi-Newton methods for nonsmooth unconstrained optimization.
-%
+% 
 %   For comments/bug reports, please visit the GRANSO GitLab webpage:
 %   https://gitlab.com/timmitchell/GRANSO
-%
+% 
 %   GRANSO Version 1.6.4, 2016-2020, see AGPL license info below.
 %   granso.m introduced in GRANSO Version 1.0.
-%
+% 
 % =========================================================================
 % |  GRANSO: GRadient-based Algorithm for Non-Smooth Optimization         |
 % |  Copyright (C) 2016 Tim Mitchell                                      |
