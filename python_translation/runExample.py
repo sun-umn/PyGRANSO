@@ -1,15 +1,15 @@
 from pygranso import pygranso
 from mat2vec import mat2vec
+import numpy as np
 
 # options for pygranso
 class Options:
-    def __init__(self):
-        self.QPsolver = 'qpalm'
+    pass
 
 # help(pygranso)
 
 # variable and corresponding dimensions
-var_dim_map = {"x1": (1,1), "x2": (1,1)}
+var_dim_map = {"U": (3,2), "V": (4,2)}
 
 # calculate total number of scalar variables
 nvar = 0
@@ -24,4 +24,10 @@ opts.QPsolver = 'gurobi'
 # call mat2vec to enable GRANSO using matrix input
 combined_fn = lambda x: mat2vec(x,var_dim_map,nvar)
 
-pygranso(1,2,opts)
+# # test
+# x = np.array([1,1,1,1,1,1,1,1,1,1,1,1,1,1])
+# [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = combined_fn(x)
+# print(ci_grad_vec)
+# print(f_grad_vec)
+
+pygranso(nvar,combined_fn,opts)
