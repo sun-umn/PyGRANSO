@@ -1,6 +1,7 @@
-from private import makePenaltyFunction 
+from private import makePenaltyFunction as mPF
+from pygransoOptions import gransoOptions
 
-def pygranso(n,obj_fn,opts):
+def pygranso(n,combined_fns,opts=None):
     """
     PyGRANSO: Python version GRadient-based Algorithm for Non-Smooth Optimization
     """
@@ -20,12 +21,12 @@ def pygranso(n,obj_fn,opts):
     #  - evaluate functions at x0
 
     try: 
-        [problem_fns,opts] = processArguments(n,obj_fn,opts)
+        [problem_fns,opts] = processArguments(n,combined_fns,opts)
         [bfgs_hess_inv_obj,opts] = getBfgsManager(opts)
       
         # construct the penalty function object and evaluate at x0
         # unconstrained problems will reset mu to one and mu will be fixed
-        [ penaltyfn_obj, grad_norms_at_x0] =  makePenaltyFunction.makePenaltyFunction(opts, problem_fns,1)
+        [ penaltyfn_obj, grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, problem_fns,1)
     except ValueError:
     #         catch err
     #     switch err.identifier
@@ -45,13 +46,17 @@ def pygranso(n,obj_fn,opts):
         print("err")
 
 
-    print("end")
+    print("pygranso end")
 
     return -1
 
-
-def processArguments(n,obj_fn,varargin):
-    return [-1,-1]
+# only combined function allowed here. simpler form compare with GRANSO
+# different cases needed if seperate obj eq and ineq are using
+def processArguments(n,combined_fns,opts):
+    problem_fns = combined_fns
+    options = opts
+    options = gransoOptions(n,options)
+    return [problem_fns,options]
 
 def getBfgsManager(opts):
     return [-1,-1]

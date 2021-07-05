@@ -1,10 +1,9 @@
 from pygranso import pygranso
 from mat2vec import mat2vec
+from pygransoOptions import Options
 import numpy as np
 
-# options for pygranso
-class Options:
-    pass
+
 
 # help(pygranso)
 
@@ -16,7 +15,7 @@ nvar = 0
 for dim in var_dim_map.values():
     nvar = nvar + dim[0] * dim[1]
 
-print(nvar)
+
 
 opts = Options()
 opts.QPsolver = 'gurobi'

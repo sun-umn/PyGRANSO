@@ -1,4 +1,0 @@
-clc
-clear
-
-L = []
