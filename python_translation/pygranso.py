@@ -25,7 +25,7 @@ def pygranso(n,combined_fns,opts=None):
         [problem_fns,opts] = processArguments(n,combined_fns,opts)
         # check realted function: np.matrix.H is recommened, consider np.transpose/conjugate 
         [bfgs_hess_inv_obj,opts] = getBfgsManager(opts)
-      
+    
         # construct the penalty function object and evaluate at x0
         # unconstrained problems will reset mu to one and mu will be fixed
         [ penaltyfn_obj, grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, problem_fns)
