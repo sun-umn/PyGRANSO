@@ -1,12 +1,11 @@
 import numpy as np
 from combinedFunction import combinedFunction
+from pygransoStruct import VariableStruct
 
 def mat2vec(x,var_dim_map,nvar,parameters = None):
 
 
-    # options for optimization variable X
-    class VariableStruct:
-        pass
+    
 
     ################################################################################
 

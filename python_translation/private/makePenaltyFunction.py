@@ -1,4 +1,4 @@
-def makePenaltyFunction(params,obj_fn,varargin):
+def makePenaltyFunction(params,obj_fn,varargin=None):
     """
     makePenaltyFunction: 
         creates an object representing the penalty function for 

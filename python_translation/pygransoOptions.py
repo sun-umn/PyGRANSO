@@ -1,11 +1,9 @@
 from numpy.core.numeric import Inf
 from private import pygransoConstants as pgC
+from private import optionValidator as oV
 import numpy as np
 from scipy import sparse
-
-# options for pygranso
-class Options:
-    pass
+from pygransoStruct import Options
 
 def gransoOptions(n,options):
     """
@@ -41,11 +39,21 @@ def gransoOptions(n,options):
     #  need error handler here
     assert isinstance(user_opts, Options) ,'PyGRANSO invalidUserOption: PyGRANSO options must provided as an object of class Options!'
 
-    # % USER PROVIDED THEIR OWN OPTIONS SO WE MUST VALIDATE THEM
-    # validator = optionValidator('GRANSO',default_opts);
+    # USER PROVIDED THEIR OWN OPTIONS SO WE MUST VALIDATE THEM
+    validator = oV.optionValidator('PyGRANSO',default_opts)
     # validator.setUserOpts(user_opts);
 
-    print('end gransoOption \n') 
+    # surround the validation so we can rethrow the error from GRANSO
+    # try ...
+    # % GET THE VALIDATED OPTIONS AND POST PROCESS THEM
+    # opts = postProcess(validator.getValidatedOpts());
+    
+    user_opts.__dict__.update(default_opts.__dict__)
+    #  Tobedel later
+    opts = postProcess(n,user_opts)
+
+    print('pygransoOptions: currently assume all options are legal \n') 
+    return opts
 
 def postProcess(n,opts):
     

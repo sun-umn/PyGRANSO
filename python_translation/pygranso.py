@@ -1,5 +1,6 @@
-from private import makePenaltyFunction as mPF
+from private import makePenaltyFunction as mPF, bfgsHessianInverse as bfgsHI
 from pygransoOptions import gransoOptions
+import numpy as np
 
 def pygranso(n,combined_fns,opts=None):
     """
@@ -26,7 +27,7 @@ def pygranso(n,combined_fns,opts=None):
       
         # construct the penalty function object and evaluate at x0
         # unconstrained problems will reset mu to one and mu will be fixed
-        [ penaltyfn_obj, grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, problem_fns,1)
+        [ penaltyfn_obj, grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, problem_fns)
     except ValueError:
     #         catch err
     #     switch err.identifier
@@ -59,4 +60,27 @@ def processArguments(n,combined_fns,opts):
     return [problem_fns,options]
 
 def getBfgsManager(opts):
-    return [-1,-1]
+    if opts.limited_mem_size == 0:
+        get_bfgs_fn = lambda H,scaleH0, *_ : bfgsHI.bfgsHessianInverse(H,scaleH0)
+        lbfgs_args  = None
+        print("CAll BFGS: Skip LBFGS for now")
+    else:
+        print("LBFGS:TODO")
+        # get_bfgs_fn = @bfgsHessianInverseLimitedMem;
+        # lbfgs_args  = {     opts.limited_mem_fixed_scaling,     ...
+        #                     opts.limited_mem_size,              ...
+        #                     opts.limited_mem_warm_start         };
+    
+
+
+    
+    bfgs_obj = get_bfgs_fn(opts.H0,opts.scaleH0,lbfgs_args)
+    # DEBUG TEST:
+    # print(bfgs_obj.getState() )
+    # print(bfgs_obj.getCounts() )
+    
+    # remove potentially large and unnecessary data from the opts structure
+    delattr(opts,'H0')
+    delattr(opts,'limited_mem_warm_start')
+
+    return [bfgs_obj,opts]

@@ -1,6 +1,6 @@
 from pygranso import pygranso
 from mat2vec import mat2vec
-from pygransoOptions import Options
+from pygransoStruct import Options
 import numpy as np
 
 
