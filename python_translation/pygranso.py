@@ -1,4 +1,5 @@
-from private import makePenaltyFunction as mPF, bfgsHessianInverse as bfgsHI
+from private.makePenaltyFunction import PanaltyFuctions
+from private import bfgsHessianInverse as bfgsHI
 from pygransoOptions import gransoOptions
 import numpy as np
 
@@ -25,13 +26,18 @@ def pygranso(n,combined_fns,opts=None):
         [problem_fns,opts] = processArguments(n,combined_fns,opts)
         # check realted function: np.matrix.H is recommened, consider np.transpose/conjugate 
         [bfgs_hess_inv_obj,opts] = getBfgsManager(opts)
-    
+
         # construct the penalty function object and evaluate at x0
         # unconstrained problems will reset mu to one and mu will be fixed
+        mPF = PanaltyFuctions() # make penalty functions 
         [ penaltyfn_obj, grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, problem_fns)
     except Exception as e:
         print(e)   
         print("pygranso main loop Error")
+
+
+    
+
 
 
     print("pygranso end")
