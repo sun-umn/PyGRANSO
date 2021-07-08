@@ -1,7 +1,7 @@
 from pygransoStruct import genral_struct
 from private import nDigitsInWholePart as nDIWP, truncate, centerString as cS, double2FixedWidthStr as d2FWS, formatOrange as fO
 
-def gransoPrinterColumns(opts,ineq_constraints,eq_constraints):
+def pygransoPrinterColumns(opts,ineq_constraints,eq_constraints):
     #    gransoPrinterColumns:
     #        Sets up formatters for each column needed for GRANSO's printer,
     #        gransoPrinter.

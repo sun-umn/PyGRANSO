@@ -326,7 +326,7 @@ class PanaltyFuctions:
         else:
             s = self.snap_shot
         
-        if len(s.__dict__) != 0:
+        if np.any(s != None):
             self.f               = s.f
             self.f_grad          = s.f_grad
             self.ci              = s.ci

@@ -1,5 +1,8 @@
+from private import pygransoPrinter
 from private.makePenaltyFunction import PanaltyFuctions
-from private import bfgsHessianInverse as bfgsHI, printMessageBox as pMB, pygransoPrinter as pP, bfgssqp, solveQP
+from private import bfgsHessianInverse as bfgsHI, printMessageBox as pMB, solveQP
+from private.bfgssqp import AlgBFGSSQP
+from private.pygransoPrinter import pgP
 from pygransoOptions import gransoOptions
 import numpy as np
 import copy
@@ -236,16 +239,21 @@ def pygranso(n,obj_fn,user_opts=None):
         n_ineq          = penaltyfn_obj.numberOfInequalities()
         n_eq            = penaltyfn_obj.numberOfEqualities()
         constrained     = n_ineq or n_eq
-        printer         = pP.pygransoPrinter(opts,n,n_ineq,n_eq)
+        pygransoPrinter_object = pgP()
+        printer         = pygransoPrinter_object.pygransoPrinter(opts,n,n_ineq,n_eq)
     
 
-    try:
-        info = bfgssqp.bfgssqp(penaltyfn_obj,bfgs_hess_inv_obj,opts,printer)
-    except Exception as e:
-        print(e)   
-        print("Error: pygranso bfgssqp ")
-        # recover optimization computed so far
-        penaltyfn_obj.restoreSnapShot()
+    # Test
+    bfgssqp_obj = AlgBFGSSQP()
+    info = bfgssqp_obj.bfgssqp(penaltyfn_obj,bfgs_hess_inv_obj,opts,printer)
+
+    # try:
+    #     info = bfgssqp.bfgssqp(penaltyfn_obj,bfgs_hess_inv_obj,opts,printer)
+    # except Exception as e:
+    #     print(e)   
+    #     print("Error: pygranso bfgssqp ")
+    #     # recover optimization computed so far
+    #     penaltyfn_obj.restoreSnapShot()
     
     # package up solution in output argument
     [ soln, stat_value ]        = penaltyfn_obj.getBestSolutions()
