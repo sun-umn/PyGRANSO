@@ -159,7 +159,7 @@ function printer = gransoPrinter(opts,n,n_ineq,n_eq)
         pen_vals_fn         = @penaltyFunctionValues;
         viol_vals_fn        = @violationValues;
     end
-   
+    
     iter_c          = cols.iter;
     mu_c            = cols.mu;
     pen_c           = cols.pen;
