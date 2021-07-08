@@ -1,5 +1,5 @@
 from private.makePenaltyFunction import PanaltyFuctions
-from private import bfgsHessianInverse as bfgsHI, printMessageBox as pMB
+from private import bfgsHessianInverse as bfgsHI, printMessageBox as pMB, gransoPrinter as gP, bfgssqp, solveQP
 from pygransoOptions import gransoOptions
 import numpy as np
 import copy
@@ -183,6 +183,10 @@ def unknownErrorMsg():
         "    TODO"] 
     return s
 
+def printSummaryAux(name,fieldname,soln,printer):
+        if hasattr(soln,fieldname):
+            printer.summary(name,getattr(soln,fieldname))
+
 def pygranso(n,obj_fn,user_opts=None):
     """
     PyGRANSO: Python version GRadient-based Algorithm for Non-Smooth Optimization
@@ -227,7 +231,67 @@ def pygranso(n,obj_fn,user_opts=None):
         if opts.prescaling_info_msg:
             printPrescalingMsg( opts.prescaling_threshold,grad_norms_at_x0,print_notice_fn)
        
-    # pygrnaso line 453 Todo
+    printer = None
+    if opts.print_level: 
+        n_ineq          = penaltyfn_obj.numberOfInequalities()
+        n_eq            = penaltyfn_obj.numberOfEqualities()
+        constrained     = n_ineq or n_eq
+        printer         = gP.gransoPrinter(opts,n,n_ineq,n_eq)
+    
+
+    try:
+        info = bfgssqp.bfgssqp(penaltyfn_obj,bfgs_hess_inv_obj,opts,printer)
+    except Exception as e:
+        print(e)   
+        print("Error: pygranso bfgssqp ")
+        # recover optimization computed so far
+        penaltyfn_obj.restoreSnapShot()
+    
+    # package up solution in output argument
+    [ soln, stat_value ]        = penaltyfn_obj.getBestSolutions()
+    soln.H_final                = bfgs_hess_inv_obj.getState()
+    soln.stat_value             = stat_value
+    bfgs_counts                 = bfgs_hess_inv_obj.getCounts()
+    soln.iters                  = bfgs_counts.requests
+    soln.BFGS_updates           = bfgs_counts
+    soln.fn_evals               = penaltyfn_obj.getNumberOfEvaluations()
+    soln.termination_code       = info.termination_code
+    [qp_requests,qp_errs]       = solveQP.solveQP('counts')
+    qp_fail_rate                = 100 * (qp_errs / qp_requests)
+    soln.quadprog_failure_rate  = qp_fail_rate
+    if hasattr(info,"error"):
+        soln.error              = info.error
+    elif hasattr(info,"mu_lowest"):
+        soln.mu_lowest          = info.mu_lowest
+
+    # python version: new function for printSummary
+    printSummary = lambda name,fieldname: printSummaryAux(name,fieldname,soln,printer)
+
+    if opts.print_level:         
+        printer.msg({ 'Optimization results:', getResultsLegend() })
+        
+        printSummary("F","final")
+        printSummary("B","best")
+        printSummary("MF","most_feasible")
+        if penaltyfn_obj.isPrescaled():
+            printer.unscaledMsg()
+            printSummary("F","final_unscaled")
+            printSummary("B","best_unscaled")
+            printSummary("MF","most_feasible_unscaled")
+        
+        width = printer.msgWidth()
+        printer.msg(getTerminationMsgLines(soln,constrained,width))
+
+        if qp_fail_rate > 1:
+            printer.quadprogFailureRate(qp_fail_rate)
+        
+        printer.close(); 
+    
+         
+    if hasattr(soln,"error"):
+        err = soln.error;      
+        print("ERROR: In the end.")
+    
 
     print("pygranso end")
 

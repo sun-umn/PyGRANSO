@@ -1,4 +1,3 @@
-import numpy as np
 from private import printOrange as pO
 
 def truncateStr(s,width):
@@ -11,7 +10,7 @@ def makeHeaderBar(width,hbar,lc,rc):
     return header
 
 def addTitle(header,title,indent,spaces):
-    if len(title) == 0:
+    if title == None:
         return
     
     title_chars     = len(title) + 2*spaces
@@ -46,12 +45,18 @@ def lineFormatStr(max_line_width,margin_spaces,vbar=None):
     return format_str
 
 def getSymbolsExtended():
-    hbar    = str(int("2550",16))  
-    vbar    = str(int("2551",16))   
-    lt      = str(int("2554",16))  
-    rt      = str(int("2557",16))  
-    lb      = str(int("255A",16))  
-    rb      = str(int("255D",16))  
+    hbar    = "═"
+    vbar    = "║"
+    lt      = "╔" 
+    rt      = "╗"  
+    lb      = "╚" 
+    rb      = "╝"
+    # hbar    = str(int("2550",16))  
+    # vbar    = str(int("2551",16))   
+    # lt      = str(int("2554",16))  
+    # rt      = str(int("2557",16))  
+    # lb      = str(int("255A",16))  
+    # rb      = str(int("255D",16))  
     return [hbar,vbar,lt,rt,lb,rb]
 
 def getSymbolsASCII():
@@ -73,7 +78,7 @@ def printMessageBox(use_ascii,use_orange,margin_spaces,title_top,title_bottom,ms
 
     #  process title and line widths
     line_width_arr = [len(msg_line) for msg_line in msg_lines]
-    max_line_width      = np.max(line_width_arr)
+    max_line_width      = max(line_width_arr)
     # strtrim in matlab -> strip in python
     title_top           = title_top.strip()
     title_bottom        = title_bottom.strip()
@@ -81,17 +86,17 @@ def printMessageBox(use_ascii,use_orange,margin_spaces,title_top,title_bottom,ms
     title_bottom_width  = len(title_bottom)
     
     # min width of header, not including the ends (the corner chars)
-    header_width        = np.max(title_top_width,title_bottom_width)
+    header_width        = max(title_top_width,title_bottom_width)
     if header_width > 0:  
         header_width    = header_width + 2*(TITLE_INDENT + TITLE_MARGIN)
     
-    header_width        = np.max(header_width,user_width)
+    header_width        = max(header_width,user_width)
     if not fixed_width_headers:
-        header_width    = np.max(header_width,max_line_width+border_spaces)
+        header_width    = max(header_width,max_line_width+border_spaces)
     
     if not have_user_width:
         # increase max_line_width if the header width is longer
-        max_line_width  = np.max(max_line_width,header_width-border_spaces)
+        max_line_width  = max(max_line_width,header_width-border_spaces)
     elif sides:
         # crop lines if they are too long for the user-specified box
         max_line_width  = header_width - border_spaces
@@ -116,7 +121,7 @@ def printMessageBox(use_ascii,use_orange,margin_spaces,title_top,title_bottom,ms
     
     
     
-    print_line_fn       = lambda s: print_fn(format_str,s)
+    print_line_fn       = lambda str_tmp: print_fn(format_str % (str_tmp) )
     
     print_fn(top)
     for msg_line in msg_lines:
