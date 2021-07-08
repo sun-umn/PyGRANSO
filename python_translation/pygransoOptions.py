@@ -99,7 +99,7 @@ def postProcess(n,opts):
 
 
 def getDefaults(n):
-    [*_, LAST_FALLBACK_LEVEL] = pgC.gransoConstants()
+    [*_, LAST_FALLBACK_LEVEL] = pgC.pygransoConstants()
 
     # default options for GRANSO
     default_opts = Options()

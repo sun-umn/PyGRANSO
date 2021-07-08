@@ -1,6 +1,6 @@
-def gransoConstants():
+def pygransoConstants():
     """
-    gransoConstants:
+    pygransoConstants:
     Simple routine for defining constants for use in:
         1) granso 
         2) gransoOptions 

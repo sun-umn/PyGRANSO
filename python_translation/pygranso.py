@@ -1,5 +1,5 @@
 from private.makePenaltyFunction import PanaltyFuctions
-from private import bfgsHessianInverse as bfgsHI, printMessageBox as pMB, gransoPrinter as gP, bfgssqp, solveQP
+from private import bfgsHessianInverse as bfgsHI, printMessageBox as pMB, pygransoPrinter as pP, bfgssqp, solveQP
 from pygransoOptions import gransoOptions
 import numpy as np
 import copy
@@ -216,8 +216,8 @@ def pygranso(n,obj_fn,user_opts=None):
         mPF = PanaltyFuctions() # make penalty functions 
         [ penaltyfn_obj, grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, problem_fns)
     except Exception as e:
-        print(e)   
-        print("pygranso main loop Error")
+            print(e)   
+            print("pygranso main loop Error")
 
 
     msg_box_fn = lambda margin_spaces,title_top,title_bottom,msg_lines,sides=True,user_width=0: pMB.printMessageBox(opts.print_ascii,opts.print_use_orange, margin_spaces,title_top,title_bottom,msg_lines,sides,user_width)
@@ -236,7 +236,7 @@ def pygranso(n,obj_fn,user_opts=None):
         n_ineq          = penaltyfn_obj.numberOfInequalities()
         n_eq            = penaltyfn_obj.numberOfEqualities()
         constrained     = n_ineq or n_eq
-        printer         = gP.gransoPrinter(opts,n,n_ineq,n_eq)
+        printer         = pP.pygransoPrinter(opts,n,n_ineq,n_eq)
     
 
     try:
