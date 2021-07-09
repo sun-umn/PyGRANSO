@@ -1,3 +1,5 @@
+# Dummy class for MATLAB struct
+
 # options for pygranso
 class Options:
     pass

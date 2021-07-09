@@ -1,8 +1,12 @@
 from operator import imod
+from private.linesearchWeakWolfe import linesearchWeakWolfe
+
+from numpy.core.defchararray import isspace
 from pygransoStruct import genral_struct
-from private import formatOrange as fO
+from private import formatOrange as fO, centerString as cS
 
 import numpy as np
+import math, string
 
 class tP:
    def __init__(self):
@@ -248,295 +252,287 @@ def moveSpanLabels(span_labels,indx,n_cols):
    labels(indx)        = span_labels
    return labels
 
-# def processSpannedLabels(   labels, widths, span_labels, row_str, vs  ):
+def processSpannedLabels(   labels, widths, span_labels, row_str, vs  ):
                                                             
-#    [span_labels,spans] = parseSpanningLabels(span_labels)
+   [span_labels,spans] = parseSpanningLabels(span_labels)
    
-#    delim_width         = len(vs)
-#    [n_lines,n_cols]    = len(labels)
-#    n_multicols         = len(spans)
+   delim_width         = len(vs)
+   [n_lines,n_cols]    = len(labels)
+   n_multicols         = len(spans)
    
-#    del_indx            = np.zeros((1,n_cols))
-#    span_indx           = np.zeros((1,n_cols))
+   del_indx            = np.zeros((1,n_cols))
+   span_indx           = np.zeros((1,n_cols))
    
-#    for j in range(n_multicols):
-#       span        = spans[j]
-#       col_start   = span[0]
-#       col_end     = span[1]
-#       span        = slice(col_start,col_end)
+   for j in range(n_multicols):
+      span        = spans[j]
+      col_start   = span[0]
+      col_end     = span[1]
+      span        = slice(col_start,col_end)
          
-#       #  join column labels for multicolumns and always do joins for the
-#       #  the very last line
-#       for k in range(n_lines):
-#          labels_to_join          = labels(k,span)
-#          if k == n_lines or ~allEmpty(labels_to_join)
-#                labels{k,col_start} = strjoin(labels_to_join,vs);
-#          end
-#       end
-#       span_indx(col_start)    = true;
-#       widths(col_start)       = getTotalWidth(    widths,             ...
-#                                                    delim_width,        ...
-#                                                    col_start,          ...
-#                                                    col_end             );
-#       row_str{col_start}      = strjoin(row_str(span),vs);     
-#       del_indx(span(2:end))   = true;
-#    end
+      #  join column labels for multicolumns and always do joins for the
+      #  the very last line
+      for k in range(n_lines):
+         labels_to_join          = labels[k,span]
+         if k == n_lines or not allEmpty(labels_to_join):
+               labels[k,col_start] = vs.join(labels_to_join) 
+         
+      span_indx[col_start]    = True
+      widths[col_start]       = getTotalWidth( widths, delim_width, col_start, col_end )
+      row_str[col_start]      = vs.join(row_str(span))   
+      del_indx[span[1:]]   = True 
    
-#    % delete columns that have been joined into first column of each span
-#    labels(:,del_indx)  = [];
-#    widths(del_indx)    = [];
-#    row_str(del_indx)   = [];
-#    span_indx(del_indx) = [];
+   #  delete columns that have been joined into first column of each span
+   labels[:,del_indx]  = None
+   widths[del_indx]    = None
+   row_str[del_indx]   = None
+   span_indx[del_indx] = None
    
-#    % reset span_labels positions and format them
-#    n_cols              = length(widths);
-#    span_labels         = moveSpanLabels(span_labels,span_indx,n_cols);
-#    span_labels         = processLabels(span_labels,widths,true);
+   #  reset span_labels positions and format them
+   n_cols              = len(widths)
+   span_labels         = moveSpanLabels(span_labels,span_indx,n_cols)
+   span_labels         = processLabels(span_labels,widths,True)
    
-#    % merge both sets of labels together
-#    overlap_line        = findOverlap(labels,span_indx);
-#    labels              = mergeLabels(span_labels,labels,overlap_line); 
-# return [labels,row_str]
+   #  merge both sets of labels together
+   overlap_line        = findOverlap(labels,span_indx)
+   labels              = mergeLabels(span_labels,labels,overlap_line) 
+   return [labels,row_str]
 
-# function tf = allEmpty(cell_of_strs)
-#     s = strtrim(strjoin(cell_of_strs));
-#     tf = isempty(s);
-# end
+def allEmpty(cell_of_strs):
+   s = " ".join(cell_of_strs).strip()
+   tf = np.all(s==None)
+   return tf
 
-# function indx = getLabelLocations(labels)
-#     indx = cellfun(@(x) any(~isspace(x)),labels);
-# end
+def getLabelLocations(labels):
+   indx = [np.any(not isspace(label)) for label in labels]  
+   return indx
 
-# function line = findOverlap(labels,spanned_indx)
-#     lines   = size(labels,1);
-#     line    = 0;
-#     % don't allow the last line to overlap 
-#     for j = 1:lines-1
-#         line_labels     = labels(j,spanned_indx);
-#         nonempty_indx   = cellfun(@(x) any(~isspace(x)),line_labels);
-#         if any(nonempty_indx)
-#             break
-#         end
-#         line = j;
-#     end 
-# end
+def findOverlap(labels,spanned_indx):
+   lines   = labels.shape[0]  
+   line    = 0
+   #  don't allow the last line to overlap 
+   for j in range(lines-1):
+      line_labels     = labels[j,spanned_indx]
+      nonempty_indx   = [np.any(not isspace(line_label)) for line_label in line_labels]    
+      if np.any(nonempty_indx!=0):
+         break
+      line = j
+   return line
 
-# function labels = mergeLabels(labels_top,labels_bottom,overlapping_lines)
-#     [n_top,n_cols]  = size(labels_top);
-#     n_bottom        = size(labels_bottom,1);
-#     n_lines         = n_top + n_bottom - overlapping_lines;
-    
-#     labels          = cell(n_lines,n_cols);
-#     [labels{:}]     = deal('');
+def mergeLabels(labels_top,labels_bottom,overlapping_lines):
+   [n_top,n_cols]  = labels_top.shape
+   n_bottom        = labels_bottom.shape[0]
+   n_lines         = n_top + n_bottom - overlapping_lines
    
-#     indx_bottom     = getLabelLocations(labels_bottom);
-#     indx            = [ false(n_lines-n_bottom,n_cols); indx_bottom ];
-#     labels(indx)    = labels_bottom(indx_bottom);
-    
-#     indx_top        = getLabelLocations(labels_top);
-#     indx            = [ indx_top; false(n_lines-n_top,n_cols) ];
-#     labels(indx)    = labels_top(indx_top);
+   labels          = np.empty([n_lines,n_cols], dtype="S10")  
+
+   indx_bottom     = getLabelLocations(labels_bottom)
+   indx            = np.vstack(np.zeros((n_lines-n_bottom,n_cols)), indx_bottom)  
+   labels[indx]    = labels_bottom[indx_bottom]
    
-# end
+   indx_top        = getLabelLocations(labels_top)
+   indx            = np.vstack(indx_top, np.zeros((n_lines-n_top,n_cols)))
+   labels[indx]    = labels_top[indx_top]
 
-# function [vs,vd] = getSymbolsVertical(use_ascii)
-#     if use_ascii
-#         vs  = '|';
-#         vd  = '|';
-#     else
-#         vs  = char(hex2dec('2502'));
-#         vd  = char(hex2dec('2551'));
-#     end
-# end
+   return labels
 
-# function [vs,vd,width] = getDelimitersVertical(use_ascii,spacing)
-#     [vs,vd] = getSymbolsVertical(use_ascii);
-#     space   = blanks(spacing);
-#     vs      = [space vs space];
-#     vd      = [space vd space];
-#     width   = length(vd);
-# end
+def getSymbolsVertical(use_ascii):
+   if use_ascii:
+      vs  = "|"
+      vd  = "|"
+   else:
+      vs  = "│"
+      vd  = "║"
+   return [vs,vd]
 
-# function [header,rules,row_str,msg_str,msg_width] = init(   use_ascii,  ...
-#                                                             labels,     ...
-#                                                             widths,     ...
-#                                                             spacing,    ...
-#                                                             span_labels )
+def getDelimitersVertical(use_ascii,spacing):
+   [vs,vd] = getSymbolsVertical(use_ascii)
+   space   = " " * spacing
+   vs      = space + vs + space
+   vd      = space + vd + space
+   width   = len(vd)
+   return [vs,vd,width]
 
-#     [vs,vd]                 = getDelimitersVertical(use_ascii,spacing);
-    
-#     n_cols                  = length(labels);
-#     labels                  = processLabels(labels,widths,false);
-#     [row_str{1:n_cols}]     = deal('%s');
-    
-#     if ~isempty(span_labels)
-#         [labels,row_str]    = processSpannedLabels( labels,             ...
-#                                                     widths,             ...
-#                                                     span_labels,        ...
-#                                                     row_str,            ...
-#                                                     vs                  );
-#     end
-    
-#     indx            = getLabelLocations(labels);
-#     widths          = cellfun(  @length, labels(end,:));
-#     blank_strs      = arrayfun( @blanks, widths, 'UniformOutput', false);
-#     blank_strs      = repmat(blank_strs,size(labels,1));
-#     labels(~indx)   = blank_strs(~indx); 
-    
-#     % transpose output to a row cell array since mat2cell outputs to a
-#     % column and strjoin on 2014a will only accept rows, while on 2015a,
-#     % strjoin can handle either.
-#     lines           = mat2cell( labels,ones(1,size(labels,1)) ).';
+def init( use_ascii, labels, widths, spacing, span_labels ):
+
+   [vs,vd]                 = getDelimitersVertical(use_ascii,spacing)
    
-#     header_strs     = cellfun(  @(x) formatLine(x,vd),      ...
-#                                 lines,                      ...
-#                                 'UniformOutput',false       );
-#     header_last     = deblank(sprintf(header_strs{end,1}));
-#     header          = strjoin(header_strs,'');                    
-#     row_str         = formatLine(row_str,vd);
-     
-#     rules           = makeRules(use_ascii,header_last);
-#     msg_width       = length(header_last) - 2;
-#     msg_str         = ['%-' num2str(msg_width) 's' vd '\n'];  
-# end
+   n_cols                  = len(labels)
+   labels                  = processLabels(labels,widths,False)
+   row_str = np.empty((1,n_cols),dtype="S10")
+   row_str[:] = "%s"
+   
+   if np.any(span_labels != None):
+      [labels,row_str]    = processSpannedLabels( labels, widths, span_labels, row_str, vs )
+   
+   
+   indx            = getLabelLocations(labels)
+   widths          = [len(label) for label in labels[-1,:]]  
+   blank_strs      = [" " * width for width in widths]  
+   blank_strs      = np.tile(blank_strs,labels.shape[0])
+   labels[not indx]   = blank_strs[not indx] 
+   
+   #  transpose output to a row cell array since mat2cell outputs to a
+   #  column and strjoin on 2014a will only accept rows, while on 2015a,
+   #  strjoin can handle either.
 
-# function label = addArrows(label,width)
-#     label       = strtrim(label);
-#     freespaces  = width - length(label);
-#     if freespaces < 0
-#         label   = label(1:width);
-#     elseif freespaces > 5
-#         arrow_length_left       = (freespaces - 4)/2;
-#         arrow_length_right      = arrow_length_left;
-#         if mod(freespaces,2) > 0 
-#             arrow_length_left   = ceil(arrow_length_left);
-#             arrow_length_right  = floor(arrow_length_right);
-#         end
-#         label = [   '<' repmat('-',1,arrow_length_left) ' '     ...
-#                     label                                       ...
-#                     ' ' repmat('-',1,arrow_length_right) '>'    ];
-#     else
-#         label = centerString(label,width);
-#     end
-# end
+   print("TODO: tablePrinter mat2cell( ,ones(1,size(labels,1)) ).'")
+   # lines           = mat2cell( ,ones(1,size(labels,1)) ).';
+   lines           = labels
 
-# function line = formatLine(formatted_labels,vd)
-#     line = strjoin([formatted_labels '\n'],vd);
-# end
+   header_strs     = [formatLine(line,vd) for line in lines] 
+   header_last     = header_strs[-1,0].rstrip()  
+   header          = "".join(header_strs)                  
+   row_str         = formatLine(row_str,vd)
+   
+   rules           = makeRules(use_ascii,header_last)
+   msg_width       = len(header_last) - 2
+   msg_str         = "%-" + str(msg_width) + "s" + vd + "\n"  
 
-# function rules = makeRules(use_ascii,h2)
+   return [header,rules,row_str,msg_str,msg_width]
 
-#     [vs,vd]             = getSymbolsVertical(use_ascii);
-#     get_symbols_fn      = ternOp(use_ascii,@getSymbolsASCII,@getSymbols);
-#     [   hs, hd,                         ...
-#         cs, cd, csd, cds,               ...
-#         tsdl, tdl, tds, td, tdsu, tdu,  ...
-#         edtr, edbr                      ] = get_symbols_fn();
-    
-#     vd_indx             = strfind(h2,vd);
-#     vd_indx             = vd_indx(1:end-1);
-#     vs_indx             = strfind(h2,vs);
-    
-#     flat_m1             = repmat(hd,1,length(h2)-1);
+def addArrows(label,width):
+   label       = label.strip()
+   freespaces  = width - len(label)
+   if freespaces < 0:
+      label   = label[0:width]
+   elif freespaces > 5:
+      arrow_length_left       = (freespaces - 4)/2
+      arrow_length_right      = arrow_length_left
+      if freespaces % 2 > 0: 
+         arrow_length_left   = math.ceil(arrow_length_left)
+         arrow_length_right  = math.floor(arrow_length_right)
+      
+      label =  "<" + "-"*arrow_length_left + label + "-" * arrow_length_right   
+   else:
+      label = cS.centerString(label,width)
+   
+   return label
 
-#     % top rules, with downward corner piece at the end
-#     top_f               = [flat_m1 edtr '\n'];  % top rule - flat 
-    
-#     top_h               = top_f;                % top rule - header
-#     top_h(vd_indx)      = td;
-    
-#     top_r               = top_h;                % top rule - row
-#     top_r(vs_indx)      = tds;
-    
-#     % bottom rules, with upward corner piece at the end
-#     bottom_f            = [flat_m1 edbr '\n'];  % bottom rule - flat
-    
-#     bottom_r            = bottom_f;
-#     bottom_r(vd_indx)   = tdu;                  % bottom rule - header/row
-#     bottom_r(vs_indx)   = tdsu;
-    
-#     % mid rules, with left-pointing T piece at the end 
-#     mid_f               = [flat_m1 tdl '\n'];   % mid rule - flat to flat
-    
-#     mid_fh              = mid_f;                % mid rule - flat to header
-#     mid_fh(vd_indx)     = td;
-    
-#     mid_fr              = mid_fh;               % mid rule - flat to row
-#     mid_fr(vs_indx)     = tds;
-    
-#     mid_r               = mid_f;                % mid rule - row to row
-#     mid_r(vd_indx)      = cd;                   % (also header to row)
-#     mid_r(vs_indx)      = cds;
-    
-#     mid_rs              = strrep(mid_r,hd,hs);  % mid rule - row to row
-#     mid_rs(vd_indx)     = csd;                  % single line, not double
-#     mid_rs(vs_indx)     = cs;
-#     mid_rs              = strrep(mid_rs,tdl,tsdl);
-    
-#     mid_rh              = mid_f;                % mid rule - row to header
-#     mid_rh(vd_indx)     = cd;
-#     mid_rh(vs_indx)     = tdsu;
-    
-#     mid_rf              = mid_f;                % mid rule - row to flat
-#     mid_rf(vd_indx)     = tdu;                  % (also header to flat)
-#     mid_rf(vs_indx)     = tdsu;
-    
-#     t = struct( 'f',    top_f,      'h',    top_h,      'r',    top_r);
-#     b = struct( 'f',    bottom_f,   'r',    bottom_r);
-#     m = struct( 'f',    mid_f,      'fh',   mid_fh,     'fr',   mid_fr, ...
-#                 'r',    mid_r,      'rh',   mid_rh,     'rf',   mid_rf, ...
-#                 'rs',   mid_rs                                          );
-            
-#     rules = struct('t',t,'b',b,'m',m);        
- 
-# end
+def formatLine(formatted_labels,vd):
+   line = vd.join(formatted_labels + "\n")   
+   return line
 
-# function [  hs, hd,                         ...
-#             cs, cd, csd, cds,               ...
-#             tsdl, tdl, tds, td, tdsu, tdu,  ...
-#             edtr, edbr                      ] = getSymbols()
-        
-#     hs                  = char(hex2dec('2500'));
-#     hd                  = char(hex2dec('2550'));
+def makeRules(use_ascii,h2):
 
-#     cs                  = char(hex2dec('253C'));
-#     cd                  = char(hex2dec('256C'));
-#     csd                 = char(hex2dec('256B'));
-#     cds                 = char(hex2dec('256A'));
+   [vs,vd]             = getSymbolsVertical(use_ascii)
+   get_symbols_fn      = lambda : getSymbolsASCII() if use_ascii else lambda: getSymbols()  
+   [ hs, hd, cs, cd, csd, cds, tsdl, tdl, tds, td, tdsu, tdu, edtr, edbr ] = get_symbols_fn()
+   
+   vd_indx             = h2.find(vd)  
+   vd_indx             = vd_indx[0:-2]
+   vs_indx             = h2.find(vs)
+   
+   flat_m1             = hd * (len(h2) - 1)  
 
-#     tsdl                = char(hex2dec('2562'));
-#     tdl                 = char(hex2dec('2563'));
-#     tds                 = char(hex2dec('2564'));
-#     td                  = char(hex2dec('2566'));
-#     tdsu                = char(hex2dec('2567'));
-#     tdu                 = char(hex2dec('2569'));
+   # top rules, with downward corner piece at the end
+   top_f               = flat_m1 + edtr + "\n"  # top rule - flat 
+   
+   top_h               = top_f                # top rule - header
+   top_h[vd_indx]      = td
+   
+   top_r               = top_h                # top rule - row
+   top_r[vs_indx]      = tds
+   
+   #  bottom rules, with upward corner piece at the end
+   bottom_f            = flat_m1 + edbr + "\n"  # bottom rule - flat
+   
+   bottom_r            = bottom_f
+   bottom_r[vd_indx]   = tdu                  # bottom rule - header/row
+   bottom_r[vs_indx]   = tdsu
+   
+   #  mid rules, with left-pointing T piece at the end 
+   mid_f               = flat_m1 + tdl + "\n"   # mid rule - flat to flat
+   
+   mid_fh              = mid_f                # mid rule - flat to header
+   mid_fh[vd_indx]     = td
+   
+   mid_fr              = mid_fh               # mid rule - flat to row
+   mid_fr[vs_indx]     = tds
+   
+   mid_r               = mid_f                # mid rule - row to row
+   mid_r[vd_indx]      = cd                   # (also header to row)
+   mid_r[vs_indx]      = cds
+   
+   mid_rs              = string.replace(mid_r,hd,hs)  # mid rule - row to row
+   mid_rs[vd_indx]     = csd                  # single line, not double
+   mid_rs[vs_indx]     = cs
+   mid_rs              = string.replace(mid_rs,tdl,tsdl)
+   
+   mid_rh              = mid_f                # mid rule - row to header
+   mid_rh[vd_indx]     = cd
+   mid_rh[vs_indx]     = tdsu
+   
+   mid_rf              = mid_f                # mid rule - row to flat
+   mid_rf[vd_indx]     = tdu                  # (also header to flat)
+   mid_rf[vs_indx]     = tdsu
+   
+   t = genral_struct()
+   setattr(t, "f", top_f)
+   setattr(t, "h", top_h)
+   setattr(t, "r", top_r)
 
-#     edtr                = char(hex2dec('2557'));
-#     edbr                = char(hex2dec('255D'));
+   b = genral_struct()
+   setattr(b, "f", bottom_f)
+   setattr(b, "r", bottom_r) 
+   
+   m = genral_struct()
+   setattr(m, "f", mid_f)
+   setattr(m, "fh", mid_fh)
+   setattr(m, "fr", mid_fr)
+   setattr(m, "r", mid_r)
+   setattr(m, "rh", mid_rh)
+   setattr(m, "rf", mid_rf)
+   setattr(m, "rs", mid_rs)
 
-# end
+   rules = genral_struct()     
+   setattr(rules, "t", t)
+   setattr(rules, "b", b)
+   setattr(rules, "m", m)      
 
-# function [  hs, hd,                         ...
-#             cs, cd, csd, cds,               ...
-#             tsdl, tdl, tds, td, tdsu, tdu,  ...
-#             edtr, edbr                      ] = getSymbolsASCII()
-        
-#     hs                  = '-';
-#     hd                  = '=';
+   return rules
 
-#     cs                  = '|';
-#     cd                  = '|';
-#     csd                 = '|';
-#     cds                 = '|';
+def getSymbols():
+      
+   hs                  = "─"
+   hd                  = "═"
 
-#     tsdl                = '-';
-#     tdl                 = '=';
-#     tds                 = '=';
-#     td                  = '=';
-#     tdsu                = '=';
-#     tdu                 = '=';
+   cs                  = "┼"
+   cd                  = "╬"
+   csd                 = "╫"
+   cds                 = "╪"
 
-#     edtr                = '=';
-#     edbr                = '=';
+   print("private.tablePrinter: double and single quote inconsistent")
+   # double and single quote inconsistent
+   tsdl                = '╢'
+   tdl                 = '╣'
+   tds                 = '╤'
+   td                  = '╦'
+   tdsu                = '╧'
+   tdu                 = '╩'
 
-# end
+   edtr                = '╗'
+   edbr                = '╝'
+
+   return [  hs, hd, cs, cd, csd, cds, tsdl, tdl, tds, td, tdsu, tdu, edtr, edbr ]
+
+def getSymbolsASCII():
+      
+   hs                  = '-'
+   hd                  = '='
+
+   cs                  = '|'
+   cd                  = '|'
+   csd                 = '|'
+   cds                 = '|'
+
+   tsdl                = '-'
+   tdl                 = '='
+   tds                 = '='
+   td                  = '='
+   tdsu                = '='
+   tdu                 = '='
+
+   edtr                = '='
+   edbr                = '='
+
+   return [  hs, hd, cs, cd, csd, cds, tsdl, tdl, tds, td, tdsu, tdu, edtr, edbr ]
