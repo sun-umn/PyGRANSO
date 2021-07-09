@@ -231,8 +231,8 @@ class pgP:
 
     #  private function to print PyGRANSO's opening header with name, author,
     #  copyright, problem specs, and whether limited-memory mode is active
-    def gransoHeader():
-        print("TODO: print copyright")
+    def gransoHeader(self):
+        print("TODO: gransoHeader print copyright")
         # table_printer.msg(copyrightNotice());
         
         # % print the problem specs

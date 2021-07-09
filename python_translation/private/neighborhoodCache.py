@@ -1,4 +1,5 @@
 import numpy as np
+from pygransoStruct import genral_struct
 
 class nC:
     def __init__(self):
@@ -17,7 +18,8 @@ class nC:
         #  by default, inf distances indicate empty slots for samples
         self.distances       = np.ones((1,self.max_size))*np.inf
         self.samples         = None
-        self.data            = self.max_size * [None]
+        # self.data            = self.max_size * [None]
+        self.data            = np.empty((1,self.max_size),dtype=object)
     
         self.n               = 0
         self.last_added_ind  = 0
@@ -29,9 +31,9 @@ class nC:
         if self.last_added_ind == 0:
             self.n               = 1
             self.last_added_ind  = 1
-            self.distances[0]    = 0
-            self.samples         = np.zeros((len(x),self.max_size))
-            self.samples[:,0]    = x
+            self.distances[0,0]    = 0
+            self.samples         = np.zeros((len(x),self.max_size)) 
+            self.samples[:,0]    = x[:,0]
             self.data[0]         = x_data
             computed        = 0
         else:
@@ -72,7 +74,7 @@ class nC:
             
         #  selection to return
         indx            = self.distances <= self.radius
-        n_x             = self.samples[:,indx-1]
-        n_data          = self.data[indx-1]
+        n_x             = self.samples[:,indx[0,:]]
+        n_data          = self.data[indx[:]]
 
         return [n_x,n_data,computed]

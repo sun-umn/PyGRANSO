@@ -188,7 +188,7 @@ function info = bfgssqp(    penaltyfn_obj,                  ...
     end
     [apply_H_QP_fn, H_QP]   = get_apply_H_QP_fn();
     % For applying the normal non-regularized version of H
-    [apply_H_fn]            = getApplyH();  
+    [apply_H_fn]            = getApplyH();
     
     bfgs_update_fn          = @bfgs_obj.update;
 
@@ -256,25 +256,25 @@ function info = bfgssqp(    penaltyfn_obj,                  ...
     evals_so_far        = penaltyfn_obj.getNumberOfEvaluations();
     while iter <= maxit
              
-        % Call standard steering strategy to produce search direction p
-        % which hopefully "promotes progress towards feasibility".
-        % However, if the returned p is empty, this means all QPs failed
-        % hard.  As a fallback, steering will be retried with steepest
-        % descent, i.e. H temporarily  set to the identity.  If this
-        % fallback also fails hard, then the standard BFGS search direction
-        % on penalty function is tried.  If this also fails, then steepest
-        % will be tried.  Finally, if all else fails, randomly generated
-        % directions are tried as a last ditch effort.
-        % NOTE: min_fallback_level and max_fallback_level control how much
-        %       of this fallback range is available.
-
-        % NOTE: the penalty parameter is only lowered by two actions:
-        % 1) either of the two steering strategies lower mu and produce
-        %    a step accepted by the line search
-        % 2) a descent direction (generated via any fallback level) is not
-        %    initially accepted by the line search but a subsequent
-        %    line search attempt with a lowered penalty parameter does
-        %    produce an accepted step.
+%         Call standard steering strategy to produce search direction p
+%         which hopefully "promotes progress towards feasibility".
+%         However, if the returned p is empty, this means all QPs failed
+%         hard.  As a fallback, steering will be retried with steepest
+%         descent, i.e. H temporarily  set to the identity.  If this
+%         fallback also fails hard, then the standard BFGS search direction
+%         on penalty function is tried.  If this also fails, then steepest
+%         will be tried.  Finally, if all else fails, randomly generated
+%         directions are tried as a last ditch effort.
+%         NOTE: min_fallback_level and max_fallback_level control how much
+%               of this fallback range is available.
+% 
+%         NOTE: the penalty parameter is only lowered by two actions:
+%         1) either of the two steering strategies lower mu and produce
+%            a step accepted by the line search
+%         2) a descent direction (generated via any fallback level) is not
+%            initially accepted by the line search but a subsequent
+%            line search attempt with a lowered penalty parameter does
+%            produce an accepted step.
         
         penalty_parameter_changed = false;
         if fallback_level < POSTQP_FALLBACK_LEVEL  

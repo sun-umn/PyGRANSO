@@ -188,7 +188,9 @@ function info = bfgssqp(    penaltyfn_obj,                  ...
     end
     [apply_H_QP_fn, H_QP]   = get_apply_H_QP_fn();
     % For applying the normal non-regularized version of H
-    [apply_H_fn]            = getApplyH();  
+    [apply_H_fn]            = getApplyH();
+    [apply_H_fn,test1]            = getApplyH();
+    [apply_H_fn,test1,test2]            = getApplyH();
     
     bfgs_update_fn          = @bfgs_obj.update;
 

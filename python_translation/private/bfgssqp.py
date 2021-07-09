@@ -112,7 +112,7 @@ class AlgBFGSSQP():
 
         [self.apply_H_QP_fn, H_QP]   = get_apply_H_QP_fn()
         #  For applying the normal non-regularized version of H
-        [self.apply_H_fn]            = self.getApplyH()  
+        [self.apply_H_fn,*_]            = self.getApplyH()  
         
         self.bfgs_update_fn          = lambda : self.bfgs_obj.update()
 
@@ -124,7 +124,7 @@ class AlgBFGSSQP():
         get_nbd_grads_fn        = nC_obj.neighborhoodCache(ngrad,evaldist)
         self.get_nearby_grads_fn     = lambda : getNearbyGradients( self.penaltyfn_obj, get_nbd_grads_fn)
 
-        [stat_vec,self.stat_val,qps_solved] = self.computeApproxStationarityVector()
+        [stat_vec,self.stat_val,qps_solved, _, _] = self.computeApproxStationarityVector()
     
         if not self.constrained:
             #  disable steering QP solves by increasing min_fallback_level.
