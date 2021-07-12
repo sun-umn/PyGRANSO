@@ -1,3 +1,4 @@
+import numpy as np
 class qpSS:
     def __init__(self):
         pass
@@ -9,7 +10,7 @@ class qpSS:
         feasibility.  
         """
 
-        d = -1
+        d = np.ones((14,1))
         mu = -1
         reduction = -1
         print("TODO: qpSteeringStrategy")

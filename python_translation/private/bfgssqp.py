@@ -154,7 +154,8 @@ class AlgBFGSSQP():
             return self.info
 
         #  set up a more convenient function handles to reduce fixed arguments
-        steering_fn     = lambda penaltyfn_parts,H: qpSS.qpSteeringStrategy(
+        qpSS_obj = qpSS()
+        steering_fn     = lambda penaltyfn_parts,H: qpSS_obj.qpSteeringStrategy(
                                 penaltyfn_parts,    H, 
                                 steering_l1_model,  steering_ineq_margin, 
                                 steering_maxit,     steering_c_viol, 
@@ -205,11 +206,12 @@ class AlgBFGSSQP():
                 else:
                     apply_H_steer = APPLY_IDENTITY; # "degraded" steering 
                 
-                try:
-                    [p,mu_new] = steering_fn(self.penaltyfn_at_x,apply_H_steer)
-                except Exception as e:
-                    print(e)
-                    print("PyGRANSO:steeringQuadprogFailure")
+                # try:
+                #     [p,mu_new] = steering_fn(self.penaltyfn_at_x,apply_H_steer)
+                # except Exception as e:
+                #     print(e)
+                #     print("PyGRANSO:steeringQuadprogFailure")
+                [p,mu_new,*_] = steering_fn(self.penaltyfn_at_x,apply_H_steer)
 
                 penalty_parameter_changed = (mu_new != self.mu)
                 if penalty_parameter_changed: 
@@ -329,7 +331,7 @@ class AlgBFGSSQP():
                 self.prepareTermination(3)
                 return self.info
             elif maxclocktime < float("inf") and (time.time()-t_start) > maxclocktime:
-                self.prepareTermination(5);
+                self.prepareTermination(5)
                 return self.info
             
             

@@ -116,9 +116,10 @@ class pgP:
         viol_values = self.viol_vals_fn(penfn_at_x)
         info_values = self.infoValues(-1,0,1,0,1)
         
-        self.table_printer.row(  self.iter_c.format_fn(0), pen_values,                        
-                            self.obj_c.format_fn(penfn_at_x.f), viol_values, info_values,
-                            self.stat_c.format_fn(stat_value,n_qps)          )
+        self.table_printer.row(  (self.iter_c.format_fn(0),) + pen_values + 
+                                (self.obj_c.format_fn(penfn_at_x.f),) + viol_values + 
+                                info_values + (self.stat_c.format_fn(stat_value,n_qps),) )
+        
 
     def iteration( self,iter, penfn_at_x,sd_code,random_attempts,ls_evals,alpha,n_grads,stat_value,n_qps):
         

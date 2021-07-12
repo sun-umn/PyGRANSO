@@ -41,21 +41,21 @@ def double2FixedWidthStr(width, str_in = None):
 
 
 def double2FixedWidth(x,width):
-    if not str.isnumeric(x):
-        x_str       = " n/a%s"%(" "*(width-4))
-        return
-    elif x == 0:
+    if x == 0:
         x_str       = " 0.%s"%("0"*(width-3))
-        return
+        return x_str
     elif x == float("inf"):
         x_str       = " Inf%s"%(" "*(width-4))  
-        return
+        return x_str
     elif x == -float("inf"):
         x_str       = "-Inf%s"%(" "*(width-4)) 
-        return
+        return x_str
     elif math.isnan(x):
         x_str       = " NaN%s"%(" "*(width-4)) 
-        return
+        return x_str
+    elif isinstance(x,int):
+        x_str       = " n/a%s"%(" "*(width-4))
+        return x_str
 
     is_negative     = x < 0
     x               = abs(x)

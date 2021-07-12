@@ -25,8 +25,6 @@ class tP:
          Python's console.  
       """
 
-      print("TODO: private.tablePrinter")
-
       self.use_orange = use_orange
       
       if np.all(self.use_orange==None):
@@ -34,21 +32,24 @@ class tP:
       
       
       [self.header,self.rules,self.row_str,self.msg_str,self.msg_width] = init(use_ascii, labels, widths, spacing, span_labels) 
-                                                      
-      [self.printOverlayFn,overlay_width]  = overlayPrinter(self.rules.m.rs,self.msg_width)
+
+      oP = Class_overlayPrinter()                                                
+      [self.printOverlayFn,overlay_width]  = oP.overlayPrinter(self.rules.m.rs,self.msg_width)
                                                    
       self.last_printed = "n"
    
       printer = genral_struct()
-      setattr(printer,"header", lambda : printHeader())
-      setattr(printer,"row", lambda : printRow())
-      setattr(printer,"msg", lambda s : printMessage(False,s))
-      setattr(printer,"msgOrange", lambda s: printMessage(self.use_orange,s))
-      setattr(printer,"overlay", lambda s : printOverlay(False,s))
-      setattr(printer,"overlayOrange", lambda s: printOverlay(self.use_orange,s))
-      setattr(printer,"msgWidth", lambda : self.msg_width())
-      setattr(printer,"overlayWidth", lambda : overlay_width())
-      setattr(printer,"close", lambda : printClose())
+      setattr(printer,"header", lambda : self.printHeader())
+      setattr(printer,"row", lambda varargin: self.printRow(varargin))
+      setattr(printer,"msg", lambda s : self.printMessage(False,s))
+      setattr(printer,"msgOrange", lambda s: self.printMessage(self.use_orange,s))
+      setattr(printer,"overlay", lambda s : self.printOverlay(False,s))
+      setattr(printer,"overlayOrange", lambda s: self.printOverlay(self.use_orange,s))
+      setattr(printer,"msgWidth", lambda : self.msg_width )
+      setattr(printer,"overlayWidth", lambda : overlay_width )
+      setattr(printer,"close", lambda : self.printClose())
+
+      return printer
       
                               
    def printHeader(self):
@@ -77,7 +78,7 @@ class tP:
          print(r)
       
       
-      print(self.row_str + varargin)
+      print(self.row_str % varargin)
       self.last_printed = "r"
    
 
@@ -434,22 +435,39 @@ def init( use_ascii, labels, widths, spacing, span_labels ):
       [labels,row_str]    = processSpannedLabels( labels, widths, span_labels, row_str, vs )
    
    
-   indx            = getLabelLocations(labels)
-   widths          = [len(label) for label in labels[-1,:]]  
+   
+   indx_top        = getLabelLocations(labels[0])
+   indx_bottom        = getLabelLocations(labels[1])
+   indx            =  [indx_top, indx_bottom]
+
+   widths          = [len(label) for label in labels[1]]  
    blank_strs      = [" " * width for width in widths]  
-   blank_strs      = np.tile(blank_strs,labels.shape[0])
-   labels[not indx]   = blank_strs[not indx] 
+
+   # Hardcode label rows = 2 here
+   blank_strs.extend(blank_strs)
+   blank_strs      = [blank_strs, blank_strs]
+
+   
+   for i in range(len(labels[0])):
+      # first row
+      if not indx[0][i]:
+         labels[0][i] = blank_strs[0][i]
+      # second row
+      if not indx[1][i]:
+         labels[1][i] = blank_strs[1][i]
+
+
    
    #  transpose output to a row cell array since mat2cell outputs to a
    #  column and strjoin on 2014a will only accept rows, while on 2015a,
    #  strjoin can handle either.
 
-   print("TODO: tablePrinter mat2cell( ,ones(1,size(labels,1)) ).'")
+   # print("TODO: tablePrinter mat2cell( ,ones(1,size(labels,1)) ).'")
    # lines           = mat2cell( ,ones(1,size(labels,1)) ).';
    lines           = labels
 
    header_strs     = [formatLine(line,vd) for line in lines] 
-   header_last     = header_strs[-1,0].rstrip()  
+   header_last     = header_strs[0].rstrip()  
    header          = "".join(header_strs)                  
    row_str         = formatLine(row_str,vd)
    
@@ -478,18 +496,26 @@ def addArrows(label,width):
    return label
 
 def formatLine(formatted_labels,vd):
-   line = vd.join(formatted_labels + "\n")   
+   line = vd.join(formatted_labels) + "\n"   
    return line
 
 def makeRules(use_ascii,h2):
 
    [vs,vd]             = getSymbolsVertical(use_ascii)
-   get_symbols_fn      = lambda : getSymbolsASCII() if use_ascii else lambda: getSymbols()  
-   [ hs, hd, cs, cd, csd, cds, tsdl, tdl, tds, td, tdsu, tdu, edtr, edbr ] = get_symbols_fn()
+   # get_symbols_fn      = lambda : getSymbolsASCII() if use_ascii else lambda: getSymbols()  
+   # [ hs, hd, cs, cd, csd, cds, tsdl, tdl, tds, td, tdsu, tdu, edtr, edbr ] = get_symbols_fn()
+
+   if use_ascii:
+      [ hs, hd, cs, cd, csd, cds, tsdl, tdl, tds, td, tdsu, tdu, edtr, edbr ] = getSymbolsASCII()
+   else:
+      [ hs, hd, cs, cd, csd, cds, tsdl, tdl, tds, td, tdsu, tdu, edtr, edbr ] = getSymbols()  
+
    
-   vd_indx             = h2.find(vd)  
-   vd_indx             = vd_indx[0:-2]
-   vs_indx             = h2.find(vs)
+   
+   vd_indx             = [pos for pos, char in enumerate(h2) if char == vd]  
+   vd_indx             = vd_indx[0:-1]
+
+   vs_indx             = [pos for pos, char in enumerate(h2) if char == vs] 
    
    flat_m1             = hd * (len(h2) - 1)  
 
@@ -497,43 +523,80 @@ def makeRules(use_ascii,h2):
    top_f               = flat_m1 + edtr + "\n"  # top rule - flat 
    
    top_h               = top_f                # top rule - header
-   top_h[vd_indx]      = td
+   top_h_list = list(top_h)
+   for idx in vd_indx:
+      top_h_list[idx]      = td
+   top_h      = "".join(top_h_list)
    
    top_r               = top_h                # top rule - row
-   top_r[vs_indx]      = tds
+   top_r_list = list(top_r)
+   for idx in vs_indx:
+      top_r_list[vs_indx]      = tds
+   top_r = "".join(top_r_list)
    
    #  bottom rules, with upward corner piece at the end
    bottom_f            = flat_m1 + edbr + "\n"  # bottom rule - flat
    
    bottom_r            = bottom_f
-   bottom_r[vd_indx]   = tdu                  # bottom rule - header/row
-   bottom_r[vs_indx]   = tdsu
+   bottom_r_list = list(bottom_r)
+   for idx in vd_indx:
+      bottom_r_list[idx]   = tdu                  # bottom rule - header/row
+   for idx in vs_indx:
+      bottom_r_list[idx]   = tdsu
+   bottom_r = "".join(bottom_r_list)
    
    #  mid rules, with left-pointing T piece at the end 
    mid_f               = flat_m1 + tdl + "\n"   # mid rule - flat to flat
    
    mid_fh              = mid_f                # mid rule - flat to header
-   mid_fh[vd_indx]     = td
+   mid_fh_list = list(mid_fh)
+   for idx in vd_indx:
+      mid_fh_list[idx]     = td
+   mid_fh = "".join(mid_fh_list)
    
    mid_fr              = mid_fh               # mid rule - flat to row
-   mid_fr[vs_indx]     = tds
+   mid_fr_list = list(mid_fr)
+   for idx in vs_indx:
+      mid_fr_list[idx]     = tds
+   mid_fr = "".join(mid_fr_list)
    
    mid_r               = mid_f                # mid rule - row to row
-   mid_r[vd_indx]      = cd                   # (also header to row)
-   mid_r[vs_indx]      = cds
-   
-   mid_rs              = string.replace(mid_r,hd,hs)  # mid rule - row to row
-   mid_rs[vd_indx]     = csd                  # single line, not double
-   mid_rs[vs_indx]     = cs
-   mid_rs              = string.replace(mid_rs,tdl,tsdl)
+   mid_r_list = list(mid_r)
+   for idx in vd_indx:
+      mid_r_list[idx]      = cd                   # (also header to row)
+   for idx in vs_indx:
+      mid_r_list[idx]      = cds
+   mid_r = "".join(mid_r_list)
+
+   for mid_r_char in mid_r_list:
+      if mid_r_char == hd:
+         mid_r_char = hs
+   mid_rs              = "".join(mid_r_list)  # mid rule - row to row
+   mid_rs_list = list(mid_rs)
+   for idx in vd_indx:
+      mid_rs_list[idx]     = csd                  # single line, not double
+   for idx in vs_indx:
+      mid_rs_list[idx]     = cs
+   for mid_rs_char in mid_rs_list:
+      if mid_rs_char == tdl:
+         mid_rs_char = tsdl
+   mid_rs              = "".join(mid_rs_list)
    
    mid_rh              = mid_f                # mid rule - row to header
-   mid_rh[vd_indx]     = cd
-   mid_rh[vs_indx]     = tdsu
-   
+   mid_rh_list = list(mid_rh)
+   for idx in vd_indx:
+      mid_rh_list[idx]     = cd
+   for idx in vs_indx:
+      mid_rh_list[idx]     = tdsu
+   mid_rh = "".join(mid_rh_list)
+
    mid_rf              = mid_f                # mid rule - row to flat
-   mid_rf[vd_indx]     = tdu                  # (also header to flat)
-   mid_rf[vs_indx]     = tdsu
+   mid_rf_list = list(mid_rf)
+   for idx in vd_indx:
+      mid_rf_list[idx]     = tdu                  # (also header to flat)
+   for idx in vs_indx:
+      mid_rf_list[idx]     = tdsu
+   mid_rf = "".join(mid_rh_list)
    
    t = genral_struct()
    setattr(t, "f", top_f)
@@ -572,36 +635,36 @@ def getSymbols():
 
    print("private.tablePrinter: double and single quote inconsistent")
    # double and single quote inconsistent
-   tsdl                = '╢'
-   tdl                 = '╣'
-   tds                 = '╤'
-   td                  = '╦'
-   tdsu                = '╧'
-   tdu                 = '╩'
+   tsdl                = "╢"
+   tdl                 = "╣"
+   tds                 = "╤"
+   td                  = "╦"
+   tdsu                = "╧"
+   tdu                 = "╩"
 
-   edtr                = '╗'
-   edbr                = '╝'
+   edtr                = "╗"
+   edbr                = "╝"
 
    return [  hs, hd, cs, cd, csd, cds, tsdl, tdl, tds, td, tdsu, tdu, edtr, edbr ]
 
 def getSymbolsASCII():
       
-   hs                  = '-'
-   hd                  = '='
+   hs                  = "-"
+   hd                  = "="
 
-   cs                  = '|'
-   cd                  = '|'
-   csd                 = '|'
-   cds                 = '|'
+   cs                  = "|"
+   cd                  = "|"
+   csd                 = "|"
+   cds                 = "|"
 
-   tsdl                = '-'
-   tdl                 = '='
-   tds                 = '='
-   td                  = '='
-   tdsu                = '='
-   tdu                 = '='
+   tsdl                = "-"
+   tdl                 = "="
+   tds                 = "="
+   td                  = "="
+   tdsu                = "="
+   tdu                 = "="
 
-   edtr                = '='
-   edbr                = '='
+   edtr                = "="
+   edbr                = "="
 
    return [  hs, hd, cs, cd, csd, cds, tsdl, tdl, tds, td, tdsu, tdu, edtr, edbr ]
