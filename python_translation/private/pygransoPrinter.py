@@ -1,5 +1,6 @@
 from pygransoStruct import genral_struct
-from private import pygransoConstants as pC, pygransoPrinterColumns as pPC, tablePrinter as tP, printMessageBox as pMB
+from private import pygransoConstants as pC, pygransoPrinterColumns as pPC, printMessageBox as pMB
+from private.tablePrinter import tP
 
 class pgP:
     def __init__(self):
@@ -80,7 +81,9 @@ class pgP:
                             ('Line Search',7,9),
                             ('Stationarity',10,11))
 
-        self.table_printer   = tP.tablePrinter( ascii, use_orange, labels, widths, 1, span_labels )    
+
+        tP_obj   = tP()
+        self.table_printer = tP_obj.tablePrinter( ascii, use_orange, labels, widths, 1, span_labels )    
         
         print_count     = 0
                 

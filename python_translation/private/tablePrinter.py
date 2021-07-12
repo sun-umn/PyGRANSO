@@ -1,9 +1,15 @@
 from operator import imod
+from os import truncate
+
+from numpy.lib.function_base import append
 from private.linesearchWeakWolfe import linesearchWeakWolfe
 
 from numpy.core.defchararray import isspace
 from pygransoStruct import genral_struct
-from private import formatOrange as fO, centerString as cS
+from private import formatOrange as fO, truncate as TR
+from private.centerString import centerString
+
+from itertools import compress
 
 import numpy as np
 import math, string
@@ -190,21 +196,25 @@ def prepareMessageStr(print_width,max_width,str):
 def processLabel(label,width,add_arrows):
    label           = label
    splitted        = label.split("\n")  
-   processed = "HelloWorld"
-   print("TODO: tablePrinter.processLabel")
-#  processed       = cellfun(  @(x) truncate(x,width), splitted,   ...
-#                              'UniformOutput',        false       );
-#  if add_arrows and ~isempty(strtrim(label)): 
-#      process_fn  = @(x) addArrows(x,width);
-#  else
-#      process_fn  = @(x) centerString(x,width);
-#  end
-#  processed       = cellfun(  process_fn,         processed,      ...
-#                              'UniformOutput',    false           );
+   
+   processed_tmp = []
+   for splitted_element in splitted:
+      processed_tmp.append(TR.truncate(splitted_element,width))
+
+   if add_arrows and len(label.strip()) > 0: 
+      process_fn  = lambda x: addArrows(x,width)
+   else:
+      process_fn  = lambda x: centerString(x,width)
+   
+   processed = []
+   for processed_tmp_element in processed_tmp:
+      processed.append(process_fn(processed_tmp_element))
+
    n               = len(processed) 
    return [processed,n]
 
 def getEmptyStrings(n):
+   print("TODO: get getEmptyStrings")
    c = np.empty((n,1),dtype=object)
    # if n > 0: 
    #   c = cellfun(@(x) '', c,'UniformOutput',false);
@@ -212,19 +222,31 @@ def getEmptyStrings(n):
    return c
 
 def spanLabel(label,lines):
-   spannedLabel    = getEmptyStrings(lines - len(label)) + label[:]
+   spannedLabel    =  label
    return spannedLabel
 
 def processLabels(labels,widths,add_arrows):
-   # [labels,lines]  = cellfun(  @(l,w) processLabel(l,w,add_arrows),    ...
-   #                            labels, num2cell(widths),               ...
-   #                            'UniformOutput',false                   );
-   # labels          = cellfun(  @(x) spanLabel(x,max(cell2mat(lines))), ...
-   #                            labels,                                 ...
-   #                            'UniformOutput',false                   );
-   # label_array     = horzcat(labels{:});
-   print("TODO: ")
-   label_array = "TODO: tablePrinter.processLabels"
+   
+   n = len(labels)
+   labels_new = []
+   lines_new = []
+   for i in range(n):
+      [label, line] = processLabel(labels[i], widths[i],add_arrows)
+      labels_new.append(label)
+      lines_new.append(line)
+
+   labels = labels_new.copy()
+   lines = lines_new.copy()
+   labels_new = []
+
+   for i in range(n):
+      #  second [0] means get string from list of string
+      label = spanLabel( labels[i][0],max(lines) )
+      labels_new.append(label)
+   
+   label_array = labels_new.copy()
+
+   
    return label_array
 
 def getTotalWidth(widths,delim_width,col_start,col_end):
@@ -232,60 +254,78 @@ def getTotalWidth(widths,delim_width,col_start,col_end):
    return w
 
 def parseSpanningLabels(spanning_labels):
-   # [labels,spans,col_starts] = cellfun(@parseSpanningLabel,        ...
-   #                                      spanning_labels,            ...
-   # #                                      'UniformOutput',false       );
-   # return [labels,spans,col_starts]
-   return [-1,-1,-1]
+   labels = []
+   spans = []
+   col_starts = []
+
+   for spanning_label in spanning_labels:
+      [label,span,col_start] = parseSpanningLabel(spanning_label)
+      labels.append(label)
+      spans.append(span)
+      col_starts.append(col_start)
+
+   return [labels,spans,col_starts]
 
 def parseSpanningLabel(spanning_label):
    label   = spanning_label[0]
    start   = spanning_label[1]
-   span    = start + spanning_label[2]
+   span    = (start , spanning_label[2])
    return [label,span,start]
 
 def moveSpanLabels(span_labels,indx,n_cols):
-   labels = np.empty(n_cols,dtype=object)
+   labels = []
+   count = 0
    for i in range(n_cols):
-      labels[i] = ""
+      if indx[i]:
+         labels.append(span_labels[count]) 
+         count += 1
+      else:
+         labels.append("")
 
-   labels(indx)        = span_labels
    return labels
 
 def processSpannedLabels(   labels, widths, span_labels, row_str, vs  ):
                                                             
-   [span_labels,spans] = parseSpanningLabels(span_labels)
+   [span_labels,spans, *_] = parseSpanningLabels(span_labels)
    
    delim_width         = len(vs)
-   [n_lines,n_cols]    = len(labels)
+   # [n_lines,n_cols]    = len(labels)
+   n_cols = len(labels)
+   n_lines = 1
+   print("HARDCODE: processSpannedLabels")
+
    n_multicols         = len(spans)
    
-   del_indx            = np.zeros((1,n_cols))
-   span_indx           = np.zeros((1,n_cols))
+   del_indx            = np.ones(n_cols, dtype=int)
+   span_indx           = np.zeros(n_cols, dtype=int)
    
    for j in range(n_multicols):
       span        = spans[j]
-      col_start   = span[0]
+      col_start   = span[0] - 1 # python index -1
       col_end     = span[1]
       span        = slice(col_start,col_end)
          
       #  join column labels for multicolumns and always do joins for the
       #  the very last line
       for k in range(n_lines):
-         labels_to_join          = labels[k,span]
+         # Hardcode n_lines to be 1 here
+         labels_to_join          = labels[span]
          if k == n_lines or not allEmpty(labels_to_join):
-               labels[k,col_start] = vs.join(labels_to_join) 
+               labels[col_start] = vs.join(labels_to_join) 
          
       span_indx[col_start]    = True
-      widths[col_start]       = getTotalWidth( widths, delim_width, col_start, col_end )
-      row_str[col_start]      = vs.join(row_str(span))   
-      del_indx[span[1:]]   = True 
+      # 'tuple' object does not support item assignment
+      widths_list = list(widths)
+      widths_list[col_start]       = getTotalWidth( widths, delim_width, col_start, col_end )
+      widths = widths_list
+      row_str[col_start]      = vs.join(row_str[span])   
+      del_indx[col_start+1:col_end]   = False # we are deleting these indexs here 
    
    #  delete columns that have been joined into first column of each span
-   labels[:,del_indx]  = None
-   widths[del_indx]    = None
-   row_str[del_indx]   = None
-   span_indx[del_indx] = None
+   labels = list(compress(labels, del_indx))
+   widths = list(compress(widths, del_indx))
+   row_str = list(compress(row_str, del_indx))
+   span_indx = list(compress(span_indx, del_indx))
    
    #  reset span_labels positions and format them
    n_cols              = len(widths)
@@ -303,11 +343,18 @@ def allEmpty(cell_of_strs):
    return tf
 
 def getLabelLocations(labels):
-   indx = [np.any(not isspace(label)) for label in labels]  
+   indx = []
+   for label in labels:
+      if len(label.strip()) == 0:
+         indx.append(False)
+      else:
+         indx.append(True)
+ 
    return indx
 
 def findOverlap(labels,spanned_indx):
-   lines   = labels.shape[0]  
+   # Hardcode lines = 1 here
+   lines   = 1
    line    = 0
    #  don't allow the last line to overlap 
    for j in range(lines-1):
@@ -319,19 +366,39 @@ def findOverlap(labels,spanned_indx):
    return line
 
 def mergeLabels(labels_top,labels_bottom,overlapping_lines):
-   [n_top,n_cols]  = labels_top.shape
-   n_bottom        = labels_bottom.shape[0]
+   # hardcode nlines = 1
+   [n_top,n_cols]  = [1,len(labels_top)]
+   n_bottom        = 1
    n_lines         = n_top + n_bottom - overlapping_lines
    
    labels          = np.empty([n_lines,n_cols], dtype="S10")  
 
    indx_bottom     = getLabelLocations(labels_bottom)
-   indx            = np.vstack(np.zeros((n_lines-n_bottom,n_cols)), indx_bottom)  
-   labels[indx]    = labels_bottom[indx_bottom]
-   
+
+   # hardcode nlines = 1
+   indx_top = []
+   for i in range(n_cols):
+      indx_top.append(False)
+   indx            = [indx_top, indx_bottom]
+
+
+   labels_bottom_new    = []
+   labels_top_new = []
    indx_top        = getLabelLocations(labels_top)
-   indx            = np.vstack(indx_top, np.zeros((n_lines-n_top,n_cols)))
-   labels[indx]    = labels_top[indx_top]
+
+   for i in range(n_cols):
+      if indx_bottom[i]:
+         labels_bottom_new.append(labels_bottom[i])
+      else:
+         labels_bottom_new.append("")
+
+      if indx_top[i]:
+         labels_top_new.append(labels_top[i])
+      else:
+         labels_top_new.append("")
+
+   
+   labels   = [labels_top_new, labels_bottom_new]
 
    return labels
 
@@ -354,13 +421,15 @@ def getDelimitersVertical(use_ascii,spacing):
 
 def init( use_ascii, labels, widths, spacing, span_labels ):
 
-   [vs,vd]                 = getDelimitersVertical(use_ascii,spacing)
+   [vs,vd, *_]                 = getDelimitersVertical(use_ascii,spacing)
    
    n_cols                  = len(labels)
    labels                  = processLabels(labels,widths,False)
-   row_str = np.empty((1,n_cols),dtype="S10")
-   row_str[:] = "%s"
    
+   row_str = []
+   for i in range(n_cols):
+      row_str.append("%s")
+
    if np.any(span_labels != None):
       [labels,row_str]    = processSpannedLabels( labels, widths, span_labels, row_str, vs )
    
@@ -402,9 +471,9 @@ def addArrows(label,width):
          arrow_length_left   = math.ceil(arrow_length_left)
          arrow_length_right  = math.floor(arrow_length_right)
       
-      label =  "<" + "-"*arrow_length_left + label + "-" * arrow_length_right   
+      label =  "<" + "-"*int(arrow_length_left) + label + "-" * int(arrow_length_right)   
    else:
-      label = cS.centerString(label,width)
+      label = centerString(label,width)
    
    return label
 
