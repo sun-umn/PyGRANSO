@@ -1,6 +1,7 @@
-from private import pygransoConstants as pC, bfgsDamping as bD, regularizePosDefMatrix as rPDM, linesearchWeakWolfe as lWW, qpTerminationCondition as qpTC
+from private import pygransoConstants as pC, bfgsDamping as bD, regularizePosDefMatrix as rPDM, linesearchWeakWolfe as lWW
 from private.neighborhoodCache import nC
 from private.qpSteeringStrategy import qpSS
+from private.qpTerminationCondition import qpTC
 import time
 from pygransoStruct import genral_struct
 import math
@@ -163,7 +164,7 @@ class AlgBFGSSQP():
 
         self.linesearch_fn   = lambda x,f,g,p,ls_maxit: lWW.linesearchWeakWolfe( 
                                 x, f, g, p,                                  
-                                lambda : self.penaltyfn_obj.evaluatePenaltyFunction(),      
+                                lambda x_in: self.penaltyfn_obj.evaluatePenaltyFunction(x_in),      
                                 wolfe1, wolfe2, self.fvalquit, ls_maxit, step_tol)
                                                         
         #  we'll use a while loop so we can explicitly update the counter only
@@ -295,7 +296,7 @@ class AlgBFGSSQP():
             self.penaltyfn_at_x          = self.penaltyfn_obj.snapShot()
 
             # for stationarity condition
-            [ stat_vec, self.stat_val, qps_solved, n_grad_samples]   = self.computeApproxStationarityVector()
+            [ stat_vec, self.stat_val, qps_solved, n_grad_samples,_]   = self.computeApproxStationarityVector()
                 
             
             ls_evals = self.penaltyfn_obj.getNumberOfEvaluations()-evals_so_far
@@ -385,7 +386,7 @@ class AlgBFGSSQP():
     def linesearchNondescent(self,x,f,g,p):
         [alpha,x,f,g,fail] = self.linesearch_fn( x,f,g,p,self.linesearch_nondescent_maxit )
         fail = 0 + 3*(fail > 0)
-        return [alpha, x, f, g, fail]
+        return [alpha, x, f, g, fail,_,_,_]
 
     #  regular weak Wolfe line search 
     #  NOTE: this function may lower variable "mu" for constrained problems
@@ -393,7 +394,7 @@ class AlgBFGSSQP():
         
         #  we need to keep around f and g so use _ls names for ls results
         ls_fn                       = lambda f,g: self.linesearch_fn(x,f,g,p,float("inf"))
-        [alpha,x_ls,f_ls,g_ls,fail] = ls_fn(f,g)
+        [alpha,x_ls,f_ls,g_ls,fail,_,_,_] = ls_fn(f,g)
                         
         #  If the problem is constrained and the line search fails without 
         #  bracketing a minimizer, it may be because the objective is 
@@ -464,7 +465,8 @@ class AlgBFGSSQP():
         n_samples = len(grad_samples)
         
         #  nonsmooth optimality measure
-        [stat_vec,n_qps,ME] = qpTC.qpTerminationCondition(   self.penaltyfn_at_x, grad_samples,
+        qPTC_obj = qpTC()
+        [stat_vec,n_qps,ME] = qPTC_obj.qpTerminationCondition(   self.penaltyfn_at_x, grad_samples,
                                                         self.apply_H_QP_fn, self.QPsolver)
         stat_value = LA.norm(stat_vec)
         self.penaltyfn_obj.addStationarityMeasure(stat_value)

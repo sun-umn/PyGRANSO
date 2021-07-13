@@ -1,5 +1,8 @@
-def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn,
-                        c1, c2, fvalquit, eval_limit, step_tol):
+import numpy as np
+import numpy.linalg as LA
+import math
+
+def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = -np.inf, eval_limit = np.inf, step_tol = 1e-12):
     """
     linesearchWeakWolfe:
         Line search enforcing weak Wolfe conditions, suitable for minimizing 
@@ -11,7 +14,73 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn,
         NOTE: the values assigned to output argument "fail" have been changed 
                 so that all error cases are assigned positive codes.
     """
+
+    alpha = 0  # lower bound on steplength conditions
+    xalpha = x0
+    falpha = f0
+    gradalpha = grad0 # need to pass grad0, not grad0'*d, in case line search fails
+    beta = np.inf  # upper bound on steplength satisfying weak Wolfe conditions
+    gradbeta = np.empty(x0.shape)
+    gradbeta[:] = np.nan
+    g0 = grad0.T @ d 
+    dnorm = LA.norm(d)
+    t = 1  # important to try steplength one first
+    n_evals = 0
+    nexpand = 0
+    # the following limit is rather arbitrary
+    # don't use HANSO's nexpandmax, which could much larger, since BFGS-SQP 
+    # will automatically reattempt the line search with a lower penalty 
+    # parameter if it terminates with the "f may be unbounded below" case.
+    nexpandmax = max(10, round(math.log2(1e5/dnorm)))  # allows more if ||d|| small
+
+    while (beta - alpha) > (LA.norm(x0 + alpha*d)/dnorm)*step_tol and n_evals < eval_limit:
+        x = x0 + t*d
+        [f,grad,is_feasible] = obj_fn(x)
+        n_evals = n_evals + 1
+        if is_feasible and not np.isnan(f) and f <= fvalquit and not np.isinf(f): 
+            fail = 0
+            alpha = t  # normally beta is inf
+            xalpha = x
+            falpha = f
+            gradalpha = grad
+            return [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals] 
+        
+        gtd = grad.T @ d
+        #  the first condition must be checked first. NOTE THE >=.
+        if f >= f0 + c1*t*g0 and np.isnan(f): # first condition violated, gone too far
+            beta = t
+            gradbeta = grad # discard f
+        #  now the second condition.  NOTE THE <=
+        elif gtd <= c2*g0 and np.isnan(gtd): # second condition violated, not gone far enough
+            alpha = t
+            xalpha = x
+            falpha = f
+            gradalpha = grad
+        else:   # quit, both conditions are satisfied
+            fail = 0
+            alpha = t
+            xalpha = x
+            falpha = f
+            gradalpha = grad
+            beta = t
+            gradbeta = grad
+            return [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals] 
+        
+        #  setup next function evaluation
+        if beta < np.inf:
+            t = (alpha + beta)/2 # bisection
+        elif nexpand < nexpandmax:
+            nexpand = nexpand + 1
+            t = 2*alpha  # still in expansion mode
+        else:
+            break # Reached the maximum number of expansions
+        
+    # end loop
+    # Wolfe conditions not satisfied: there are two cases
+    if beta == np.inf: # minimizer never bracketed
+        fail = 2
+    else: # point satisfying Wolfe conditions was bracketed
+        fail = 1
     
-    print("TODO: linesearchWeakWolfe")
-    # return[  alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals]  
-    return[  -1,-1,-1,-1,-1,-1,-1,-1]                                        
+
+    return [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals]                               

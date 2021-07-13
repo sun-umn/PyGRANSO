@@ -1,5 +1,6 @@
 import numpy as np
 from pygransoStruct import genral_struct
+import numpy.linalg as LA
 
 class nC:
     def __init__(self):
@@ -39,8 +40,8 @@ class nC:
         else:
             #  Calculate the distance from the new sample point x to the 
             #  most recent;y added sample already in the cache 
-            dist_to_last_added = np.norm(x - self.samples[:,self.last_added_ind])
-            self.distances[self.last_added_ind] = 0 # will be set exactly below
+            dist_to_last_added = LA.norm(x - self.samples[:,self.last_added_ind-1])
+            self.distances[0,self.last_added_ind-1] = 0 # will be set exactly below
             
             #  Overestimate the distances from the new sample point x to all 
             #  the other sample points by applying the triangle inequality 
@@ -48,27 +49,31 @@ class nC:
             #  distances between samples{last_index} and all the remaining
             #  points. 
             #  Note: distance(last_added_index) will be dist_to_last_added.
-            self.distances[0:self.n]      = self.distances[0:self.n] + dist_to_last_added
+
+            for i in range(self.n):
+                self.distances[i]      = self.distances[i] + dist_to_last_added
             
             #  Only the (over)estimated distances which are greater than the 
             #  allowed radius will need to be computed exactly.
-            indx                = self.distances > self.radius and  not np.isinf(self.distances)
-            computed            = sum(indx)
-            self.distances[indx]     = np.sqrt(np.sum(np.square(self.samples[:,indx])))
+            
+            indx                = np.logical_and(self.distances > self.radius , self.distances != np.inf)
+            # indx                = self.distances > self.radius and  not np.isinf(self.distances)
+            computed            = np.sum(np.sum(indx))
+            self.distances[indx]     = np.sqrt(np.sum(np.square(self.samples[:,indx[0]])))
            
             if self.n < self.max_size:
                 #  add x and x_data to next free slot
                 self.n               = self.n + 1
                 self.last_added_ind  = self.n
-                self.distances[self.n-1]  = 0
-                self.samples[:,self.n-1]    = x
-                self.data[self.n-1]         = x_data
+                self.distances[0,self.n-1]  = 0
+                self.samples[:,self.n-1]    = x[0]
+                self.data[0,self.n-1]         = x_data
             else:
                 #  no free slot available - overwrite oldest sample
                 oldest_ind              = (self.last_added_ind % self.max_size) + 1
-                self.distances[oldest_ind-1]   = 0
+                self.distances[0,oldest_ind-1]   = 0
                 self.samples[:,oldest_ind-1]   = x
-                self.data[oldest_ind-1]        = x_data
+                self.data[0,oldest_ind-1]        = x_data
                 self.last_added_ind          = oldest_ind
             
             

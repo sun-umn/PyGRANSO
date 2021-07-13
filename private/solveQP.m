@@ -168,7 +168,7 @@
             end
             
             % suppress output
-            params.outputflag = 0;
+            params.outputflag = 1;
             
             results = gurobi(model,params);
             varargout = {results.x,results.pi};

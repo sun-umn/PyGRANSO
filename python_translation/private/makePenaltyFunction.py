@@ -130,7 +130,7 @@ def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_thresh
     scalings= None; # default if no prescaling is applied
     # isempty function
     if np.all( c_fn==None ):
-        eval_fn             = lambda x : None
+        eval_fn_ret             = lambda x : None
         # These must have the right dimensions for computations to be 
         # done even if there are no such constraints
         c                   = np.zeros((0,1))
@@ -164,12 +164,12 @@ def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_thresh
         [tv,tv_l1,tv_l1_grad]   = viol_fn(c,c_grad)
         # reset eval_fn so that it computes the values and gradients 
         # for both the constraint and the corresponding violation
-        eval_fn             = lambda x: eval_fn(x,c_fn)
+        eval_fn_ret             = lambda x: eval_fn(x,c_fn)
         constrained         = True
     else:       
         print("PyGRANSO userSuppliedFunctionsError: {}eq_fn must be a function handle of x or empty, that is, None.\n".format(type_str))
     
-    return [eval_fn, c, c_grad, tv, tv_l1, tv_l1_grad, c_grad_norms, scalings, constrained]
+    return [eval_fn_ret, c, c_grad, tv, tv_l1, tv_l1_grad, c_grad_norms, scalings, constrained]
 
 def dataStruct(x,f):
     s = genral_struct()
@@ -198,19 +198,30 @@ class PanaltyFuctions:
 
     # evaluate objective, constraints, violation, and penalty function at x
     def evaluateAtX(self,x_in):
-        try: 
-            self.at_snap_shot    = False
-            self.stat_value      = float("nan")
-            self.fn_evals        += 1
-            # evaluate objective and its gradient
-            [self.f,self.f_grad]      = self.obj_fn(x_in)
-            # evaluate constraints and their violations (nested update)
-            self.eval_ineq_fn(x_in) 
-            self.eval_eq_fn(x_in)
-        except Exception as e:
-            print(e)   
-            print("PyGRANSO userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x.")
+        # try: 
+        #     self.at_snap_shot    = False
+        #     self.stat_value      = float("nan")
+        #     self.fn_evals        += 1
+        #     # evaluate objective and its gradient
+        #     [self.f,self.f_grad]      = self.obj_fn(x_in)
+        #     # evaluate constraints and their violations (nested update)
+        #     self.eval_ineq_fn(x_in) 
+        #     self.eval_eq_fn(x_in)
+        # except Exception as e:
+        #     print(e)   
+        #     print("PyGRANSO userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x.")
         
+        self.at_snap_shot    = False
+        self.stat_value      = float("nan")
+        self.fn_evals        += 1
+        # evaluate objective and its gradient
+        [self.f,self.f_grad]      = self.obj_fn(x_in)
+        # evaluate constraints and their violations (nested update)
+        self.eval_ineq_fn(x_in) 
+        self.eval_eq_fn(x_in)
+
+        print("skip try & except in  makePenaltyFunction.evaluateAtX")
+
         self.x                   = x_in
         self.feasible_to_tol     = self.is_feasible_to_tol_fn(self.tvi,self.tve);  
         self.tv                  = np.max(self.tvi,self.tve)
