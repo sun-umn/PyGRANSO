@@ -14,6 +14,8 @@ from itertools import compress
 import numpy as np
 import math, string
 
+from dbg_print import dbg_print
+
 class tP:
    def __init__(self):
        pass
@@ -60,8 +62,8 @@ class tP:
       if self.last_printed == "r" or self.last_printed == "h" or self.last_printed == "w":
          r = self.rules.m.rh
              
-      print(r)
-      print(self.header)
+      print(r,end="")
+      print(self.header,end="")
       
       self.last_printed = "h"
    
@@ -75,16 +77,16 @@ class tP:
          r = self.rules.m.r
       
       if self.last_printed != "r":
-         print(r)
+         print(r,end="")
       
       
-      print(self.row_str % varargin)
+      print(self.row_str % varargin,end="")
       self.last_printed = "r"
    
 
    def printMessage(self,use_orange,msg_lines):
       if len(msg_lines) < 1:
-            return
+         return
       
       if self.last_printed == "n":
          r = self.rules.t.f
@@ -94,15 +96,15 @@ class tP:
          r = self.rules.m.rf
       
       
-      print(r)
-      if np.ischar(msg_lines):
-            print("TODO: tablePrinter np.ischar(msg_lines)")
-            msg_lines   = msg_lines
+      print(r,end="")
+      # if np.ischar(msg_lines):
+      #       dbg_print("TODO: tablePrinter np.ischar(msg_lines)")
+      #       msg_lines   = msg_lines
       
       if use_orange: 
-            msg_line_fn = lambda : messageLineOrange()
+            msg_line_fn = lambda s: self.messageLineOrange(s)
       else:
-            msg_line_fn = lambda : messageLineBlack()
+            msg_line_fn = lambda s: self.messageLineBlack(s)
       
       for msg_line in msg_lines:
          msg_line_fn(msg_line)
@@ -110,46 +112,46 @@ class tP:
       self.last_printed    = "m"
    
 
-      def printOverlay(self,use_orange,msg_lines):
-         if len(msg_lines) < 1:
-               return
-         if self.last_printed == "n":
-            r = self.rules.t.r
-         elif self.last_printed == "m":
-            r = self.rules.m.fr
-         elif self.last_printed == "r" or self.last_printed == "h" or self.last_printed == "w":
-            r = self.rules.m.r
+   def printOverlay(self,use_orange,msg_lines):
+      if len(msg_lines) < 1:
+            return
+      if self.last_printed == "n":
+         r = self.rules.t.r
+      elif self.last_printed == "m":
+         r = self.rules.m.fr
+      elif self.last_printed == "r" or self.last_printed == "h" or self.last_printed == "w":
+         r = self.rules.m.r
 
 
-         print(r)
-         self.printOverlayFn(use_orange,msg_lines)
-         self.last_printed    = "w"
+      print(r,end="")
+      self.printOverlayFn(use_orange,msg_lines)
+      self.last_printed    = "w"
+   
+
+   def printClose(self):
+
+      if self.last_printed == "m":
+         r = self.rules.b.f
+      elif self.last_printed == "r" or self.last_printed == "h" or self.last_printed == "w":
+         r = self.rules.b.r
+
+
+      if self.last_printed != "n":
+            print(r,end="")
+            self.last_printed = "n"
       
 
-      def printClose(self):
+   def messageLineBlack(self,str):
+      str = prepareMessageStr(self.msg_width,self.msg_width,str)
+      print(self.msg_str % str,end="")
+      
 
-         if self.last_printed == "m":
-            r = self.rules.b.f
-         elif self.last_printed == "r" or self.last_printed == "h" or self.last_printed == "w":
-            r = self.rules.b.r
-
-
-         if self.last_printed != "n":
-               print(r)
-               self.last_printed = "n"
-         
-
-      def messageLineBlack(self,str):
-         str = prepareMessageStr(self.msg_width,self.msg_width,str)
-         print(self.msg_str,str)
-         
-
-      def messageLineOrange(str):
-         str = prepareMessageStr(self.msg_width,self.msg_width,str)
-         if self.use_orange and len(str) > 0:
-               str = fO.formatOrange(str)
-         
-         print(self.msg_str,str)
+   def messageLineOrange(self,str):
+      str = prepareMessageStr(self.msg_width,self.msg_width,str)
+      if self.use_orange and len(str) > 0:
+            str = fO.formatOrange(str)
+      
+      print(self.msg_str % str,end="")
       
 
 
@@ -182,7 +184,7 @@ class Class_overlayPrinter:
          if self.use_orange and len(str) > 0:
             str = fO.formatOrange(str)
          
-         print(self.rule[0:3] + "   "  + str + "   " + self.rule[self.max_width + 10:])
+         print(self.rule[0:3] + "   "  + str + "   " + self.rule[self.max_width + 10:],end="")
         
    
 
@@ -195,7 +197,7 @@ def prepareMessageStr(print_width,max_width,str):
     return str
 
 def processLabel(label,width,add_arrows):
-   label           = label
+   # label           = label
    splitted        = label.split("\n")  
    
    processed_tmp = []
@@ -215,7 +217,7 @@ def processLabel(label,width,add_arrows):
    return [processed,n]
 
 def getEmptyStrings(n):
-   print("TODO: get getEmptyStrings")
+   dbg_print("TODO: get getEmptyStrings")
    c = np.empty((n,1),dtype=object)
    # if n > 0: 
    #   c = cellfun(@(x) '', c,'UniformOutput',false);
@@ -251,7 +253,7 @@ def processLabels(labels,widths,add_arrows):
    return label_array
 
 def getTotalWidth(widths,delim_width,col_start,col_end):
-   w = sum(widths[col_start:col_end]) + delim_width*(col_end-col_start)
+   w = sum(widths[col_start-1:col_end]) + delim_width*(col_end-col_start)
    return w
 
 def parseSpanningLabels(spanning_labels):
@@ -293,7 +295,7 @@ def processSpannedLabels(   labels, widths, span_labels, row_str, vs  ):
    # [n_lines,n_cols]    = len(labels)
    n_cols = len(labels)
    n_lines = 1
-   print("HARDCODE: processSpannedLabels")
+   dbg_print("HARDCODE: processSpannedLabels")
 
    n_multicols         = len(spans)
    
@@ -317,7 +319,7 @@ def processSpannedLabels(   labels, widths, span_labels, row_str, vs  ):
       span_indx[col_start]    = True
       # 'tuple' object does not support item assignment
       widths_list = list(widths)
-      widths_list[col_start]       = getTotalWidth( widths, delim_width, col_start, col_end )
+      widths_list[col_start]       = getTotalWidth( widths, delim_width, col_start+1, col_end )
       widths = widths_list
       row_str[col_start]      = vs.join(row_str[span])   
       del_indx[col_start+1:col_end]   = False # we are deleting these indexs here 
@@ -427,9 +429,7 @@ def init( use_ascii, labels, widths, spacing, span_labels ):
    n_cols                  = len(labels)
    labels                  = processLabels(labels,widths,False)
    
-   row_str = []
-   for i in range(n_cols):
-      row_str.append("%s")
+   row_str = ["%s"] * n_cols
 
    if np.any(span_labels != None):
       [labels,row_str]    = processSpannedLabels( labels, widths, span_labels, row_str, vs )
@@ -473,7 +473,7 @@ def init( use_ascii, labels, widths, spacing, span_labels ):
    
    rules           = makeRules(use_ascii,header_last)
    msg_width       = len(header_last) - 2
-   msg_str         = "%-" + str(msg_width) + "s" + vd + "\n"  
+   msg_str         = "%" + str(msg_width) + "s"  + vd + "\n"  
 
    return [header,rules,row_str,msg_str,msg_width]
 
@@ -489,7 +489,7 @@ def addArrows(label,width):
          arrow_length_left   = math.ceil(arrow_length_left)
          arrow_length_right  = math.floor(arrow_length_right)
       
-      label =  "<" + "-"*int(arrow_length_left) + label + "-" * int(arrow_length_right)   
+      label =  "<" + "-"*int(arrow_length_left) + " " + label + " " + "-" * int(arrow_length_right) + ">"   
    else:
       label = centerString(label,width)
    
@@ -633,7 +633,6 @@ def getSymbols():
    csd                 = "╫"
    cds                 = "╪"
 
-   print("private.tablePrinter: double and single quote inconsistent")
    # double and single quote inconsistent
    tsdl                = "╢"
    tdl                 = "╣"

@@ -7,6 +7,7 @@ from pygransoStruct import genral_struct
 import math
 import numpy.linalg as LA
 import numpy as np
+from dbg_print import dbg_print
 
 class AlgBFGSSQP():
     def __init__(self):
@@ -115,7 +116,7 @@ class AlgBFGSSQP():
         #  For applying the normal non-regularized version of H
         [self.apply_H_fn,*_]            = self.getApplyH()  
         
-        self.bfgs_update_fn          = lambda : self.bfgs_obj.update()
+        self.bfgs_update_fn          = lambda s,y,sty,damped: self.bfgs_obj.update(s,y,sty,damped)
 
         #  function which caches up to ngrad previous gradients and will return 
         #  those which are sufficently close to the current iterate x. 
@@ -212,7 +213,7 @@ class AlgBFGSSQP():
                 # except Exception as e:
                 #     print(e)
                 #     print("PyGRANSO:steeringQuadprogFailure")
-                print("Skip try & except in bfgssqp")
+                dbg_print("Skip try & except in bfgssqp")
                 [p,mu_new,*_] = steering_fn(self.penaltyfn_at_x,apply_H_steer)
 
                 penalty_parameter_changed = (mu_new != self.mu)
@@ -262,17 +263,17 @@ class AlgBFGSSQP():
                     elif can_fallback:
                         continue
                     else: # return 6 (feasible) or 7 (infeasible)
-                        self.prepareTermination(6 + ~feasible);
+                        self.prepareTermination(6 + ~feasible)
                         return self.info
                     
                 elif linesearch_failed == 2:  # couldn't bracket minimizer
-                    self.prepareTermination(8);
+                    self.prepareTermination(8)
                     return self.info
                 else: # failed on nondescent direction
                     if can_fallback:
                         continue
                     else:
-                        self.prepareTermination(9);
+                        self.prepareTermination(9)
                     
                     
             
@@ -314,7 +315,7 @@ class AlgBFGSSQP():
                                         stat_vec, self.stat_val, self.fallback_level  )
             
         
-            if self.print_level and (iter % print_frequency) == 0:
+            if self.print_level and (self.iter % print_frequency) == 0:
                 self.printer.iter(   self.iter, self.penaltyfn_at_x, 
                                 self.fallback_level, self.random_attempts,  
                                 ls_evals,       alpha,  
@@ -493,7 +494,8 @@ class AlgBFGSSQP():
         return tf
 
     def prepareTermination(self,code):
-        self.info.termination_code   = code
+        self.info = genral_struct()
+        setattr(self.info, "termination_code", code)
         if code == 8 and self.constrained:
             self.info.mu_lowest      = self.mu_lowest
 

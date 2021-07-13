@@ -39,7 +39,7 @@ def getCount(label,maxit):
     iter = genral_struct()
     setattr(iter,"label",label)
     setattr(iter,"width",width)
-    setattr(iter,"format_fn",lambda x: " "*(width-1) + str(x) )
+    setattr(iter,"format_fn",lambda x: "%*s" % (width,x) )
     setattr(iter,"format_str",lambda x: " "*(width-1) + truncate.truncate(x,width) )
     setattr(iter,"blank_str"," " * width)
     setattr(iter,"na_str",cS.centerString('-',width) )

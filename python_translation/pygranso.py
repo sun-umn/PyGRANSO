@@ -1,11 +1,14 @@
 from private import pygransoPrinter
 from private.makePenaltyFunction import PanaltyFuctions
-from private import bfgsHessianInverse as bfgsHI, printMessageBox as pMB, solveQP
+from private import bfgsHessianInverse as bfgsHI, printMessageBox as pMB
 from private.bfgssqp import AlgBFGSSQP
 from private.pygransoPrinter import pgP
 from pygransoOptions import gransoOptions
+from private.solveQP import getErr
 import numpy as np
 import copy
+from dbg_print import dbg_print
+from private.wrapToLines import wrapToLines
 
 # only combined function allowed here. simpler form compare with GRANSO
 # different cases needed if seperate obj eq and ineq are using
@@ -19,9 +22,9 @@ def getBfgsManager(opts):
     if opts.limited_mem_size == 0:
         get_bfgs_fn = lambda H,scaleH0, *_ : bfgsHI.bfgsHessianInverse(H,scaleH0)
         lbfgs_args  = None
-        print("CAll BFGS: Skip LBFGS for now")
+        dbg_print("CAll BFGS: Skip LBFGS for now")
     else:
-        print("LBFGS:TODO")
+        dbg_print("LBFGS:TODO")
         # get_bfgs_fn = @bfgsHessianInverseLimitedMem;
         # lbfgs_args  = {     opts.limited_mem_fixed_scaling,     ...
         #                     opts.limited_mem_size,              ...
@@ -90,7 +93,39 @@ def prescalingEnabledMsgs():
     return [title,pre,post]
 
 def getTerminationMsgLines(soln,constrained,width):
-    pass
+    if soln.termination_code == 0:
+        s = convergedToTolerancesMsg(constrained)
+    elif soln.termination_code ==  1:
+        s = progressSlowMsg(constrained)
+    elif soln.termination_code ==  2:
+        s = targetValueAttainedMsg(constrained)
+    elif soln.termination_code ==  3:
+        s = "halt signaled by user via opts.halt_log_fn."
+    elif soln.termination_code ==  4:
+        s = "max iterations reached."
+    elif soln.termination_code ==  5:
+        s = "clock/wall time limit reached."
+    elif soln.termination_code ==  6:
+        s = bracketedMinimizerFeasibleMsg(soln,constrained);          
+    elif soln.termination_code ==  7:
+        s = bracketedMinimizerInfeasibleMsg()
+    elif soln.termination_code ==  8:
+        s = failedToBracketedMinimizerMsg(soln)
+    elif soln.termination_code ==  9:
+        s = "failed to produce a descent direction."
+    #  Case 10 is no longer used
+    elif soln.termination_code ==  11:
+        s = "user-supplied functions threw an error."
+    elif soln.termination_code ==  12:
+        s = "steering aborted due to quadprog() error; see opts.halt_on_quadprog_error."
+    else:
+        s = "unknown termination condition."
+    
+    s = "PyGRANSO termination code: %d --- %s" % (soln.termination_code,s)    
+    lines = [   "Iterations:              %d" % (soln.iters),
+                "Function evaluations:    %d" % (soln.fn_evals),
+                wrapToLines(s,width,0) ]
+    return lines
 
 def getResultsLegend():
     s = "F = final iterate, B = Best (to tolerance), MF = Most Feasible"
@@ -264,7 +299,9 @@ def pygranso(n,obj_fn,user_opts=None):
     soln.BFGS_updates           = bfgs_counts
     soln.fn_evals               = penaltyfn_obj.getNumberOfEvaluations()
     soln.termination_code       = info.termination_code
-    [qp_requests,qp_errs]       = solveQP.solveQP('counts')
+
+    
+    [qp_requests,qp_errs]       = getErr()
     qp_fail_rate                = 100 * (qp_errs / qp_requests)
     soln.quadprog_failure_rate  = qp_fail_rate
     if hasattr(info,"error"):
@@ -293,7 +330,7 @@ def pygranso(n,obj_fn,user_opts=None):
         if qp_fail_rate > 1:
             printer.quadprogFailureRate(qp_fail_rate)
         
-        printer.close(); 
+        printer.close()
     
          
     if hasattr(soln,"error"):
@@ -301,7 +338,7 @@ def pygranso(n,obj_fn,user_opts=None):
         print("ERROR: In the end.")
     
 
-    print("pygranso end")
+    # print("pygranso end")
 
     return -1
 

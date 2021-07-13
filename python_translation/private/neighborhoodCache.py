@@ -51,7 +51,7 @@ class nC:
             #  Note: distance(last_added_index) will be dist_to_last_added.
 
             for i in range(self.n):
-                self.distances[i]      = self.distances[i] + dist_to_last_added
+                self.distances[0,i]      = self.distances[0,i] + dist_to_last_added
             
             #  Only the (over)estimated distances which are greater than the 
             #  allowed radius will need to be computed exactly.
@@ -72,7 +72,7 @@ class nC:
                 #  no free slot available - overwrite oldest sample
                 oldest_ind              = (self.last_added_ind % self.max_size) + 1
                 self.distances[0,oldest_ind-1]   = 0
-                self.samples[:,oldest_ind-1]   = x
+                self.samples[:,oldest_ind-1]   = x.reshape(x.size)
                 self.data[0,oldest_ind-1]        = x_data
                 self.last_added_ind          = oldest_ind
             

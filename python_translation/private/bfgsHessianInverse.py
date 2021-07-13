@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.core.numeric import Inf
-
+from pygransoStruct import genral_struct
 
 class H_obj_struct:
     
@@ -35,7 +35,7 @@ class H_obj_struct:
             # before the first update only
             
             # gamma = sty/np.dot(np.transpose(y),y) 
-            gamma = sty/(y.H @ y) 
+            gamma = sty/(y.T @ y) 
 
             if np.isinf(gamma) or np.isnan(gamma):
                 skipped     = 1
@@ -54,7 +54,7 @@ class H_obj_struct:
         # Hy = np.dot(self.H,y)
         # rhoHyst = np.dot((rho*Hy),np.transpose(s) ) 
         Hy = self.H @ y
-        rhoHyst = (rho*Hy) @ s.H
+        rhoHyst = (rho*Hy) @ s.T
 
         #   old version: update may not be symmetric because of rounding
         #  H = H - rhoHyst' - rhoHyst + rho*s*(y'*rhoHyst) + rho*s*s';
@@ -65,10 +65,10 @@ class H_obj_struct:
         #  ytHy could be < 0 if H not numerically pos def
         
         # ytHy = np.dot(np.transpose(y),Hy)
-        ytHy = y.H @ Hy
+        ytHy = y.T @ Hy
         sstfactor = max([rho*rho*ytHy + rho,  0])
         sscaled = np.sqrt(sstfactor)*s
-        H_new = self.H - (rhoHyst.H + rhoHyst) + sscaled @ sscaled.H
+        H_new = self.H - (rhoHyst.T + rhoHyst) + sscaled @ sscaled.T
 
         #  only update H if H_new doesn't contain any infs or nans
         H_vec = np.reshape(H_new, (H_new.size,1))
@@ -98,10 +98,14 @@ class H_obj_struct:
         return H_out
 
     def getCounts(self):
-        counts = { "requests" : self.requests,"updates" : self.updates,\
-                    "damped_requests" : self.damped_requests, "damped_updates" : self.damped_updates,\
-                    "scaling_skips" : self.scale_fails, "sty_fails" : self.sty_fails,\
-                    "infnan_fails" : self.infnan_fails}     
+        counts = genral_struct()
+        setattr(counts,"requests",self.requests)
+        setattr(counts,"updates",self.updates)
+        setattr(counts,"damped_requests",self.damped_requests)
+        setattr(counts,"damped_updates",self.damped_updates)
+        setattr(counts,"scaling_skips",self.scale_fails)
+        setattr(counts,"sty_fails",self.sty_fails)
+        setattr(counts,"infnan_fails",self.infnan_fails)
         return counts
 
 

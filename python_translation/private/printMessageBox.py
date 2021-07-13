@@ -117,7 +117,7 @@ def printMessageBox(use_ascii,use_orange,margin_spaces,title_top,title_bottom,ms
     if use_orange:
         print_fn        = lambda strPrint : pO.printOrange(strPrint)
     else:
-        print_fn        = lambda strPrint : print(strPrint)
+        print_fn        = lambda strPrint : print(strPrint,end="")
     
     
     

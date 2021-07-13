@@ -1,7 +1,8 @@
 from math import inf
 import numpy as np
 import numpy.linalg as LA
-from private.solveQP import Class_solveQP
+from private.solveQP import solveQP
+from dbg_print import dbg_print
 
 class qpSS:
     def __init__(self):
@@ -131,11 +132,10 @@ class qpSS:
         #     print(e)
         #     print("PyGRANSO steeringQuadprogFailure: Steering aborted due to a quadprog failure.")
 
-        print("Skip try & except in qpsteering strategy")
+        dbg_print("Skip try & except in qpsteering strategy")
         if self.QPsolver == "gurobi":
-            solveQP_obj = Class_solveQP()
             #  formulation of QP has no 1/2
-            y = solveQP_obj.solveQP(self.H,self.f,None,None,self.LB,self.UB, "gurobi")
+            y = solveQP(self.H,self.f,None,None,self.LB,self.UB, "gurobi")
 
         d = -self.mu_Hinv_f_grad - (self.Hinv_c_grads @ y)
         return d

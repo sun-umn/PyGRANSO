@@ -4,6 +4,7 @@ from private import optionValidator as oV
 import numpy as np
 from scipy import sparse
 from pygransoStruct import Options
+from dbg_print import dbg_print
 
 def gransoOptions(n,options):
     """
@@ -52,7 +53,7 @@ def gransoOptions(n,options):
     #  Tobedel later
     opts = postProcess(n,user_opts)
 
-    print('pygransoOptions: currently assume all options are legal \n') 
+    dbg_print('pygransoOptions: currently assume all options are legal \n') 
     return opts
 
 def postProcess(n,opts):
@@ -121,7 +122,10 @@ def getDefaults(n):
     setattr(default_opts,'viol_eq_tol',1e-6)
     setattr(default_opts,'ngrad',min([100,2*n,n+10]))
     setattr(default_opts,'evaldist',1e-4)
-    setattr(default_opts,'maxit',1000)
+
+    dbg_print("pygransoOptions: set default maxit to a small # for now. Original: 1000")
+    
+    setattr(default_opts,'maxit',30)
     setattr(default_opts,'maxclocktime',Inf)
     setattr(default_opts,'fvalquit',-Inf)
     setattr(default_opts,'halt_on_quadprog_error',False)

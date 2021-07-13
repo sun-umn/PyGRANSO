@@ -1,4 +1,5 @@
 from pygransoStruct import Options, sub_validators_struct
+from dbg_print import dbg_print
 
 def optionValidator( program_name, default_opts,sub_validators=None, sub_optname=None):
     # optionValidator:
@@ -11,7 +12,7 @@ def optionValidator( program_name, default_opts,sub_validators=None, sub_optname
     def checkAndSetSubValidators():
         # if sub_validators != None:
         #     cellfun(@checkAndSetSubValidator,fieldnames(sub_validators));    
-        print('optionValidator checkAndSetSubValidators: TODO')
+        dbg_print('optionValidator checkAndSetSubValidators: TODO')
 
 
     # function checkAndSetSubValidator(name)
@@ -59,7 +60,7 @@ def optionValidator( program_name, default_opts,sub_validators=None, sub_optname
 
     # Optional suboptname 4th argument
     if sub_optname != None:
-        print("optionValidator sub_optname: TODO")
+        dbg_print("optionValidator sub_optname: TODO")
     #     assert( ischar(sub_optname), id_str, 'Input ''sub_optname'' must be a string!'   );
     #     invalid_str = [ err_id ': .' sub_optname '.%s must be %s.' ];
     #     custom_str  = [ err_id ': .' sub_optname ': %s' ];
@@ -67,7 +68,7 @@ def optionValidator( program_name, default_opts,sub_validators=None, sub_optname
     #     invalid_str = [ err_id ': .%s must be %s.' ];
     #     custom_str  = [ err_id ': %s' ];
     
-    print("optionValidator: currently assume all provided options are legal\n")
+    dbg_print("optionValidator: currently assume all provided options are legal\n")
     # assertFn = lambda tf,varargin : assert(tf,err_id,varargin{:})
     
 

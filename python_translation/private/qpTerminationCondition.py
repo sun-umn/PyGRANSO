@@ -1,5 +1,6 @@
 import numpy as np
-from private.solveQP import Class_solveQP
+from private.solveQP import solveQP
+from dbg_print import dbg_print
 
 class qpTC:
     def __init__(self):
@@ -48,9 +49,8 @@ class qpTC:
 
         # Choose solver
         if QPsolver == "gurobi":
-            solveQP_obj = Class_solveQP()
             #  formulation of QP has no 1/2
-            self.solveQP_fn = lambda H: solveQP_obj.solveQP(H,f,Aeq,beq,LB,UB,QPsolver)
+            self.solveQP_fn = lambda H: solveQP(H,f,Aeq,beq,LB,UB,QPsolver)
 
         [y,_,qps_solved,ME] = self.solveQPRobust()
       
@@ -75,7 +75,7 @@ class qpTC:
         x = self.solveQP_fn(self.H)
         # return [x,lambdas,stat_type,ME]
            
-        print("qpTerminationCondition: ignore other 3 Fall back strategies for now")
+        dbg_print("qpTerminationCondition: ignore other 3 Fall back strategies for now")
         
         return [x,lambdas,stat_type,ME]
     

@@ -1,6 +1,7 @@
 from pygransoStruct import genral_struct
 from private import pygransoConstants as pC, pygransoPrinterColumns as pPC, printMessageBox as pMB
 from private.tablePrinter import tP
+from dbg_print import dbg_print
 
 class pgP:
     def __init__(self):
@@ -90,11 +91,11 @@ class pgP:
         msg_box_fn = lambda varargin:  pMB.printMessageBox(ascii,use_orange,varargin)
         
         printer = genral_struct
-        setattr(printer, "msg", lambda : self.table_printer.msg() )
+        setattr(printer, "msg", lambda s: self.table_printer.msg(s) )
         setattr(printer, "close", lambda : self.table_printer.close() )
         setattr(printer, "msgWidth", lambda : self.table_printer.msgWidth() )
         setattr(printer, "init", lambda penfn_at_x,stat_value,n_qps: self.init(penfn_at_x,stat_value,n_qps))
-        setattr(printer, "iter", lambda penfn_at_x,sd_code,random_attempts,ls_evals,alpha,n_grads,stat_value,n_qps:
+        setattr(printer, "iter", lambda iter, penfn_at_x,sd_code,random_attempts,ls_evals,alpha,n_grads,stat_value,n_qps:
                                      self.iteration(iter, penfn_at_x,sd_code,random_attempts,ls_evals,alpha,n_grads,stat_value,n_qps))
         setattr(printer, "summary", lambda name,penfn_at_x: self.summary(name,penfn_at_x))
         setattr(printer, "unscaledMsg", lambda : self.unscaledMsg())
@@ -132,16 +133,16 @@ class pgP:
         viol_values = self.viol_vals_fn(penfn_at_x)
         info_values = self.infoValues( sd_code, random_attempts, ls_evals, alpha, n_grads )
                                 
-        self.table_printer.row(  self.iter_c.format_fn(iter), pen_values, self.obj_c.format_fn(penfn_at_x.f),
-                            viol_values, info_values, self.stat_c.format_fn(stat_value,n_qps)          )
+        self.table_printer.row(  (self.iter_c.format_fn(iter),) + pen_values + ( self.obj_c.format_fn(penfn_at_x.f),) +
+                            viol_values + info_values + (self.stat_c.format_fn(stat_value,n_qps),)          )
 
     def summary(self,name,penfn_at_x):   
         viol_values = self.viol_vals_fn(penfn_at_x)
         info_values = (self.sd_c.blank_str, self.ls_evals_c.blank_str, self.ls_size_c.blank_str, self.ngrad_c.blank_str)
                         
-        self.table_printer.row(  self.iter_c.format_str(name), self.mu_c.blank_str, 
-                            self.pen_c.blank_str, self.obj_c.format_fn(penfn_at_x.f), 
-                            viol_values, info_values, self.stat_c.blank_str )
+        self.table_printer.row(  (self.iter_c.format_str(name),) + (self.mu_c.blank_str,)+ 
+                            (self.pen_c.blank_str,) + (self.obj_c.format_fn(penfn_at_x.f), ) +
+                            viol_values + info_values + (self.stat_c.blank_str,) )
     
 
     def unscaledMsg(self):
@@ -210,7 +211,7 @@ class pgP:
         t2 = "PyGRANSO: QUADPROG ERROR IN %s QP - END"%(loc)    
 
         # err_str                 = getReport(err)
-        print("TODO: skip pygransoPrinter.printQPError for now")
+        dbg_print("TODO: skip pygransoPrinter.printQPError for now")
         
         #  Get rid of the stack trace info and just show the root cause
         # indx                    = strfind(err_str,'Caused by:');
@@ -236,7 +237,7 @@ class pgP:
     #  private function to print PyGRANSO's opening header with name, author,
     #  copyright, problem specs, and whether limited-memory mode is active
     def gransoHeader(self):
-        print("TODO: gransoHeader print copyright")
+        dbg_print("TODO: gransoHeader print copyright")
         # table_printer.msg(copyrightNotice());
         
         # % print the problem specs

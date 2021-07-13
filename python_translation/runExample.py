@@ -19,6 +19,7 @@ for dim in var_dim_map.values():
 
 opts = Options()
 opts.QPsolver = 'gurobi'
+opts.maxit = 10
 
 # call mat2vec to enable GRANSO using matrix input
 combined_fn = lambda x: mat2vec(x,var_dim_map,nvar)

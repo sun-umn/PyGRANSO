@@ -3,6 +3,7 @@ import types
 import numpy as np
 import numpy.linalg as LA
 from pygransoStruct import genral_struct
+from dbg_print import dbg_print
 
 def assertFnOutputs(n,f,g,fn_name):
     if fn_name == "objective":
@@ -141,12 +142,15 @@ def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_thresh
         tv_l1_grad          = 0
         constrained         = False
     elif isinstance(c_fn, types.LambdaType):
-        try: 
-            [c,c_grad]      = c_fn(x0)
-        except Exception as e:
-            print(e)
-            print("PyGRANSO userSuppliedFunctionsError : failed to evaluate [c,c_grad] = {}eq_fn(x0).".format(type_str))
+        # try: 
+        #     [c,c_grad]      = c_fn(x0)
+        # except Exception as e:
+        #     print(e)
+        #     print("PyGRANSO userSuppliedFunctionsError : failed to evaluate [c,c_grad] = {}eq_fn(x0).".format(type_str))
             
+        [c,c_grad]      = c_fn(x0)
+        dbg_print("Skip try & except in makepenalty function.setupconstraint")
+
         assertFnOutputs(n,c,c_grad,type_str+"equality constraints") 
         c_grad_norms        = np.sqrt(np.sum(np.square(c_grad),0)) 
         # indices of gradients whose norms are larger than limit
@@ -220,7 +224,7 @@ class PanaltyFuctions:
         self.eval_ineq_fn(x_in) 
         self.eval_eq_fn(x_in)
 
-        print("skip try & except in  makePenaltyFunction.evaluateAtX")
+        dbg_print("skip try & except in  makePenaltyFunction.evaluateAtX")
 
         self.x                   = x_in
         self.feasible_to_tol     = self.is_feasible_to_tol_fn(self.tvi,self.tve);  
@@ -468,13 +472,20 @@ class PanaltyFuctions:
             best_unscaled   = ()
         
         soln = genral_struct()
-        setattr(soln,scalings_field[0],scalings_field[1])
-        setattr(soln,final_field[0],final_field[1])
-        setattr(soln,final_unscaled[0],final_unscaled[1])
-        setattr(soln,best_field[0],best_field[1])
-        setattr(soln,best_unscaled[0],best_unscaled[1])
-        setattr(soln,feas_field[0],feas_field[1])
-        setattr(soln,feas_unscaled[0],feas_unscaled[1])
+        if scalings_field != ():
+            setattr(soln,scalings_field[0],scalings_field[1])
+        if final_unscaled != ():
+            setattr(soln,final_field[0],final_field[1])
+        if final_unscaled != ():
+            setattr(soln,final_unscaled[0],final_unscaled[1])
+        if best_field != ():
+            setattr(soln,best_field[0],best_field[1])
+        if best_unscaled != ():
+            setattr(soln,best_unscaled[0],best_unscaled[1])
+        if feas_field != ():
+            setattr(soln,feas_field[0],feas_field[1])
+        if feas_unscaled != ():
+            setattr(soln,feas_unscaled[0],feas_unscaled[1])
         
         stat_value_o = self.stat_value
         return [soln, stat_value_o]
@@ -517,12 +528,15 @@ class PanaltyFuctions:
         # objective and its gradient
     
         # originally: if nargin < 4. Currently we only allow combinefns
-        try: 
-            [self.f,self.f_grad,self.obj_fn,ineq_fn,eq_fn] = splitEvalAtX(self.obj_fn,self.x)
-        except Exception as e:
-            print(e)         
-            print("\n error handler TODO: failed to evaluate [f,grad,ci,ci_grad,ce,ce_grad] = obj_fn(x0). \n")
+        # try: 
+        #     [self.f,self.f_grad,self.obj_fn,ineq_fn,eq_fn] = splitEvalAtX(self.obj_fn,self.x)
+        # except Exception as e:
+        #     print(e)         
+        #     print("\n error handler TODO: failed to evaluate [f,grad,ci,ci_grad,ce,ce_grad] = obj_fn(x0). \n")
         
+        dbg_print("Skip try & except in makepenalty function.makePenaltyFunction")
+        [self.f,self.f_grad,self.obj_fn,ineq_fn,eq_fn] = splitEvalAtX(self.obj_fn,self.x)
+
         assertFnOutputs(n,self.f,self.f_grad,'objective')
 
         prescaling_threshold = params.prescaling_threshold
