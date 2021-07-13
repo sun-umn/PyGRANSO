@@ -90,7 +90,7 @@ class H_obj_struct:
         return skipped
 
     def applyH(self,q):
-        r = self.H*q 
+        r = self.H @q 
         return r
 
     def getState(self):

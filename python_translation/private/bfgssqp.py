@@ -67,7 +67,7 @@ class AlgBFGSSQP():
         self.regularize_threshold        = opts.regularize_threshold
         self.regularize_max_eigenvalues  = opts.regularize_max_eigenvalues
         
-        self.quadprog_opts               = opts.quadprog_opts
+        self.QPsolver               = opts.QPsolver
 
         #  line search parameters
         wolfe1                      = opts.wolfe1
@@ -159,7 +159,7 @@ class AlgBFGSSQP():
                                 penaltyfn_parts,    H, 
                                 steering_l1_model,  steering_ineq_margin, 
                                 steering_maxit,     steering_c_viol, 
-                                steering_c_mu,      self.quadprog_opts           )
+                                steering_c_mu,      self.QPsolver           )
 
         self.linesearch_fn   = lambda x,f,g,p,ls_maxit: lWW.linesearchWeakWolfe( 
                                 x, f, g, p,                                  
@@ -211,6 +211,7 @@ class AlgBFGSSQP():
                 # except Exception as e:
                 #     print(e)
                 #     print("PyGRANSO:steeringQuadprogFailure")
+                print("Skip try & except in bfgssqp")
                 [p,mu_new,*_] = steering_fn(self.penaltyfn_at_x,apply_H_steer)
 
                 penalty_parameter_changed = (mu_new != self.mu)
@@ -464,7 +465,7 @@ class AlgBFGSSQP():
         
         #  nonsmooth optimality measure
         [stat_vec,n_qps,ME] = qpTC.qpTerminationCondition(   self.penaltyfn_at_x, grad_samples,
-                                                        self.apply_H_QP_fn, self.quadprog_opts)
+                                                        self.apply_H_QP_fn, self.QPsolver)
         stat_value = LA.norm(stat_vec)
         self.penaltyfn_obj.addStationarityMeasure(stat_value)
         

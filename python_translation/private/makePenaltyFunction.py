@@ -217,7 +217,7 @@ class PanaltyFuctions:
         self.tv_l1               = self.tvi_l1 + self.tve_l1
         self.tv_l1_grad          = self.tvi_l1_grad + self.tve_l1_grad
         self.p                   = self.mu*self.f + self.tv_l1
-        self.p_grad              = self.mu*self.f_grad + self.tv_l1_grad
+        self.p_grad              = self.mu*self.f_grad + self.tv_l1_grad.reshape(self.f_grad.shape)
         
         # update best points encountered so far
         self.update_best_fn()
@@ -258,7 +258,7 @@ class PanaltyFuctions:
     def updatePenaltyParameter(self,mu_new):
         self.mu              = mu_new
         self.p               = self.mu*self.f + self.tv_l1
-        self.p_grad          = self.mu*self.f_grad + self.tv_l1_grad
+        self.p_grad          = self.mu*self.f_grad + self.tv_l1_grad.reshape(self.f_grad.shape)
         p_new           = self.p
         p_grad_new      = self.p_grad;   
         return [p_new,p_grad_new,mu_new] 
@@ -563,7 +563,7 @@ class PanaltyFuctions:
         self.tv_l1           = self.tvi_l1 + self.tve_l1
         self.tv_l1_grad      = self.tvi_l1_grad + self.tve_l1_grad
         self.p               = self.mu*self.f + self.tv_l1
-        self.p_grad          = self.mu*self.f_grad + self.tv_l1_grad
+        self.p_grad          = self.mu*self.f_grad + self.tv_l1_grad.reshape(self.f_grad.shape)
         
         #  to be able to rollback to a previous iterate and mu, specifically
         #  last time snapShot() was invoked
