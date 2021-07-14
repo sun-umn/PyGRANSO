@@ -19,7 +19,7 @@ for dim in var_dim_map.values():
 
 opts = Options()
 opts.QPsolver = 'gurobi'
-opts.maxit = 10
+opts.maxit = 3
 opts.x0 = np.ones((nvar,1))
 
 # call mat2vec to enable GRANSO using matrix input

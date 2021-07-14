@@ -10,6 +10,9 @@ from private.isRow import isRow
 from private.isColumn import isColumn
 from private.isMbyN import isMbyN
 from private.isPositiveDefinite import isPositiveDefinite
+from private.isString import isString
+import numpy as np
+import copy
 
 class oV:
     def __init__(self):
@@ -69,47 +72,45 @@ class oV:
         validator = genral_struct()
         setattr(validator, "setUserOpts", lambda some_user_opts : self.setUserOpts(some_user_opts))
         setattr(validator, "assert", lambda tf, error_msg : self.customAssert(tf, error_msg))
-        
-        validator = struct(                                             ...
-        'setUserOpts',                  @setUserOpts,               ...
-        'assert',                       @customAssert,              ...
-        'isSpecified',                  @isSpecified,               ...
-        'validateValue',                @validateValue,             ...
-        'validateAndSet',               @validateAndSet,            ...
-        'getValue',                     @getValue,                  ...
-        'getDefaultOpts',               @getDefaultOpts,            ...
-        'getValidatedOpts',             @getValidatedOpts,          ...
-        'setLogical',                   @setLogical,                ...
-        'setStruct',                    @setStruct,                 ...
-        'setStructWithFields',          @setStructWithFields,       ... 
-        'setStructWithValidation',      @setStructWithValidation,   ...
-        'setFunctionHandle',            @setFunctionHandle,         ...
-        'setInteger',                   @setInteger,                ...
-        'setIntegerPositive',           @setIntegerPositive,        ...
-        'setIntegerNegative',           @setIntegerNegative,        ...
-        'setIntegerNonnegative',        @setIntegerNonnegative,     ...
-        'setIntegerNonpositive',        @setIntegerNonpositive,     ...
-        'setIntegerInRange',            @setIntegerInRange,         ...
-        'setReal',                      @setReal,                   ...
-        'setRealPositive',              @setRealPositive,           ...
-        'setRealNegative',              @setRealNegative,           ...
-        'setRealNonnegative',           @setRealNonnegative,        ...
-        'setRealNonpositive',           @setRealNonpositive,        ...
-        'setRealInIntervalOO',          @setRealInIntervalOO,       ...
-        'setRealInIntervalOC',          @setRealInIntervalOC,       ...
-        'setRealInIntervalCO',          @setRealInIntervalCO,       ...
-        'setRealInIntervalCC',          @setRealInIntervalCC,       ...
-        'setFiniteValued',              @setFiniteValued,           ...
-        'setRealValued',                @setRealValued,             ...
-        'setRealFiniteValued',          @setRealFiniteValued,       ...
-        'setNonZero',                   @setNonZero,                ...
-        'setRow',                       @setRow,                    ...
-        'setRowDimensioned',            @setRowDimensioned,         ...
-        'setColumn',                    @setColumn,                 ...
-        'setColumnDimensioned',         @setColumnDimensioned,      ...
-        'setDimensioned',               @setDimensioned,            ...
-        'setSparse',                    @setSparse,                 ...
-        'setPositiveDefinite',          @setPositiveDefinite        );
+        setattr(validator, "isSpecified", lambda name : self.isSpecified(name))
+        setattr(validator, "validateValue", lambda opt_name, validate_fn, error_msg : self.validateValue(opt_name, validate_fn, error_msg))
+        setattr(validator, "validateAndSet", lambda opt_name, validate_fn, error_msg : self.validateAndSet(opt_name, validate_fn, error_msg))
+        setattr(validator, "getValue", lambda opt_name : self.getValue(opt_name))
+        setattr(validator, "getDefaultOpts", lambda  : self.getDefaultOpts())
+        setattr(validator, "getValidatedOpts", lambda : self.getValidatedOpts( ))
+        setattr(validator, "setLogical", lambda name : self.setLogical(name))
+        setattr(validator, "setStruct", lambda name : self.setStruct(name))
+        setattr(validator, "setStructWithFields", lambda name, varargin : self.setStructWithFields(name, varargin))
+        setattr(validator, "setStructWithValidation", lambda name : self.setStructWithValidation(name))
+        setattr(validator, "setFunctionHandle", lambda name : self.setFunctionHandle(name))
+        setattr(validator, "setInteger", lambda name : self.setInteger(name))
+        setattr(validator, "setIntegerPositive", lambda  name: self.setIntegerPositive(name))
+        setattr(validator, "setIntegerNegative", lambda name: self.setIntegerNegative(name ))
+        setattr(validator, "setIntegerNonnegative", lambda name : self.setIntegerNonnegative(name))
+        setattr(validator, "setIntegerNonpositive", lambda name : self.setIntegerNonpositive(name))
+        setattr(validator, "setIntegerInRange", lambda name, l, r : self.setIntegerInRange(name, l, r))
+        setattr(validator, "setReal", lambda  name: self.setReal(name))
+        setattr(validator, "setRealPositive", lambda name: self.setRealPositive(name ))
+        setattr(validator, "setRealNegative", lambda name : self.setRealNegative(name))
+        setattr(validator, "setRealNonnegative", lambda name : self.setRealNonnegative(name))
+        setattr(validator, "setRealNonpositive", lambda name : self.setRealNonpositive(name))
+        setattr(validator, "setRealInIntervalOO", lambda  name, l, r: self.setRealInIntervalOO(name, l, r))
+        setattr(validator, "setRealInIntervalOC", lambda name, l, r: self.setRealInIntervalOC(name, l, r ))
+        setattr(validator, "setRealInIntervalCO", lambda  name, l, r: self.setRealInIntervalCO(name, l, r))
+        setattr(validator, "setRealInIntervalCC", lambda name, l, r: self.setRealInIntervalCC(name, l, r ))
+        setattr(validator, "setFiniteValued", lambda  name: self.setFiniteValued(name))
+        setattr(validator, "setRealValued", lambda name: self.setRealValued(name ))
+        setattr(validator, "setRealFiniteValued", lambda name : self.setRealFiniteValued(name))
+        setattr(validator, "setNonZero", lambda name : self.setNonZero(name))
+        setattr(validator, "setRow", lambda name : self.setRow(name))
+        setattr(validator, "setRowDimensioned", lambda  name, dim: self.setRowDimensioned(name, dim))
+        setattr(validator, "setColumn", lambda name: self.setColumn(name ))
+        setattr(validator, "setColumnDimensioned", lambda name, dim : self.setColumnDimensioned(name, dim))
+        setattr(validator, "setDimensioned", lambda name, m, n : self.setDimensioned(name, m, n))
+        setattr(validator, "setSparse", lambda name : self.setSparse(name))
+        setattr(validator, "setPositiveDefinite", lambda name : self.setPositiveDefinite(name))
+
+        setattr(validator, "setString", lambda name : self.setString(name))
 
         return validator
 
@@ -118,14 +119,14 @@ class oV:
 
     #  initialize optionProcessor with options from the user 
     def setUserOpts(self,some_user_opts):
-        self.opts        = self.default_opts.copy()
+        self.opts        = copy.deepcopy(self.default_opts) 
         assert isinstance(some_user_opts, Options), self.id_str + "%s.setUserOpts(s) requires that s is a struct." % self.ov_str 
-        self.user_opts   = some_user_opts.copy()
+        self.user_opts   = copy.deepcopy(some_user_opts)
         return
 
     #  get the default options
     def getDefaultOpts(self):
-        opts_out    = self.default_opts.copy()
+        opts_out    = copy.deepcopy(self.default_opts) 
         return opts_out
 
     #  get the processed/validated options
@@ -145,7 +146,7 @@ class oV:
     #  set the user's value if it meets the necessary conditions
     def validateAndSet(self,opt_name,validate_fn,error_msg):
         value = self.validateValue(opt_name,validate_fn,error_msg)
-        if value != None:
+        if np.any(value != None):
             setattr(self.opts,opt_name, value)  
 
     #  checks the user's option for opt_name 
@@ -158,9 +159,9 @@ class oV:
         if hasattr(self.user_opts,opt_name):
             value = getattr(self.user_opts, opt_name)  
             #  make sure the user's value is not empty 
-            assert value != None, self.invalid_str + opt_name + " nonempty"
+            assert np.any(value != None), self.invalid_str + opt_name + " nonempty"
             #  finally check the specific validation criteria
-            assert validate_fn(value) ,self.invalid_str + opt_name+error_msg
+            assert validate_fn(value) ,self.invalid_str %(opt_name,error_msg)
         
         return value
 
@@ -191,7 +192,7 @@ class oV:
         self.validateAndSet( name, lambda x: isinstance(x,genral_struct) and [hasattr(x,field) for field in varargin], "a struct with fields: %s" % ", ".join(varargin) )  
         
         sub_struct      = makeStructWithFields(varargin)
-        user_sub_struct = getattr(self.user_opts, name).copy()
+        user_sub_struct = copy.deepcopy(getattr(self.user_opts, name))
         sub_validator   = self.optionValidator(self.program_name,sub_struct,None,name)
         sub_validator.setUserOpts(user_sub_struct)
         return sub_validator
@@ -200,7 +201,7 @@ class oV:
         if self.isSpecified(name):
             self.setStruct(name)
             validated_sub_opts = getattr(self.sub_validators,name)(getattr(self.user_opts,name))
-            getattr(self.opts,name) = validated_sub_opts
+            setattr(self.opts,name,validated_sub_opts)
         return 
     
     def setInteger(self,name):
@@ -224,7 +225,7 @@ class oV:
         return
 
     def setIntegerInRange(self,name,l,r):
-        self.validateAndSet( name, lambda x: isAnInteger(x) and l <= x and x <= r, "an integer in {%g,...,%g}",(l,r) )
+        self.validateAndSet( name, lambda x: isAnInteger(x) and l <= x and x <= r, "an integer in {%g,...,%g}"%(l,r) )
         return 
 
     def setReal(self,name):
@@ -306,6 +307,10 @@ class oV:
       
     def setPositiveDefinite(self,name):
         self.validateAndSet( name, lambda x: isFiniteValued(x) and isPositiveDefinite(x), "a positive definite matrix")
+        return
+
+    def setString(self,name):
+        self.validateAndSet( name,lambda x: isString(x), "a string")
         return
 
     # Todo

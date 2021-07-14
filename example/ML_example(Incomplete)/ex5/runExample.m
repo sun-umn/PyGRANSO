@@ -42,6 +42,7 @@ end
 % opts.quadprog_opts.QPsolver = 'quadprog';
 opts.quadprog_opts.QPsolver = 'gurobi';
 opts.x0 = ones(nvar,1);
+opts.maxit = 3;
 
 %% call mat2vec to enable GRANSO using matrix input
 combined_fn = @(x) mat2vec(x,var_dim_map,nvar);
