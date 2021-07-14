@@ -36,19 +36,22 @@ def wrapToLines(str_in,width,indent):
         word_end    = position - 1 + chars
         if word_end > width:
             count           = count + 1
-            lines[count]    = line
+            lines[count-1]    = line
             line            = getBlankLine(width)
             position        = 1 + indent
             word_end        = position - 1 + chars
         
         line_lst = list(line)
+        word_lst = list(word)
+        ii = 0
         for i in range(position-1,word_end):
-            line_lst[i] = word
+            line_lst[i] = word_lst[ii]
+            ii += 1
         line = "".join(line_lst)
       
-        if j == len(words):
+        if j == len(words)-1:
             count           = count + 1
-            lines[count]    = line
+            lines[count-1]    = line
         elif word[-1] == "." or word[-1] == "?" or word[-1] == "!":
             position = position + chars + 2
         else:

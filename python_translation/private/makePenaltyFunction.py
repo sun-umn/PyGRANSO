@@ -31,30 +31,34 @@ def assertFnOutputs(n,f,g,fn_name):
 def assertFn(cond,arg_name,fn_name,msg):
     assert cond,("PyGRANSO userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(arg_name,fn_name,msg)  )                                 
 
-def splitEvalAtX(eval_at_x_fn,x0):
+class Class_splitEvalAtX:
+    def __init__(self):
+        pass
+
+    def splitEvalAtX(self,eval_at_x_fn,x0):
+        
+        self.eval_at_x_fn = eval_at_x_fn
+        [f,f_grad,self.ci,self.ci_grad,self.ce,self.ce_grad] = self.eval_at_x_fn(x0)
     
-    def objective(x):
-        [f,g,ci,ci_grad,ce,ce_grad] = eval_at_x_fn(x)
+        obj_fn = lambda x : self.objective(x)
+        ineq_fn = (lambda varargin: self.inequality(varargin) ) if (isinstance(self.ci,np.ndarray)) else (None)
+        eq_fn = (lambda varargin: self.equality(varargin) ) if (isinstance(self.ce,np.ndarray)) else (None)
+        
+        return [f,f_grad,obj_fn,ineq_fn,eq_fn] 
+
+    def objective(self,x):
+        [f,g,self.ci,self.ci_grad,self.ce,self.ce_grad] = self.eval_at_x_fn(x)
         return [f,g]
 
-    def inequality(varargin):
-        c       = ci
-        c_grad  = ci_grad
+    def inequality(self,varargin):
+        c       = self.ci
+        c_grad  = self.ci_grad
         return [c,c_grad]
     
-    def equality(varargin):
-        c       = ce
-        c_grad  = ce_grad
+    def equality(self,varargin):
+        c       = self.ce
+        c_grad  = self.ce_grad
         return [c,c_grad]
-
-    [f,f_grad,ci,ci_grad,ce,ce_grad] = eval_at_x_fn(x0)
-  
-    obj_fn = lambda x : objective(x)
-    ineq_fn = (lambda varargin: inequality(varargin) ) if (isinstance(ci,np.ndarray)) else (None)
-    eq_fn = (lambda varargin: equality(varargin) ) if (isinstance(ce,np.ndarray)) else (None)
-    
-    
-    return [f,f_grad,obj_fn,ineq_fn,eq_fn] 
 
 def rescaleObjective(x,fn,scaling):
     [f,g]   = fn(x)
@@ -63,9 +67,9 @@ def rescaleObjective(x,fn,scaling):
     return [f,g]
 
 def violationsInequality(ci):
-    vi = ci
-    violated_indx = (ci >= 0)
-    vi[~violated_indx] = 0
+    vi = ci.copy()
+    violated_indx = ci >= 0
+    vi[ ~violated_indx] = 0
     return [vi,violated_indx]
 
 def violationsEquality(ce):
@@ -142,14 +146,14 @@ def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_thresh
         tv_l1_grad          = 0
         constrained         = False
     elif isinstance(c_fn, types.LambdaType):
-        # try: 
-        #     [c,c_grad]      = c_fn(x0)
-        # except Exception as e:
-        #     print(e)
-        #     print("PyGRANSO userSuppliedFunctionsError : failed to evaluate [c,c_grad] = {}eq_fn(x0).".format(type_str))
+        try: 
+            [c,c_grad]      = c_fn(x0)
+        except Exception as e:
+            print(e)
+            print("PyGRANSO userSuppliedFunctionsError : failed to evaluate [c,c_grad] = {}eq_fn(x0).".format(type_str))
             
-        [c,c_grad]      = c_fn(x0)
-        dbg_print("Skip try & except in makepenalty function.setupconstraint")
+        # [c,c_grad]      = c_fn(x0)
+        # dbg_print("Skip try & except in makepenalty function.setupconstraint")
 
         assertFnOutputs(n,c,c_grad,type_str+"equality constraints") 
         c_grad_norms        = np.sqrt(np.sum(np.square(c_grad),0)) 
@@ -202,29 +206,29 @@ class PanaltyFuctions:
 
     # evaluate objective, constraints, violation, and penalty function at x
     def evaluateAtX(self,x_in):
-        # try: 
-        #     self.at_snap_shot    = False
-        #     self.stat_value      = float("nan")
-        #     self.fn_evals        += 1
-        #     # evaluate objective and its gradient
-        #     [self.f,self.f_grad]      = self.obj_fn(x_in)
-        #     # evaluate constraints and their violations (nested update)
-        #     self.eval_ineq_fn(x_in) 
-        #     self.eval_eq_fn(x_in)
-        # except Exception as e:
-        #     print(e)   
-        #     print("PyGRANSO userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x.")
+        try: 
+            self.at_snap_shot    = False
+            self.stat_value      = float("nan")
+            self.fn_evals        += 1
+            # evaluate objective and its gradient
+            [self.f,self.f_grad]      = self.obj_fn(x_in)
+            # evaluate constraints and their violations (nested update)
+            self.eval_ineq_fn(x_in) 
+            self.eval_eq_fn(x_in)
+        except Exception as e:
+            print(e)   
+            print("PyGRANSO userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x.")
         
-        self.at_snap_shot    = False
-        self.stat_value      = float("nan")
-        self.fn_evals        += 1
-        # evaluate objective and its gradient
-        [self.f,self.f_grad]      = self.obj_fn(x_in)
-        # evaluate constraints and their violations (nested update)
-        self.eval_ineq_fn(x_in) 
-        self.eval_eq_fn(x_in)
+        # self.at_snap_shot    = False
+        # self.stat_value      = float("nan")
+        # self.fn_evals        += 1
+        # # evaluate objective and its gradient
+        # [self.f,self.f_grad]      = self.obj_fn(x_in)
+        # # evaluate constraints and their violations (nested update)
+        # self.eval_ineq_fn(x_in) 
+        # self.eval_eq_fn(x_in)
 
-        dbg_print("skip try & except in  makePenaltyFunction.evaluateAtX")
+        # dbg_print("skip try & except in  makePenaltyFunction.evaluateAtX")
 
         self.x                   = x_in
         self.feasible_to_tol     = self.is_feasible_to_tol_fn(self.tvi,self.tve);  
@@ -528,14 +532,15 @@ class PanaltyFuctions:
         # objective and its gradient
     
         # originally: if nargin < 4. Currently we only allow combinefns
-        # try: 
-        #     [self.f,self.f_grad,self.obj_fn,ineq_fn,eq_fn] = splitEvalAtX(self.obj_fn,self.x)
-        # except Exception as e:
-        #     print(e)         
-        #     print("\n error handler TODO: failed to evaluate [f,grad,ci,ci_grad,ce,ce_grad] = obj_fn(x0). \n")
+        try: 
+            splitEvalAtX_obj = Class_splitEvalAtX()
+            [self.f,self.f_grad,self.obj_fn,ineq_fn,eq_fn] = splitEvalAtX_obj.splitEvalAtX(self.obj_fn,self.x)
+        except Exception as e:
+            print(e)         
+            print("\n error handler TODO: failed to evaluate [f,grad,ci,ci_grad,ce,ce_grad] = obj_fn(x0). \n")
         
-        dbg_print("Skip try & except in makepenalty function.makePenaltyFunction")
-        [self.f,self.f_grad,self.obj_fn,ineq_fn,eq_fn] = splitEvalAtX(self.obj_fn,self.x)
+        # dbg_print("Skip try & except in makepenalty function.makePenaltyFunction")
+        # [self.f,self.f_grad,self.obj_fn,ineq_fn,eq_fn] = splitEvalAtX(self.obj_fn,self.x)
 
         assertFnOutputs(n,self.f,self.f_grad,'objective')
 

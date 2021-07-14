@@ -65,7 +65,7 @@ class qpSS:
         #  feasible, i.e., at least ineq_margin away from the feasible boundary,
         #  and no equality constraints are present.
         #  Explicitly check for infinity in case ineq contains -inf 
-        if ineq_margin != np.inf and np.any(self.ineq <= -ineq_margin) and n_eq == 0:
+        if ineq_margin != np.inf and not np.any(self.ineq >= -ineq_margin) and n_eq == 0:
             return [d,mu,reduction]
         
             

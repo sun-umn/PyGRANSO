@@ -64,7 +64,7 @@ def postProcess(n,opts):
     
     
     # If an initial starting point was not provided, use random vector
-    if opts.x0 == None:
+    if np.all(opts.x0 == None):
         opts.x0 = np.random.randn(n,1)
     
     # If an initial inverse Hessian was not provided, use the identity
@@ -104,7 +104,10 @@ def getDefaults(n):
 
     # default options for GRANSO
     default_opts = Options()
-    setattr(default_opts,'x0',None)
+    # setattr(default_opts,'x0',None)
+    setattr(default_opts,'x0',np.ones((14,1)))  
+    dbg_print("pygransoOptions: set default x0 to a all ones for now. Original: None")
+
     setattr(default_opts,'mu0',1)
     setattr(default_opts,'H0',None)
     setattr(default_opts,'checkH0',True)

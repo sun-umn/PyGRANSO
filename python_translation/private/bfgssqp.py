@@ -208,13 +208,14 @@ class AlgBFGSSQP():
                 else:
                     apply_H_steer = APPLY_IDENTITY; # "degraded" steering 
                 
-                # try:
-                #     [p,mu_new] = steering_fn(self.penaltyfn_at_x,apply_H_steer)
-                # except Exception as e:
-                #     print(e)
-                #     print("PyGRANSO:steeringQuadprogFailure")
-                dbg_print("Skip try & except in bfgssqp")
-                [p,mu_new,*_] = steering_fn(self.penaltyfn_at_x,apply_H_steer)
+                try:
+                    [p,mu_new,*_] = steering_fn(self.penaltyfn_at_x,apply_H_steer)
+                except Exception as e:
+                    print(e)
+                    print("PyGRANSO:steeringQuadprogFailure")
+
+                # dbg_print("Skip try & except in bfgssqp")
+                
 
                 penalty_parameter_changed = (mu_new != self.mu)
                 if penalty_parameter_changed: 
@@ -385,9 +386,9 @@ class AlgBFGSSQP():
 
     #  only try a few line search iterations if p is not a descent direction
     def linesearchNondescent(self,x,f,g,p):
-        [alpha,x,f,g,fail] = self.linesearch_fn( x,f,g,p,self.linesearch_nondescent_maxit )
+        [alpha,x,f,g,fail,_,_,_] = self.linesearch_fn( x,f,g,p,self.linesearch_nondescent_maxit )
         fail = 0 + 3*(fail > 0)
-        return [alpha, x, f, g, fail,_,_,_]
+        return [alpha, x, f, g, fail]
 
     #  regular weak Wolfe line search 
     #  NOTE: this function may lower variable "mu" for constrained problems
