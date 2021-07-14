@@ -122,20 +122,17 @@ class qpSS:
     #  solve dual of steering QP to yeild new search direction
     #  throws an error if QP solver failed somehow
     def solveSteeringDualQP(self):
-        # try: 
-        #     # qpalm only for linux
-        #     if self.QPsolver == "gurobi":
-        #         solveQP_obj = Class_solveQP()
-        #         #  formulation of QP has no 1/2
-        #         y = solveQP_obj.solveQP(self.H,self.f,None,None,self.LB,self.UB, "gurobi")
-        # except Exception as e:
-        #     print(e)
-        #     print("PyGRANSO steeringQuadprogFailure: Steering aborted due to a quadprog failure.")
+        try: 
+            # qpalm only for linux
+            if self.QPsolver == "gurobi":
+                #  formulation of QP has no 1/2
+                y = solveQP(self.H,self.f,None,None,self.LB,self.UB, "gurobi")
+        except Exception as e:
+            print(e)
+            print("PyGRANSO steeringQuadprogFailure: Steering aborted due to a quadprog failure.")
 
-        dbg_print("Skip try & except in qpsteering strategy")
-        if self.QPsolver == "gurobi":
-            #  formulation of QP has no 1/2
-            y = solveQP(self.H,self.f,None,None,self.LB,self.UB, "gurobi")
+        # dbg_print("Skip try & except in qpsteering strategy")
+        
 
         d = -self.mu_Hinv_f_grad - (self.Hinv_c_grads @ y)
         return d

@@ -2,6 +2,7 @@ from pygransoStruct import genral_struct
 from private import pygransoConstants as pC, pygransoPrinterColumns as pPC, printMessageBox as pMB
 from private.tablePrinter import tP
 from dbg_print import dbg_print
+from private.nDigitsInWholePart import nDigitsInWholePart
 
 class pgP:
     def __init__(self):
@@ -238,31 +239,25 @@ class pgP:
     #  copyright, problem specs, and whether limited-memory mode is active
     def gransoHeader(self):
         dbg_print("TODO: gransoHeader print copyright")
-        # table_printer.msg(copyrightNotice());
+        # self.table_printer.msg(copyrightNotice());
         
-        # % print the problem specs
-        # w       = nDigitsInWholePart(max([n n_ineq n_eq])) + 2;
-        # spec_fn = @(s,n) sprintf(' %-35s: %*d',sprintf('# of %s',s),w,n);
+        #  print the problem specs
+        w       = nDigitsInWholePart(max([self.n, self.n_ineq, self.n_eq])) + 2
+        spec_fn = lambda s,n: " %-35s: %*d"%("# of %s"%s,w,n)
         
-        # msg = {                                                         ...
-        #     'Problem specifications:',                                  ...
-        #     spec_fn('variables',n),                                     ...
-        #     spec_fn('inequality constraints',n_ineq),                   ...
-        #     spec_fn('equality constraints',n_eq),                       ...
-        #     };
-        # table_printer.msg(msg);
+        msg = ["Problem specifications:", spec_fn("variables",self.n), spec_fn("inequality constraints",self.n_ineq), spec_fn("equality constraints",self.n_eq)]
+        self.table_printer.msg(msg)
         
-        # % print limited memory message, if enabled
-        # nvec = opts.limited_mem_size;
-        # if nvec <= 0
-        #     return
-        # end
-        # msg = {                                                         ...
-        #     sprintf('Limited-memory mode enabled with size = %d.',nvec) ...
-        #     [   'NOTE: limited-memory mode is generally NOT '           ...
-        #     'recommended for nonsmooth problems.']                  ...
-        #     };
-        # table_printer.msgOrange(msg);
+        #  print limited memory message, if enabled
+        nvec = self.opts.limited_mem_size
+        if nvec <= 0:
+            return
+        
+        msg = ["Limited-memory mode enabled with size = %d."%nvec,
+               "NOTE: limited-memory mode is generally NOT ",
+               "recommended for nonsmooth problems." ] 
+
+        self.table_printer.msgOrange(msg)
         
         
 

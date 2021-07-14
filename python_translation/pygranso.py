@@ -126,7 +126,7 @@ def pygranso(n,obj_fn,user_opts=None):
 
     # print("pygranso end")
 
-    return -1
+    return soln
 
 
 
