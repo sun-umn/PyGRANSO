@@ -452,7 +452,7 @@ class AlgBFGSSQP():
             n_samples   = 1
             dist_evals  = 0
             self.penaltyfn_obj.addStationarityMeasure(stat_value)
-            return
+            return [  stat_vec, stat_value, n_qps, n_samples, dist_evals ]
       
         #  otherwise, we must do a nonsmooth stationary point test
             

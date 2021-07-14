@@ -16,9 +16,9 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
     """
 
     alpha = 0  # lower bound on steplength conditions
-    xalpha = x0
+    xalpha = x0.copy()
     falpha = f0
-    gradalpha = grad0 # need to pass grad0, not grad0'*d, in case line search fails
+    gradalpha = grad0.copy() # need to pass grad0, not grad0'*d, in case line search fails
     beta = np.inf  # upper bound on steplength satisfying weak Wolfe conditions
     gradbeta = np.empty(x0.shape)
     gradbeta[:] = np.nan
@@ -40,30 +40,30 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
         if is_feasible and not np.isnan(f) and f <= fvalquit and not np.isinf(f): 
             fail = 0
             alpha = t  # normally beta is inf
-            xalpha = x
+            xalpha = x.copy()
             falpha = f
-            gradalpha = grad
+            gradalpha = grad.copy()
             return [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals] 
         
         gtd = grad.T @ d
         #  the first condition must be checked first. NOTE THE >=.
-        if f >= f0 + c1*t*g0 and np.isnan(f): # first condition violated, gone too far
+        if f >= f0 + c1*t*g0 or np.isnan(f): # first condition violated, gone too far
             beta = t
-            gradbeta = grad # discard f
+            gradbeta = grad.copy() # discard f
         #  now the second condition.  NOTE THE <=
-        elif gtd <= c2*g0 and np.isnan(gtd): # second condition violated, not gone far enough
+        elif gtd <= c2*g0 or np.isnan(gtd): # second condition violated, not gone far enough
             alpha = t
-            xalpha = x
+            xalpha = x.copy()
             falpha = f
-            gradalpha = grad
+            gradalpha = grad.copy()
         else:   # quit, both conditions are satisfied
             fail = 0
             alpha = t
-            xalpha = x
+            xalpha = x.copy()
             falpha = f
-            gradalpha = grad
+            gradalpha = grad.copy()
             beta = t
-            gradbeta = grad
+            gradbeta = grad.copy()
             return [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals] 
         
         #  setup next function evaluation

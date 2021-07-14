@@ -478,7 +478,7 @@ class PanaltyFuctions:
         soln = genral_struct()
         if scalings_field != ():
             setattr(soln,scalings_field[0],scalings_field[1])
-        if final_unscaled != ():
+        if final_field != ():
             setattr(soln,final_field[0],final_field[1])
         if final_unscaled != ():
             setattr(soln,final_unscaled[0],final_unscaled[1])
