@@ -19,6 +19,9 @@ class qpTC:
         p           = l * len(penaltyfn_at_x.ci)
         q           = l * len(penaltyfn_at_x.ce)                                
     
+        # # debug here:
+        # l = 1
+
         F           = penaltyfn_at_x.f * np.ones((l,1)) 
         
         CI = penaltyfn_at_x.ci
@@ -29,13 +32,25 @@ class qpTC:
             CI = CI_new
             CE = CE_new
         
-        # convert cell array fields F, CI, CE to struct array with same
-        grads_array = gradient_samples[0]
-        #  convert struct array into individual arrays of samples
-        F_grads     = grads_array.F      # n by l
-        CI_grads    = grads_array.CI     # n by p
-        CE_grads    = grads_array.CE     # n by q 
-    
+        F_grads_lst = []
+        CI_grads_lst = []
+        CE_grads_lst = []
+        
+        for i in range(l):
+            # convert cell array fields F, CI, CE to struct array with same
+            grads_array = gradient_samples[i]
+            #  convert struct array into individual arrays of samples
+            F_grads_lst.append(grads_array.F)     # n by l
+            CI_grads_lst.append(grads_array.CI)     # n by p
+            CE_grads_lst.append(grads_array.CE)     # n by q 
+        F_grads_tmp = np.array(F_grads_lst) 
+        n = int(F_grads_tmp.size/l)
+        F_grads = F_grads_tmp.reshape((n,l))
+        CI_grads = np.array(CI_grads_lst).reshape((n,p)) 
+        CE_grads = np.array(CE_grads_lst).reshape((n,q))
+
+        dbg_print("check qpTerminationCondition dimension here. line 50")
+
         #  Set up arguments for quadprog interface
         self.all_grads   = np.hstack((CE_grads, F_grads, CI_grads))
         Hinv_grads  = apply_Hinv(self.all_grads)

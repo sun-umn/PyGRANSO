@@ -82,34 +82,3 @@ def solveQP(H,f,A,b,LB,UB,QPsolver):
             solution[i,0] = x[i]
 
         return solution
-
-# # Create variables
-    # x = m.addVars(nvar,1)
-    # lst = []
-    # for i in range(len(x)):
-    #     lst.append(x[i,0])
-    # x_vec = np.array(lst)
-    # x_vec = x_vec.reshape(nvar,1)
-    
-    # # Set objective: x.THx + f.T x
-    # obj = x_vec.T @ H @ x_vec + f.T @ x_vec
-    # m.setObjective(obj[0][0])
-    
-    
-
-
-    
-    # # LB and UB always exist
-    # m.addConstrs(x_vec[i][0] >= LB[i] for i in range(len(LB)))
-    # m.addConstrs(x_vec[i][0] <= UB[i] for i in range(len(UB)))
-    
-    #  suppress output
-    # m.Params.LogToConsole = 0
-    # m.Params.outputflag = 0
-    
-    
-
-    # result_lst = []
-    # for v in m.getVars():
-    #     result_lst.append(v.x)
-    # result  = np.array([result_lst]).T

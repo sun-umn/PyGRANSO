@@ -551,5 +551,5 @@ def getNearbyGradients(penaltyfn_obj,grad_nbd_fn):
     setattr(grads,"F",f_grad)
     setattr(grads,"CI",ci_grad)
     setattr(grads,"CE",ce_grad)
-    [*_,grads,dist_evals] = grad_nbd_fn(penaltyfn_obj.getX(), grads)
-    return [grads,dist_evals]
+    [*_,grads_ret,dist_evals] = grad_nbd_fn(penaltyfn_obj.getX(), grads)
+    return [grads_ret,dist_evals]

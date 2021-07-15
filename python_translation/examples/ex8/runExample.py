@@ -35,4 +35,6 @@ opts.x0 = np.ones((10,1))
 # call mat2vec to enable GRANSO using matrix input
 combined_fn = lambda x: mat2vec(x,var_dim_map,nvar)
 
-pygranso(nvar,combined_fn,opts)
+soln = pygranso(nvar,combined_fn,opts)
+
+print(soln.final.x)
