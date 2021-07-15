@@ -1,3 +1,5 @@
+from numpy import conjugate as conj
+
 def bfgsDamping(damping,applyH,s,y,sty):
     """
     bfgsDamping:
@@ -7,7 +9,7 @@ def bfgsDamping(damping,applyH,s,y,sty):
 
     damped      = False
     Hs          = applyH(s)
-    stHs        = s.T@Hs 
+    stHs        = conj(s.T)@Hs 
     
     if sty < damping * stHs:
         theta   = ((1 - damping) * stHs) / (stHs - sty)

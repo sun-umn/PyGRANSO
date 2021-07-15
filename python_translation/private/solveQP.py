@@ -2,6 +2,7 @@ from dbg_print import dbg_print
 import gurobipy as gp
 from gurobipy import GRB
 import numpy as np
+from numpy import conjugate as conj
 
 QP_REQUESTS = 0
 
@@ -40,6 +41,7 @@ def solveQP(H,f,A,b,LB,UB,QPsolver):
         H = H/2
 
         nvar = len(f)
+        # nvar = H.shape[0]
         # Create a new model
         m = gp.Model()
         vtype = [GRB.CONTINUOUS] * nvar

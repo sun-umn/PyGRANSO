@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.core.numeric import Inf
 from pygransoStruct import genral_struct
+from numpy import conjugate as conj
 
 class H_obj_struct:
     
@@ -35,7 +36,7 @@ class H_obj_struct:
             # before the first update only
             
             # gamma = sty/np.dot(np.transpose(y),y) 
-            gamma = sty/(y.T @ y) 
+            gamma = sty/(conj(y.T) @ y) 
 
             if np.isinf(gamma) or np.isnan(gamma):
                 skipped     = 1
@@ -54,7 +55,7 @@ class H_obj_struct:
         # Hy = np.dot(self.H,y)
         # rhoHyst = np.dot((rho*Hy),np.transpose(s) ) 
         Hy = self.H @ y
-        rhoHyst = (rho*Hy) @ s.T
+        rhoHyst = (rho*Hy) @ conj(s.T)
 
         #   old version: update may not be symmetric because of rounding
         #  H = H - rhoHyst' - rhoHyst + rho*s*(y'*rhoHyst) + rho*s*s';
@@ -65,10 +66,10 @@ class H_obj_struct:
         #  ytHy could be < 0 if H not numerically pos def
         
         # ytHy = np.dot(np.transpose(y),Hy)
-        ytHy = y.T @ Hy
+        ytHy = conj(y.T) @ Hy
         sstfactor = max([rho*rho*ytHy + rho,  0])
         sscaled = np.sqrt(sstfactor)*s
-        H_new = self.H - (rhoHyst.T + rhoHyst) + sscaled @ sscaled.T
+        H_new = self.H - (conj(rhoHyst.T) + rhoHyst) + sscaled @ conj(sscaled.T)
 
         #  only update H if H_new doesn't contain any infs or nans
         H_vec = np.reshape(H_new, (H_new.size,1))

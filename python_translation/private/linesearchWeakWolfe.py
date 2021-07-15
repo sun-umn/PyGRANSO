@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.linalg as LA
 import math
+from numpy import conjugate as conj
 
 def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = -np.inf, eval_limit = np.inf, step_tol = 1e-12):
     """
@@ -22,7 +23,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
     beta = np.inf  # upper bound on steplength satisfying weak Wolfe conditions
     gradbeta = np.empty(x0.shape)
     gradbeta[:] = np.nan
-    g0 = grad0.T @ d 
+    g0 = conj(grad0.T) @ d 
     dnorm = LA.norm(d)
     t = 1  # important to try steplength one first
     n_evals = 0
@@ -45,7 +46,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
             gradalpha = grad.copy()
             return [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals] 
         
-        gtd = grad.T @ d
+        gtd = conj(grad.T) @ d
         #  the first condition must be checked first. NOTE THE >=.
         if f >= f0 + c1*t*g0 or np.isnan(f): # first condition violated, gone too far
             beta = t

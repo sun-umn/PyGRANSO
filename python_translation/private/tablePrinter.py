@@ -496,7 +496,7 @@ def addArrows(label,width):
    return label
 
 def formatLine(formatted_labels,vd):
-   line = vd.join(formatted_labels) + "\n"   
+   line = vd.join(formatted_labels) + vd + "\n"   
    return line
 
 def makeRules(use_ascii,h2):
@@ -577,9 +577,12 @@ def makeRules(use_ascii,h2):
       mid_rs_list[idx]     = csd                  # single line, not double
    for idx in vs_indx:
       mid_rs_list[idx]     = cs
-   for mid_rs_char in mid_rs_list:
-      if mid_rs_char == tdl:
-         mid_rs_char = tsdl
+   for i in range(len(mid_rs_list)):
+   # for mid_rs_char in mid_rs_list: 
+      if mid_rs_list[i] == tdl:
+         mid_rs_list[i] = tsdl
+      if mid_rs_list[i] == hd:
+         mid_rs_list[i] = hs
    mid_rs              = "".join(mid_rs_list)
    
    mid_rh              = mid_f                # mid rule - row to header
@@ -596,7 +599,7 @@ def makeRules(use_ascii,h2):
       mid_rf_list[idx]     = tdu                  # (also header to flat)
    for idx in vs_indx:
       mid_rf_list[idx]     = tdsu
-   mid_rf = "".join(mid_rh_list)
+   mid_rf = "".join(mid_rf_list)
    
    t = genral_struct()
    setattr(t, "f", top_f)

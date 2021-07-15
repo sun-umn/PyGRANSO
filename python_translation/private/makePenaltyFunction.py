@@ -236,7 +236,10 @@ class PanaltyFuctions:
         self.tv_l1               = self.tvi_l1 + self.tve_l1
         self.tv_l1_grad          = self.tvi_l1_grad + self.tve_l1_grad
         self.p                   = self.mu*self.f + self.tv_l1
-        self.p_grad              = self.mu*self.f_grad + self.tv_l1_grad.reshape(self.f_grad.shape)
+        if isinstance(self.tv_l1_grad,int):
+            self.p_grad              = self.mu*self.f_grad + self.tv_l1_grad
+        else:
+            self.p_grad              = self.mu*self.f_grad + self.tv_l1_grad.reshape(self.f_grad.shape)
         
         # update best points encountered so far
         self.update_best_fn()
@@ -445,11 +448,16 @@ class PanaltyFuctions:
             best_unscaled   = ()
         
         soln = genral_struct()
-        setattr(soln,scalings_field[0],scalings_field[1])
-        setattr(soln,final_field[0],final_field[1])
-        setattr(soln,final_unscaled[0],final_unscaled[1])
-        setattr(soln,best_field[0],best_field[1])
-        setattr(soln,best_unscaled[0],best_unscaled[1])
+        if scalings_field != ():
+            setattr(soln,scalings_field[0],scalings_field[1])
+        if final_field != ():
+            setattr(soln,final_field[0],final_field[1])
+        if final_unscaled != ():
+            setattr(soln,final_unscaled[0],final_unscaled[1])
+        if best_field != ():
+            setattr(soln,best_field[0],best_field[1])
+        if best_unscaled != ():
+            setattr(soln,best_unscaled[0],best_unscaled[1])
 
         stat_value_o = self.stat_value
         return [soln, stat_value_o]
@@ -586,14 +594,17 @@ class PanaltyFuctions:
             #  unconstrained problems should have fixed mu := 1 
             self.mu                          = 1
             update_penalty_parameter_fn = lambda varargin : self.penaltyParameterIsFixed(varargin)
-            self.is_feasible_to_tol_fn       = lambda : True # unconstrained is always true
+            self.is_feasible_to_tol_fn       = lambda tvi, tve: True # unconstrained is always true
         
         self.feasible_to_tol = self.is_feasible_to_tol_fn(self.tvi,self.tve)                                   
         self.tv              = max(self.tvi,self.tve)
         self.tv_l1           = self.tvi_l1 + self.tve_l1
         self.tv_l1_grad      = self.tvi_l1_grad + self.tve_l1_grad
         self.p               = self.mu*self.f + self.tv_l1
-        self.p_grad          = self.mu*self.f_grad + self.tv_l1_grad.reshape(self.f_grad.shape)
+        if isinstance(self.tv_l1_grad,int):
+            self.p_grad          = self.mu*self.f_grad + self.tv_l1_grad
+        else:
+            self.p_grad          = self.mu*self.f_grad + self.tv_l1_grad.reshape(self.f_grad.shape)
         
         #  to be able to rollback to a previous iterate and mu, specifically
         #  last time snapShot() was invoked

@@ -1,6 +1,7 @@
 import math
 import scipy.linalg as la
 import numpy as np
+from numpy import conjugate as conj
 
 def regularizePosDefMatrix(  A, condnum_limit, limit_max_eigenvalues ):
     """
@@ -37,7 +38,7 @@ def regularizePosDefMatrix(  A, condnum_limit, limit_max_eigenvalues ):
         [d,updated] = raiseSmallestEigenvalues(d,condnum_limit)
         
     if updated:
-        Areg = V@np.diag(d)@V.T
+        Areg = V@np.diag(d) @ conj(V.T)
         info = 0
 
     return [Areg,info]

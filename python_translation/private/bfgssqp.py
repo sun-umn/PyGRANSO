@@ -8,6 +8,7 @@ import math
 import numpy.linalg as LA
 import numpy as np
 from dbg_print import dbg_print
+from numpy import conjugate as conj
 
 class AlgBFGSSQP():
     def __init__(self):
@@ -356,7 +357,7 @@ class AlgBFGSSQP():
     
     def checkDirection(self,p,g):    
         fallback            = False
-        gtp                 = g.T@p
+        gtp                 = conj(g.T)@p
         if math.isnan(gtp) or math.isinf(gtp):
             is_descent      = False
             fallback        = True    
@@ -504,7 +505,7 @@ class AlgBFGSSQP():
                     
         s               = alpha*p
         y               = g - gprev
-        sty             = s.T@y
+        sty             = conj(s.T)@y
         
         if self.damping > 0:
             [y,sty,damped] = bD.bfgsDamping(self.damping,self.apply_H_fn,s,y,sty)

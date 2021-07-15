@@ -7,14 +7,14 @@ function soln = runExample()
 %       Read this source code.
 %   
 %       This tutorial example shows:
-%
+% 
 %           - how to call GRANSO using objective and constraint functions
 %             defined in combinedFunction.m 
 %       
 %           - how to set GRANSO's inputs when there aren't any 
 %             equality constraint functions (which also applies when there
 %             aren't any inequality constraints)
-%
+% 
 %   USAGE:
 %       soln = runExample();
 % 
@@ -22,7 +22,7 @@ function soln = runExample()
 %   
 %   OUTPUT:
 %       soln        GRANSO's output struct
-%
+% 
 %   See also combinedFunction. 
         
 % key
@@ -40,6 +40,7 @@ end
 
 % opts.quadprog_opts.QPsolver = 'qpalm';
 opts.quadprog_opts.QPsolver = 'quadprog';
+opts.x0 = [0.51;0.51];
 
 %% call mat2vec to enable GRANSO using matrix input
 combined_fn = @(x) mat2vec(x,var_dim_map,nvar);

@@ -1,11 +1,12 @@
+import os, sys
+currentdir = os.path.dirname(os.path.realpath(__file__))
+parentdir = os.path.dirname(currentdir)
+grandparentdir = os.path.dirname(parentdir)
+sys.path.append(grandparentdir)
 from pygranso import pygranso
 from mat2vec import mat2vec
 from pygransoStruct import Options
 import numpy as np
-
-
-
-# help(pygranso)
 
 # variable and corresponding dimensions
 var_dim_map = {"U": (3,2), "V": (4,2)}
@@ -19,8 +20,8 @@ for dim in var_dim_map.values():
 
 opts = Options()
 opts.QPsolver = 'gurobi'
-opts.maxit = 3
-opts.x0 = np.ones((nvar,1))
+opts.maxit = 100
+opts.x0 = 10*np.ones((nvar,1))
 
 # call mat2vec to enable GRANSO using matrix input
 combined_fn = lambda x: mat2vec(x,var_dim_map,nvar)

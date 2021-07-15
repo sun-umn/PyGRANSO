@@ -9,6 +9,7 @@ import numpy as np
 import copy
 from dbg_print import dbg_print
 from private.wrapToLines import wrapToLines
+from time import sleep
 
 
 def pygranso(n,obj_fn,user_opts=None):
@@ -99,7 +100,11 @@ def pygranso(n,obj_fn,user_opts=None):
     printSummary = lambda name,fieldname: printSummaryAux(name,fieldname,soln,printer)
 
     if opts.print_level:         
+        
+        
         printer.msg({ 'Optimization results:', getResultsLegend() })
+        
+        sleep(0.1)
         
         printSummary("F","final")
         printSummary("B","best")

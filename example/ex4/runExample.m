@@ -4,7 +4,7 @@ function soln = runExample()
 %       static-output-feedback (SOF) plant:
 %       
 %           M = A + BXC,
-%
+% 
 %       where A,B,C are all fixed real-valued matrices
 %           - A is n by n 
 %           - B is n by p
@@ -17,25 +17,25 @@ function soln = runExample()
 %           - n = 200
 %           - p = 10
 %           - m = 20
-%
+% 
 %       The objective is to minimize the maximum of the imaginary parts of
 %       the eigenvalues of M.  In other words, we want to restrict the
 %       spectrum of M to be contained in the smallest strip as possible
 %       centered on the x-axis (since the spectrum of M is symmetric with
 %       respect to the x-axis).
-%
+% 
 %       The (inequality) constraint is that the system must be
 %       asymptotically stable, subject to a specified stability margin.  In
 %       other words, if the stability margin is 1, the spectral abscissa 
 %       must be at most -1.
 % 
 %       Read this source code.
-%
+% 
 %   USAGE:
 %       soln = runExample();
-%
+% 
 %   INPUT: [none]
-%
+% 
 %   OUTPUT:
 %       soln        GRANSO's output struct
 

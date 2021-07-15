@@ -3,6 +3,7 @@ import numpy as np
 import numpy.linalg as LA
 from private.solveQP import solveQP
 from dbg_print import dbg_print
+from numpy import conjugate as conj
 
 class qpSS:
     def __init__(self):
@@ -42,11 +43,11 @@ class qpSS:
         #  Update (Buyun): Set up arguments for QPALM interface
         self.c_grads             = np.hstack((self.eq_grad, self.ineq_grad))
         self.Hinv_c_grads        = apply_Hinv(self.c_grads)
-        self.H                   = self.c_grads.T @ self.Hinv_c_grads
+        self.H                   = conj(self.c_grads.T) @ self.Hinv_c_grads
         #  Fix H since numerically, it is unlikely to be _perfectly_ symmetric 
-        self.H                   = (self.H + self.H.T) / 2
+        self.H                   = (self.H + conj(self.H.T)) / 2
         self.mu_Hinv_f_grad      = mu * self.Hinv_f_grad
-        self.f                   = self.c_grads.T @ self.mu_Hinv_f_grad - np.vstack((self.eq, self.ineq)) 
+        self.f                   = conj(self.c_grads.T) @ self.mu_Hinv_f_grad - np.vstack((self.eq, self.ineq)) 
         self.LB                  = np.vstack((-np.ones((n_eq,1)), np.zeros((self.n_ineq,1))  ))  
         self.UB                  = np.ones((n_eq + self.n_ineq, 1))
         
@@ -140,5 +141,5 @@ class qpSS:
     #  update penalty parameter dependent values for QP
     def updateSteeringQP(self,mu):
         self.mu_Hinv_f_grad  = mu * self.Hinv_f_grad
-        self.f               = self.c_grads.T @ self.mu_Hinv_f_grad - np.vstack((self.eq, self.ineq))
+        self.f               = conj(self.c_grads.T) @ self.mu_Hinv_f_grad - np.vstack((self.eq, self.ineq))
         return

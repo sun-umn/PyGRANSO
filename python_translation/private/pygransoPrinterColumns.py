@@ -156,7 +156,7 @@ class gSM:
             str = "%s:%d"%(value,stat_type)  
             str = fO.formatOrange(str)
         else:
-            str = "%s  '"%(value)
+            str = "%s  "%(value)
         return str
 
 def violationFormatter(label,n_constraints):

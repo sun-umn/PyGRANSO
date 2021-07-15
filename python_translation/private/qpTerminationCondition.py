@@ -1,6 +1,7 @@
 import numpy as np
 from private.solveQP import solveQP
 from dbg_print import dbg_print
+from numpy import conjugate as conj
 
 class qpTC:
     def __init__(self):
@@ -23,8 +24,8 @@ class qpTC:
         CI = penaltyfn_at_x.ci
         CE = penaltyfn_at_x.ce
         for i in range(l-1):
-            CI_new          = np.vstack(CI,CI)
-            CE_new          = np.vstack(CE,CE)
+            CI_new          = np.vstack((CI,CI))
+            CE_new          = np.vstack((CE,CE))
             CI = CI_new
             CE = CE_new
         
@@ -38,9 +39,9 @@ class qpTC:
         #  Set up arguments for quadprog interface
         self.all_grads   = np.hstack((CE_grads, F_grads, CI_grads))
         Hinv_grads  = apply_Hinv(self.all_grads)
-        self.H           = self.all_grads.T @ Hinv_grads
+        self.H           = conj(self.all_grads.T) @ Hinv_grads
         #  Fix H since numerically, it is unlikely to be _perfectly_ symmetric 
-        self.H           = (self.H + self.H.T) / 2
+        self.H           = (self.H + conj(self.H.T)) / 2
         f           = -np.vstack((CE, F, CI))
         LB          = np.vstack((-np.ones((q,1)), np.zeros((l+p,1))))
         UB          = np.vstack((np.ones((q,1)), mu*np.ones((l,1)), np.ones((p,1))))  

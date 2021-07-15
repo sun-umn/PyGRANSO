@@ -19,7 +19,7 @@ end
 
 % opts.quadprog_opts.QPsolver = 'qpalm';
 opts.quadprog_opts.QPsolver = 'quadprog';
- 
+opts.x0 = [1;1];
 
  
 
