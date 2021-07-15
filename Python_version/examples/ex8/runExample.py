@@ -28,7 +28,7 @@ for dim in var_dim_map.values():
 
 opts = Options()
 opts.QPsolver = 'gurobi'
-opts.maxit = 100
+opts.maxit = 1000
 opts.x0 = np.ones((10,1))
 # opts.ngrad = 24
 
