@@ -2,6 +2,8 @@ import numpy as np
 from combinedFunction import combinedFunction
 from pygransoStruct import VariableStruct, genral_struct
 import torch
+from private.getObjGrad import getObjGrad
+from private.numpyVec2TorchTensor import numpyVec2TorchTensor
 
 def mat2vec(x,var_dim_map,nvar,parameters = None):
 
@@ -149,55 +151,18 @@ def mat2vec(x,var_dim_map,nvar,parameters = None):
 def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None):
     ################################################################################
 
-    X = VariableStruct()
-    # reshape vector input x to matrix form X, e.g., X.U and X.V
-    curIdx = 0
-    # current variable, e.g., U
-    for var in var_dim_map.keys():
-        # corresponding dimension of the variable, e.g, 3 by 2
-        tmpDim1 = var_dim_map.get(var)[0]
-        tmpDim2 = var_dim_map.get(var)[1]
-        # reshape vector input x in to matrix variables, e.g, X.U, X.V
-        tmpMat = np.reshape(x[curIdx:curIdx+tmpDim1*tmpDim2],(tmpDim1,tmpDim2))
-        setattr(X, var, torch.from_numpy(tmpMat))
-        curIdx += tmpDim1 * tmpDim2
-
-    ################################################################################
-
+    X = numpyVec2TorchTensor(x,var_dim_map)
     # obtain objective and constraint function and their corresponding gradient
-
     # matrix form functions
     if parameters == None:
         [f,ci,ce,ce_grad] = combinedFunction(X)
     else:
         [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X,parameters)
     
-    ################################################################################
-    ############################       Get gradient    #############################
-    f_grad = genral_struct()
-    f.backward()
-    # current variable, e.g., U
-    for var in var_dim_map.keys():
-        grad_tmp = getattr(X,var).grad
-        setattr(f_grad,var,grad_tmp)   
-
-
-    ################################################################################
+    # ################################################################################
     # obj function is a scalar form
-    f_vec = f.item()
-
-    ################################################################################
-    # transform f_grad form matrix form to vector form
-    f_grad_vec = np.zeros((nvar,1))
-    curIdx = 0
-    # current variable, e.g., U
-    for var in var_dim_map.keys():
-        # corresponding dimension of the variable, e.g, 3 by 2
-        tmpDim1 = var_dim_map.get(var)[0]
-        tmpDim2 = var_dim_map.get(var)[1]
-        
-        f_grad_vec[curIdx:curIdx+tmpDim1*tmpDim2] = np.reshape(getattr(f_grad,var),(tmpDim1*tmpDim2,1))
-        curIdx += tmpDim1 * tmpDim2
+    f_vec = f.item()    
+    f_grad_vec = getObjGrad(nvar,var_dim_map,f,X)
 
     ################################################################################
     ############################  ci and ci_grad   #################################
@@ -226,6 +191,9 @@ def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None):
 
         ################################################################################
         
+        ci_vec_torch.sum().backward()
+        aaa = X.x1.grad
+        bbb = X.x2.grad
 
         # gradient of inquality constraints
         ci_grad_vec = np.zeros((nvar,nconstr))
@@ -239,6 +207,7 @@ def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None):
                 # current variable, e.g., U
                 for var in var_dim_map.keys():
                     ci_grad_tmp = getattr(X,var).grad
+                    print(ci_grad_tmp)
                     pass
                     # setattr(ci_grad,var,ci_grad_tmp) 
             

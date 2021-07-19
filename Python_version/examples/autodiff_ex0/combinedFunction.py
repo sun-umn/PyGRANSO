@@ -35,8 +35,8 @@ def combinedFunction(X):
 
     # inequality constraint, matrix form
     ci = ciStruct()
-    ci.c1 = -U
-    ci.c2 = -V
+    ci.c1 = -U 
+    ci.c2 = -V  
 
     # # gradient of inequality constraint, matrix form
     # ci_grad = ci_gradStruct()

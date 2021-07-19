@@ -1,16 +1,17 @@
 import torch
 
-x = torch.tensor(-10.5, requires_grad=True)
-print(x.data)
-print(x.grad)
-print(x.grad_fn)
+x = torch.tensor([[1.,2.,3.],[1.,2.,3.]], requires_grad=True)
 
 y = abs(x)
 
 print(y)
-print(y.grad)
-print(y.grad_fn)
-y.backward()
+
+y.sum().backward(retain_graph=True)
+print(x.grad)
+
+z = abs(x)
+
+z.sum().backward(retain_graph=True)
 print(x.grad)
 
 pass
