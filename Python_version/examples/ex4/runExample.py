@@ -8,6 +8,7 @@ from mat2vec import mat2vec
 from pygransoStruct import Options
 import numpy as np
 import scipy.io
+import time
 
 """
   runExample: (example_mat/ex4)
@@ -92,6 +93,10 @@ stab_margin = 1
 
 
 ## SET UP THE ANONYMOUS FUNCTION HANDLE AND OPTIMIZE
+
+start = time.time()
 # call mat2vec to enable GRANSO using matrix input
 combined_fn = lambda x: mat2vec(x,var_dim_map,nvar)
 pygranso(nvar,combined_fn,opts)
+end = time.time()
+print(end - start)

@@ -1,17 +1,16 @@
 import torch
 
-a = torch.tensor([0., -.5], requires_grad=True)
-# b = torch.tensor([6., 4.], requires_grad=True)
+x = torch.tensor(-10.5, requires_grad=True)
+print(x.data)
+print(x.grad)
+print(x.grad_fn)
 
-Q = abs(a)
+y = abs(x)
 
-external_grad = torch.tensor([1., 1.])
-Q.backward(gradient=external_grad)
+print(y)
+print(y.grad)
+print(y.grad_fn)
+y.backward()
+print(x.grad)
 
-# check if collected gradients are correct
-print( a.grad)
-# print(-2*b == b.grad)
-
-C = Q.detach().numpy()
-
-print(C)
+pass

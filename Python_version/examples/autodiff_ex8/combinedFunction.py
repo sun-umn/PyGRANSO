@@ -2,7 +2,7 @@ import numpy as np
 from numpy import linalg as LA
 from numpy.core.fromnumeric import transpose
 import torch
-from torch import autograd
+
 
 class f_gradStruct:
     pass
@@ -19,30 +19,18 @@ class ci_gradStruct:
 def combinedFunction(X):
     
     # input variable, matirx form
+    # u = torch.tensor(X.u)
     u = X.u
     u.requires_grad_(True)
-    
+     
     # objective function
     # f must be a scalar. not 1 by 1 matrix
-    # f = (abs(u))[0][0]
-    f = torch.abs(u)
-    # print('Gradient function for loss =', f.grad_fn)
-    
-    # external_grad = torch.tensor([[1.]])
-    # f.backward(gradient=external_grad)
     
 
-    # f_grad = f_gradStruct()
-    # f.backward()
-    # f_grad.u = u.grad
+    f = torch.sum(u**2)**0.5
 
-    # #  absolute value
-    # if u >= 0:
-    #   f_grad.u    = 1
-    # else:
-    #   f_grad.u    = -1
-
-    
+    # f_grad.u = u/np.sum(np.square(u))**0.5
+        
     # inequality constraint 
     ci = None
     ci_grad = None
@@ -52,4 +40,3 @@ def combinedFunction(X):
     ce_grad = None
 
     return [f,ci,ci_grad,ce,ce_grad]
-    # return [f,ci,ce]

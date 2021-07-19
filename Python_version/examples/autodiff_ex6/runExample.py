@@ -29,8 +29,7 @@ for dim in var_dim_map.values():
 opts = Options()
 opts.QPsolver = 'gurobi'
 opts.maxit = 100
-# opts.x0 = np.array([1.]).reshape((1,1))
-opts.x0 = np.array([-.5]).reshape((1,1))
+opts.x0 = np.array([150.]).reshape((1,1))
 # opts.ngrad = 24
 
 # call mat2vec to enable GRANSO using matrix input

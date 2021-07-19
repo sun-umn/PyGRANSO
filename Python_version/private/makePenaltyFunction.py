@@ -22,9 +22,15 @@ def assertFnOutputs(n,f,g,fn_name):
 
     assertFn(r == n,arg2,fn_name,'have dimension matching the number of variables')
 
-    assertFn(np.isreal(f.all()),arg1,fn_name,'should be real valued')
+    if isinstance(f,float):
+        dbg_print("f is float")
+    else:
+        dbg_print("f is not float")
+    assertFn(np.isreal(f),arg1,fn_name,'should be real valued')
+    # assertFn(np.isreal(f.all()),arg1,fn_name,'should be real valued')
     assertFn(np.isreal(g.all()),arg2,fn_name,'should be real valued')
-    assertFn(np.isfinite(f.all()),arg1,fn_name,'should be finite valued')
+    assertFn(np.isfinite(f),arg1,fn_name,'should be finite valued')
+    # assertFn(np.isfinite(f.all()),arg1,fn_name,'should be finite valued')
     assertFn(np.isfinite(g.all()),arg2,fn_name,'should be finite valued')
     return
 

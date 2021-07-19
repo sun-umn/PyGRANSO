@@ -77,7 +77,7 @@ def double2FixedWidth(x,width):
         #  get length without sign since the actual number of whole digits 
         #  may be increased by one due to rounding in sprintf (e.g.
         #  99.99999999...)
-        expected    = width - float(x >= 0)  
+        expected    = int(width - float(x >= 0)  )
         if len(x_str) > expected:
             x_str   = x_str[0:expected]
         

@@ -1,11 +1,9 @@
 import numpy as np
 from combinedFunction import combinedFunction
-from pygransoStruct import VariableStruct
+from pygransoStruct import VariableStruct, genral_struct
+import torch
 
 def mat2vec(x,var_dim_map,nvar,parameters = None):
-
-
-    
 
     ################################################################################
 
@@ -161,7 +159,7 @@ def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None):
         tmpDim2 = var_dim_map.get(var)[1]
         # reshape vector input x in to matrix variables, e.g, X.U, X.V
         tmpMat = np.reshape(x[curIdx:curIdx+tmpDim1*tmpDim2],(tmpDim1,tmpDim2))
-        setattr(X, var, tmpMat)
+        setattr(X, var, torch.from_numpy(tmpMat))
         curIdx += tmpDim1 * tmpDim2
 
     ################################################################################
@@ -170,13 +168,23 @@ def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None):
 
     # matrix form functions
     if parameters == None:
-        [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X)
+        [f,ci,ce,ce_grad] = combinedFunction(X)
     else:
         [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X,parameters)
     
     ################################################################################
+    ############################       Get gradient    #############################
+    f_grad = genral_struct()
+    f.backward()
+    # current variable, e.g., U
+    for var in var_dim_map.keys():
+        grad_tmp = getattr(X,var).grad
+        setattr(f_grad,var,grad_tmp)   
+
+
+    ################################################################################
     # obj function is a scalar form
-    f_vec = f
+    f_vec = f.item()
 
     ################################################################################
     # transform f_grad form matrix form to vector form
@@ -200,37 +208,70 @@ def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None):
         # current constraint, e.g., c1, c2
         for constr_i in ci.__dict__.keys():
             constrMatrix = getattr(ci,constr_i)
-            nconstr = nconstr + constrMatrix.size
+            nconstr = nconstr + torch.numel(constrMatrix)
         
         
         # inquality constraints
-        ci_vec = np.zeros((nconstr,1))
+        ci_vec_torch = torch.zeros(nconstr,1)
         curIdx = 0
+        nconstr_ci = genral_struct()
         # current constraint, e.g., c1, c2
         for constr_i in ci.__dict__.keys():
             constrMatrix = getattr(ci,constr_i)
-            ci_vec[curIdx:curIdx + constrMatrix.size] = np.reshape(constrMatrix,(constrMatrix.size,1))
-            curIdx = curIdx + constrMatrix.size
+            ci_vec_torch[curIdx:curIdx + torch.numel(constrMatrix)] = torch.reshape(constrMatrix,(torch.numel(constrMatrix),1))
+            curIdx = curIdx + torch.numel(constrMatrix)
+            setattr(nconstr_ci,constr_i,torch.numel(constrMatrix))
+
+        ci_vec = ci_vec_torch.detach().numpy() # detach from current computational graph
 
         ################################################################################
+        
+
         # gradient of inquality constraints
         ci_grad_vec = np.zeros((nvar,nconstr))
-        # iterate column: constraints
-        colIdx = 0
-        # current constraint, e.g., c1, c2
+
+        curIdx = 0
         for constr_i in ci.__dict__.keys():
-            constrMatrix = getattr(ci,constr_i)
-            rowIdx = 0
-            # iterate row: variables
+            ci_grad = genral_struct()
+            ci_tmp = torch.reshape(getattr(ci,constr_i),(getattr(nconstr_ci,constr_i),1))
+            for i in range(getattr(nconstr_ci,constr_i)):
+                ci_tmp[i].backward()
+                # current variable, e.g., U
+                for var in var_dim_map.keys():
+                    ci_grad_tmp = getattr(X,var).grad
+                    pass
+                    # setattr(ci_grad,var,ci_grad_tmp) 
+            
+            curIdx = 0
             # current variable, e.g., U
             for var in var_dim_map.keys():
                 # corresponding dimension of the variable, e.g, 3 by 2
                 tmpDim1 = var_dim_map.get(var)[0]
                 tmpDim2 = var_dim_map.get(var)[1]
-                ciGradMatrix = getattr(getattr(ci_grad,constr_i),var) 
-                ci_grad_vec[rowIdx:rowIdx+tmpDim1*tmpDim2, colIdx:colIdx+constrMatrix.size] = ciGradMatrix
-                rowIdx += tmpDim1 * tmpDim2
-            colIdx += constrMatrix.size
+                
+                ci_grad_vec[curIdx:curIdx+tmpDim1*tmpDim2,i] = np.reshape(getattr(ci_grad,var),(tmpDim1*tmpDim2,1))
+                curIdx += tmpDim1 * tmpDim2
+
+
+        # # iterate column: constraints
+        # colIdx = 0
+        # # current constraint, e.g., c1, c2
+        # for constr_i in ci.__dict__.keys():
+        #     constrMatrix = getattr(ci,constr_i)
+        #     ci_grad = genral_struct()
+        #     ci_vec_torch[0].backward()
+        #     rowIdx = 0
+        #     # iterate row: variables
+        #     # current variable, e.g., U
+        #     for var in var_dim_map.keys():
+        #         # corresponding dimension of the variable, e.g, 3 by 2
+        #         tmpDim1 = var_dim_map.get(var)[0]
+        #         tmpDim2 = var_dim_map.get(var)[1]
+        #         # ciGradMatrix = getattr(getattr(ci_grad,constr_i),var) 
+                
+        #         ci_grad_vec[rowIdx:rowIdx+tmpDim1*tmpDim2, colIdx:colIdx+constrMatrix.size] = getattr(ci_vec_torch.grad)
+        #         rowIdx += tmpDim1 * tmpDim2
+        #     colIdx += constrMatrix.size
         
     else:
         ci_vec = None
