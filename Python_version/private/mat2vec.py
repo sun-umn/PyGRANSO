@@ -1,6 +1,6 @@
 import numpy as np
 from combinedFunction import combinedFunction
-from pygransoStruct import VariableStruct, genral_struct
+from pygransoStruct import VariableStruct, general_struct
 import torch
 from private.getObjGrad import getObjGrad
 from private.numpyVec2TorchTensor import numpyVec2TorchTensor

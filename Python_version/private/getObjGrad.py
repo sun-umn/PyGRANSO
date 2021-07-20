@@ -1,5 +1,5 @@
 import numpy as np
-from pygransoStruct import genral_struct
+from pygransoStruct import general_struct
 
 def getObjGrad(nvar,var_dim_map,f,X):
     # f_grad = genral_struct()

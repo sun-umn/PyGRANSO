@@ -1,4 +1,4 @@
-from pygransoStruct import genral_struct
+from pygransoStruct import general_struct
 from private import pygransoConstants as pC, pygransoPrinterColumns as pPC, printMessageBox as pMB
 from private.tablePrinter import tP
 from dbg_print import dbg_print
@@ -22,7 +22,7 @@ class pgP:
         # Setup printer options from GRANSO options
         ascii                           = self.opts.print_ascii
         use_orange                      = self.opts.print_use_orange
-        print_opts = genral_struct()
+        print_opts = general_struct()
         setattr(print_opts,"use_orange",use_orange)
         setattr(print_opts,"print_width",self.opts.print_width)
         setattr(print_opts,"maxit",self.opts.maxit)
@@ -91,7 +91,7 @@ class pgP:
                 
         msg_box_fn = lambda varargin:  pMB.printMessageBox(ascii,use_orange,varargin)
         
-        printer = genral_struct
+        printer = general_struct
         setattr(printer, "msg", lambda s: self.table_printer.msg(s) )
         setattr(printer, "close", lambda : self.table_printer.close() )
         setattr(printer, "msgWidth", lambda : self.table_printer.msgWidth() )

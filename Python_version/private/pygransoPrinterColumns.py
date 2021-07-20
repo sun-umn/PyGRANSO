@@ -1,4 +1,4 @@
-from pygransoStruct import genral_struct
+from pygransoStruct import general_struct
 from private import nDigitsInWholePart as nDIWP, truncate, centerString as cS, double2FixedWidthStr as d2FWS, formatOrange as fO
 
 def pygransoPrinterColumns(opts,ineq_constraints,eq_constraints):
@@ -10,7 +10,7 @@ def pygransoPrinterColumns(opts,ineq_constraints,eq_constraints):
     constrained     = ineq_constraints or eq_constraints
    
     #  set up all the column formatters
-    c = genral_struct()
+    c = general_struct()
     setattr(c,"iter", getCount("Iter",opts.maxit))
     
     if constrained:
@@ -36,7 +36,7 @@ def pygransoPrinterColumns(opts,ineq_constraints,eq_constraints):
 
 def getCount(label,maxit):
     width   = max(nDIWP.nDigitsInWholePart(maxit),len(label))
-    iter = genral_struct()
+    iter = general_struct()
     setattr(iter,"label",label)
     setattr(iter,"width",width)
     setattr(iter,"format_fn",lambda x: "%*s" % (width,x) )
@@ -51,7 +51,7 @@ def getBlank(label,user_width = -1):
     label = label.strip()
     width = len(label)
     width = max(width,user_width)
-    type = genral_struct()
+    type = general_struct()
     setattr(type,"label",label)
     setattr(type,"width",width)
     setattr(type,"blank_str"," " * width)
@@ -67,7 +67,7 @@ def getNumberColumn(label,num_width,nonnegative=False):
     else:
         format_number_fn    = get_num_fn
 
-    type = genral_struct()
+    type = general_struct()
     setattr(type,"label",label)
     setattr(type,"width",num_width)
     setattr(type,"format_fn",format_number_fn)
@@ -97,7 +97,7 @@ class gSD:
         
         self.sd_str_fn = lambda code,tries: searchDirectionStr(code,tries,self.width)
         
-        type = genral_struct()
+        type = general_struct()
         setattr(type,"label","SD")
         setattr(type,"width",self.width)
         setattr(type,"format_fn",format_fn)
@@ -133,7 +133,7 @@ class gSM:
         else:
             format_fn       = lambda value,stat_type: self.formatStationarityMeasure(value,stat_type)
         
-        type = genral_struct()
+        type = general_struct()
         setattr(type,"label","Value")
         setattr(type,"width",width)
         setattr(type,"format_fn",format_fn)

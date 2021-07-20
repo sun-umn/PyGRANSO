@@ -1,5 +1,5 @@
 import numpy as np
-from pygransoStruct import genral_struct
+from pygransoStruct import general_struct
 import numpy.linalg as LA
 
 class nC:

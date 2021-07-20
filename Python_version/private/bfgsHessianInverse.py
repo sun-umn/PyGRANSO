@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.core.numeric import Inf
-from pygransoStruct import genral_struct
+from pygransoStruct import general_struct
 from numpy import conjugate as conj
 
 class H_obj_struct:
@@ -99,7 +99,7 @@ class H_obj_struct:
         return H_out
 
     def getCounts(self):
-        counts = genral_struct()
+        counts = general_struct()
         setattr(counts,"requests",self.requests)
         setattr(counts,"updates",self.updates)
         setattr(counts,"damped_requests",self.damped_requests)

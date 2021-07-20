@@ -1,5 +1,5 @@
 import torch
-from pygransoStruct import genral_struct
+from pygransoStruct import general_struct
 
 def getCiVec(ci):
     #  number of constraints

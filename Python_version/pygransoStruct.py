@@ -12,5 +12,5 @@ class VariableStruct:
 class sub_validators_struct:
     pass
 
-class genral_struct:
+class general_struct:
     pass

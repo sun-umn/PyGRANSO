@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import linalg as LA
 from numpy.core.fromnumeric import transpose
-from pygransoStruct import genral_struct
+from pygransoStruct import general_struct
 import torch
 
 class ciStruct:
@@ -27,7 +27,7 @@ def combinedFunction(X):
     ci = None
 
     # equality constraint 
-    ce = genral_struct()
+    ce = general_struct()
     ce.c1 = torch.norm(q, p = 2) - 1
 
     return [f,ci,ce]

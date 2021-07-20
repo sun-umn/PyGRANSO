@@ -1,5 +1,5 @@
 import dbg_print
-from pygransoStruct import genral_struct
+from pygransoStruct import general_struct
 
 def makeStructWithFields(varargin):
     """
@@ -11,6 +11,6 @@ def makeStructWithFields(varargin):
     # args(1:2:end-1) = varargin(:);
     # s               = struct(args{:});
     dbg_print("skip makeStructWithFields for now")
-    s = genral_struct()
+    s = general_struct()
     
     return s

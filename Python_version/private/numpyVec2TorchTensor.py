@@ -1,9 +1,9 @@
-from pygransoStruct import genral_struct
+from pygransoStruct import general_struct
 import numpy as np
 import torch
 
 def numpyVec2TorchTensor(x,var_dim_map):
-    X = genral_struct()
+    X = general_struct()
     # reshape vector input x to matrix form X, e.g., X.U and X.V
     curIdx = 0
     # current variable, e.g., U
