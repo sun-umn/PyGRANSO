@@ -110,7 +110,7 @@ def totalViolationEquality(ce,ce_grad):
     
     # l_1 penalty term for penalty function
     tve_l1 = np.sum(ve)
-    tve_l1_grad = np.sum(ce_grad[:,indx[:,0]],1) - sum(ce_grad[:,np.logical_not(indx[:,0])],1)
+    tve_l1_grad = np.sum(ce_grad[:,indx[:,0]],1) - np.sum(ce_grad[:,np.logical_not(indx[:,0])],1)
 
     return [tve,tve_l1,tve_l1_grad]
 
@@ -238,7 +238,7 @@ class PanaltyFuctions:
 
         self.x                   = x_in
         self.feasible_to_tol     = self.is_feasible_to_tol_fn(self.tvi,self.tve);  
-        self.tv                  = np.max(self.tvi,self.tve)
+        self.tv                  = np.maximum(self.tvi,self.tve)
         self.tv_l1               = self.tvi_l1 + self.tve_l1
         self.tv_l1_grad          = self.tvi_l1_grad + self.tve_l1_grad
         self.p                   = self.mu*self.f + self.tv_l1

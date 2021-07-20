@@ -53,7 +53,7 @@ def double2FixedWidth(x,width):
     elif math.isnan(x):
         x_str       = " NaN%s"%(" "*(width-4)) 
         return x_str
-    elif not isinstance(x,int)  and not isinstance(x,float) and x.dtype != "int64":
+    elif not isinstance(x,int)  and not isinstance(x,float) and x.dtype != "int64" and x.dtype != "float32":
         x_str       = " n/a%s"%(" "*(width-4))
         return x_str
 
