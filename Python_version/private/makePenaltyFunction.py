@@ -35,7 +35,7 @@ def assertFnOutputs(n,f,g,fn_name):
     return
 
 def assertFn(cond,arg_name,fn_name,msg):
-    assert cond,("PyGRANSO userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(arg_name,fn_name,msg)  )                                 
+    assert np.all(cond),("PyGRANSO userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(arg_name,fn_name,msg)  )                                 
 
 class Class_splitEvalAtX:
     def __init__(self):

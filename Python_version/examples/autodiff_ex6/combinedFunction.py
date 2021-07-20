@@ -45,11 +45,11 @@ def combinedFunction(X):
     
     # inequality constraint 
     ci = None
-    ci_grad = None
+    # ci_grad = None
     
     # equality constraint 
     ce = None
-    ce_grad = None
+    # ce_grad = None
 
-    return [f,ci,ci_grad,ce,ce_grad]
+    return [f,ci,ce]
     # return [f,ci,ce]

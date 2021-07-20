@@ -43,20 +43,20 @@ def combinedFunction(X):
 
     # inequality constraint, matrix form
     ci = ciStruct()
-    ci.c1 = np.sqrt(2)*x1-1 +0*x2
-    ci.c2 = 2*x2-1 + 0*x1
+    ci.c1 = np.sqrt(2)*x1-1  
+    ci.c2 = 2*x2-1 
 
-    # gradient of inequality constraint, matrix form
-    ci_grad = ci_gradStruct()
-    # # of constr b # of vars of U and V
-    ci_grad.c1.x1 = np.sqrt(2)
-    ci_grad.c1.x2 = 0
+    # # gradient of inequality constraint, matrix form
+    # ci_grad = ci_gradStruct()
+    # # # of constr b # of vars of U and V
+    # ci_grad.c1.x1 = np.sqrt(2)
+    # ci_grad.c1.x2 = 0
     
-    ci_grad.c2.x1 = 0
-    ci_grad.c2.x2 = 2
+    # ci_grad.c2.x1 = 0
+    # ci_grad.c2.x2 = 2
     
     # equality constraint 
     ce = None
-    ce_grad = None
+    # ce_grad = None
 
-    return [f,ci,ce,ce_grad]
+    return [f,ci,ce]

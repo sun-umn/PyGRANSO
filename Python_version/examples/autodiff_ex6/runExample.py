@@ -4,7 +4,7 @@ parentdir = os.path.dirname(currentdir)
 grandparentdir = os.path.dirname(parentdir)
 sys.path.append(grandparentdir)
 from pygranso import pygranso
-from mat2vec import mat2vec_autodiff
+from private.mat2vec import mat2vec_autodiff
 from pygransoStruct import Options
 import numpy as np
 

@@ -4,7 +4,7 @@ parentdir = os.path.dirname(currentdir)
 grandparentdir = os.path.dirname(parentdir)
 sys.path.append(grandparentdir)
 from pygranso import pygranso
-from private.mat2vec import mat2vec
+from private.mat2vec import mat2vec_autodiff
 from pygransoStruct import Options
 import numpy as np
 
@@ -24,7 +24,7 @@ opts.maxit = 100
 opts.x0 = np.ones((nvar,1))
 
 # call mat2vec to enable GRANSO using matrix input
-combined_fn = lambda x: mat2vec(x,var_dim_map,nvar)
+combined_fn = lambda x: mat2vec_autodiff(x,var_dim_map,nvar)
 
 # # test
 # x = np.array([1,1,1,1,1,1,1,1,1,1,1,1,1,1])
@@ -34,3 +34,6 @@ combined_fn = lambda x: mat2vec(x,var_dim_map,nvar)
 
 soln = pygranso(nvar,combined_fn,opts)
 print(soln.final.x)
+sol_U = soln.final.x[0:6].reshape((3,2))
+sol_V = soln.final.x[6:14].reshape((4,2))
+print(sol_U @ sol_V.T)
