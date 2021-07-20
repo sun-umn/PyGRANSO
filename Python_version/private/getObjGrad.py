@@ -3,7 +3,7 @@ from pygransoStruct import genral_struct
 
 def getObjGrad(nvar,var_dim_map,f,X):
     # f_grad = genral_struct()
-    f.backward()
+    f.backward(retain_graph=True)
     # transform f_grad form matrix form to vector form
     f_grad_vec = np.zeros((nvar,1))
 
