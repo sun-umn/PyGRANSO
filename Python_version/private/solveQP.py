@@ -75,6 +75,7 @@ def solveQP(H,f,A,b,LB,UB,QPsolver):
         #  suppress output
         # m.Params.LogToConsole = 0
         m.Params.outputflag = 0
+        # m.params.NonConvex = 2
 
         m.optimize()
         x = m.getAttr('x', vars)

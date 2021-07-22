@@ -20,7 +20,7 @@ nvar = getNvar(var_dim_map)
 opts = Options()
 opts.QPsolver = 'gurobi'
 opts.maxit = 1000
-opts.x0 = 0.1*np.ones((nvar,1))
+opts.x0 = .2*np.ones((nvar,1))
 # opts.x0 = np.zeros((nvar,1))
 
 # call mat2vec to enable GRANSO using matrix input
