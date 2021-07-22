@@ -1,3 +1,3 @@
 # Dictionary learning
 
-Gneralized LASSO: total variation denoising
+Generalized LASSO: total variation denoising
