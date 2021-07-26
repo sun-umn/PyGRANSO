@@ -41,9 +41,13 @@ We will tackle the severe limitations of GRANSO, and build a user-friendly and s
 ## Dependencies
 
 Python 3.7.10
+
 numpy-1.20.3 
+
 scipy-1.6.2
+
 pytorch-1.5.0
+
 gurobi
 
 ## Updating Summary
