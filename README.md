@@ -4,6 +4,7 @@ Toward a user-friendly and scalable numerical package for nonsmooth, nonconvex, 
 
 ## Table of contents
 * [General Information](#general-information)
+* [Dependencies](#dependencies)
 * [Updating Summary](#updating-summary)
 * [Usage](#usage)
 * [References](#references)
@@ -36,6 +37,14 @@ We will tackle the severe limitations of GRANSO, and build a user-friendly and s
 3) User-friendly and scalable Python GRANSO: Central to the project, we will revamp GRANSO and translate it into Python, for a couple of critical reasons: a) modern Python computational frameworks, such as Jax and Pytorch, enable highly optimized and parallelizable matrix/tensor computations that take the full advantage of modern massively parallel hardware, e.g., GPUs, and b) Jax and Pytorch provide first-rate autodifferentiation capabilities, removing the pain of deriving analytic subgradients. Powerful matrix/tensor computation and autodifferentiation will substantially boost the usability and scalability of GRANSO for non-experts, and turn the impossible, e.g., constrained deep learning, into possible. We will translate GRANSO into Jax or Pytorch, or maybe both. QPALM will be interfaced through its Python binding. 
 
 4) Preliminary test on constrained deep learning: We will use the solver to explore constrained deep learning problems arising in robust image recognition, which is often formulated as a constrained min-max optimization problem.
+
+## Dependencies
+
+Python 3.7.10
+numpy-1.20.3 
+scipy-1.6.2
+pytorch-1.5.0
+gurobi
 
 ## Updating Summary
 

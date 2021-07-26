@@ -20,7 +20,7 @@ nvar = getNvar(var_dim_map)
 opts = Options()
 opts.QPsolver = 'gurobi'
 opts.maxit = 10000
-opts.x0 = 0.1*np.ones((nvar,1))
+opts.x0 = 0.9*np.ones((nvar,1))
 # opts.x0 = np.zeros((nvar,1))
 
 start = time.time()
