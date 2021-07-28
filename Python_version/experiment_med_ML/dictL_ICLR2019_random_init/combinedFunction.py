@@ -14,14 +14,16 @@ def combinedFunction(X):
     q = X.q
     q.requires_grad_(True)
     
-    n = 10
+    n = 400
     m = 10*n**2
-    
+
     theta = 0.3   # sparsity level
 
     torch.manual_seed(2021)
     randmatrix = torch.rand(n,m)
     Y = randmatrix * (randmatrix <= theta) # Bernoulli-Gaussian model
+    # print(Y)
+    # print(randmatrix)
     
     # objective function
     qtY = torch.mm( torch.transpose(q,0,1).double(), Y.double())
