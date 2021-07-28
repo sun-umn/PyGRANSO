@@ -1,6 +1,6 @@
 def pygransoOptionsAvanced(varargin):
     """
-   gransoOptionsAdvanced:
+    gransoOptionsAdvanced:
        Process user options struct for pygranso.py.  If user_opts is None or
        not provided, returned opts will be PyGRANSO's default parameters.
        Standard or advanced options may be set.
