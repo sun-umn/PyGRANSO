@@ -12,16 +12,19 @@ import time
 import torch
 
 # variable and corresponding dimensions
-n = 10
+n = 400
 var_dim_map = {"q": (n,1)}
 
 nvar = getNvar(var_dim_map)
 
 opts = Options()
 opts.QPsolver = 'gurobi'
-opts.maxit = 10
-# opts.x0 = 0.9*np.ones((nvar,1))
-# opts.x0 = np.zeros((nvar,1))
+opts.maxit = 10000
+# opts.x0 = 0.1*np.ones((nvar,1))
+opts.opt_tol = 1e-6
+opts.fvalquit = 1e-6
+opts.print_level = 1
+opts.print_frequency = 10
 
 start = time.time()
 # call mat2vec to enable GRANSO using matrix input
@@ -32,6 +35,6 @@ print("Total Wall Time: {}s".format(end - start))
 
 
 # print(soln.final.x)
-print(max(abs(soln.final.x)))
+print(max(abs(soln.final.x))) # should be close to 1
 
 
