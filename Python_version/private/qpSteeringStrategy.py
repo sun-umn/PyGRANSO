@@ -128,6 +128,9 @@ class qpSS:
             if self.QPsolver == "gurobi":
                 #  formulation of QP has no 1/2
                 y = solveQP(self.H,self.f,None,None,self.LB,self.UB, "gurobi")
+            elif self.QPsolver == "osqp":
+                #  formulation of QP has no 1/2
+                y = solveQP(self.H,self.f,None,None,self.LB,self.UB, "osqp")
         except Exception as e:
             print(e)
             print("PyGRANSO steeringQuadprogFailure: Steering aborted due to a quadprog failure.")

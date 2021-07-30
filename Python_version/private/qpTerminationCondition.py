@@ -67,6 +67,9 @@ class qpTC:
         if QPsolver == "gurobi":
             #  formulation of QP has no 1/2
             self.solveQP_fn = lambda H: solveQP(H,f,Aeq,beq,LB,UB,QPsolver)
+        elif QPsolver == "osqp":
+            #  formulation of QP has no 1/2
+            self.solveQP_fn = lambda H: solveQP(H,f,Aeq,beq,LB,UB,QPsolver)
 
         [y,_,qps_solved,ME] = self.solveQPRobust()
       

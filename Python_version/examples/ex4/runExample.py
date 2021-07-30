@@ -77,6 +77,7 @@ var_dim_map = {"XX": (p,m) }
 
 opts = Options()
 opts.QPsolver = 'gurobi'
+# opts.QPsolver = 'osqp'
 opts.maxit = 200
 opts.x0 = np.zeros((nvar,1))
 

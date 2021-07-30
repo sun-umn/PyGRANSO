@@ -48,7 +48,8 @@ for dim in var_dim_map.values():
 
 
 opts = Options()
-opts.QPsolver = 'gurobi'
+# opts.QPsolver = 'gurobi'
+opts.QPsolver = 'osqp'
 opts.maxit = 100
 opts.x0 = np.array([0.51,0.51]).reshape((2,1))
 

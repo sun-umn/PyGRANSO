@@ -16,6 +16,7 @@ var_dim_map = {"x": (10,1)}
 
 nvar = getNvar(var_dim_map)
 
+
 opts = Options()
 opts.QPsolver = 'gurobi'
 opts.maxit = 1000

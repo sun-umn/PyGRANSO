@@ -1,8 +1,9 @@
 from dbg_print import dbg_print
 import gurobipy as gp
 from gurobipy import GRB
+import osqp
 import numpy as np
-from numpy import conjugate as conj
+from scipy import sparse
 
 QP_REQUESTS = 0
 
@@ -84,5 +85,40 @@ def solveQP(H,f,A,b,LB,UB,QPsolver):
                 solution[i,0] = x[i]
 
             return solution
+
+        elif QPsolver == "osqp":
+            # H,f always exist
+            nvar = len(f)
+            # H and A has to be sparse
+            H_sparse = sparse.csc_matrix(H)
+            # LB and UB always exist
+
+            if np.any(A != None) and np.any(b != None):
+                Aeq = A
+                beq = b
+                speye = sparse.eye(nvar)
+                LB_new = np.vstack((beq,LB))
+                UB_new = np.vstack((beq,UB))
+                A_new = sparse.vstack([Aeq,speye])
+            else:
+                #  no constraint A*x == b
+                A_new = sparse.eye(nvar)
+                LB_new = LB
+                UB_new = UB
+
+            # Create an OSQP object
+            prob = osqp.OSQP()
+
+            # Setup workspace and change alpha parameter
+            prob.setup(H_sparse, f, A_new, LB_new, UB_new, alpha=1.0,verbose=False)
+
+            # Solve problem
+            res = prob.solve()
+
+            solution = res.x
+            sol_len = solution.size
+            solution = solution.reshape((sol_len,1))
+            return solution
+
     except Exception as e:
         print(e)

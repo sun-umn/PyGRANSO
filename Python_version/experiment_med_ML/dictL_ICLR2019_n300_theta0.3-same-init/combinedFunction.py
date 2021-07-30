@@ -23,7 +23,7 @@ def combinedFunction(X):
     theta = 0.3   # sparsity level
 
     # read input data from matlab file
-    filepath = r"C:\Users\Buyun\Desktop\randnMat.mat"
+    filepath = r"C:\Users\Buyun\Desktop\ICLR2019X.mat"
     arrays = {}
     f = h5py.File(filepath)
     for k, v in f.items():
