@@ -25,7 +25,7 @@ def combinedFunction(X):
     
 
     torch.manual_seed(2021)
-    Y = torch.rand(n,m) * (torch.rand(n,m) <= theta) # Bernoulli-Gaussian model
+    Y = torch.randn(n,m) * (torch.rand(n,m) <= theta) # Bernoulli-Gaussian model
     
     
     # objective function
@@ -37,6 +37,7 @@ def combinedFunction(X):
 
     # equality constraint 
     ce = general_struct()
-    ce.c1 = torch.norm(q, p = 2) - 1
+    # ce.c1 = torch.norm(q, p = 2) - 1
+    ce.c1  = torch.mm( torch.transpose(q,0,1).double(), q.double()) - 1
 
     return [f,ci,ce]
