@@ -1,4 +1,4 @@
-function [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X)
+function [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X, parameters)
 %   combinedFunction: (example_mat/ex2_spectral_radius_optimization)
 %       Defines objective and inequality constraint functions, with their
 %       respective gradients, for an eigenvalue optimization problem of a 
@@ -44,7 +44,10 @@ function [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X)
 
 XX           = X.XX;
 
-[A,B,C,~,~] = loadExample('ex4_data_n=200.mat');
+% [A,B,C,~,~] = loadExample('ex4_data_n=200.mat');
+A = parameters.A;
+B = parameters.B;
+C = parameters.C;
 stability_margin = 1;
 M           = A + B*XX*C;
 [V,D]       = eig(M);

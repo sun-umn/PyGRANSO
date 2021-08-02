@@ -421,7 +421,7 @@ def pygranso(n,obj_fn,user_opts=None):
         
         printer.msg({ 'Optimization results:', getResultsLegend() })
         
-        sleep(0.1)
+        sleep(0.01)
         
         printSummary("F","final")
         printSummary("B","best")

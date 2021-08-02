@@ -9,6 +9,7 @@ import numpy.linalg as LA
 import numpy as np
 from dbg_print import dbg_print
 from numpy import conjugate as conj
+from numpy.random import default_rng
 
 class AlgBFGSSQP():
     def __init__(self):
@@ -227,7 +228,10 @@ class AlgBFGSSQP():
             elif self.fallback_level == 3:
                 p = -g;     # steepest descent
             else:
-                p = np.random.randn(n,1)
+                # p = np.random.randn(n,1)
+                # new version of randn
+                rng = default_rng()
+                p = rng.standard_normal(size=(n,1))
                 self.random_attempts = self.random_attempts + 1
                 
                 

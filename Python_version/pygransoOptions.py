@@ -6,6 +6,7 @@ from scipy import sparse
 from pygransoStruct import Options
 from dbg_print import dbg_print
 from private.isAnInteger import isAnInteger
+from numpy.random import default_rng
 
 def gransoOptions(n,options):
     """
@@ -446,7 +447,9 @@ def postProcess(n,opts):
     
     # If an initial starting point was not provided, use random vector
     if np.all(opts.x0 == None):
-        opts.x0 = np.random.randn(n,1)
+        # opts.x0 = np.random.randn(n,1)
+        rng = default_rng()
+        opts.x0 = rng.standard_normal(size=(n,1))
     
     # If an initial inverse Hessian was not provided, use the identity
     if opts.H0 == None:

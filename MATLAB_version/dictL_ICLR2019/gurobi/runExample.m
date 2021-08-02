@@ -1,8 +1,8 @@
 function soln = runExample()
-
+n=30;
 var = {'q'};
 % value: dimension. e.g., 2 by 2 => [2,2]
-dim = {[100,1]};
+dim = {[30,1]};
 var_dim_map =  containers.Map(var, dim);
 
 % calculate total number of scalar variables

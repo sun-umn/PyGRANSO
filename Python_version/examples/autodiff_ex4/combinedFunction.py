@@ -22,20 +22,23 @@ class ci_gradStruct:
     class c2:
         pass
 
-def combinedFunction(X):
+def combinedFunction(X,parameters):
     
     # input variable, matirx form
     XX           = X.XX
     XX.requires_grad_(True)
 
-    # read input data from matlab file
-    file = currentdir + "/ex4_data_n=200.mat"
-    mat = scipy.io.loadmat(file)
-    mat_struct = mat['sys']
-    val = mat_struct[0,0]
-    A = torch.from_numpy(val['A'])
-    B = torch.from_numpy(val['B'])
-    C = torch.from_numpy(val['C'])
+    # # read input data from matlab file
+    # file = currentdir + "/ex4_data_n=200.mat"
+    # mat = scipy.io.loadmat(file)
+    # mat_struct = mat['sys']
+    # val = mat_struct[0,0]
+    # A = torch.from_numpy(val['A'])
+    # B = torch.from_numpy(val['B'])
+    # C = torch.from_numpy(val['C'])
+    A = parameters.A
+    B = parameters.B
+    C = parameters.C
 
     stability_margin = 1
     M           = A + B@XX@C

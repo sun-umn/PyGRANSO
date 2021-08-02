@@ -5,10 +5,11 @@ grandparentdir = os.path.dirname(parentdir)
 sys.path.append(grandparentdir)
 from pygranso import pygranso
 from private.mat2vec import mat2vec, mat2vec_autodiff
-from pygransoStruct import Options
+from pygransoStruct import Options, general_struct
 import numpy as np
 import scipy.io
 import time
+import torch
 
 """
   runExample: (example_mat/ex4)
@@ -59,10 +60,11 @@ file = currentdir + "/ex4_data_n=200.mat"
 mat = scipy.io.loadmat(file)
 mat_struct = mat['sys']
 val = mat_struct[0,0]
-A = val['A']
-B = val['B']
+A = torch.from_numpy(val['A'])
+B = torch.from_numpy(val['B'])
+C = torch.from_numpy(val['C'])
+
 p = B.shape[1]
-C = val['C']
 m = C.shape[0]
 
 nvar        = m*p
@@ -77,8 +79,14 @@ var_dim_map = {"XX": (p,m) }
 
 opts = Options()
 opts.QPsolver = 'gurobi'
+# opts.QPsolver = 'osqp'
 opts.maxit = 200
 opts.x0 = np.zeros((nvar,1))
+
+parameters = general_struct()
+parameters.A = A
+parameters.B = B
+parameters.C = C
 
 feasibility_bias = False
 if feasibility_bias:
@@ -96,7 +104,7 @@ stab_margin = 1
 
 start = time.time()
 # call mat2vec to enable GRANSO using matrix input
-combined_fn = lambda x: mat2vec_autodiff(x,var_dim_map,nvar)
+combined_fn = lambda x: mat2vec_autodiff(x,var_dim_map,nvar,parameters)
 pygranso(nvar,combined_fn,opts)
 end = time.time()
 print(end - start)

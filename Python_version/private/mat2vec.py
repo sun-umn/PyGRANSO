@@ -150,11 +150,16 @@ def mat2vec(x,var_dim_map,nvar,parameters = None):
 
 
 
-def mat2vec_autodiff(x,var_dim_map,nvar):
+def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None):
     X = numpyVec2TorchTensor(x,var_dim_map)
     # obtain objective and constraint function and their corresponding gradient
     # matrix form functions    
-    [f,ci,ce] = combinedFunction(X)
+    
+    if parameters == None:
+        [f,ci,ce] = combinedFunction(X)
+    else:
+        [f,ci,ce] = combinedFunction(X,parameters)
+        
     # obj function is a scalar form
     f_vec = f.item()    
     f_grad_vec = getObjGrad(nvar,var_dim_map,f,X)
