@@ -40,8 +40,8 @@ def code_to_profile():
     nvar = getNvar(var_dim_map)
 
     opts = Options()
-    # opts.QPsolver = 'gurobi'
-    opts.QPsolver = 'osqp'
+    opts.QPsolver = 'gurobi'
+    # opts.QPsolver = 'osqp'
     opts.maxit = 10000
     # opts.x0 = np.ones((nvar,1))
     opts.opt_tol = 1e-6
@@ -53,6 +53,7 @@ def code_to_profile():
     theta = 0.3   # sparsity level
     parameters = general_struct()
     parameters.Y = torch.randn(n,m) * (torch.rand(n,m) <= theta) # Bernoulli-Gaussian model
+    parameters.Y = parameters.Y.double()
     parameters.m = m
 
     start = time.time()

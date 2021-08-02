@@ -1,8 +1,14 @@
 function soln = runExample()
-n=30;
+
+
+rng(12);
+theta = .3;   % sparsity level
+n = 100;   % dimension
+m = round(10*n^2);    % number of measurements
+
 var = {'q'};
 % value: dimension. e.g., 2 by 2 => [2,2]
-dim = {[30,1]};
+dim = {[n,1]};
 var_dim_map =  containers.Map(var, dim);
 
 % calculate total number of scalar variables
@@ -16,7 +22,7 @@ end
 % opts.quadprog_opts.QPsolver = 'quadprog';
 opts.quadprog_opts.QPsolver = 'gurobi';
 
-opts.x0 = ones(n);
+opts.x0 = ones(n,1);
 opts.maxit = 2000;
 opts.opt_tol = 1e-6;
 %opts.limited_mem_size = 250;   % lbfgs
@@ -24,21 +30,17 @@ opts.fvalquit = 1e-6;
 opts.print_level = 1;
 opts.print_frequency = 10; 
 
-tic;
-soln = granso(n, obj, [], ec, opts);   % randomly initialize
-toc
 
+
+parameters.Y = randn(n,m) .* (rand(n,m) <= theta);   % Bernoulli-Gaussian model
+parameters.m = m;
+
+tic
+combined_fn = @(x) mat2vec(x,var_dim_map, nvar,parameters );
+soln = granso(nvar,combined_fn,opts);
+toc 
 
 max(abs(soln.final.x))   % should be close to 1
-%stem(soln.final.x)
-
-
-%% call mat2vec to enable GRANSO using matrix input
-combined_fn = @(x) mat2vec(x,var_dim_map,nvar);
-soln = granso(nvar,combined_fn,opts);
-
-
-
  
     
 end
