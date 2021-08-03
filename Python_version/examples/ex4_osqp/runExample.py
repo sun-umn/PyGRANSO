@@ -9,6 +9,7 @@ from pygransoStruct import Options
 import numpy as np
 import scipy.io
 import time
+from pygransoStruct import general_struct
 
 """
   runExample: (example_mat/ex4)
@@ -54,6 +55,17 @@ import time
 
 """
 
+# # read input data from matlab file
+# file = currentdir + "/ex4_data_n=200.mat"
+# mat = scipy.io.loadmat(file)
+# mat_struct = mat['sys']
+# val = mat_struct[0,0]
+# A = val['A']
+# B = val['B']
+# p = B.shape[1]
+# C = val['C']
+# m = C.shape[0]
+
 # read input data from matlab file
 file = currentdir + "/ex4_data_n=200.mat"
 mat = scipy.io.loadmat(file)
@@ -63,6 +75,9 @@ A = val['A']
 B = val['B']
 p = B.shape[1]
 C = val['C']
+m = C.shape[0]
+
+p = B.shape[1]
 m = C.shape[0]
 
 nvar        = m*p
@@ -89,6 +104,12 @@ if feasibility_bias:
 
 stab_margin = 1
 
+parameters = general_struct()
+parameters.A = A
+parameters.B = B
+parameters.C = C
+parameters.m = m
+parameters.p = p
 ## FOR PLOTTING THE SPECTRUM
 
 
@@ -97,7 +118,7 @@ stab_margin = 1
 
 start = time.time()
 # call mat2vec to enable GRANSO using matrix input
-combined_fn = lambda x: mat2vec(x,var_dim_map,nvar)
+combined_fn = lambda x: mat2vec(x,var_dim_map,nvar,parameters)
 pygranso(nvar,combined_fn,opts)
 end = time.time()
 print(end - start)

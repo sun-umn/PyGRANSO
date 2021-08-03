@@ -22,8 +22,9 @@ end
 % opts.quadprog_opts.QPsolver = 'quadprog';
 opts.quadprog_opts.QPsolver = 'gurobi';
 
-opts.x0 = ones(n,1);
+opts.x0 = 0.1*ones(n,1);
 opts.maxit = 2000;
+% opts.maxit = 100;
 opts.opt_tol = 1e-6;
 %opts.limited_mem_size = 250;   % lbfgs
 opts.fvalquit = 1e-6;

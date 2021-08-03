@@ -19,21 +19,27 @@ class ci_gradStruct:
     class c2:
         pass
 
-def combinedFunction(X):
+def combinedFunction(X,parameters):
     
     # input variable, matirx form
     XX           = X.XX
 
     # read input data from matlab file
-    file = currentdir + "/ex4_data_n=200.mat"
-    mat = scipy.io.loadmat(file)
-    mat_struct = mat['sys']
-    val = mat_struct[0,0]
-    A = val['A']
-    B = val['B']
-    p = B.shape[1]
-    C = val['C']
-    m = C.shape[0]
+    # file = currentdir + "/ex4_data_n=200.mat"
+    # mat = scipy.io.loadmat(file)
+    # mat_struct = mat['sys']
+    # val = mat_struct[0,0]
+    # A = val['A']
+    # B = val['B']
+    # p = B.shape[1]
+    # C = val['C']
+    # m = C.shape[0]
+
+    A = parameters.A
+    B = parameters.B
+    C = parameters.C
+    m = parameters.m
+    p = parameters.p
 
     stability_margin = 1
     M           = A + B@XX@C
