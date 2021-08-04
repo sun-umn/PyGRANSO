@@ -6,13 +6,12 @@ class ci_gradStruct:
     class c1:
         pass
 
-def f_fun(m,Y,q):
-    qtY = Y.T @ q
-    f = 1/m * la.norm(qtY,  ord = 1)
+def f_fun(m,Ytq):
+    f = 1/m * la.norm(Ytq,  ord = 1)
     return f
 
-def f_gradfun(m,Y,q):
-    return 1/m*Y@ np.sign(Y.T@q)
+def f_gradfun(m,Y,Ytq):
+    return 1/m*Y@ np.sign(Ytq)
 
 def combinedFunction(X,parameters):
     
@@ -23,13 +22,14 @@ def combinedFunction(X,parameters):
     m = parameters.m
     Y = parameters.Y
     
+    Ytq = Y.T @ q
     # objective function
-    f = f_fun(m,Y,q)
+    f = f_fun(m,Ytq)
     # f = 1/m * np.max(np.sum(np.abs(qtY)))
     
     f_grad = general_struct()
     # f_grad.q = 1/m*Y@ np.sign(Y.T@q)
-    f_grad.q = f_gradfun(m,Y,q)
+    f_grad.q = f_gradfun(m,Y,Ytq)
 
     # inequality constraint, matrix form
     ci = None

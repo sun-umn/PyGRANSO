@@ -55,7 +55,7 @@ def code_to_profile():
     theta = 0.3   # sparsity level
     parameters = general_struct()
     Y = torch.randn(n,m) * (torch.rand(n,m) <= theta) # Bernoulli-Gaussian model
-    parameters.Y = Y.numpy()
+    parameters.Y = Y.double().numpy()
     # parameters.Y = rng.standard_normal(size=(n,m)) * (rng.standard_normal(size=(n,m)) <= theta) # Bernoulli-Gaussian model
     # parameters.Y = np.random.randn(n,m) * (np.random.randn(n,m) <= theta) # Bernoulli-Gaussian model
     parameters.m = m
