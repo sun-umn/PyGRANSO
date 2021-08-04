@@ -18,7 +18,7 @@ from scipy.stats import norm
 
 
 # variable and corresponding dimensions
-n = 50
+n = 200
 m = 10*n**2
 var_dim_map = {"q": (n,1)}
 
@@ -30,7 +30,9 @@ opts.QPsolver = 'osqp'
 opts.maxit = 10000
 # opts.maxit = 100
 
-np.random.seed(1)
+seed_num = 1
+print( "seed_num = %d" %seed_num)
+np.random.seed(seed_num)
 x0 = norm.ppf(np.random.rand(n,1))
 x0 = x0/la.norm(x0,2)
 opts.x0 = x0

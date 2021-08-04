@@ -10,6 +10,12 @@ from pygransoStruct import Options, general_struct
 import time
 import numpy as np
 import torch
+import numpy.linalg as la
+import scipy.io
+from scipy.stats import norm
+
+
+
 
 # variable and corresponding dimensions
 n = 70
@@ -23,17 +29,29 @@ opts = Options()
 opts.QPsolver = 'osqp'
 opts.maxit = 10000
 # opts.maxit = 100
-opts.x0 = 0.1*np.ones((nvar,1))
+
+np.random.seed(1)
+x0 = norm.ppf(np.random.rand(n,1))
+x0 = x0/la.norm(x0,2)
+opts.x0 = x0
+print(x0.T@x0)
+
+# print( opts.x0.T @ opts.x0 )
+# opts.x0 = 0.1*np.ones((nvar,1))
+
 opts.opt_tol = 1e-6
 opts.fvalquit = 1e-6
 opts.print_level = 1
 opts.print_frequency = 10
 
-torch.manual_seed(2021)
+
 theta = 0.3   # sparsity level
 parameters = general_struct()
-parameters.Y = torch.randn(n,m) * (torch.rand(n,m) <= theta) # Bernoulli-Gaussian model
-parameters.Y = parameters.Y.double()
+Y = norm.ppf(np.random.rand(n,m)) * (norm.ppf(np.random.rand(n,m)) <= theta)
+# print(Y)
+parameters.Y = torch.from_numpy(Y)
+
+
 parameters.m = m
 
 start = time.time()

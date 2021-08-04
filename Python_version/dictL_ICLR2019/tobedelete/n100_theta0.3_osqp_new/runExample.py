@@ -12,7 +12,7 @@ import numpy as np
 import torch
 
 # variable and corresponding dimensions
-n = 300
+n = 100
 m = 10*n**2
 var_dim_map = {"q": (n,1)}
 
@@ -23,7 +23,7 @@ opts = Options()
 opts.QPsolver = 'osqp'
 opts.maxit = 10000
 # opts.maxit = 100
-opts.x0 = 0.1*np.ones((nvar,1))
+# opts.x0 = 0.1*np.ones((nvar,1))
 opts.opt_tol = 1e-6
 opts.fvalquit = 1e-6
 opts.print_level = 1
