@@ -11,8 +11,8 @@ from numpy.random import default_rng
 def gransoOptions(n,options):
     """
     gransoOptions:
-        Validate user options struct for granso.m.  If user_opts is [] or
-        not provided, returned opts will be GRANSO's default parameters.
+        Validate user options struct for pygranso.py.  If user_opts is [] or
+        not provided, returned opts will be PyGRANSO's default parameters.
         Standard or advanced options may be set.  
 
        Type:
@@ -31,12 +31,12 @@ def gransoOptions(n,options):
                    may be given as None.
 
        OUTPUT:
-       opts        Struct of all tunable user parameters for GRANSO.
+       opts        Struct of all tunable user parameters for PyGRANSO.
                    If a field is provided in user_opts, then the user's 
                    value is checked to whether or not it is a valid value, 
                    and if so, it is set in opts.  Otherwise, an error is 
                    thrown.  If a field is not provided in user_opts, opts
-                   will contain the field with GRANSO's default value.  
+                   will contain the field with PyGRANSO's default value.  
 
        STANDARD PARAMETERS 
 
@@ -52,7 +52,7 @@ def gransoOptions(n,options):
 
        .H0:                            [n by n real matrix | {speye(n)}]
        Initial inverse Hessian approximation.  In full-memory mode, and 
-       if opts.checkH0 is true, GRANSO will numerically assert that this
+       if opts.checkH0 is true, PyGRANSO will numerically assert that this
        matrix is positive definite.  In limited-memory mode, that is, if
        opts.limited_mem_size > 0, no numerical checks are done but this 
        matrix must be a sparse matrix.
@@ -60,7 +60,7 @@ def gransoOptions(n,options):
        .checkH0                        [logical | {true}]
        By default, PyGRANSO will check whether or not H0 is numerically
        positive definite (by checking whether or not chol() succeeds).
-       However, when restarting GRANSO from the last iterate of an earlier
+       However, when restarting PyGRANSO from the last iterate of an earlier
        run, using soln.H_final (the last BFGS approximation to the inverse
        Hessian), soln.H_final may sometimes fail this check.  Set this
        option to false to disable it.  No positive definite check is done
@@ -69,7 +69,7 @@ def gransoOptions(n,options):
       .scaleH0                        [logical | {true}]
        Scale H0 during BFGS/L-BFGS updates.  For full-memory BFGS, scaling
        is only applied on the first iteration only, and is generally only
-       recommended when H0 is the identity (which is GRANSO's default).
+       recommended when H0 is the identity (which is PyGRANSO's default).
        For limited-memory BFGS, H0 is scaled on every update.  For more
        details, see opts.limited_mem_fixed_scaling.
  
@@ -82,7 +82,7 @@ def gransoOptions(n,options):
        zero completely disables damping.
 
         .limited_mem_size               [nonnegative integer | {0}]
-       By default, GRANSO uses full-memory BFGS updating.  For nonsmooth
+       By default, PyGRANSO uses full-memory BFGS updating.  For nonsmooth
        problems, full-memory BFGS is generally recommended.  However, if
        this is not feasible, one may optionally enable limited-memory BFGS
        updating by setting opts.limited_mem_size to a positive integer
@@ -93,12 +93,12 @@ def gransoOptions(n,options):
        permits that H0 can be scaled on every iteration.  By default,
        PyGRANSO will reuse the scaling parameter that is calculated on the
        very first iteration for all subsequent iterations as well.  Set
-       this option to false to force GRANSO to calculate a new scaling
+       this option to false to force PyGRANSO to calculate a new scaling
        parameter on every iteration.  Note that opts.scaleH0 has no effect
        when opts.limited_mem_fixed_scaling is set to true.
 
        .limited_mem_warm_start         [struct | {[]}]
-       If one is restarting GRANSO, the previous L-BFGS information can be
+       If one is restarting PyGRANSO, the previous L-BFGS information can be
        recycled by setting opts.limited_mem_warm_start = soln.H_final,
        where soln is PyGRANSO's output struct from a previous run.  Note
        that one can either reuse the previous H0 or set a new one.
@@ -116,20 +116,20 @@ def gransoOptions(n,options):
        solutions for the originally specified problem.
 
        .prescaling_info_msg            [logical | {true}]
-       Prints a notice that GRANSO has either automatically pre-scaled at
+       Prints a notice that PyGRANSO has either automatically pre-scaled at
        least one of the objective or constraint functions or it has
        deteced that the optimization problem may be poorly scaled.  For
        more details, see opts.prescaling_threshold.  
 
        .opt_tol                        [real >= 0 | {1e-8}]
        Tolerance for reaching (approximate) optimality/stationarity.
-       See opts.ngrad, opts.evaldist, and the description of GRANSO's 
+       See opts.ngrad, opts.evaldist, and the description of PyGRANSO's 
        output argument soln, specifically the subsubfield .dnorm for more
        information.
 
        .rel_tol                        [real >= 0 | {0}]
        Tolerance for determining when the relative decrease in the penalty
-       function is sufficiently small.  GRANSO will terminate if when 
+       function is sufficiently small.  PyGRANSO will terminate if when 
        the relative decrease in the penalty function is at or below this
        tolerance and the current iterate is feasible to tolerances.
        Generally, we don't recommend using this feature since small steps
@@ -154,7 +154,7 @@ def gransoOptions(n,options):
        cached gradients were evaluated at points within evaldist of the 
        current iterate.  Using 1 is recommended if and only if the problem 
        is unconstrained and the objective is known to be smooth.  See 
-       opts.opt_tol, opts.evaldist, and the description of GRANSO's output
+       opts.opt_tol, opts.evaldist, and the description of PyGRANSO's output
        argument soln, specifically the subsubfield .dnorm for more
        information.
 
@@ -177,7 +177,7 @@ def gransoOptions(n,options):
        opts.viol_ineq_tol and opts.viol_eq_tol).
  
        .halt_on_quadprog_error         [logical | {false}]
-       By default, GRANSO will attempt to 'work around' any quadprog
+       By default, PyGRANSO will attempt to 'work around' any quadprog
        failure (numerically invalid result or quadprog throws a bonafide
        error) according to a set of default fallback strategies (see
        gransoOptionsAdvanced for how these can be configured).  Generally,
@@ -185,7 +185,7 @@ def gransoOptions(n,options):
        occurring quite rarely.  However, if quadprog fails frequently,
        then PyGRANSO's performance will likely be greatly hindered (in terms
        of efficiency and quality of optimization).  Set this option to
-       true if one wishes GRANSO to halt on the first quadprog error 
+       true if one wishes PyGRANSO to halt on the first quadprog error 
        encountered while computing the search direction.
 
        .halt_on_linesearch_bracket     [logical | {true}]
@@ -195,15 +195,15 @@ def gransoOptions(n,options):
        (default).  For unconstrained nonsmooth problems, it has been 
        observed that this type of line search failure is often an 
        indication that a stationarity has in fact been reached.  By 
-       setting this parameter to false, GRANSO will instead first attempt 
+       setting this parameter to false, PyGRANSO will instead first attempt 
        alternative optimization strategies (if available) to see if
        further progress can be made before terminating.   See
        gransoOptionsAdvanced for more details on PyGRANSO's available 
        fallback optimization strategies and how they can be configured.
 
        .quadprog_info_msg              [logical | {true}]
-       Prints a notice that GRANSO's requires a quadprog-compatible QP
-       solver and that the choice of QP solver may affect GRANSO's quality
+       Prints a notice that PyGRANSO's requires a quadprog-compatible QP
+       solver and that the choice of QP solver may affect PyGRANSO's quality
        of performance, in terms of efficiency and level of optimization. 
 
        .print_level                    [integer in {0,1,2,3} | 1]
@@ -234,15 +234,15 @@ def gransoOptions(n,options):
        character map, which may look better when captured by diary().
 
        .print_use_orange               [logical | {true}]
-       By default, GRANSO's printed output makes use of an undocumented
-       MATLAB feature for printing orange text.  GRANSO's uses orange
+       By default, PyGRANSO's printed output makes use of an undocumented
+       MATLAB feature for printing orange text.  PyGRANSO's uses orange
        printing to highlight pertinent information.  However, the user
        is the given option to disable it, since support cannot be
        guaranteed (since it is an undocumented feature).
   
        .halt_log_fn                    [a function handle | {[]}]  
        A user-provided function handle that is called on every iteration
-       to allow the user to signal to GRANSO for it to halt at that 
+       to allow the user to signal to PyGRANSO for it to halt at that 
        iteration and/or create historical logs of the progress of the
        algorithm.  For more details, see also makeHaltLogFunctions in the
        halt_log_template folder, which shows the function signature
@@ -251,14 +251,14 @@ def gransoOptions(n,options):
        .debug_mode                     [logical | {false}]
        By default, PyGRANSO will catch any errors that occur during runtime,
        in order to be able to return the best computed result so far. 
-       Instead of rethrowing the error, GRANSO will instead print an error
-       message without and add the error object to GRANSO's struct output
+       Instead of rethrowing the error, PyGRANSO will instead print an error
+       message without and add the error object to PyGRANSO's struct output
        argument soln.  However, this behavior can make it harder to debug
-       GRANSO so it can be disabled by setting this option to true.
+       PyGRANSO so it can be disabled by setting this option to true.
         
         END OF STANDARD PARAMETERS
 
-       See also granso, gransoOptionsAdvanced, and makeHaltLogFunctions.
+       See also pygranso, pygransoOptionsAdvanced, and makeHaltLogFunctions.
 
     """
     
