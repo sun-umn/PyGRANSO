@@ -3,10 +3,11 @@ import torch
 
 def combinedFunction(X,parameters):
     
-    # input variable, matirx form. torch tensor
+    # user defined variable, matirx form. torch tensor
     q = X.q
     q.requires_grad_(True)
     
+    # obtain parameters from runExample.py
     m = parameters.m
     Y = parameters.Y
     
