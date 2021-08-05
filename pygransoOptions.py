@@ -509,7 +509,7 @@ def getDefaults(n):
     setattr(default_opts,'regularize_threshold',Inf)
     setattr(default_opts,'regularize_max_eigenvalues',False)
     setattr(default_opts,'quadprog_info_msg',True)
-    setattr(default_opts,'QPsolver',None)
+    setattr(default_opts,'QPsolver','osqp')
     setattr(default_opts,'wolfe1',1e-4)
     setattr(default_opts,'wolfe2',0.5)
     setattr(default_opts,'linesearch_nondescent_maxit',0)
@@ -525,8 +525,6 @@ def getDefaults(n):
     setattr(default_opts,'print_use_orange',True)
     setattr(default_opts,'halt_log_fn',None)
     setattr(default_opts,'debug_mode',False)
-
-    # setattr(default_opts,'QPsolver',None)
 
     return [default_opts, LAST_FALLBACK_LEVEL]
     

@@ -4,6 +4,10 @@
 class Options:
     pass
 
+# struct for parameters
+class Parameters:
+    pass
+
 # options for optimization variable X
 class VariableStruct:
     pass

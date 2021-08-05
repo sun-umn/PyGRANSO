@@ -10,9 +10,11 @@ import copy
 from dbg_print import dbg_print
 from private.wrapToLines import wrapToLines
 from time import sleep
+from private.mat2vec import mat2vec_autodiff
+from private.getNvar import getNvar
 
 
-def pygranso(n,obj_fn,user_opts=None):
+def pygranso(var_dim_map,parameters=None,user_opts=None):
     """
     PyGRANSO: Python version GRadient-based Algorithm for Non-Smooth Optimization
 
@@ -347,6 +349,10 @@ def pygranso(n,obj_fn,user_opts=None):
     #  - process arguments
     #  - set initial Hessian inverse approximation
     #  - evaluate functions at x0
+
+    # call the functions getNvar to get the total number of (scalar) variables
+    n = getNvar(var_dim_map)
+    obj_fn = lambda x: mat2vec_autodiff(x,var_dim_map,n,parameters)
 
     try: 
         [problem_fns,opts] = processArguments(n,obj_fn,user_opts)
