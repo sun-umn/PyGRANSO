@@ -40,9 +40,20 @@ We will tackle the severe limitations of GRANSO, and build a user-friendly and s
 
 ## Dependencies
 
+```bash
+conda install -c oxfordcontrol osqp
+
+conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch
+
+pip install gurobipy
+```
+
+
+osqp
+
 Python 3.7.10
 
-numpy-1.20.3 
+numpy-1.20.3
 
 scipy-1.6.2
 
