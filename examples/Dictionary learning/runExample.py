@@ -13,7 +13,7 @@ from pygransoStruct import Options, Parameters
 
 # variables and corresponding dimensions.
 n = 30
-vars = {"q": (n,1)}
+var_in = {"q": (n,1)}
 
 # parameters
 parameters = Parameters()
@@ -22,7 +22,6 @@ theta = 0.3   # sparsity level
 Y = norm.ppf(np.random.rand(n,m)) * (norm.ppf(np.random.rand(n,m)) <= theta)  # Bernoulli-Gaussian model
 parameters.Y = torch.from_numpy(Y) 
 parameters.m = m
-
 
 # user defined options
 opts = Options()
@@ -38,13 +37,9 @@ opts.fvalquit = 1e-6
 opts.print_level = 1
 opts.print_frequency = 10
 
-
-
-########################################################################################
-###########################  main algorithm  ###########################################
-
+#  main algorithm  
 start = time.time()
-soln = pygranso(vars,parameters,opts)
+soln = pygranso(var_in,parameters,opts)
 end = time.time()
 print("Total Wall Time: {}s".format(end - start))
 

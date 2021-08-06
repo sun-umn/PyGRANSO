@@ -1,10 +1,10 @@
 from pygransoStruct import general_struct
 import torch
 
-def combinedFunction(X,parameters):
+def combinedFunction(X_struct,parameters):
     
     # user defined variable, matirx form. torch tensor
-    q = X.q
+    q = X_struct.q
     q.requires_grad_(True)
     
     # obtain parameters from runExample.py
