@@ -17,7 +17,6 @@ var_in = {"x": (n,1)}
 
 # parameters
 parameters = Parameters()
-
 eta = 0.5 # parameter for penalty term
 torch.manual_seed(1)
 b = torch.rand(n,1)

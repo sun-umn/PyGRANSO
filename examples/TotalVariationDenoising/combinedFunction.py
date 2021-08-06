@@ -13,8 +13,7 @@ def combinedFunction(X_struct,parameters = None):
     eta = parameters.eta
     
     # objective function
-    f = (x-b).t() @ (x-b)
-    f += eta * torch.norm( F@x, p = 1)
+    f = (x-b).t() @ (x-b)  + eta * torch.norm( F@x, p = 1)
 
     # inequality constraint, matrix form
     ci = None
