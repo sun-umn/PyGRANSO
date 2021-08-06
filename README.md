@@ -11,7 +11,6 @@ Please check https://pygranso.readthedocs.io/en/latest for detailed documentatio
 * [Contact](#contact)
 
 ## References
-Ben Hermans, Andreas Themelis, and Panagiotis Patrinos. "QPALM: a Newton-type proximal augmented Lagrangian method for quadratic programs." 2019 IEEE 58th Conference on Decision and Control (CDC). IEEE, 2019.
 
 Frank E. Curtis, Tim Mitchell, and Michael L. Overton. "A BFGS-SQP method for nonsmooth, nonconvex, constrained optimization and its evaluation using relative minimization profiles." Optimization Methods and Software 32.1 (2017): 148-181.
 
