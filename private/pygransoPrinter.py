@@ -24,6 +24,7 @@ class pgP:
         use_orange                      = self.opts.print_use_orange
         print_opts = general_struct()
         setattr(print_opts,"use_orange",use_orange)
+        setattr(print_opts,"use_ascii",ascii)
         setattr(print_opts,"print_width",self.opts.print_width)
         setattr(print_opts,"maxit",self.opts.maxit)
         setattr(print_opts,"ls_max_estimate",50*(self.opts.linesearch_reattempts + 1))

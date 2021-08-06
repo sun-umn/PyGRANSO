@@ -36,6 +36,7 @@ opts.opt_tol = 1e-6
 opts.fvalquit = 1e-6
 opts.print_level = 1
 opts.print_frequency = 10
+opts.print_ascii = True
 
 #  main algorithm  
 start = time.time()

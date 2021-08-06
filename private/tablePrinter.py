@@ -28,6 +28,7 @@ class tP:
       """
 
       self.use_orange = use_orange
+      self.use_ascii = use_ascii
       
       if np.all(self.use_orange==None):
          self.use_orange  = False
@@ -148,7 +149,7 @@ class tP:
 
    def messageLineOrange(self,str):
       str = prepareMessageStr(self.msg_width,self.msg_width,str)
-      if self.use_orange and len(str) > 0:
+      if self.use_orange and len(str) > 0 and not self.use_ascii:
             str = fO.formatOrange(str)
       
       print(self.msg_str % str,end="")
@@ -407,8 +408,8 @@ def mergeLabels(labels_top,labels_bottom,overlapping_lines):
 
 def getSymbolsVertical(use_ascii):
    if use_ascii:
-      vs  = "|"
-      vd  = "|"
+      vs  = chr(124)
+      vd  = chr(124)
    else:
       vs  = "│"
       vd  = "║"
@@ -531,7 +532,7 @@ def makeRules(use_ascii,h2):
    top_r               = top_h                # top rule - row
    top_r_list = list(top_r)
    for idx in vs_indx:
-      top_r_list[vs_indx]      = tds
+      top_r_list[idx]      = tds
    top_r = "".join(top_r_list)
    
    #  bottom rules, with upward corner piece at the end
@@ -651,22 +652,22 @@ def getSymbols():
 
 def getSymbolsASCII():
       
-   hs                  = "-"
-   hd                  = "="
+   hs                  = chr(45)
+   hd                  = chr(61)
 
-   cs                  = "|"
-   cd                  = "|"
-   csd                 = "|"
-   cds                 = "|"
+   cs                  = chr(124)
+   cd                  = chr(124)
+   csd                 = chr(124)
+   cds                 = chr(124)
 
-   tsdl                = "-"
-   tdl                 = "="
-   tds                 = "="
-   td                  = "="
-   tdsu                = "="
-   tdu                 = "="
+   tsdl                = chr(45)
+   tdl                 = chr(61)
+   tds                 = chr(61)
+   td                  = chr(61)
+   tdsu                = chr(61)
+   tdu                 = chr(61)
 
-   edtr                = "="
-   edbr                = "="
+   edtr                = chr(61)
+   edbr                = chr(61)
 
    return [  hs, hd, cs, cd, csd, cds, tsdl, tdl, tds, td, tdsu, tdu, edtr, edbr ]

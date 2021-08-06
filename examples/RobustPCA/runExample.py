@@ -12,8 +12,8 @@ from pygransoStruct import Options, Parameters
 # Please read the documentation on https://pygranso.readthedocs.io/en/latest/
 
 # variables and corresponding dimensions.
-d1 = 7
-d2 = 8
+d1 = 5
+d2 = 10
 var_in = {"M": (d1,d2),"S": (d1,d2)}
 
 # parameters
@@ -24,7 +24,8 @@ parameters.Y = torch.randn(d1,d2)
 
 # user defined options
 opts = Options()
-opts.x0 = np.ones((2*d1*d2,1))
+opts.x0 = .2 * np.ones((2*d1*d2,1))
+# opts.print_ascii = True
 
 #  main algorithm  
 start = time.time()

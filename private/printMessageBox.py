@@ -13,11 +13,14 @@ def addTitle(header,title,indent,spaces):
     if title == None:
         return
     
-    title_chars     = len(title) + 2*spaces
-    # indx            = slice(indent+1,indent+1+title_chars) 
-    title_str = " "*spaces + title + " "*spaces 
-    header_new  =  header[0:indent+1] + title_str + header[indent+1+title_chars:]
-    return header_new
+    if len(title) != 0:
+        title_chars     = len(title) + 2*spaces
+        # indx            = slice(indent+1,indent+1+title_chars) 
+        title_str = " "*spaces + title + " "*spaces 
+        header_new  =  header[0:indent+1] + title_str + header[indent+1+title_chars:]
+        return header_new
+    else:
+        return header
 
 def getHeaders(ascii,header_width):
 
@@ -60,7 +63,7 @@ def getSymbolsExtended():
     return [hbar,vbar,lt,rt,lb,rb]
 
 def getSymbolsASCII():
-    return ["#","#","#","#","#","#"]
+    return [chr(35)]*6
 
 def printMessageBox(use_ascii,use_orange,margin_spaces,title_top,title_bottom,msg_lines,sides=True,user_width=0):
     # printMessageBox:
@@ -114,7 +117,7 @@ def printMessageBox(use_ascii,use_orange,margin_spaces,title_top,title_bottom,ms
     
     format_str          = lineFormatStr(max_line_width,margin_spaces,vbar)
     
-    if use_orange:
+    if use_orange and not use_ascii:
         print_fn        = lambda strPrint : pO.printOrange(strPrint)
     else:
         print_fn        = lambda strPrint : print(strPrint,end="")

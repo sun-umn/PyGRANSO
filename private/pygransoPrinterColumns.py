@@ -30,7 +30,7 @@ def pygransoPrinterColumns(opts,ineq_constraints,eq_constraints):
     setattr(c,"ls_size", getNumberColumn("t",9,True))
     setattr(c,"ngrad", getCount("Grads",opts.ngrad))
     gSM_object = gSM()
-    setattr(c,"stat_value", gSM_object.getStationarityMeasure(opts.use_orange))
+    setattr(c,"stat_value", gSM_object.getStationarityMeasure(opts.use_orange, opts.use_ascii))
     
     return c
 
@@ -85,7 +85,7 @@ class gSD:
         self.constrained = constrained
         random_attempts = opts.random_attempts
         
-        if opts.use_orange:
+        if opts.use_orange and not opts.use_ascii:
             format_fn = lambda sd_code,random_attempts: self.formatSearchDirectionOrange(sd_code,random_attempts,constrained)
         else:
             format_fn = lambda sd_code,random_attempts: self.formatSearchDirection(sd_code,random_attempts)
@@ -123,12 +123,12 @@ class gSM:
     def __init__(self):
         pass
 
-    def getStationarityMeasure(self,use_orange):
+    def getStationarityMeasure(self,use_orange,use_ascii):
         get_num_fn          = d2FWS.double2FixedWidthStr(9)
         self.format_number_fn    = lambda x: dropFirstChar(get_num_fn(x))
         width               = 10
         
-        if use_orange:
+        if use_orange and not use_ascii:
             format_fn       = lambda value,stat_type: self.formatStationarityMeasureOrange(value,stat_type)
         else:
             format_fn       = lambda value,stat_type: self.formatStationarityMeasure(value,stat_type)

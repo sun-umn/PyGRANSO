@@ -161,7 +161,7 @@ def pygranso(var_dim_map,parameters=None,user_opts=None):
  
        NOTE: The above total violation measures are with respect to the
        infinity norm, since the infinity norm is used for determining
-       whether or not a point is feasible.  Note however that GRANSO 
+       whether or not a point is feasible.  Note however that PyGRANSO 
        optimizes an L1 penalty function.
  
        The soln struct also has the following subfields:
@@ -171,14 +171,14 @@ def pygranso(var_dim_map,parameters=None,user_opts=None):
                            Limited-memory BFGS:
                            - A struct containing fields S,Y,rho,gamma, 
                              representing the final LBFGS state (so that
-                             GRANSO can be warm started using this data).
+                             PyGRANSO can be warm started using this data).
        
        .stat_value         an approximate measure of stationarity at the 
                            last accepted iterate.  See opts.opt_tol, 
                            opts.ngrad, opts.evaldist, and equation (13) 
                            and its surrounding discussion in the paper 
                            referenced below describing the underlying 
-                           BFGS-SQP method that GRANSO implements.
+                           BFGS-SQP method that PyGRANSO implements.
    
        .iters              The number of iterations incurred.  Note that 
                            if the last iteration fails to produce a step,
@@ -196,7 +196,7 @@ def pygranso(var_dim_map,parameters=None,user_opts=None):
                            constraint functions at a single point counts
                            as one function evaluation.
    
-       .termination_code   Numeric code indicating why GRANSO terminated:
+       .termination_code   Numeric code indicating why PyGRANSO terminated:
            0:  Approximate stationarity measurement <= opts.opt_tol and 
                current iterate is sufficiently close to the feasible 
                region (as determined by opts.viol_ineq_tol and 
@@ -248,7 +248,7 @@ def pygranso(var_dim_map,parameters=None,user_opts=None):
                available fallbacks or opts.halt_on_quadprog_error was set 
                to true).  Only relevant for constrained problems.
  
-           13: An unknown error occurred, forcing GRANSO to stop.  Please 
+           13: An unknown error occurred, forcing PyGRANSO to stop.  Please 
                report these errors to the developer.
  
         .quadprog_failure_rate  Percent of the time quadprog threw an error or
@@ -256,7 +256,7 @@ def pygranso(var_dim_map,parameters=None,user_opts=None):
  
         .error                  Only present for soln.termination equal to 11, 
                            12, or 13.  Contains the thrown error that
-                           caused GRANSO to halt optimization.
+                           caused PyGRANSO to halt optimization.
  
         .mu_lowest              Only present for constrained problems where
                            the line search failed to bracket a minimizer 
@@ -504,7 +504,7 @@ def getTableRows(nums,num_width,cols,indent,brackets):
 
 def quadprogInfoMsg():
     msg = ["PyGRANSO requires a quadratic program (QP) solver that has a quadprog-compatible ",
-            "interface, as defined by Gurobi and QPALM..."]  
+            "interface, as defined by osqp and Gurobi..."]  
     return msg                   
 
 def poorScalingDetectedMsgs():
@@ -516,7 +516,7 @@ def poorScalingDetectedMsgs():
 
     post = ["NOTE: One may wish to consider whether the problem can be alternatively formulated",
     "with better inherent scaling, which may yield improved optimization results.",
-    "Alternatively, GRANSO can optionally apply automatic pre-scaling to poorly-scaled",
+    "Alternatively, PyGRANSO can optionally apply automatic pre-scaling to poorly-scaled",
     "objective and/or constraint functions if opts.prescaling_threshold is set to some",
     "sufficiently small positive number (e.g. 100).  For more details, see gransoOptions.",
     "",
@@ -526,8 +526,8 @@ def poorScalingDetectedMsgs():
 def prescalingEnabledMsgs():
     title = "PRE-SCALING ENABLED"      
 
-    pre = ["GRANSO has applied pre-scaling to functions whose norms were considered large at x0.",
-        "GRANSO will now try to solve this pre-scaled version instead of the original problem",
+    pre = ["PyGRANSO has applied pre-scaling to functions whose norms were considered large at x0.",
+        "PyGRANSO will now try to solve this pre-scaled version instead of the original problem",
         "given.  Specifically, the following functions have been automatically scaled",
         "downward so that the norms of their respective gradients evaluated at x0 no longer",
         "exceed opts.prescaling_threshold and instead are now equal to it:"] 
@@ -536,7 +536,7 @@ def prescalingEnabledMsgs():
         "objective/constraint functions are poorly scaled, a solution to the pre-scaled",
         "problem MAY OR MAY NOT BE A SOLUTION to the original unscaled problem.  One may wish",
         "to consider if the problem can be reformulated with better inherent scaling.  The",
-        "amount of pre-scaling applied by GRANSO can be tuned, or disabled completely, via",
+        "amount of pre-scaling applied by PyGRANSO can be tuned, or disabled completely, via",
         "adjusting opts.prescaling_threshold.  For more details, see gransoOptions.",
         "To disable this notice, set opts.prescaling_info_msg = false."]  
     return [title,pre,post]
@@ -623,9 +623,9 @@ def bracketedMinimizerInfeasibleMsg():
 
 def failedToBracketedMinimizerMsg(soln):
     if hasattr(soln,"mu_lowest"):
-        s_mu = ["GRANSO attempted mu values down to {} unsuccessively.  However, if ".format(soln.mu_lowest),
+        s_mu = ["PyGRANSO attempted mu values down to {} unsuccessively.  However, if ".format(soln.mu_lowest),
                 "the objective function is indeed bounded below on the feasible set, ",
-                "consider restarting GRANSO with opts.mu0 set even lower than {}.".format(soln.mu_lowest)] 
+                "consider restarting PyGRANSO with opts.mu0 set even lower than {}.".format(soln.mu_lowest)] 
     else:
         s_mu = ""
 
