@@ -1,7 +1,7 @@
 from pygransoStruct import general_struct
 import torch
 
-def combinedFunction(X_struct,parameters):
+def combinedFunction(X_struct,parameters = None):
     
     # user defined variable, matirx form. torch tensor
     q = X_struct.q
