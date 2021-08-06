@@ -18,12 +18,11 @@ def combinedFunction(X_struct,parameters):
     # objective function
     M           = A + B@X@C
     [D,_]       = LA.eig(M)
-    d           = D
-    f = torch.max(d.imag)
+    f = torch.max(D.imag)
 
     # inequality constraint, matrix form
     ci = general_struct()
-    ci.c1 = torch.max(d.real) + stability_margin
+    ci.c1 = torch.max(D.real) + stability_margin
 
     # equality constraint 
     ce = None
