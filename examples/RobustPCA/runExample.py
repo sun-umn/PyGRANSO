@@ -24,13 +24,7 @@ parameters.Y = torch.randn(d1,d2)
 
 # user defined options
 opts = Options()
-opts.QPsolver = 'osqp' 
-opts.maxit = 1000
 opts.x0 = np.ones((2*d1*d2,1))
-opts.opt_tol = 1e-6
-opts.fvalquit = 1e-6
-opts.print_level = 1
-opts.print_frequency = 5
 
 #  main algorithm  
 start = time.time()
@@ -39,4 +33,3 @@ end = time.time()
 print("Total Wall Time: {}s".format(end - start))
 
 # print(soln.final.x)
-print(max(abs(soln.final.x))) # should be close to 1
