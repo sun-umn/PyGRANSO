@@ -12,8 +12,8 @@ from pygransoStruct import Options, Parameters
 # Please read the documentation on https://pygranso.readthedocs.io/en/latest/
 
 # variables and corresponding dimensions.
-d1 = 5
-d2 = 10
+d1 = 7
+d2 = 8
 var_in = {"M": (d1,d2),"S": (d1,d2)}
 
 # parameters
@@ -30,7 +30,7 @@ opts.x0 = np.ones((2*d1*d2,1))
 opts.opt_tol = 1e-6
 opts.fvalquit = 1e-6
 opts.print_level = 1
-opts.print_frequency = 10
+opts.print_frequency = 5
 
 #  main algorithm  
 start = time.time()

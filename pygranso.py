@@ -570,7 +570,7 @@ def getTerminationMsgLines(soln,constrained,width):
     else:
         s = "unknown termination condition."
     
-    s = "PyGRANSO termination code: %d --- %s" % (soln.termination_code,s)    
+    s = "PyGRANSO termination code: %d --- %s" % (soln.termination_code,"".join(s))    
     lines = [   "Iterations:              %d" % (soln.iters),
                 "Function evaluations:    %d" % (soln.fn_evals)]
     lines.extend( wrapToLines(s,width,0))
