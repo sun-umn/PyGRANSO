@@ -3,7 +3,7 @@ from private.makePenaltyFunction import PanaltyFuctions
 from private import bfgsHessianInverse as bfgsHI, printMessageBox as pMB
 from private.bfgssqp import AlgBFGSSQP
 from private.pygransoPrinter import pgP
-from pygransoOptions import gransoOptions
+from pygransoOptions import pygransoOptions
 from private.solveQP import getErr
 import numpy as np
 import copy
@@ -333,7 +333,7 @@ def pygranso(var_dim_map,parameters=None,user_opts=None):
                        deficient or broken quadprog installation (or that 
                        the license is invalid or can't be verified).
  
-       See also gransoOptions, gransoOptionsAdvanced, makeHaltLogFunctions.
+       See also pygransoOptions, gransoOptionsAdvanced, makeHaltLogFunctions.
     """
     
     # if nargin < 2
@@ -464,7 +464,7 @@ def pygranso(var_dim_map,parameters=None,user_opts=None):
 def processArguments(n,combined_fns,opts):
     problem_fns = combined_fns
     options = opts
-    options = gransoOptions(n,options)
+    options = pygransoOptions(n,options)
     return [problem_fns,options]
 
 def getBfgsManager(opts):
@@ -518,7 +518,7 @@ def poorScalingDetectedMsgs():
     "with better inherent scaling, which may yield improved optimization results.",
     "Alternatively, PyGRANSO can optionally apply automatic pre-scaling to poorly-scaled",
     "objective and/or constraint functions if opts.prescaling_threshold is set to some",
-    "sufficiently small positive number (e.g. 100).  For more details, see gransoOptions.",
+    "sufficiently small positive number (e.g. 100).  For more details, see pygransoOptions.",
     "",
     "To disable this notice, set opts.prescaling_info_msg = false."]
     return [title,pre,post]
@@ -537,7 +537,7 @@ def prescalingEnabledMsgs():
         "problem MAY OR MAY NOT BE A SOLUTION to the original unscaled problem.  One may wish",
         "to consider if the problem can be reformulated with better inherent scaling.  The",
         "amount of pre-scaling applied by PyGRANSO can be tuned, or disabled completely, via",
-        "adjusting opts.prescaling_threshold.  For more details, see gransoOptions.",
+        "adjusting opts.prescaling_threshold.  For more details, see pygransoOptions.",
         "To disable this notice, set opts.prescaling_info_msg = false."]  
     return [title,pre,post]
 

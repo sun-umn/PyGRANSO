@@ -8,9 +8,9 @@ from dbg_print import dbg_print
 from private.isAnInteger import isAnInteger
 from numpy.random import default_rng
 
-def gransoOptions(n,options):
+def pygransoOptions(n,options):
     """
-    gransoOptions:
+    pygransoOptions:
         Validate user options struct for pygranso.py.  If user_opts is [] or
         not provided, returned opts will be PyGRANSO's default parameters.
         Standard or advanced options may be set.  
@@ -20,8 +20,8 @@ def gransoOptions(n,options):
        to see documentation for the advanced user options.
    
        USAGE:
-       opts = gransoOptions(n);
-       opts = gransoOptions(n,user_opts);
+       opts = pygransoOptions(n);
+       opts = pygransoOptions(n,user_opts);
 
        INPUT:
        n           Number of variables being optimized.
@@ -343,7 +343,7 @@ def gransoOptions(n,options):
             lbfgs_validator.setReal("gamma")
             lbfgs_validator.setFiniteValued("gamma")
         
-        if hasattr(user_opts,"H0") and user_opts.H0 != None:
+        if hasattr(user_opts,"H0") and np.any(user_opts.H0) != None:
             validator.setDimensioned("H0",n,n)
             validator.setRealFiniteValued("H0")
             if lim_mem_mode:
@@ -452,7 +452,7 @@ def postProcess(n,opts):
         opts.x0 = rng.standard_normal(size=(n,1))
     
     # If an initial inverse Hessian was not provided, use the identity
-    if opts.H0 == None:
+    if np.any(opts.H0) == None:
         opts.H0 = sparse.eye(n).toarray()
     
     
