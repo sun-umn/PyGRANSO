@@ -6,10 +6,6 @@ Toward a user-friendly and scalable numerical package for nonsmooth, nonconvex, 
 
 Please check https://pygranso.readthedocs.io/en/latest for detailed documentation.
 
-## Table of contents
-* [References](#references)
-* [Contact](#contact)
-
 ## References
 
 Frank E. Curtis, Tim Mitchell, and Michael L. Overton. "A BFGS-SQP method for nonsmooth, nonconvex, constrained optimization and its evaluation using relative minimization profiles." Optimization Methods and Software 32.1 (2017): 148-181.
