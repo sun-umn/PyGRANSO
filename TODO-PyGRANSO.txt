@@ -1,0 +1,19 @@
+1. autodiff faster when there is a summation. typical in ML problem. may not exist in robust PCA. (split cost)
+
+2. special analysis for different example. dictL good, spectral radius med, rpca bad.
+
+3. change input compatible with pytorch tensor
+
+4. MATLAB parfor also parallel executation
+
+5. gpu support for constrained DL
+
+6. consider nonconx rpca, otherwise cannot win cvx
+
+Manuscript:
+
+1. show results consistent with matlab (Rosenbrock, Spectral)
+
+2. Performance analysis: DictL, spectral, rpca (bad)
+
+3. 
