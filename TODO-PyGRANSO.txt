@@ -10,10 +10,12 @@
 
 6. consider nonconx rpca, otherwise cannot win cvx
 
+7. Generalized PyTorch function. Not only Built-in
+
 Manuscript:
 
 1. show results consistent with matlab (Rosenbrock, Spectral)
 
 2. Performance analysis: DictL, spectral, rpca (bad)
 
-3. 
+3. GPU for osqp and autodiff
