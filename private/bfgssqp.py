@@ -10,6 +10,7 @@ import numpy as np
 from dbg_print import dbg_print,dbg_print_1
 from numpy import conjugate as conj
 from numpy.random import default_rng
+# import torch
 
 class AlgBFGSSQP():
     def __init__(self):
@@ -236,7 +237,8 @@ class AlgBFGSSQP():
                 rng = default_rng()
                 p = rng.standard_normal(size=(n,1))
                 self.random_attempts = self.random_attempts + 1
-                
+            
+            # dbg_print_1("norm of gradient = {}".format(LA.norm(g)))
                 
             [p,is_descent,fallback_on_this_direction] = self.checkDirection(p,g)
 
