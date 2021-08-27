@@ -1,5 +1,6 @@
 import numpy as np
 from pygransoStruct import general_struct
+import torch
 
 def getObjGrad(nvar,var_dim_map,f,X):
     # f_grad = genral_struct()
@@ -20,4 +21,20 @@ def getObjGrad(nvar,var_dim_map,f,X):
 
         # preventing gradient accumulating
         getattr(X,var).grad.zero_()
+    return f_grad_vec
+
+def getObjGradDL(nvar,model,f):
+    # f_grad = genral_struct()
+    f.backward()
+    # transform f_grad form matrix form to vector form
+    f_grad_vec = np.zeros((nvar,1))
+
+    curIdx = 0
+    parameter_lst = list(model.parameters())
+    for i in range(len(parameter_lst)):
+        # print(parameter_lst[i].grad.shape)
+        f_grad_reshape = torch.reshape(parameter_lst[i].grad,(-1,1)).cpu().numpy()
+        f_grad_vec[curIdx:curIdx+f_grad_reshape.shape[0]] = f_grad_reshape
+        curIdx += f_grad_reshape.shape[0]
+
     return f_grad_vec

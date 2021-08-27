@@ -34,6 +34,8 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
     # parameter if it terminates with the "f may be unbounded below" case.
     nexpandmax = max(10, round(math.log2(1e5/dnorm)))  # allows more if ||d|| small
 
+    test_flag = 0
+
     while (beta - alpha) > (LA.norm(x0 + alpha*d)/dnorm)*step_tol and n_evals < eval_limit:
         x = x0 + t*d
         [f,grad,is_feasible] = obj_fn(x)
@@ -51,12 +53,14 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
         if f >= f0 + c1*t*g0 or np.isnan(f): # first condition violated, gone too far
             beta = t
             gradbeta = grad.copy() # discard f
+            test_flag = 1
         #  now the second condition.  NOTE THE <=
         elif gtd <= c2*g0 or np.isnan(gtd): # second condition violated, not gone far enough
             alpha = t
             xalpha = x.copy()
             falpha = f
             gradalpha = grad.copy()
+            test_flag = 2
         else:   # quit, both conditions are satisfied
             fail = 0
             alpha = t
@@ -81,6 +85,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
     if beta == np.inf: # minimizer never bracketed
         fail = 2
     else: # point satisfying Wolfe conditions was bracketed
+        print("test_flag = %d"%test_flag)
         fail = 1
     
 

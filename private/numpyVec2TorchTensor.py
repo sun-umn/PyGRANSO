@@ -16,3 +16,10 @@ def numpyVec2TorchTensor(x,var_dim_map):
         setattr(X, var, torch.from_numpy(tmpMat))
         curIdx += tmpDim1 * tmpDim2
     return X
+
+def numpyVec2DLTorchTensor(x,model):
+    x_torch = torch.from_numpy(x).cuda()
+    torch.nn.utils.vector_to_parameters(x_torch, model.parameters())
+
+    
+    

@@ -243,7 +243,7 @@ class AlgBFGSSQP():
                 else: # all fallbacks have failed - quit!
                     self.prepareTermination(9); # not a descent descent direction
                     return self.info
-                end
+                
             else: # ATTEMPT LINE SEARCH
                 f_prev = f      # for relative termination tolerance
                 self.g_prev = g      # necessary for BFGS update
@@ -269,7 +269,7 @@ class AlgBFGSSQP():
                     elif can_fallback:
                         continue
                     else: # return 6 (feasible) or 7 (infeasible)
-                        self.prepareTermination(6 + ~feasible)
+                        self.prepareTermination(7 - feasible)
                         return self.info
                     
                 elif linesearch_failed == 2:  # couldn't bracket minimizer

@@ -10,11 +10,11 @@ import copy
 from dbg_print import dbg_print
 from private.wrapToLines import wrapToLines
 from time import sleep
-from private.mat2vec import mat2vec_autodiff
-from private.getNvar import getNvar
+from private.mat2vec import mat2vec_autodiff,tensor2vec_autodiff
+from private.getNvar import getNvar,getNvarTorch
 
 
-def pygranso(var_dim_map,parameters=None,user_opts=None):
+def pygranso(var_dim_map=None,user_parameters=None,user_opts=None,nn_model=None):
     """
     PyGRANSO: Python version GRadient-based Algorithm for Non-Smooth Optimization
 
@@ -350,9 +350,14 @@ def pygranso(var_dim_map,parameters=None,user_opts=None):
     #  - set initial Hessian inverse approximation
     #  - evaluate functions at x0
 
-    # call the functions getNvar to get the total number of (scalar) variables
-    n = getNvar(var_dim_map)
-    obj_fn = lambda x: mat2vec_autodiff(x,var_dim_map,n,parameters)
+    if var_dim_map == None and nn_model != None:
+        n = getNvarTorch(nn_model.parameters())
+        obj_fn = lambda x: tensor2vec_autodiff(x,nn_model,n,user_parameters)
+
+    else:
+        # call the functions getNvar to get the total number of (scalar) variables
+        n = getNvar(var_dim_map)
+        obj_fn = lambda x: mat2vec_autodiff(x,var_dim_map,n,user_parameters)
 
     try: 
         [problem_fns,opts] = processArguments(n,obj_fn,user_opts)
