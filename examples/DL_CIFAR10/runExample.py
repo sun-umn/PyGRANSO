@@ -6,6 +6,7 @@ from scipy.stats import norm
 import sys
 ## Adding PyGRANSO directories. Should be modified by user
 sys.path.append(r'C:\Users\Buyun\Documents\GitHub\PyGRANSO')
+sys.path.append(r'C:\Users\Buyun\Documents\GitHub\PyGRANSO\examples\DL_CIFAR10')
 from pygranso import pygranso
 from pygransoStruct import Options, Parameters
 from private.getNvar import getNvarTorch
@@ -18,21 +19,31 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-if __name__ == "__main__":
+def mainFun():
 
+        
         transform = transforms.Compose(
         [transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
         batch_size = 1000
 
-        trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+
+
+        trainset = torchvision.datasets.CIFAR10(root='./examples/DL_CIFAR10/data', train=True,
                                                 download=False, transform=transform)
+
+        # trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+        #                                         download=False, transform=transform)
+
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
                                                 shuffle=False, num_workers=2)
 
-        testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+        testset = torchvision.datasets.CIFAR10(root='./examples/DL_CIFAR10/data', train=False,
                                         download=False, transform=transform)
+
+        # testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+        #                                 download=False, transform=transform)
         testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                                 shuffle=False, num_workers=2)
 
@@ -145,7 +156,7 @@ if __name__ == "__main__":
         # opts.wolfe2 = 1e-4
         opts.halt_on_linesearch_bracket = False
         opts.max_fallback_level = 3
-        opts.min_fallback_level = 2
+        opts.min_fallback_level = 3
         # opts.max_random_attempts = 10
         # opts.linesearch_nondescent_maxit = 25
         # opts.linesearch_nondescent_maxit = 8
@@ -168,20 +179,24 @@ if __name__ == "__main__":
         print("acc = {}".format(acc))
         print("total time = {} s".format(end-start))
 
-        for i in range(100):
-                opts.x0 = soln.final.x
-                # opts.mu0 = soln.final.mu
-                # opts.H0 = soln.H_final
-                # opts.scaleH0 = False
+        # for i in range(100):
+        #         opts.x0 = soln.final.x
+        #         # opts.mu0 = soln.final.mu
+        #         # opts.H0 = soln.H_final
+        #         # opts.scaleH0 = False
 
-                #  main algorithm  
-                start = time.time()
-                soln = pygranso(user_parameters = parameters, user_opts = opts, nn_model = model)
-                end = time.time()
+        #         #  main algorithm  
+        #         start = time.time()
+        #         soln = pygranso(user_parameters = parameters, user_opts = opts, nn_model = model)
+        #         end = time.time()
 
-                numpyVec2DLTorchTensor(soln.final.x,model) # update model paramters
-                outputs = model(inputs.to(device=device, dtype=torch.double) )
-                acc = (outputs.max(1)[1] == labels.to(device=device, dtype=torch.double) ).sum().item()/labels.size(0)
+        #         numpyVec2DLTorchTensor(soln.final.x,model) # update model paramters
+        #         outputs = model(inputs.to(device=device, dtype=torch.double) )
+        #         acc = (outputs.max(1)[1] == labels.to(device=device, dtype=torch.double) ).sum().item()/labels.size(0)
 
-                print("acc = {}".format(acc))
-                print("total time = {} s".format(end-start))
+        #         print("acc = {}".format(acc))
+        #         print("total time = {} s".format(end-start))
+
+
+if __name__ == "__main__":
+    mainFun()
