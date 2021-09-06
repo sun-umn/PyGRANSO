@@ -2,6 +2,7 @@ import numpy as np
 from numpy.core.numeric import Inf
 from pygransoStruct import general_struct
 from numpy import conjugate as conj
+from dbg_print import dbg_print_1
 
 class H_obj_struct:
     
@@ -92,6 +93,11 @@ class H_obj_struct:
 
     def applyH(self,q):
         r = self.H @q 
+        # dbg_print_1("Second-derivative test:")
+        # pos_definite_flag = np.sum(np.linalg.eigvals(self.H) > 0)
+        # dbg_print_1(pos_definite_flag)
+        # dbg_print_1(pos_definite_flag/self.H.shape[0])
+
         return r
 
     def getState(self):

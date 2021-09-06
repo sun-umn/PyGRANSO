@@ -230,3 +230,5 @@ def tensor2vec_autodiff(x,model,nvar,parameters = None):
         ce_grad_vec = None
 
     return [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec]
+
+

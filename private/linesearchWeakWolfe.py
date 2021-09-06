@@ -17,13 +17,19 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
                 so that all error cases are assigned positive codes.
     """
 
-    dbg_print_1("start rescaling line search direction:")
-    dbg_print_1("norm of d = {}".format(LA.norm(d)))
-    d_rescale = d.copy()
-    d_rescale =  d_rescale / LA.norm(d_rescale)
-    # d_rescale = 5 * d_rescale
+    eval_limit = 25
+    dbg_print_1("hard coding eval_limit = %d: initial t = 10"%eval_limit)
+    
 
-    dbg_print_1("end rescaling line search direction.")
+    # dbg_print_1("start rescaling line search direction:")
+    
+    d_rescale = d.copy()
+    # d_norm = LA.norm(d_rescale)
+    # d_rescale =  d_rescale / d_norm
+    # d_rescale =  2000 * d_rescale
+    # dbg_print_1("norm of d = {}".format(LA.norm(d_rescale)))
+    
+    # dbg_print_1("end rescaling line search direction.")
 
 
     alpha = 0  # lower bound on steplength conditions
@@ -31,13 +37,18 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
     falpha = f0
     gradalpha = grad0.copy() # need to pass grad0, not grad0'*d, in case line search fails
     beta = np.inf  # upper bound on steplength satisfying weak Wolfe conditions
+    
+    # dbg_print_1("change beta to be 1:")
+    # beta = 1
+
     gradbeta = np.empty(x0.shape)
     gradbeta[:] = np.nan
     # g0 = conj(grad0.T) @ d 
     # dnorm = LA.norm(d)
     g0 = conj(grad0.T) @ d_rescale 
     dnorm = LA.norm(d_rescale)
-    t = 1  # important to try steplength one first
+    # t = 1  # important to try steplength one first
+    t = 1e-2  # important to try steplength one first
     n_evals = 0
     nexpand = 0
     # the following limit is rather arbitrary
@@ -48,11 +59,29 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
 
     test_flag = 0
 
+    # dbg_print_1("hard code step size:")
+    # t = 0.001
+    # fail = 0
+    # alpha = t
+    # x = x0 + t*d_rescale
+    # xalpha = x.copy()
+    # [f,grad,is_feasible] = obj_fn(x)
+    # falpha = f
+    # gradalpha = grad.copy()
+    # beta = t
+    # gradbeta = grad.copy()
+    # dbg_print_1("final step size t = %f "%t)
+    # return [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals] 
+
+
+
     # while (beta - alpha) > (LA.norm(x0 + alpha*d)/dnorm)*step_tol and n_evals < eval_limit:
     #     x = x0 + t*d
     while (beta - alpha) > (LA.norm(x0 + alpha*d_rescale)/dnorm)*step_tol and n_evals < eval_limit:
         x = x0 + t*d_rescale
         [f,grad,is_feasible] = obj_fn(x)
+        # dbg_print_1("intermediate obj fun val f = {}".format(f) )
+        # dbg_print_1("intermediate step size t = {}".format(t))
         n_evals = n_evals + 1
         if is_feasible and not np.isnan(f) and f <= fvalquit and not np.isinf(f): 
             fail = 0
@@ -69,13 +98,15 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
             beta = t
             gradbeta = grad.copy() # discard f
             test_flag = 1
-        #  now the second condition.  NOTE THE <=
-        elif gtd <= c2*g0 or np.isnan(gtd): # second condition violated, not gone far enough
-            alpha = t
-            xalpha = x.copy()
-            falpha = f
-            gradalpha = grad.copy()
-            test_flag = 2
+
+        # #  now the second condition.  NOTE THE <=
+        # elif gtd <= c2*g0 or np.isnan(gtd): # second condition violated, not gone far enough
+        #     alpha = t
+        #     xalpha = x.copy()
+        #     falpha = f
+        #     gradalpha = grad.copy()
+        #     test_flag = 2
+
         else:   # quit, both conditions are satisfied
             fail = 0
             alpha = t
@@ -84,6 +115,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
             gradalpha = grad.copy()
             beta = t
             gradbeta = grad.copy()
+            dbg_print_1("final step size t = %f "%t)
             return [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals] 
         
         #  setup next function evaluation
@@ -95,13 +127,42 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
         else:
             break # Reached the maximum number of expansions
         
+    
+
+    # dbg_print_1("Ignore the termination code 6:")
+    # fail = 0
+    # alpha = t
+    # xalpha = x.copy()
+    # falpha = f
+    # gradalpha = grad.copy()
+    # beta = t
+    # gradbeta = grad.copy()
+    # dbg_print_1("final step size t = %f "%t)
+    # return [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals] 
+
+
+
     # end loop
     # Wolfe conditions not satisfied: there are two cases
     if beta == np.inf: # minimizer never bracketed
         fail = 2
     else: # point satisfying Wolfe conditions was bracketed
+        # dbg_print_1("final step size t = %f "%t)
         dbg_print_1("wolfe condition %d fails"%test_flag)
         fail = 1
     
+
+    #####################################################################
+    dbg_print_1("return t when line searhc fails:")
+    alpha = t
+    xalpha = x.copy()
+    falpha = f
+    gradalpha = grad.copy()
+    beta = t
+    gradbeta = grad.copy()
+    dbg_print_1("final step size t = %f \n"%t)
+    return [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals] 
+    ###################################################################
+
 
     return [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals]                               

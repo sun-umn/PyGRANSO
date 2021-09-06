@@ -7,8 +7,8 @@ def dbg_print(args):
         print(OKCYAN + args + W)
 
 def dbg_print_1(args):
-    debug_flag = True
-    # debug_flag = False
+    # debug_flag = True
+    debug_flag = False
     OKCYAN = '\033[96m'
     W  = '\033[0m'  # white (normal)
     if debug_flag:

@@ -2,6 +2,7 @@ import numpy as np
 from private.solveQP import solveQP
 from dbg_print import dbg_print
 from numpy import conjugate as conj
+from numpy import linalg as LA
 
 class qpTC:
     def __init__(self):
@@ -90,11 +91,65 @@ class qpTC:
         ME      = None # ignore other 3 Fall back strategies for now
         
         #  Attempt to solve QP
-        stat_type   = 1
-        x = self.solveQP_fn(self.H)
-        # return [x,lambdas,stat_type,ME]
+        try:
+            stat_type   = 1
+            x = self.solveQP_fn(self.H)
+            return [x,lambdas,stat_type,ME]
+        except Exception as e:
+            print(e)
+            print("PyGRANSO:qpTerminationCondition type 1 failure")
            
-        dbg_print("qpTerminationCondition: ignore other 3 Fall back strategies for now")
-        
-        return [x,lambdas,stat_type,ME]
+
+        #  QP solver failed, possibly because H was numerically nonconvex,
+        #  i.e. H may have tiny negative eigenvalues close to zero because
+        #  of rounding errors
+       
+        #  Fall back strategy #1: replace Hinv with identity and try again
+        try:
+            stat_type = 2
+            R = conj(self.all_grads.T) @ self.all_grads
+            R = (R + conj(R.T))/2
+            x = self.solveQP_fn(R)
+            return [x,lambdas,stat_type,ME]
+        except Exception as e:
+            print(e)
+            print("PyGRANSO:qpTerminationCondition type 2 failure")
     
+        dbg_print("ignore revert to MATLAB quadprog")
+
+        # % Fall back strategy #2: revert to MATLAB's quadprog, if user is
+        # % using a different quadprog solver and reattempt with original H
+        # if ~isDefaultQuadprog() 
+        #     users_paths = path;
+        #     % put MATLAB's quadprog on top of path so that it is called
+        #     addpath(getDefaultQuadprogPath());
+        #     try 
+        #         stat_type   = 3;
+        #         [x,lambdas] = solveQP_fn(H);  
+        #     catch err
+        #         ME = ME.addCause(err);
+        #     end
+        #     % restore user's original list of paths (and their order!)
+        #     path(users_paths); 
+            
+        #     % solve succeeded
+        #     if ~isempty(x)
+        #         return
+        #     end
+        # end 
+
+        #  Fall back strategy #3: regularize H - this could be expensive
+        #  Even though min(eig(Hreg)) may still be tiny negative number,
+        #  this mild regularization seems to often be sufficient prevent 
+        #  MOSEK from complaining about nonconvexity and aborting. 
+
+        try:
+            stat_type = 4
+            [D,V] = LA.eig(self.H)
+            dvec = [x if x >= 0 else 0 for x in D]
+            Hreg = conj(V.T) @ np.diag(dvec) @ conj(V.T)
+            x = self.solveQP_fn(Hreg)
+            return [x,lambdas,stat_type,ME]
+        except Exception as e:
+            print(e)
+            print("PyGRANSO:qpTerminationCondition type 4 failure")

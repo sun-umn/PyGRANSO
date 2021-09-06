@@ -48,13 +48,13 @@ if __name__ == "__main__":
                         self.conv1 = nn.Conv2d(3, 6, 5)
                         self.conv1_bn = nn.BatchNorm2d(6)
                         self.pool = nn.MaxPool2d(2, 2)
-                        self.conv2 = nn.Conv2d(6, 10, 5)
-                        self.conv2_bn = nn.BatchNorm2d(10)
-                        self.fc1 = nn.Linear(10 * 5 * 5, 80)
-                        self.fc1_bn = nn.BatchNorm1d(80)
-                        self.fc2 = nn.Linear(80, 40)
-                        self.fc2_bn = nn.BatchNorm1d(40)
-                        self.fc3 = nn.Linear(40, 10)
+                        self.conv2 = nn.Conv2d(6, 8, 9)
+                        self.conv2_bn = nn.BatchNorm2d(8)
+                        self.fc1 = nn.Linear(8 * 3 * 3, 30)
+                        self.fc1_bn = nn.BatchNorm1d(30)
+                        self.fc2 = nn.Linear(30, 20)
+                        self.fc2_bn = nn.BatchNorm1d(20)
+                        self.fc3 = nn.Linear(20, 10)
 
                 def forward(self, x):
                         x = self.pool(F.elu( self.conv1_bn(self.conv1(x))  ))
@@ -130,7 +130,7 @@ if __name__ == "__main__":
         opts = Options()
         nvar = getNvarTorch(model.parameters())
         opts.QPsolver = 'osqp' 
-        opts.maxit = 1000
+        opts.maxit = 100
         # opts.x0 = .1 * np.ones((nvar,1))
         x0_vec = torch.nn.utils.parameters_to_vector(model.parameters()).cpu().detach().numpy()
         opts.x0 = np.double(np.reshape(x0_vec,(-1,1)))
@@ -139,13 +139,16 @@ if __name__ == "__main__":
         opts.fvalquit = 1e-6
         # opts.step_tol = 1e-30
         opts.print_level = 1
-        opts.print_frequency = 1
+        opts.print_frequency = 10
         # opts.print_ascii = True
-        opts.wolfe1 = 0.3
-        opts.wolfe2 = .99
+        # opts.wolfe1 = 0.1
+        # opts.wolfe2 = 1e-4
         opts.halt_on_linesearch_bracket = False
-        opts.max_fallback_level = 4
+        opts.max_fallback_level = 3
+        opts.min_fallback_level = 2
         # opts.max_random_attempts = 10
+        # opts.linesearch_nondescent_maxit = 25
+        # opts.linesearch_nondescent_maxit = 8
 
 
         outputs = model(inputs.to(device=device, dtype=torch.double) )
@@ -163,3 +166,22 @@ if __name__ == "__main__":
         acc = (outputs.max(1)[1] == labels.to(device=device, dtype=torch.double) ).sum().item()/labels.size(0)
 
         print("acc = {}".format(acc))
+        print("total time = {} s".format(end-start))
+
+        for i in range(100):
+                opts.x0 = soln.final.x
+                # opts.mu0 = soln.final.mu
+                # opts.H0 = soln.H_final
+                # opts.scaleH0 = False
+
+                #  main algorithm  
+                start = time.time()
+                soln = pygranso(user_parameters = parameters, user_opts = opts, nn_model = model)
+                end = time.time()
+
+                numpyVec2DLTorchTensor(soln.final.x,model) # update model paramters
+                outputs = model(inputs.to(device=device, dtype=torch.double) )
+                acc = (outputs.max(1)[1] == labels.to(device=device, dtype=torch.double) ).sum().item()/labels.size(0)
+
+                print("acc = {}".format(acc))
+                print("total time = {} s".format(end-start))
