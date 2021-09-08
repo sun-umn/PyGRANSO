@@ -27,6 +27,7 @@ if __name__ == "__main__":
         batch_size = 1000
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 
         # trainset = torchvision.datasets.CIFAR10(root='./examples/DL_CIFAR10/data', train=True,
@@ -51,6 +52,13 @@ if __name__ == "__main__":
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
                                                 shuffle=False, num_workers=2)
 
+=======
+        trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+                                                download=False, transform=transform)
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
+                                                shuffle=False, num_workers=2)
+
+>>>>>>> parent of c598721 (update profiling)
         testset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                         download=False, transform=transform)
         testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
@@ -219,6 +227,7 @@ if __name__ == "__main__":
                 # opts.mu0 = soln.final.mu
                 # opts.H0 = soln.H_final
                 # opts.scaleH0 = False
+<<<<<<< HEAD
 
                 #  main algorithm  
                 start = time.time()
@@ -229,5 +238,17 @@ if __name__ == "__main__":
                 outputs = model(inputs.to(device=device, dtype=torch.double) )
                 acc = (outputs.max(1)[1] == labels.to(device=device, dtype=torch.double) ).sum().item()/labels.size(0)
 
+=======
+
+                #  main algorithm  
+                start = time.time()
+                soln = pygranso(user_parameters = parameters, user_opts = opts, nn_model = model)
+                end = time.time()
+
+                numpyVec2DLTorchTensor(soln.final.x,model) # update model paramters
+                outputs = model(inputs.to(device=device, dtype=torch.double) )
+                acc = (outputs.max(1)[1] == labels.to(device=device, dtype=torch.double) ).sum().item()/labels.size(0)
+
+>>>>>>> parent of c598721 (update profiling)
                 print("acc = {}".format(acc))
                 print("total time = {} s".format(end-start))
