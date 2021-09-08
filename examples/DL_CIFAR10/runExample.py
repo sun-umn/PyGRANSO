@@ -10,7 +10,7 @@ sys.path.append(r'C:\Users\Buyun\Documents\GitHub\PyGRANSO\examples\DL_CIFAR10')
 from pygranso import pygranso
 from pygransoStruct import Options, Parameters
 from private.getNvar import getNvarTorch
-from private.numpyVec2TorchTensor import numpyVec2DLTorchTensor
+
 
 import torch
 import torchvision
@@ -30,25 +30,25 @@ def mainFun():
 
 
 
-        trainset = torchvision.datasets.CIFAR10(root='./examples/DL_CIFAR10/data', train=True,
-                                                download=False, transform=transform)
-
-        # trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+        # trainset = torchvision.datasets.CIFAR10(root='./examples/DL_CIFAR10/data', train=True,
         #                                         download=False, transform=transform)
+
+        trainset = torchvision.datasets.CIFAR10(root='C:/Users/Buyun/Documents/GitHub/PyGRANSO/examples/DL_CIFAR10/data', train=True,
+                                                download=False, transform=transform)
 
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
                                                 shuffle=False, num_workers=2)
 
-        testset = torchvision.datasets.CIFAR10(root='./examples/DL_CIFAR10/data', train=False,
-                                        download=False, transform=transform)
+        # testset = torchvision.datasets.CIFAR10(root='./examples/DL_CIFAR10/data', train=False,
+        #                                 download=False, transform=transform)
 
         # testset = torchvision.datasets.CIFAR10(root='./data', train=False,
         #                                 download=False, transform=transform)
-        testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
-                                                shuffle=False, num_workers=2)
+        # testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
+        #                                         shuffle=False, num_workers=2)
 
-        classes = ('plane', 'car', 'bird', 'cat',
-                'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+        # classes = ('plane', 'car', 'bird', 'cat',
+        #         'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
         import torch.nn as nn
         import torch.nn.functional as F
@@ -56,25 +56,45 @@ def mainFun():
         class Net(nn.Module):
                 def __init__(self):
                         super().__init__()
-                        self.conv1 = nn.Conv2d(3, 6, 5)
-                        self.conv1_bn = nn.BatchNorm2d(6)
+                        self.conv1 = nn.Conv2d(3, 4, 5,padding=2)
+                        self.conv1_bn = nn.BatchNorm2d(4)
                         self.pool = nn.MaxPool2d(2, 2)
-                        self.conv2 = nn.Conv2d(6, 8, 9)
-                        self.conv2_bn = nn.BatchNorm2d(8)
-                        self.fc1 = nn.Linear(8 * 3 * 3, 30)
-                        self.fc1_bn = nn.BatchNorm1d(30)
-                        self.fc2 = nn.Linear(30, 20)
-                        self.fc2_bn = nn.BatchNorm1d(20)
-                        self.fc3 = nn.Linear(20, 10)
+                        self.fc1 = nn.Linear(4 * 2 * 2, 10)
+                        # self.fc1_bn = nn.BatchNorm1d(30)
+                        # self.fc2 = nn.Linear(30, 20)
+                        # self.fc2_bn = nn.BatchNorm1d(20)
+                        # self.fc3 = nn.Linear(20, 10)
 
                 def forward(self, x):
-                        x = self.pool(F.elu( self.conv1_bn(self.conv1(x))  ))
-                        x = self.pool(F.elu( self.conv2_bn(self.conv2(x))  ))
+                        x = self.pool(self.pool(self.pool(self.pool(F.elu( self.conv1_bn(self.conv1(x))  )))))
                         x = torch.flatten(x, 1) # flatten all dimensions except batch
-                        x = F.elu( self.fc1_bn(self.fc1(x)) )
-                        x = F.elu( self.fc2_bn(self.fc2(x)) )
-                        x = self.fc3(x)
+                        # x = F.elu( self.fc1_bn(self.fc1(x)) )
+                        # x = F.elu( self.fc2_bn(self.fc2(x)) )
+                        x = self.fc1(x)
                         return x
+
+        # class Net(nn.Module):
+        #         def __init__(self):
+        #                 super().__init__()
+        #                 self.conv1 = nn.Conv2d(3, 6, 5)
+        #                 self.conv1_bn = nn.BatchNorm2d(6)
+        #                 self.pool = nn.MaxPool2d(2, 2)
+        #                 self.conv2 = nn.Conv2d(6, 8, 9)
+        #                 self.conv2_bn = nn.BatchNorm2d(8)
+        #                 self.fc1 = nn.Linear(8 * 3 * 3, 30)
+        #                 self.fc1_bn = nn.BatchNorm1d(30)
+        #                 self.fc2 = nn.Linear(30, 20)
+        #                 self.fc2_bn = nn.BatchNorm1d(20)
+        #                 self.fc3 = nn.Linear(20, 10)
+
+        #         def forward(self, x):
+        #                 x = self.pool(F.elu( self.conv1_bn(self.conv1(x))  ))
+        #                 x = self.pool(F.elu( self.conv2_bn(self.conv2(x))  ))
+        #                 x = torch.flatten(x, 1) # flatten all dimensions except batch
+        #                 x = F.elu( self.fc1_bn(self.fc1(x)) )
+        #                 x = F.elu( self.fc2_bn(self.fc2(x)) )
+        #                 x = self.fc3(x)
+        #                 return x
 
 
         # class Net(nn.Module):
@@ -141,16 +161,21 @@ def mainFun():
         opts = Options()
         nvar = getNvarTorch(model.parameters())
         opts.QPsolver = 'osqp' 
-        opts.maxit = 100
+        opts.maxit = 20
         # opts.x0 = .1 * np.ones((nvar,1))
-        x0_vec = torch.nn.utils.parameters_to_vector(model.parameters()).cpu().detach().numpy()
-        opts.x0 = np.double(np.reshape(x0_vec,(-1,1)))
+        # x0_vec = torch.nn.utils.parameters_to_vector(model.parameters()).cpu().detach().numpy()
+        # opts.x0 = np.double(np.reshape(x0_vec,(-1,1)))
+
+        opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach()
+
+        if torch.cuda.is_available():
+                opts.GPU = True
 
         opts.opt_tol = 1e-6
         opts.fvalquit = 1e-6
         # opts.step_tol = 1e-30
         opts.print_level = 1
-        opts.print_frequency = 10
+        opts.print_frequency = 1
         # opts.print_ascii = True
         # opts.wolfe1 = 0.1
         # opts.wolfe2 = 1e-4

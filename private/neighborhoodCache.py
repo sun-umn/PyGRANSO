@@ -1,6 +1,7 @@
 import numpy as np
 from pygransoStruct import general_struct
 import numpy.linalg as LA
+import torch
 
 class nC:
     def __init__(self):
@@ -33,8 +34,8 @@ class nC:
             self.n               = 1
             self.last_added_ind  = 1
             self.distances[0,0]    = 0
-            self.samples         = np.zeros((len(x),self.max_size)) 
-            self.samples[:,0]    = x[:,0]
+            self.samples         = torch.zeros((len(x),self.max_size)) 
+            self.samples[:,0]    = x[:]
             self.data[0]         = x_data
             computed        = 0
         else:

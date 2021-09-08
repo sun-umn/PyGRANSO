@@ -1,4 +1,4 @@
-import numpy.linalg as LA
+import torch
 def isPositiveDefinite(A):
     """  
     isPositiveDefinite:
@@ -7,7 +7,7 @@ def isPositiveDefinite(A):
       otherwise.
     """
     try :
-        LA.cholesky(A)
+        torch.cholesky(A)
     except: 
         tf = False
         return tf

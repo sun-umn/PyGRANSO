@@ -33,7 +33,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
 
 
     alpha = 0  # lower bound on steplength conditions
-    xalpha = x0.copy()
+    xalpha = x0.detach().clone()
     falpha = f0
     gradalpha = grad0.copy() # need to pass grad0, not grad0'*d, in case line search fails
     beta = np.inf  # upper bound on steplength satisfying weak Wolfe conditions

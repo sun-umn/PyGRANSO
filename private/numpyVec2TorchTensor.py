@@ -1,5 +1,5 @@
 from pygransoStruct import general_struct
-import numpy as np
+# import numpy as np
 import torch
 
 def numpyVec2TorchTensor(x,var_dim_map):
@@ -12,14 +12,16 @@ def numpyVec2TorchTensor(x,var_dim_map):
         tmpDim1 = var_dim_map.get(var)[0]
         tmpDim2 = var_dim_map.get(var)[1]
         # reshape vector input x in to matrix variables, e.g, X.U, X.V
-        tmpMat = np.reshape(x[curIdx:curIdx+tmpDim1*tmpDim2],(tmpDim1,tmpDim2))
-        setattr(X, var, torch.from_numpy(tmpMat))
+        tmpMat = torch.reshape(x[curIdx:curIdx+tmpDim1*tmpDim2],(tmpDim1,tmpDim2))
+        # setattr(X, var, torch.from_numpy(tmpMat))
+        setattr(X, var, tmpMat)
+
         curIdx += tmpDim1 * tmpDim2
     return X
 
-def numpyVec2DLTorchTensor(x,model):
-    x_torch = torch.from_numpy(x).cuda()
-    torch.nn.utils.vector_to_parameters(x_torch, model.parameters())
+# def numpyVec2DLTorchTensor(x,model):
+#     x_torch = torch.from_numpy(x).cuda()
+#     torch.nn.utils.vector_to_parameters(x_torch, model.parameters())
 
     
     

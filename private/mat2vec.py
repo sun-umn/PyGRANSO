@@ -1,9 +1,11 @@
 import numpy as np
-from combinedFunction import combinedFunctionDL
+# from combinedFunction import combinedFunctionDL
+from combinedFunction import combinedFunction
 from pygransoStruct import VariableStruct, general_struct
 import torch
-from private.getObjGrad import getObjGradDL
-from private.numpyVec2TorchTensor import numpyVec2TorchTensor, numpyVec2DLTorchTensor
+# from private.getObjGrad import getObjGradDL
+from private.getObjGrad import getObjGrad
+from private.numpyVec2TorchTensor import numpyVec2TorchTensor
 from private.getCiVec import getCiVec
 from private.getCiGradVec import getCiGradVec
 
@@ -187,7 +189,8 @@ def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None):
 
 def tensor2vec_autodiff(x,model,nvar,parameters = None):
 
-    numpyVec2DLTorchTensor(x,model) # update model paramters
+    # numpyVec2DLTorchTensor(x,model) # update model paramters
+    torch.nn.utils.vector_to_parameters(x, model.parameters())
     
     # obtain objective and constraint function and their corresponding gradient
     # matrix form functions    
