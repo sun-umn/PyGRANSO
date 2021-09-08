@@ -13,7 +13,6 @@ from time import sleep
 from private.mat2vec import mat2vec_autodiff,tensor2vec_autodiff
 from private.getNvar import getNvar,getNvarTorch
 
-
 def pygranso(var_dim_map=None,user_parameters=None,user_opts=None,nn_model=None):
     """
     PyGRANSO: Python version GRadient-based Algorithm for Non-Smooth Optimization

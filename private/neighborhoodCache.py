@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from pygransoStruct import general_struct
 import numpy.linalg as LA
 
@@ -27,7 +28,8 @@ class nC:
 
         get_neighborhood_fn = lambda x,x_data: self.getCachedNeighborhoodAbout(x,x_data)
         return get_neighborhood_fn
-    
+
+    # @profile
     def getCachedNeighborhoodAbout(self,x,x_data):
         if self.last_added_ind == 0:
             self.n               = 1
@@ -40,7 +42,15 @@ class nC:
         else:
             #  Calculate the distance from the new sample point x to the 
             #  most recent;y added sample already in the cache 
-            dist_to_last_added = LA.norm(x - self.samples[:,self.last_added_ind-1])
+            # sample = self.samples[:,self.last_added_ind-1]
+            # diff = x - sample
+            # dist_to_last_added = LA.norm(diff)
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  
+            sample = self.samples[:,self.last_added_ind-1]
+            sample_gpu = torch.from_numpy(sample).to(device=device)
+            x_gpu = torch.from_numpy(x).to(device=device)
+            diff_gpu = x_gpu - sample_gpu
+            dist_to_last_added = torch.norm(diff_gpu)
             self.distances[0,self.last_added_ind-1] = 0 # will be set exactly below
             
             #  Overestimate the distances from the new sample point x to all 
