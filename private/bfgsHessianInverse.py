@@ -89,12 +89,20 @@ class H_obj_struct:
         sscaled = np.sqrt(sstfactor)*s_gpu
         # H_new = self.H - (conj(rhoHyst.T) + rhoHyst) + sscaled @ conj(sscaled.T)
         H_new = H_gpu - (torch.conj(rhoHyst.t()) + rhoHyst) + sscaled @ torch.conj(sscaled.t())
-        H_new = H_new.cpu().numpy()
+        # H_new = H_new.cpu().numpy()
 
         #  only update H if H_new doesn't contain any infs or nans
-        H_vec = np.reshape(H_new, (H_new.size,1))
-        if np.all( (np.logical_or(np.isinf(H_vec),np.isnan(H_vec))) == False ): 
-            self.H = H_new
+        # H_vec = np.reshape(H_new, (H_new.size,1))
+        # if np.all( (np.logical_or(np.isinf(H_vec),np.isnan(H_vec))) == False ): 
+        
+        H_vec = torch.reshape(H_new, (torch.numel(H_new),1))
+        notInf_flag = torch.all(torch.isinf(H_vec) == False)
+        notNan_flag = torch.all(torch.isnan(H_vec) == False)
+        dbg_print_1("notInf_flag = {}".format( notInf_flag ) )
+        dbg_print_1("notNan_flag = {}".format( notNan_flag ) )
+        # if torch.all( (torch.logical_or(torch.isfinite(H_vec),torch.isnan(H_vec))) == False ): 
+        if notInf_flag and notNan_flag:
+            self.H = H_new.cpu().numpy()
             self.updates += 1
             if damped: 
                 self.damped_updates += 1
