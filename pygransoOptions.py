@@ -1,6 +1,7 @@
+from numpy.core.numeric import Inf
 from private import pygransoConstants as pgC
 from private.optionValidator import oV
-import torch
+import numpy as np
 from scipy import sparse
 from pygransoStruct import Options
 from dbg_print import dbg_print
@@ -299,7 +300,7 @@ def pygransoOptions(n,options):
         validator.setLogical("debug_mode")
         
         #  SET INITIAL POINT AND PENALTY PARAMETER VALUE
-        if hasattr(user_opts,"x0") and user_opts.x0 != None:
+        if hasattr(user_opts,"x0") and np.any(user_opts.x0 != None):
             validator.setColumnDimensioned("x0",n)
             validator.setRealFiniteValued("x0")
         
@@ -308,7 +309,6 @@ def pygransoOptions(n,options):
         #  SET INITIAL (L)BFGS DATA
         validator.setLogical("checkH0")
         validator.setLogical("scaleH0")
-        validator.setLogical("GPU")
         validator.setRealInIntervalCC("bfgs_damping",0,1)
         validator.setLogical("limited_mem_fixed_scaling")
         validator.setIntegerNonnegative("limited_mem_size")
@@ -343,7 +343,7 @@ def pygransoOptions(n,options):
             lbfgs_validator.setReal("gamma")
             lbfgs_validator.setFiniteValued("gamma")
         
-        if hasattr(user_opts,"H0") and torch.any(user_opts.H0) != None:
+        if hasattr(user_opts,"H0") and np.any(user_opts.H0) != None:
             validator.setDimensioned("H0",n,n)
             validator.setRealFiniteValued("H0")
             if lim_mem_mode:
@@ -390,7 +390,7 @@ def pygransoOptions(n,options):
         validator.setRealInIntervalOO("steering_c_mu",0,1) 
         validator.setLogical("quadprog_info_msg")
         validator.setString("QPsolver")
-        validator.setRealInIntervalCC("regularize_threshold",1,float('inf'))
+        validator.setRealInIntervalCC("regularize_threshold",1,np.inf)
         validator.setLogical("regularize_max_eigenvalues")
 
         #  LINE SEARCH PARAMETERS
@@ -409,7 +409,7 @@ def pygransoOptions(n,options):
 
         #  LOGGING PARAMETERS
         validator.setIntegerInRange("print_level",0,3)
-        validator.setIntegerInRange("print_frequency",1,float('inf'))
+        validator.setIntegerInRange("print_frequency",1,np.inf)
         validator.setIntegerInRange("print_width",9,23)
         validator.setLogical("print_ascii")
         validator.setLogical("print_use_orange")
@@ -446,12 +446,13 @@ def postProcess(n,opts):
     
     
     # If an initial starting point was not provided, use random vector
-    if opts.x0 == None:
+    if np.all(opts.x0 == None):
+        # opts.x0 = np.random.randn(n,1)
         rng = default_rng()
         opts.x0 = rng.standard_normal(size=(n,1))
     
     # If an initial inverse Hessian was not provided, use the identity
-    if opts.H0 == None:
+    if np.any(opts.H0) == None:
         opts.H0 = sparse.eye(n).toarray()
     
     
@@ -470,16 +471,17 @@ def getDefaults(n):
     # default options for GRANSO
     default_opts = Options()
     setattr(default_opts,'x0',None)
+    # setattr(default_opts,'x0',np.ones((14,1)))  
+    # dbg_print("pygransoOptions: set default x0 to a all ones for now. Original: None")
     setattr(default_opts,'mu0',1)
     setattr(default_opts,'H0',None)
     setattr(default_opts,'checkH0',True)
     setattr(default_opts,'scaleH0',True)
-    setattr(default_opts,'GPU',False)
     setattr(default_opts,'bfgs_damping',1e-4)
     setattr(default_opts,'limited_mem_size',0)
     setattr(default_opts,'limited_mem_fixed_scaling',True)
     setattr(default_opts,'limited_mem_warm_start',None)
-    setattr(default_opts,'prescaling_threshold',float('inf'))
+    setattr(default_opts,'prescaling_threshold',Inf)
     setattr(default_opts,'prescaling_info_msg',True)
     setattr(default_opts,'opt_tol',1e-8)
     setattr(default_opts,'rel_tol',0)
@@ -492,8 +494,8 @@ def getDefaults(n):
     # setattr(default_opts,'evaldist',1e-8)
     # dbg_print("pygransoOptions: set default maxit to a small # for now. Original: 1000")
     setattr(default_opts,'maxit',1000)
-    setattr(default_opts,'maxclocktime',float('inf'))
-    setattr(default_opts,'fvalquit',-float('inf'))
+    setattr(default_opts,'maxclocktime',Inf)
+    setattr(default_opts,'fvalquit',-Inf)
     setattr(default_opts,'halt_on_quadprog_error',False)
     setattr(default_opts,'halt_on_linesearch_bracket',True)
     setattr(default_opts,'min_fallback_level',0)
@@ -504,7 +506,7 @@ def getDefaults(n):
     setattr(default_opts,'steering_maxit',10)
     setattr(default_opts,'steering_c_viol',0.1)
     setattr(default_opts,'steering_c_mu',0.9)
-    setattr(default_opts,'regularize_threshold',float('inf'))
+    setattr(default_opts,'regularize_threshold',Inf)
     setattr(default_opts,'regularize_max_eigenvalues',False)
     setattr(default_opts,'quadprog_info_msg',True)
     setattr(default_opts,'QPsolver','osqp')

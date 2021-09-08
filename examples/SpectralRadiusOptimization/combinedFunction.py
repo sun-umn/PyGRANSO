@@ -3,7 +3,7 @@ import torch
 from torch import linalg as LA
 
 
-def combinedFunction(X_struct,parameters = None):
+def combinedFunctionDL(X_struct,parameters = None):
     
     # user defined variable, matirx form. torch tensor
     X = X_struct.X

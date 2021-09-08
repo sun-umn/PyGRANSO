@@ -11,7 +11,7 @@ from private.isColumn import isColumn
 from private.isMbyN import isMbyN
 from private.isPositiveDefinite import isPositiveDefinite
 from private.isString import isString
-# import numpy as np
+import numpy as np
 import copy
 
 class oV:
@@ -146,7 +146,7 @@ class oV:
     #  set the user's value if it meets the necessary conditions
     def validateAndSet(self,opt_name,validate_fn,error_msg):
         value = self.validateValue(opt_name,validate_fn,error_msg)
-        if value != None:
+        if np.any(value != None):
             setattr(self.opts,opt_name, value)  
 
     #  checks the user's option for opt_name 
@@ -159,7 +159,7 @@ class oV:
         if hasattr(self.user_opts,opt_name):
             value = getattr(self.user_opts, opt_name)  
             #  make sure the user's value is not empty 
-            assert value != None, self.invalid_str + opt_name + " nonempty"
+            assert np.any(value != None), self.invalid_str + opt_name + " nonempty"
             #  finally check the specific validation criteria
             assert validate_fn(value) ,self.invalid_str %(opt_name,error_msg)
         
@@ -293,7 +293,7 @@ class oV:
         return
 
     def setColumnDimensioned(self,name,dim):
-        self.validateAndSet( name, lambda x: isColumn(x) and x.shape[0] == dim, "a column vector of length %d"%dim)
+        self.validateAndSet( name, lambda x: isColumn(x) and x.size == dim, "a column vector of length %d"%dim)
         return
 
     def setDimensioned(self,name,m,n):                                          

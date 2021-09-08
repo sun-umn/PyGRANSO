@@ -3,6 +3,7 @@ from numpy.core.numeric import Inf
 from pygransoStruct import general_struct
 from numpy import conjugate as conj
 from dbg_print import dbg_print_1
+import torch
 
 class H_obj_struct:
     
@@ -17,6 +18,7 @@ class H_obj_struct:
         self.H = H
         self.scaleH0 = scaleH0
 
+    # @profile
     def update(self,s,y,sty,damped=False):
         self.requests += 1
         skipped  = 0
@@ -47,16 +49,30 @@ class H_obj_struct:
             
             self.scaleH0         = False # only allow first update to be scaled
         
+
+        dbg_print_1("start torch accelaeration")
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        # sty_gpu = torch.from_numpy(sty).to(device=device)
+        H_gpu = torch.from_numpy(self.H).to(device=device)
+        s_gpu = torch.from_numpy(s).to(device=device)
+        # y_gpu = torch.from_numpy(y).to(device=device)
+        s_gpu = torch.from_numpy(s).to(device=device)
+
         # for formula, see Nocedal and Wright's book
         # M = I - rho*s*y', H = M*H*M' + rho*s*s', so we have
         # H = H - rho*s*y'*H - rho*H*y*s' + rho^2*s*y'*H*y*s' + rho*s*s'
         #  note that the last two terms combine: (rho^2*y'Hy + rho)ss'
-        rho = 1./sty
+        rho = (1./sty)[0][0]
 
         # Hy = np.dot(self.H,y)
         # rhoHyst = np.dot((rho*Hy),np.transpose(s) ) 
         Hy = self.H @ y
-        rhoHyst = (rho*Hy) @ conj(s.T)
+        Hy_gpu = torch.from_numpy(Hy).to(device=device)
+        
+        
+
+        # rhoHyst = (rho*Hy) @ conj(s.T)
+        rhoHyst = (rho*Hy_gpu) @ torch.conj(s_gpu.t())
 
         #   old version: update may not be symmetric because of rounding
         #  H = H - rhoHyst' - rhoHyst + rho*s*(y'*rhoHyst) + rho*s*s';
@@ -68,9 +84,12 @@ class H_obj_struct:
         
         # ytHy = np.dot(np.transpose(y),Hy)
         ytHy = conj(y.T) @ Hy
-        sstfactor = max([rho*rho*ytHy + rho,  0])
-        sscaled = np.sqrt(sstfactor)*s
-        H_new = self.H - (conj(rhoHyst.T) + rhoHyst) + sscaled @ conj(sscaled.T)
+        sstfactor = max([rho*rho*ytHy + rho,  0])[0][0]
+        # sscaled = np.sqrt(sstfactor)*s
+        sscaled = np.sqrt(sstfactor)*s_gpu
+        # H_new = self.H - (conj(rhoHyst.T) + rhoHyst) + sscaled @ conj(sscaled.T)
+        H_new = H_gpu - (torch.conj(rhoHyst.t()) + rhoHyst) + sscaled @ torch.conj(sscaled.t())
+        H_new = H_new.cpu().numpy()
 
         #  only update H if H_new doesn't contain any infs or nans
         H_vec = np.reshape(H_new, (H_new.size,1))

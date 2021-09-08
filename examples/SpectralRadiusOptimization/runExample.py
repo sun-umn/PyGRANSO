@@ -38,7 +38,7 @@ parameters.stability_margin = 1
 opts = Options()
 opts.QPsolver = 'osqp' 
 opts.maxit = 200
-opts.x0 = torch.ones(p*m).double()
+opts.x0 = np.zeros((p*m,1))
 opts.print_level = 1
 opts.print_frequency = 1
 
