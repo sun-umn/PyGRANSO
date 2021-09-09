@@ -27,10 +27,10 @@ def assertFnOutputs(n,f,g,fn_name):
         dbg_print("f is float")
     else:
         dbg_print("f is not float")
-    assertFn(np.isreal(f),arg1,fn_name,'should be real valued')
+    assertFn(torch.isreal(f) if torch.is_tensor(f) else np.isreal(f),arg1,fn_name,'should be real valued')
     # assertFn(np.isreal(f.all()),arg1,fn_name,'should be real valued')
     assertFn(torch.isreal(g)==True,arg2,fn_name,'should be real valued')
-    assertFn(np.isfinite(f),arg1,fn_name,'should be finite valued')
+    assertFn(torch.isfinite(f) if torch.is_tensor(f) else np.isfinite(f) ,arg1,fn_name,'should be finite valued')
     # assertFn(np.isfinite(f.all()),arg1,fn_name,'should be finite valued')
     assertFn(torch.isfinite(g),arg2,fn_name,'should be finite valued')
     return
@@ -77,9 +77,9 @@ def rescaleObjective(x,fn,scaling):
     return [f,g]
 
 def violationsInequality(ci):
-    vi = ci.copy()
+    vi = ci.detach().clone()
     violated_indx = ci >= 0
-    vi[ ~violated_indx] = 0
+    vi[ not violated_indx] = 0
     return [vi,violated_indx]
 
 def violationsEquality(ce):
@@ -88,10 +88,10 @@ def violationsEquality(ce):
     return [ve,violated_indx]
 
 def totalViolationMax(v):
-    if np.all(v==0):
+    if torch.all(v==0):
         v_max = 0
     else:
-        v_max = np.max(v)
+        v_max = torch.max(v).item()
     return v_max
 
 def totalViolationInequality(ci,ci_grad):
@@ -101,9 +101,9 @@ def totalViolationInequality(ci,ci_grad):
     tvi = totalViolationMax(vi)
     
     #  l_1 penalty term for penalty function
-    tvi_l1 = np.sum(vi)
+    tvi_l1 = torch.sum(vi)
     # indx used for select certain cols
-    tvi_l1_grad = np.sum(ci_grad[:,indx[:,0]],1)
+    tvi_l1_grad = torch.sum(ci_grad[:,indx[:,0]],1)
     return [tvi,tvi_l1,tvi_l1_grad]
 
 def totalViolationEquality(ce,ce_grad):

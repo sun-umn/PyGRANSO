@@ -1,3 +1,4 @@
+import torch
 from private import pygransoConstants as pC, bfgsDamping as bD, regularizePosDefMatrix as rPDM, linesearchWeakWolfe as lWW
 from private.neighborhoodCache import nC
 from private.qpSteeringStrategy import qpSS
@@ -489,7 +490,7 @@ class AlgBFGSSQP():
         #  If its norm is small, that indicates that we are at a smooth 
         #  stationary point and we can return this measure and terminate
         stat_vec        = self.penaltyfn_at_x.p_grad
-        stat_value      = LA.norm(stat_vec)
+        stat_value      = torch.norm(stat_vec)
         if stat_value <= self.opt_tol:
             n_qps       = 0
             n_samples   = 1
