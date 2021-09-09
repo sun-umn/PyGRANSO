@@ -2,7 +2,7 @@ from pygransoStruct import general_struct
 import numpy as np
 import torch
 
-def numpyVec2TorchTensor(x,var_dim_map):
+def vec2mat(x,var_dim_map):
     X = general_struct()
     # reshape vector input x to matrix form X, e.g., X.U and X.V
     curIdx = 0
@@ -12,8 +12,8 @@ def numpyVec2TorchTensor(x,var_dim_map):
         tmpDim1 = var_dim_map.get(var)[0]
         tmpDim2 = var_dim_map.get(var)[1]
         # reshape vector input x in to matrix variables, e.g, X.U, X.V
-        tmpMat = np.reshape(x[curIdx:curIdx+tmpDim1*tmpDim2],(tmpDim1,tmpDim2))
-        setattr(X, var, torch.from_numpy(tmpMat))
+        tmpMat = torch.reshape(x[curIdx:curIdx+tmpDim1*tmpDim2],(tmpDim1,tmpDim2))
+        setattr(X, var, tmpMat)
         curIdx += tmpDim1 * tmpDim2
     return X
 

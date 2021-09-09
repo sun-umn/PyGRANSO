@@ -37,8 +37,9 @@ parameters.stability_margin = 1
 # user defined options
 opts = Options()
 opts.QPsolver = 'osqp' 
-opts.maxit = 200
-opts.x0 = np.zeros((p*m,1))
+opts.maxit = 20
+# opts.x0 = np.zeros((p*m,1))
+opts.x0 = torch.zeros(p*m,1)
 opts.print_level = 1
 opts.print_frequency = 1
 
@@ -48,3 +49,4 @@ start = time.time()
 soln = pygranso(var_in,parameters,opts)
 end = time.time()
 print("Total Wall Time: {}s".format(end - start))
+pass

@@ -13,6 +13,7 @@ from private.isPositiveDefinite import isPositiveDefinite
 from private.isString import isString
 import numpy as np
 import copy
+import torch
 
 class oV:
     def __init__(self):
@@ -293,7 +294,7 @@ class oV:
         return
 
     def setColumnDimensioned(self,name,dim):
-        self.validateAndSet( name, lambda x: isColumn(x) and x.size == dim, "a column vector of length %d"%dim)
+        self.validateAndSet( name, lambda x: isColumn(x) and torch.numel(x) == dim, "a column vector of length %d"%dim)
         return
 
     def setDimensioned(self,name,m,n):                                          
