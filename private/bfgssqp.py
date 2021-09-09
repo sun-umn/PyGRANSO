@@ -549,7 +549,7 @@ class AlgBFGSSQP():
                     
         s               = alpha*p
         y               = g - gprev
-        sty             = conj(s.T)@y
+        sty             = torch.conj(s.t())@y
         
         if self.damping > 0:
             [y,sty,damped] = bD.bfgsDamping(self.damping,self.apply_H_fn,s,y,sty)

@@ -42,7 +42,7 @@ def solveQP(H,f,A,b,LB,UB,QPsolver):
             # H,f always exist
             nvar = len(f)
             # H and A has to be sparse
-            dbg_print_2("NOTE: inefficient convert torch tensor to numpy to sparse")
+            dbg_print_2("NOTE: solveQP.py inefficient convert torch tensor to numpy to sparse")
             H = H.cpu().numpy()
             f = f.cpu().numpy()
             if A != None:

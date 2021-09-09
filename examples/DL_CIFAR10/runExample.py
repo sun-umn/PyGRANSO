@@ -10,7 +10,7 @@ sys.path.append(r'C:\Users\Buyun\Documents\GitHub\PyGRANSO\examples\DL_CIFAR10')
 from pygranso import pygranso
 from pygransoStruct import Options, Parameters
 from private.getNvar import getNvarTorch
-from private.numpyVec2TorchTensor import numpyVec2DLTorchTensor
+# from private.numpyVec2TorchTensor import numpyVec2DLTorchTensor
 
 import torch
 import torchvision
@@ -141,10 +141,10 @@ def mainFun():
         opts = Options()
         nvar = getNvarTorch(model.parameters())
         opts.QPsolver = 'osqp' 
-        opts.maxit = 40
+        opts.maxit = 100
         # opts.x0 = .1 * np.ones((nvar,1))
-        x0_vec = torch.nn.utils.parameters_to_vector(model.parameters()).cpu().detach().numpy()
-        opts.x0 = np.double(np.reshape(x0_vec,(-1,1)))
+        opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach().reshape(nvar,1)
+        # opts.x0 = np.double(np.reshape(x0_vec,(-1,1)))
 
         opts.opt_tol = 1e-6
         opts.fvalquit = 1e-6
@@ -172,7 +172,8 @@ def mainFun():
         soln = pygranso(user_parameters = parameters, user_opts = opts, nn_model = model)
         end = time.time()
 
-        numpyVec2DLTorchTensor(soln.final.x,model) # update model paramters
+        # numpyVec2DLTorchTensor(soln.final.x,model) # update model paramters
+        torch.nn.utils.vector_to_parameters(soln.final.x, model.parameters())
         outputs = model(inputs.to(device=device, dtype=torch.double) )
         acc = (outputs.max(1)[1] == labels.to(device=device, dtype=torch.double) ).sum().item()/labels.size(0)
 

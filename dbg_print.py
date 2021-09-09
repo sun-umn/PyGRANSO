@@ -15,8 +15,8 @@ def dbg_print_1(args):
         print(OKCYAN + args + W)
 
 def dbg_print_2(args):
-    debug_flag = True
-    # debug_flag = False
+    # debug_flag = True
+    debug_flag = False
     WARNING = '\033[93m'
     W  = '\033[0m'  # white (normal)
     if debug_flag:

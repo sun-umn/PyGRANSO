@@ -69,7 +69,7 @@ class qpSS:
         #  feasible, i.e., at least ineq_margin away from the feasible boundary,
         #  and no equality constraints are present.
         #  Explicitly check for infinity in case ineq contains -inf 
-        if ineq_margin != np.inf and not np.any(self.ineq >= -ineq_margin) and n_eq == 0:
+        if ineq_margin != np.inf and not torch.any(self.ineq >= -ineq_margin) and n_eq == 0:
             return [d,mu,reduction]
         
             
@@ -147,5 +147,5 @@ class qpSS:
     #  update penalty parameter dependent values for QP
     def updateSteeringQP(self,mu):
         self.mu_Hinv_f_grad  = mu * self.Hinv_f_grad
-        self.f               = conj(self.c_grads.T) @ self.mu_Hinv_f_grad - np.vstack((self.eq, self.ineq))
+        self.f               = torch.conj(self.c_grads.t()) @ self.mu_Hinv_f_grad - torch.vstack((self.eq, self.ineq))
         return

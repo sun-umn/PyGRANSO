@@ -39,7 +39,8 @@ class H_obj_struct:
             # before the first update only
             
             # gamma = sty/np.dot(np.transpose(y),y) 
-            gamma = sty/(conj(y.T) @ y) 
+            gamma = sty/(torch.conj(y.t()) @ y) 
+            gamma = gamma.item()
 
             if np.isinf(gamma) or np.isnan(gamma):
                 skipped     = 1
@@ -51,12 +52,12 @@ class H_obj_struct:
         
 
         dbg_print_1("start torch accelaeration")
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        # sty_gpu = torch.from_numpy(sty).to(device=device)
-        H_gpu = torch.from_numpy(self.H).to(device=device)
-        s_gpu = torch.from_numpy(s).to(device=device)
-        # y_gpu = torch.from_numpy(y).to(device=device)
-        s_gpu = torch.from_numpy(s).to(device=device)
+        # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        # # sty_gpu = torch.from_numpy(sty).to(device=device)
+        # H_gpu = torch.from_numpy(self.H).to(device=device)
+        # s_gpu = torch.from_numpy(s).to(device=device)
+        # # y_gpu = torch.from_numpy(y).to(device=device)
+        # s_gpu = torch.from_numpy(s).to(device=device)
 
         # for formula, see Nocedal and Wright's book
         # M = I - rho*s*y', H = M*H*M' + rho*s*s', so we have
@@ -67,12 +68,12 @@ class H_obj_struct:
         # Hy = np.dot(self.H,y)
         # rhoHyst = np.dot((rho*Hy),np.transpose(s) ) 
         Hy = self.H @ y
-        Hy_gpu = torch.from_numpy(Hy).to(device=device)
+        # Hy_gpu = torch.from_numpy(Hy).to(device=device)
         
         
 
         # rhoHyst = (rho*Hy) @ conj(s.T)
-        rhoHyst = (rho*Hy_gpu) @ torch.conj(s_gpu.t())
+        rhoHyst = (rho*Hy) @ torch.conj(s.t())
 
         #   old version: update may not be symmetric because of rounding
         #  H = H - rhoHyst' - rhoHyst + rho*s*(y'*rhoHyst) + rho*s*s';
@@ -83,12 +84,12 @@ class H_obj_struct:
         #  ytHy could be < 0 if H not numerically pos def
         
         # ytHy = np.dot(np.transpose(y),Hy)
-        ytHy = conj(y.T) @ Hy
-        sstfactor = max([rho*rho*ytHy + rho,  0])[0][0]
+        ytHy = torch.conj(y.t()) @ Hy
+        sstfactor = max([rho*rho*ytHy + rho,  0]).item()
         # sscaled = np.sqrt(sstfactor)*s
-        sscaled = np.sqrt(sstfactor)*s_gpu
+        sscaled = np.sqrt(sstfactor)*s
         # H_new = self.H - (conj(rhoHyst.T) + rhoHyst) + sscaled @ conj(sscaled.T)
-        H_new = H_gpu - (torch.conj(rhoHyst.t()) + rhoHyst) + sscaled @ torch.conj(sscaled.t())
+        H_new = self.H - (torch.conj(rhoHyst.t()) + rhoHyst) + sscaled @ torch.conj(sscaled.t())
         # H_new = H_new.cpu().numpy()
 
         #  only update H if H_new doesn't contain any infs or nans
@@ -102,7 +103,7 @@ class H_obj_struct:
         dbg_print_1("notNan_flag = {}".format( notNan_flag ) )
         # if torch.all( (torch.logical_or(torch.isfinite(H_vec),torch.isnan(H_vec))) == False ): 
         if notInf_flag and notNan_flag:
-            self.H = H_new.cpu().numpy()
+            self.H = H_new
             self.updates += 1
             if damped: 
                 self.damped_updates += 1

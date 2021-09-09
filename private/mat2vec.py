@@ -3,7 +3,7 @@ from combinedFunction import combinedFunctionDL
 from pygransoStruct import VariableStruct, general_struct
 import torch
 from private.getObjGrad import getObjGradDL,getObjGrad
-from private.vec2mat import vec2mat, numpyVec2DLTorchTensor
+from private.vec2mat import vec2mat
 from private.getCiVec import getCiVec
 from private.getCiGradVec import getCiGradVec
 
@@ -44,7 +44,7 @@ def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None):
 
 def tensor2vec_autodiff(x,model,nvar,parameters = None):
 
-    numpyVec2DLTorchTensor(x,model) # update model paramters
+    torch.nn.utils.vector_to_parameters(x, model.parameters()) # update model paramters
     
     # obtain objective and constraint function and their corresponding gradient
     # matrix form functions    
