@@ -13,6 +13,28 @@ from time import sleep
 from private.mat2vec import mat2vec_autodiff,tensor2vec_autodiff
 from private.getNvar import getNvar,getNvarTorch
 
+
+import cProfile, pstats, io
+
+def profile(fnc):
+    
+    def inner(*args, **kwargs):
+        
+        pr = cProfile.Profile()
+        pr.enable()
+        retval = fnc(*args, **kwargs)
+        pr.disable()
+        s = io.StringIO()
+        # sortby = 'cumulative'
+        sortby = 'tottime'
+        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        ps.print_stats()
+        print(s.getvalue())
+        return retval
+
+    return inner
+
+@profile
 def pygranso(var_dim_map=None,user_parameters=None,user_opts=None,nn_model=None):
     """
     PyGRANSO: Python version GRadient-based Algorithm for Non-Smooth Optimization

@@ -179,6 +179,8 @@ def mainFun():
         print("acc = {}".format(acc))
         print("total time = {} s".format(end-start))
 
+        pass
+
         # for i in range(100):
         #         opts.x0 = soln.final.x
         #         # opts.mu0 = soln.final.mu
