@@ -23,7 +23,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
 
     # dbg_print_1("start rescaling line search direction:")
     
-    d_rescale = d.copy()
+    d_rescale = d.detach().clone()
     # d_norm = LA.norm(d_rescale)
     # d_rescale =  d_rescale / d_norm
     # d_rescale =  2000 * d_rescale

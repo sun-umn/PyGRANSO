@@ -242,9 +242,9 @@ class AlgBFGSSQP():
                 self.random_attempts = self.random_attempts + 1
             
             dbg_print_1("start rescaling search direction p:") 
-            p_norm = LA.norm(p)
+            p_norm = torch.norm(p).item()
             p =  1 * p / p_norm
-            dbg_print_1("norm of d = {}".format(LA.norm(p)))
+            dbg_print_1("norm of d = {}".format(torch.norm(p).item()))
             dbg_print_1("end rescaling search direction p.")
                 
             [p,is_descent,fallback_on_this_direction] = self.checkDirection(p,g)
@@ -400,7 +400,8 @@ class AlgBFGSSQP():
     
     def checkDirection(self,p,g):    
         fallback            = False
-        gtp                 = conj(g.T)@p
+        gtp                 = torch.conj(g.t())@p
+        gtp = gtp.item()
         if math.isnan(gtp) or math.isinf(gtp):
             is_descent      = False
             fallback        = True    
@@ -514,7 +515,7 @@ class AlgBFGSSQP():
         qPTC_obj = qpTC()
         [stat_vec,n_qps,ME] = qPTC_obj.qpTerminationCondition(   self.penaltyfn_at_x, grad_samples,
                                                         self.apply_H_QP_fn, self.QPsolver)
-        stat_value = LA.norm(stat_vec)
+        stat_value = torch.norm(stat_vec).item()
         self.penaltyfn_obj.addStationarityMeasure(stat_value)
         
         if self.print_level > 2 and  len(ME) > 0:

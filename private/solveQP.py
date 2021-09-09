@@ -45,7 +45,8 @@ def solveQP(H,f,A,b,LB,UB,QPsolver):
             dbg_print_2("NOTE: inefficient convert torch tensor to numpy to sparse")
             H = H.cpu().numpy()
             f = f.cpu().numpy()
-            A = A.cpu().numpy()
+            if A != None:
+                A = A.cpu().numpy()
             # b = b.cpu().numpy()
             LB = LB.cpu().numpy()
             UB = UB.cpu().numpy()
