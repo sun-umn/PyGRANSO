@@ -45,11 +45,11 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
     # dbg_print_1("change beta to be 1:")
     # beta = 1
 
-    gradbeta = torch.empty(x0.shape).to(device=device) 
+    gradbeta = torch.empty(x0.shape,device=device)
     gradbeta[:] = float('nan')
     # g0 = conj(grad0.T) @ d 
     # dnorm = LA.norm(d)
-    g0 = torch.conj(grad0.t()) @ d_rescale 
+    g0 = (torch.conj(grad0.t()) @ d_rescale).item() 
     dnorm = torch.norm(d_rescale).item()
     # t = 1  # important to try steplength one first
     t = 1e-2  # important to try steplength one first
@@ -99,6 +99,8 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
         
         # gtd = conj(grad.T) @ d
         gtd = torch.conj(grad.t()) @ d_rescale
+
+        
         #  the first condition must be checked first. NOTE THE >=.
         if f >= f0 + c1*t*g0 or np.isnan(f): # first condition violated, gone too far
             beta = t
