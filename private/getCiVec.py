@@ -13,7 +13,7 @@ def getCiVec(ci):
     
     # inquality constraints
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    ci_vec_torch = torch.zeros(nconstr,1).to(device=device, dtype=torch.double)
+    ci_vec_torch = torch.zeros((nconstr,1),device=device, dtype=torch.double)
     curIdx = 0
     # nconstr_ci = genral_struct()
     nconstr_ci_total = 0

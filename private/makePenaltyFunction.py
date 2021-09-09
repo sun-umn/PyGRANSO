@@ -150,8 +150,8 @@ def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_thresh
         eval_fn_ret             = lambda x : None
         # These must have the right dimensions for computations to be 
         # done even if there are no such constraints
-        c                   = torch.zeros(0,1).to(device=device, dtype=torch.double)
-        c_grad              = torch.zeros(len(x0),0).to(device=device, dtype=torch.double)
+        c                   = torch.zeros((0,1),device=device, dtype=torch.double)
+        c_grad              = torch.zeros((len(x0),0),device=device, dtype=torch.double)
         c_grad_norms        = 0
         tv                  = 0
         tv_l1               = 0

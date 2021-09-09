@@ -13,7 +13,7 @@ def getObjGrad(nvar,var_dim_map,f,X):
 
     
     dbg_print_1('Using device in getObjGrad')
-    f_grad_vec = torch.zeros(nvar,1).to(device=device, dtype=torch.double)
+    f_grad_vec = torch.zeros((nvar,1),device=device, dtype=torch.double)
 
     curIdx = 0
     # current variable, e.g., U
@@ -29,12 +29,12 @@ def getObjGrad(nvar,var_dim_map,f,X):
         # preventing gradient accumulating
         getattr(X,var).grad.zero_()
     return f_grad_vec
-
+# @profile
 def getObjGradDL(nvar,model,f):
     # f_grad = genral_struct()
     f.backward()
     # transform f_grad form matrix form to vector form
-    f_grad_vec = torch.zeros((nvar,1)).to(device=device, dtype=torch.double)
+    f_grad_vec = torch.zeros((nvar,1),device=device, dtype=torch.double)
 
     curIdx = 0
     parameter_lst = list(model.parameters())

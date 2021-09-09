@@ -16,7 +16,7 @@ from numpy.random import default_rng
 class AlgBFGSSQP():
     def __init__(self):
         pass
-
+    # @profile
     def bfgssqp(self,penaltyfn_obj, bfgs_obj, opts, printer):
         """
         bfgssqp:

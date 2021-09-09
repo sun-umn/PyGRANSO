@@ -457,7 +457,7 @@ def postProcess(n,opts):
     
     # If an initial inverse Hessian was not provided, use the identity
     if np.any(opts.H0) == None:
-        opts.H0 = torch.eye(n).to(device=device, dtype=torch.double) 
+        opts.H0 = torch.eye(n,device=device, dtype=torch.double) 
     
     
     if hasattr(opts,"QPsolver"):

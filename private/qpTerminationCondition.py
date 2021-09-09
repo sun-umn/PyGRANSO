@@ -27,7 +27,7 @@ class qpTC:
         # # debug here:
         # l = 1
 
-        F           = penaltyfn_at_x.f * torch.ones(l,1).to(device=device, dtype=torch.double) 
+        F           = penaltyfn_at_x.f * torch.ones((l,1),device=device, dtype=torch.double) 
         
         CI = penaltyfn_at_x.ci
         CE = penaltyfn_at_x.ce
@@ -64,9 +64,9 @@ class qpTC:
         #  Fix H since numerically, it is unlikely to be _perfectly_ symmetric 
         self.H           = (self.H + torch.conj(self.H.t())) / 2
         f           = -torch.vstack((CE, F, CI))
-        LB          = torch.vstack((-torch.ones((q,1)), torch.zeros((l+p,1)))).to(device=device, dtype=torch.double) 
-        UB          = torch.vstack((torch.ones((q,1)), mu*torch.ones((l,1)), torch.ones((p,1)))).to(device=device, dtype=torch.double)   
-        Aeq         = torch.hstack((torch.zeros((1,q)), torch.ones((1,l)), torch.zeros((1,p)))).to(device=device, dtype=torch.double)   
+        LB          = torch.vstack( (-torch.ones((q,1),device=device, dtype=torch.double), torch.zeros((l+p,1),device=device, dtype=torch.double)) ) 
+        UB          = torch.vstack((torch.ones((q,1),device=device, dtype=torch.double), mu*torch.ones((l,1),device=device, dtype=torch.double), torch.ones((p,1),device=device, dtype=torch.double))  ) 
+        Aeq         = torch.hstack((torch.zeros((1,q),device=device, dtype=torch.double), torch.ones((1,l),device=device, dtype=torch.double), torch.zeros((1,p),device=device, dtype=torch.double)) ) 
         beq         = mu
 
         # Choose solver

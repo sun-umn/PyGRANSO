@@ -20,8 +20,7 @@ class nC:
         self.max_size = max_size
         self.radius = radius
         #  by default, inf distances indicate empty slots for samples
-        self.distances       = torch.ones(1,self.max_size)*float('inf')
-        self.distances = self.distances.to(device=device, dtype=torch.double) 
+        self.distances       = torch.ones((1,self.max_size),device=device, dtype=torch.double)*float('inf')
         self.samples         = None
         # self.data            = self.max_size * [None]
         self.data            = np.empty((1,self.max_size),dtype=object)
@@ -38,7 +37,7 @@ class nC:
             self.n               = 1
             self.last_added_ind  = 1
             self.distances[0,0]    = 0
-            self.samples         = torch.zeros(len(x),self.max_size).to(device=device, dtype=torch.double) 
+            self.samples         = torch.zeros((len(x),self.max_size),device=device, dtype=torch.double) 
             self.samples[:,0]    = x[:,0]
             self.data[0]         = x_data
             computed        = 0
@@ -50,8 +49,6 @@ class nC:
             # dist_to_last_added = LA.norm(diff)
             
             sample = self.samples[:,self.last_added_ind-1]
-            # sample = torch.from_numpy(sample).to(device=device)
-            # x = torch.from_numpy(x).to(device=device)
             diff_gpu = x - sample
             dist_to_last_added = torch.norm(diff_gpu)
             self.distances[0,self.last_added_ind-1] = 0 # will be set exactly below
@@ -72,7 +69,6 @@ class nC:
             indx                = torch.logical_and(self.distances > self.radius , self.distances != float('inf'))
             # indx                = self.distances > self.radius and  not np.isinf(self.distances)
             computed            = torch.sum(torch.sum(indx)).item()
-            # self.distances = self.distances.to(device=device, dtype=torch.double) 
             self.distances[indx]     = torch.sqrt(torch.sum(torch.square(self.samples[:,indx[0]])))
            
             if self.n < self.max_size:

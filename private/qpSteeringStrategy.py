@@ -51,11 +51,11 @@ class qpSS:
         self.H                   = (self.H + torch.conj(self.H.t())) / 2
         self.mu_Hinv_f_grad      = mu * self.Hinv_f_grad
         self.f                   = torch.conj(self.c_grads.t()) @ self.mu_Hinv_f_grad - torch.vstack((self.eq, self.ineq)) 
-        self.LB                  = torch.vstack((-torch.ones((n_eq,1)), torch.zeros((self.n_ineq,1))  )).to(device=device, dtype=torch.double)   
-        self.UB                  = torch.ones((n_eq + self.n_ineq, 1)).to(device=device, dtype=torch.double) 
+        self.LB                  = torch.vstack((-torch.ones((n_eq,1)), torch.zeros((self.n_ineq,1))  ),device=device, dtype=torch.double)   
+        self.UB                  = torch.ones((n_eq + self.n_ineq, 1),device=device, dtype=torch.double) 
         
         #  Identity matrix: compatible with the constraint form in QPALM
-        self.A                   = torch.eye(n_eq + self.n_ineq).to(device=device, dtype=torch.double) 
+        self.A                   = torch.eye(n_eq + self.n_ineq,device=device, dtype=torch.double) 
     
         #  Check predicted violation reduction for search direction
         #  given by current penalty parameter
