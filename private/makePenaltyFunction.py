@@ -2,6 +2,7 @@ from sys import flags
 import types
 import numpy as np
 import numpy.linalg as LA
+import torch
 from pygransoStruct import general_struct
 from dbg_print import dbg_print
 
@@ -28,14 +29,17 @@ def assertFnOutputs(n,f,g,fn_name):
         dbg_print("f is not float")
     assertFn(np.isreal(f),arg1,fn_name,'should be real valued')
     # assertFn(np.isreal(f.all()),arg1,fn_name,'should be real valued')
-    assertFn(np.isreal(g.all()),arg2,fn_name,'should be real valued')
+    assertFn(torch.isreal(g)==True,arg2,fn_name,'should be real valued')
     assertFn(np.isfinite(f),arg1,fn_name,'should be finite valued')
     # assertFn(np.isfinite(f.all()),arg1,fn_name,'should be finite valued')
-    assertFn(np.isfinite(g.all()),arg2,fn_name,'should be finite valued')
+    assertFn(torch.isfinite(g),arg2,fn_name,'should be finite valued')
     return
 
 def assertFn(cond,arg_name,fn_name,msg):
-    assert np.all(cond),("PyGRANSO userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(arg_name,fn_name,msg)  )                                 
+    if torch.is_tensor(cond):
+        assert torch.all(cond),("PyGRANSO userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(arg_name,fn_name,msg)  )   
+    else:
+        assert np.all(cond),("PyGRANSO userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(arg_name,fn_name,msg)  )                                 
 
 class Class_splitEvalAtX:
     def __init__(self):
@@ -47,8 +51,8 @@ class Class_splitEvalAtX:
         [f,f_grad,self.ci,self.ci_grad,self.ce,self.ce_grad] = self.eval_at_x_fn(x0)
     
         obj_fn = lambda x : self.objective(x)
-        ineq_fn = (lambda varargin: self.inequality(varargin) ) if (isinstance(self.ci,np.ndarray)) else (None)
-        eq_fn = (lambda varargin: self.equality(varargin) ) if (isinstance(self.ce,np.ndarray)) else (None)
+        ineq_fn = (lambda varargin: self.inequality(varargin) ) if ( torch.is_tensor(self.ci) ) else (None)
+        eq_fn = (lambda varargin: self.equality(varargin) ) if (torch.is_tensor(self.ce)) else (None)
         
         return [f,f_grad,obj_fn,ineq_fn,eq_fn] 
 
@@ -126,7 +130,9 @@ def unscaleValues(values,scalars):
     return values
 
 def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_threshold):
-                                        
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
     n = len(x0)
                             
     #  eval_fn is either a function handle for evaluateInequality or
@@ -144,8 +150,8 @@ def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_thresh
         eval_fn_ret             = lambda x : None
         # These must have the right dimensions for computations to be 
         # done even if there are no such constraints
-        c                   = np.zeros((0,1))
-        c_grad              = np.zeros((len(x0),0))
+        c                   = torch.zeros(0,1).to(device=device, dtype=torch.double)
+        c_grad              = torch.zeros(len(x0),0).to(device=device, dtype=torch.double)
         c_grad_norms        = 0
         tv                  = 0
         tv_l1               = 0
@@ -162,10 +168,10 @@ def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_thresh
         # dbg_print("Skip try & except in makepenalty function.setupconstraint")
 
         assertFnOutputs(n,c,c_grad,type_str+"equality constraints") 
-        c_grad_norms        = np.sqrt(np.sum(np.square(c_grad),0)) 
+        c_grad_norms        = torch.sqrt(torch.sum(torch.square(c_grad),0)) 
         # indices of gradients whose norms are larger than limit
         indx                = c_grad_norms > prescaling_threshold
-        if np.any(indx !=0 ):
+        if torch.any(indx !=0 ):
             scalings        = np.ones(len(c),1)
             # we want to rescale these "too large" functions so that 
             # the norms of their gradients are set to limit at x0
@@ -560,7 +566,7 @@ class PanaltyFuctions:
 
         prescaling_threshold = params.prescaling_threshold
         # checking scaling of objective and rescale if necessary
-        f_grad_norm = LA.norm(self.f_grad)
+        f_grad_norm = torch.norm(self.f_grad)
         if f_grad_norm > prescaling_threshold:
             self.scaling_f = prescaling_threshold / f_grad_norm
             self.obj_fn = lambda x : rescaleObjective(x,self.obj_fn,self.scaling_f)

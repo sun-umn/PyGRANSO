@@ -12,15 +12,18 @@ import scipy.io
 
 # Please read the documentation on https://pygranso.readthedocs.io/en/latest/
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print('Using device:', device)
+
 # read input data from matlab file
 currentdir = os.path.dirname(os.path.realpath(__file__))
 file = currentdir + "/spec_radius_opt_data.mat"
 mat = scipy.io.loadmat(file)
 mat_struct = mat['sys']
 mat_struct = mat_struct[0,0]
-A = torch.from_numpy(mat_struct['A'])
-B = torch.from_numpy(mat_struct['B'])
-C = torch.from_numpy(mat_struct['C'])
+A = torch.from_numpy(mat_struct['A']).to(device=device, dtype=torch.double)
+B = torch.from_numpy(mat_struct['B']).to(device=device, dtype=torch.double)
+C = torch.from_numpy(mat_struct['C']).to(device=device, dtype=torch.double)
 p = B.shape[1]
 m = C.shape[0]
 
@@ -39,7 +42,7 @@ opts = Options()
 opts.QPsolver = 'osqp' 
 opts.maxit = 20
 # opts.x0 = np.zeros((p*m,1))
-opts.x0 = torch.zeros(p*m,1)
+opts.x0 = torch.zeros(p*m,1).to(device=device, dtype=torch.double)
 opts.print_level = 1
 opts.print_frequency = 1
 
