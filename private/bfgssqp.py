@@ -13,6 +13,9 @@ from numpy import conjugate as conj
 from numpy.random import default_rng
 # import torch
 
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
+
 class AlgBFGSSQP():
     def __init__(self):
         pass
@@ -485,13 +488,14 @@ class AlgBFGSSQP():
         #  snapshot to be restored.
         return [alpha, x_ls, f_ls, g_ls, fail]
 
+    # @profile
     def computeApproxStationarityVector(self):
             
         #  first check the smooth case (gradient of the penalty function).
         #  If its norm is small, that indicates that we are at a smooth 
         #  stationary point and we can return this measure and terminate
         stat_vec        = self.penaltyfn_at_x.p_grad
-        stat_value      = torch.norm(stat_vec)
+        stat_value      = torch.norm(stat_vec).item()
         if stat_value <= self.opt_tol:
             n_qps       = 0
             n_samples   = 1
