@@ -41,9 +41,9 @@ class qpTC:
             # convert cell array fields F, CI, CE to struct array with same
             grads_array = gradient_samples[i]
             #  convert struct array into individual arrays of samples
-            F_grads_lst.append(grads_array.F)     # n by l
-            CI_grads_lst.append(grads_array.CI)     # n by p
-            CE_grads_lst.append(grads_array.CE)     # n by q 
+            F_grads_lst.append(grads_array.F.cpu().numpy())     # n by l
+            CI_grads_lst.append(grads_array.CI.cpu().numpy())     # n by p
+            CE_grads_lst.append(grads_array.CE.cpu().numpy())     # n by q 
         F_grads_tmp = np.array(F_grads_lst) 
         n = int(F_grads_tmp.size/l)
         F_grads = F_grads_tmp.reshape((n,l))

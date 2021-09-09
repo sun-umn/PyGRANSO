@@ -3,6 +3,8 @@ import torch
 from pygransoStruct import general_struct
 import numpy.linalg as LA
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  
+
 class nC:
     def __init__(self):
         pass
@@ -18,7 +20,7 @@ class nC:
         self.max_size = max_size
         self.radius = radius
         #  by default, inf distances indicate empty slots for samples
-        self.distances       = np.ones((1,self.max_size))*np.inf
+        self.distances       = torch.ones(1,self.max_size)*float('inf')
         self.samples         = None
         # self.data            = self.max_size * [None]
         self.data            = np.empty((1,self.max_size),dtype=object)
@@ -35,7 +37,7 @@ class nC:
             self.n               = 1
             self.last_added_ind  = 1
             self.distances[0,0]    = 0
-            self.samples         = np.zeros((len(x),self.max_size)) 
+            self.samples         = torch.zeros(len(x),self.max_size).to(device=device) 
             self.samples[:,0]    = x[:,0]
             self.data[0]         = x_data
             computed        = 0
@@ -45,7 +47,7 @@ class nC:
             # sample = self.samples[:,self.last_added_ind-1]
             # diff = x - sample
             # dist_to_last_added = LA.norm(diff)
-            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  
+            
             sample = self.samples[:,self.last_added_ind-1]
             sample_gpu = torch.from_numpy(sample).to(device=device)
             x_gpu = torch.from_numpy(x).to(device=device)
