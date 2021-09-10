@@ -31,7 +31,7 @@ class nC:
         get_neighborhood_fn = lambda x,x_data: self.getCachedNeighborhoodAbout(x,x_data)
         return get_neighborhood_fn
 
-    @profile
+    # @profile
     def getCachedNeighborhoodAbout(self,x,x_data):
         if self.last_added_ind == 0:
             self.n               = 1

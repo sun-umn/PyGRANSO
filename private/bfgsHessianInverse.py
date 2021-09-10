@@ -85,7 +85,7 @@ class H_obj_struct:
         
         # ytHy = np.dot(np.transpose(y),Hy)
         ytHy = torch.conj(y.t()) @ Hy
-        sstfactor = max([rho*rho*ytHy + rho,  0]).item()
+        sstfactor = max([(rho*rho*ytHy + rho).item(),  0])
         # sscaled = np.sqrt(sstfactor)*s
         sscaled = np.sqrt(sstfactor)*s
         # H_new = self.H - (conj(rhoHyst.T) + rhoHyst) + sscaled @ conj(sscaled.T)
