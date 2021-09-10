@@ -19,7 +19,8 @@ import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import numpy as np
 
-
+# debugging
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 def mainFun():
 
@@ -169,8 +170,7 @@ def mainFun():
 
         print("acc = {}".format(acc))
 
-        # debugging
-        os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+        
 
         #  main algorithm  
         start = time.time()

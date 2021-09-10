@@ -31,7 +31,7 @@ class nC:
         get_neighborhood_fn = lambda x,x_data: self.getCachedNeighborhoodAbout(x,x_data)
         return get_neighborhood_fn
 
-    # @profile
+    @profile
     def getCachedNeighborhoodAbout(self,x,x_data):
         if self.last_added_ind == 0:
             self.n               = 1
@@ -60,9 +60,10 @@ class nC:
             #  points. 
             #  Note: distance(last_added_index) will be dist_to_last_added.
 
-            for i in range(self.n):
-                self.distances[0,i]      = self.distances[0,i] + dist_to_last_added
-            
+            # for i in range(self.n):
+            # self.distances[0,i]      = self.distances[0,i] + dist_to_last_added
+            self.distances      = self.distances + dist_to_last_added
+
             #  Only the (over)estimated distances which are greater than the 
             #  allowed radius will need to be computed exactly.
             
