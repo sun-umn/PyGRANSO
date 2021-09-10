@@ -495,7 +495,8 @@ class AlgBFGSSQP():
         #  If its norm is small, that indicates that we are at a smooth 
         #  stationary point and we can return this measure and terminate
         stat_vec        = self.penaltyfn_at_x.p_grad
-        stat_value      = torch.norm(stat_vec).item()
+        stat_value      = torch.norm(stat_vec)
+        self.opt_tol = torch.as_tensor(self.opt_tol,device = device, dtype=torch.double)
         if stat_value <= self.opt_tol:
             n_qps       = 0
             n_samples   = 1

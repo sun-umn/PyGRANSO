@@ -1,3 +1,4 @@
+import os
 import time
 import numpy as np
 # import torch
@@ -17,6 +18,7 @@ import torchvision
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import numpy as np
+
 
 
 def mainFun():
@@ -166,6 +168,9 @@ def mainFun():
         acc = (outputs.max(1)[1] == labels.to(device=device, dtype=torch.double) ).sum().item()/labels.size(0)
 
         print("acc = {}".format(acc))
+
+        # debugging
+        os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
         #  main algorithm  
         start = time.time()

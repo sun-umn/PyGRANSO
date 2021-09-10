@@ -34,7 +34,7 @@ def profile(fnc):
 
     return inner
 
-@profile
+# @profile
 def pygranso(var_dim_map=None,user_parameters=None,user_opts=None,nn_model=None):
     """
     PyGRANSO: Python version GRadient-based Algorithm for Non-Smooth Optimization
