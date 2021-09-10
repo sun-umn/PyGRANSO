@@ -144,7 +144,7 @@ def mainFun():
         opts = Options()
         nvar = getNvarTorch(model.parameters())
         opts.QPsolver = 'osqp' 
-        opts.maxit = 1500
+        opts.maxit = 300
         # opts.x0 = .1 * np.ones((nvar,1))
         opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach().reshape(nvar,1)
         # opts.x0 = np.double(np.reshape(x0_vec,(-1,1)))
@@ -153,7 +153,7 @@ def mainFun():
         opts.fvalquit = 1e-6
         # opts.step_tol = 1e-30
         opts.print_level = 1
-        opts.print_frequency = 10
+        opts.print_frequency = 1
         # opts.print_ascii = True
         # opts.wolfe1 = 0.1
         # opts.wolfe2 = 1e-4
