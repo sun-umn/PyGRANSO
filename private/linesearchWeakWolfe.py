@@ -50,7 +50,8 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
 
     while (beta - alpha) > (torch.norm(x0 + alpha*d_rescale).item()/dnorm)*step_tol and n_evals < eval_limit:
         x = x0 + t*d_rescale
-        [f,grad,is_feasible] = obj_fn(x)
+        [f,is_feasible] = f_eval_fn(x)
+        # [f,grad,is_feasible] = obj_fn(x)
         if torch.is_tensor(f):
             f = f.item()
         n_evals = n_evals + 1
@@ -58,6 +59,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
             fail = 0
             alpha = t  # normally beta is inf
             xalpha = x.detach().clone()
+            [f,grad,is_feasible] = obj_fn(x)
             falpha = f
             gradalpha = grad.detach().clone()
             # return [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals]
@@ -73,6 +75,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
             fail = 0
             alpha = t
             xalpha = x.detach().clone()
+            [f,grad,is_feasible] = obj_fn(x)
             falpha = f
             gradalpha = grad.detach().clone()
             beta = t
@@ -104,6 +107,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
     dbg_print_1("return t when line searhc fails:")
     alpha = t
     xalpha = x.detach().clone()
+    [f,grad,is_feasible] = obj_fn(x)
     falpha = f
     gradalpha = grad.detach().clone()
     beta = t

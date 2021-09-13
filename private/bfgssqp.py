@@ -173,7 +173,7 @@ class AlgBFGSSQP():
 
         self.linesearch_fn   = lambda x,f,g,p,ls_maxit: lWW.linesearchWeakWolfe( 
                                 x, f, g, p,
-                                lambda x_in: self.f_eval_fn(x_in),                                  
+                                lambda x_in: self.penaltyfn_obj.evaluatePenaltyFunction4linesearch(x_in),                                  
                                 lambda x_in: self.penaltyfn_obj.evaluatePenaltyFunction(x_in),      
                                 wolfe1, wolfe2, self.fvalquit, ls_maxit, step_tol)
                                                         

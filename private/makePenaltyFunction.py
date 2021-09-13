@@ -214,6 +214,36 @@ class PanaltyFuctions:
     def __init__(self):
         pass
 
+    # evaluate objective, constraints, violation, and penalty function at x
+    def evaluateAtX4linesearch(self,x_in):
+        try: 
+            self.at_snap_shot    = False
+            self.stat_value      = float("nan")
+            self.fn_evals        += 1
+            # evaluate objective and its gradient
+            self.f      = self.f_eval_fn(x_in)
+            # evaluate constraints and their violations (nested update)
+            self.eval_ineq_fn(x_in) 
+            self.eval_eq_fn(x_in)
+        except Exception as e:
+            print(e)   
+            print("PyGRANSO userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x for line search.")
+
+        self.x                   = x_in
+        self.feasible_to_tol     = self.is_feasible_to_tol_fn(self.tvi,self.tve);  
+        self.tv                  = np.maximum(self.tvi,self.tve)
+        self.tv_l1               = self.tvi_l1 + self.tve_l1
+        # self.tv_l1_grad          = self.tvi_l1_grad + self.tve_l1_grad
+        self.p                   = self.mu*self.f + self.tv_l1
+        
+        # # update best points encountered so far
+        # self.update_best_fn()
+        
+        # copy nested variables values to output arguments
+        p_out               = self.p
+        feasible_to_tol_out = self.feasible_to_tol
+
+        return [p_out,feasible_to_tol_out]
 
     # evaluate objective, constraints, violation, and penalty function at x
     def evaluateAtX(self,x_in):
@@ -515,7 +545,7 @@ class PanaltyFuctions:
             unscaled_data   = ([name+"_unscaled"],self.unscale_fields_fn(data))
         return unscaled_data
 
-    def makePenaltyFunction(self,params,obj_fn,varargin=None):
+    def makePenaltyFunction(self,params,f_eval_fn,obj_fn,varargin=None):
         """
         makePenaltyFunction: 
             creates an object representing the penalty function for 
@@ -528,7 +558,7 @@ class PanaltyFuctions:
                 mu*obj_fn   + sum of active inequality constraints 
                             + sum of absolute value of eq. constraints
         """
-
+        self.f_eval_fn = f_eval_fn 
         self.obj_fn = obj_fn 
         # assert (isinstance(obj_fn,types.LambdaType), 'PyGRANSO userSuppliedFunctionsError: obj_fn must be a lambda function of x.' )
         
@@ -629,6 +659,7 @@ class PanaltyFuctions:
 
         # output object with methods
         penalty_fn_object = general_struct()
+        setattr(penalty_fn_object,"evaluatePenaltyFunction4linesearch",lambda x_in: self.evaluateAtX4linesearch(x_in))
         setattr(penalty_fn_object,"evaluatePenaltyFunction",lambda x_in: self.evaluateAtX(x_in))
         setattr(penalty_fn_object,"updatePenaltyParameter",update_penalty_parameter_fn)
         setattr(penalty_fn_object,"getX",lambda : self.getX())

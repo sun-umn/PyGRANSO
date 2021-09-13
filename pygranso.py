@@ -374,7 +374,7 @@ def pygranso(var_dim_map=None,user_parameters=None,user_opts=None,nn_model=None)
     if var_dim_map == None and nn_model != None:
         n = getNvarTorch(nn_model.parameters())
         obj_fn = lambda x: tensor2vec_autodiff(x,nn_model,n,user_parameters)
-        f_eval_fn = lambda x: obj_eval(x,nn_model,parameters = None)
+        f_eval_fn = lambda x: obj_eval(x,nn_model,user_parameters)
 
     else:
         # call the functions getNvar to get the total number of (scalar) variables
@@ -391,7 +391,7 @@ def pygranso(var_dim_map=None,user_parameters=None,user_opts=None,nn_model=None)
         # construct the penalty function object and evaluate at x0
         # unconstrained problems will reset mu to one and mu will be fixed
         mPF = PanaltyFuctions() # make penalty functions 
-        [ penaltyfn_obj, grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, problem_fns)
+        [ penaltyfn_obj, grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, f_eval_fn, problem_fns)
     except Exception as e:
             print(e)   
             print("pygranso main loop Error")

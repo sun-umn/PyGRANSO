@@ -23,6 +23,8 @@ osqp-GPU is not necessary as it's not the main cost
 
 TODO:
 
+Modify line search: currently eval [f,isfeasible] for each line search iter and [f,g,is_feasible] before returning line search. Try to check function evaluated
+
 warm start
 
 SR1
