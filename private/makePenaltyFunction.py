@@ -214,7 +214,6 @@ class PanaltyFuctions:
     def __init__(self):
         pass
 
-    ############## PUBLIC helper functions ##############
 
     # evaluate objective, constraints, violation, and penalty function at x
     def evaluateAtX(self,x_in):
@@ -230,17 +229,6 @@ class PanaltyFuctions:
         except Exception as e:
             print(e)   
             print("PyGRANSO userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x.")
-        
-        # self.at_snap_shot    = False
-        # self.stat_value      = float("nan")
-        # self.fn_evals        += 1
-        # # evaluate objective and its gradient
-        # [self.f,self.f_grad]      = self.obj_fn(x_in)
-        # # evaluate constraints and their violations (nested update)
-        # self.eval_ineq_fn(x_in) 
-        # self.eval_eq_fn(x_in)
-
-        # dbg_print("skip try & except in  makePenaltyFunction.evaluateAtX")
 
         self.x                   = x_in
         self.feasible_to_tol     = self.is_feasible_to_tol_fn(self.tvi,self.tve);  

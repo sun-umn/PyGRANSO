@@ -10,7 +10,7 @@ import copy
 from dbg_print import dbg_print
 from private.wrapToLines import wrapToLines
 from time import sleep
-from private.mat2vec import mat2vec_autodiff,tensor2vec_autodiff
+from private.mat2vec import mat2vec_autodiff, tensor2vec_autodiff, obj_eval
 from private.getNvar import getNvar,getNvarTorch
 
 
@@ -374,11 +374,14 @@ def pygranso(var_dim_map=None,user_parameters=None,user_opts=None,nn_model=None)
     if var_dim_map == None and nn_model != None:
         n = getNvarTorch(nn_model.parameters())
         obj_fn = lambda x: tensor2vec_autodiff(x,nn_model,n,user_parameters)
+        f_eval_fn = lambda x: obj_eval(x,nn_model,parameters = None)
 
     else:
         # call the functions getNvar to get the total number of (scalar) variables
         n = getNvar(var_dim_map)
         obj_fn = lambda x: mat2vec_autodiff(x,var_dim_map,n,user_parameters)
+        f_eval_fn = None
+        print("TODO: f_eval for non-DL problem")
 
     try: 
         [problem_fns,opts] = processArguments(n,obj_fn,user_opts)
@@ -419,7 +422,7 @@ def pygranso(var_dim_map=None,user_parameters=None,user_opts=None,nn_model=None)
 
     try:
         bfgssqp_obj = AlgBFGSSQP()
-        info = bfgssqp_obj.bfgssqp(penaltyfn_obj,bfgs_hess_inv_obj,opts,printer)
+        info = bfgssqp_obj.bfgssqp(f_eval_fn, penaltyfn_obj,bfgs_hess_inv_obj,opts,printer)
     except Exception as e:
         print(e)   
         print("Error: pygranso bfgssqp ")

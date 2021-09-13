@@ -20,7 +20,7 @@ class AlgBFGSSQP():
     def __init__(self):
         pass
     # @profile
-    def bfgssqp(self,penaltyfn_obj, bfgs_obj, opts, printer):
+    def bfgssqp(self,f_eval_fn, penaltyfn_obj, bfgs_obj, opts, printer):
         """
         bfgssqp:
         Minimizes a penalty function.  Note that bfgssqp operates on the
@@ -28,6 +28,7 @@ class AlgBFGSSQP():
         states.  The result of bfgssqp's optimization process is obtained
         by querying these objects after bfgssqp has been run.
         """
+        self.f_eval_fn = f_eval_fn
         self.penaltyfn_obj = penaltyfn_obj
         self.bfgs_obj = bfgs_obj
         self.printer = printer
@@ -171,7 +172,8 @@ class AlgBFGSSQP():
                                 steering_c_mu,      self.QPsolver           )
 
         self.linesearch_fn   = lambda x,f,g,p,ls_maxit: lWW.linesearchWeakWolfe( 
-                                x, f, g, p,                                  
+                                x, f, g, p,
+                                lambda x_in: self.f_eval_fn(x_in),                                  
                                 lambda x_in: self.penaltyfn_obj.evaluatePenaltyFunction(x_in),      
                                 wolfe1, wolfe2, self.fvalquit, ls_maxit, step_tol)
                                                         
@@ -434,7 +436,8 @@ class AlgBFGSSQP():
 
     #  only try a few line search iterations if p is not a descent direction
     def linesearchNondescent(self,x,f,g,p):
-        [alpha,x,f,g,fail,_,_,_] = self.linesearch_fn( x,f,g,p,self.linesearch_nondescent_maxit )
+        # [alpha,x,f,g,fail,_,_,_] = self.linesearch_fn( x,f,g,p,self.linesearch_nondescent_maxit )
+        [alpha,x,f,g,fail] = self.linesearch_fn( x,f,g,p,self.linesearch_nondescent_maxit )
         fail = 0 + 3*(fail > 0)
         return [alpha, x, f, g, fail]
 
@@ -444,7 +447,8 @@ class AlgBFGSSQP():
         
         #  we need to keep around f and g so use _ls names for ls results
         ls_fn                       = lambda f,g: self.linesearch_fn(x,f,g,p,float("inf"))
-        [alpha,x_ls,f_ls,g_ls,fail,_,_,_] = ls_fn(f,g)
+        # [alpha,x_ls,f_ls,g_ls,fail,_,_,_] = ls_fn(f,g)
+        [alpha,x_ls,f_ls,g_ls,fail] = ls_fn(f,g)
                         
         #  If the problem is constrained and the line search fails without 
         #  bracketing a minimizer, it may be because the objective is 

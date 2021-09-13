@@ -1,11 +1,24 @@
 import numpy as np
-from combinedFunction import combinedFunctionDL
+from combinedFunction import combinedFunctionDL, eval_obj
 from pygransoStruct import VariableStruct, general_struct
 import torch
 from private.getObjGrad import getObjGradDL,getObjGrad
 from private.vec2mat import vec2mat
 from private.getCiVec import getCiVec
 from private.getCiGradVec import getCiGradVec
+
+def obj_eval(x,model,parameters = None):
+    torch.nn.utils.vector_to_parameters(x, model.parameters()) # update model paramters
+    
+    # obtain objective and constraint function and their corresponding gradient
+    # matrix form functions    
+    
+    if parameters == None:
+        f = eval_obj(model)
+    else:
+        f = eval_obj(model,parameters)
+    
+    return f
 
 def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None):
     X = vec2mat(x,var_dim_map)
