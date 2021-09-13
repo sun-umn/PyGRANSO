@@ -144,7 +144,7 @@ def mainFun():
         opts = Options()
         nvar = getNvarTorch(model.parameters())
         opts.QPsolver = 'osqp' 
-        opts.maxit = 300
+        opts.maxit = 100
         # opts.x0 = .1 * np.ones((nvar,1))
         opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach().reshape(nvar,1)
         # opts.x0 = np.double(np.reshape(x0_vec,(-1,1)))

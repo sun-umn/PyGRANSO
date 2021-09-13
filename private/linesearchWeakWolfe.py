@@ -97,8 +97,8 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
             gradalpha = grad.detach().clone()
             return [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals] 
         
-        # gtd = conj(grad.T) @ d
-        gtd = torch.conj(grad.t()) @ d_rescale
+        # # only used in second condition
+        # gtd = torch.conj(grad.t()) @ d_rescale
 
         
         #  the first condition must be checked first. NOTE THE >=.
@@ -173,4 +173,4 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
     ###################################################################
 
 
-    return [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals]                               
+    # return [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals]                               
