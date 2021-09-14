@@ -1,3 +1,4 @@
+import os
 import time
 import numpy as np
 # import torch
@@ -8,9 +9,9 @@ import sys
 sys.path.append(r'C:\Users\Buyun\Documents\GitHub\PyGRANSO')
 sys.path.append(r'C:\Users\Buyun\Documents\GitHub\PyGRANSO\examples\DL_CIFAR10')
 from pygranso import pygranso
-from pygransoStruct import Options, Parameters
+from pygransoStruct import Options, Data
 from private.getNvar import getNvarTorch
-from private.numpyVec2TorchTensor import numpyVec2DLTorchTensor
+# from private.numpyVec2TorchTensor import numpyVec2DLTorchTensor
 
 import torch
 import torchvision
@@ -18,6 +19,8 @@ import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import numpy as np
 
+# debugging
+# os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 def mainFun():
 
@@ -126,7 +129,7 @@ def mainFun():
 
         ################### PyGRANSO
 
-        # parameters
+        # data_in
         for i, data in enumerate(trainloader, 0):        
                 if i >= 1:
                         break   
@@ -134,23 +137,23 @@ def mainFun():
                 inputs, labels = data
                 # print(inputs.shape)
 
-        parameters = Parameters()
-        parameters.labels = labels.cuda() # label/target [256]
-        parameters.inputs = inputs.double().cuda() # input data [256,3,32,32]
+        data_in = Data()
+        data_in.labels = labels.cuda() # label/target [256]
+        data_in.inputs = inputs.double().cuda() # input data [256,3,32,32]
 
         opts = Options()
         nvar = getNvarTorch(model.parameters())
         opts.QPsolver = 'osqp' 
-        opts.maxit = 40
+        opts.maxit = 100
         # opts.x0 = .1 * np.ones((nvar,1))
-        x0_vec = torch.nn.utils.parameters_to_vector(model.parameters()).cpu().detach().numpy()
-        opts.x0 = np.double(np.reshape(x0_vec,(-1,1)))
+        opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach().reshape(nvar,1)
+        # opts.x0 = np.double(np.reshape(x0_vec,(-1,1)))
 
         opts.opt_tol = 1e-6
         opts.fvalquit = 1e-6
         # opts.step_tol = 1e-30
         opts.print_level = 1
-        opts.print_frequency = 10
+        opts.print_frequency = 1
         # opts.print_ascii = True
         # opts.wolfe1 = 0.1
         # opts.wolfe2 = 1e-4
@@ -167,17 +170,22 @@ def mainFun():
 
         print("acc = {}".format(acc))
 
+        
+
         #  main algorithm  
         start = time.time()
-        soln = pygranso(user_parameters = parameters, user_opts = opts, nn_model = model)
+        soln = pygranso(user_data = data_in, user_opts = opts, nn_model = model)
         end = time.time()
 
-        numpyVec2DLTorchTensor(soln.final.x,model) # update model paramters
+        # numpyVec2DLTorchTensor(soln.final.x,model) # update model paramters
+        torch.nn.utils.vector_to_parameters(soln.final.x, model.parameters())
         outputs = model(inputs.to(device=device, dtype=torch.double) )
         acc = (outputs.max(1)[1] == labels.to(device=device, dtype=torch.double) ).sum().item()/labels.size(0)
 
         print("acc = {}".format(acc))
         print("total time = {} s".format(end-start))
+
+        pass
 
         # for i in range(100):
         #         opts.x0 = soln.final.x
@@ -187,7 +195,7 @@ def mainFun():
 
         #         #  main algorithm  
         #         start = time.time()
-        #         soln = pygranso(user_parameters = parameters, user_opts = opts, nn_model = model)
+        #         soln = pygranso(user_data = data_in, user_opts = opts, nn_model = model)
         #         end = time.time()
 
         #         numpyVec2DLTorchTensor(soln.final.x,model) # update model paramters

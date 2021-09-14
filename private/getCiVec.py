@@ -12,7 +12,8 @@ def getCiVec(ci):
     
     
     # inquality constraints
-    ci_vec_torch = torch.zeros(nconstr,1)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    ci_vec_torch = torch.zeros((nconstr,1),device=device, dtype=torch.double)
     curIdx = 0
     # nconstr_ci = genral_struct()
     nconstr_ci_total = 0
@@ -24,6 +25,6 @@ def getCiVec(ci):
         # setattr(nconstr_ci,constr_i,torch.numel(constrMatrix))
         nconstr_ci_total += torch.numel(constrMatrix)
 
-    ci_vec = ci_vec_torch.detach().numpy() # detach from current computational graph
+    ci_vec = ci_vec_torch.detach() # detach from current computational graph
 
     return [ci_vec,ci_vec_torch,nconstr_ci_total]

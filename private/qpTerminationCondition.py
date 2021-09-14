@@ -1,8 +1,11 @@
 import numpy as np
+import torch
 from private.solveQP import solveQP
 from dbg_print import dbg_print
 from numpy import conjugate as conj
 from numpy import linalg as LA
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  
 
 class qpTC:
     def __init__(self):
@@ -14,7 +17,8 @@ class qpTC:
         provided in cell array gradient samples, given the inverse Hessian
         (or approximation to it)
         """
-
+        # obtain # of variables
+        n = torch.numel(gradient_samples[0].F)
         mu          = penaltyfn_at_x.mu
         l           = gradient_samples.size
         p           = l * len(penaltyfn_at_x.ci)
@@ -23,15 +27,19 @@ class qpTC:
         # # debug here:
         # l = 1
 
-        F           = penaltyfn_at_x.f * np.ones((l,1)) 
+        F           = penaltyfn_at_x.f * torch.ones((l,1),device=device, dtype=torch.double) 
         
         CI = penaltyfn_at_x.ci
         CE = penaltyfn_at_x.ce
-        for i in range(l-1):
-            CI_new          = np.vstack((CI,CI))
-            CE_new          = np.vstack((CE,CE))
-            CI = CI_new
-            CE = CE_new
+        # for i in range(l-1):
+        #     CI_new          = torch.vstack((CI_new,CI))
+        #     CE_new          = torch.vstack((CE_new,CE))
+        # if l > 1:
+        #     CI = CI_new
+        #     CE = CE_new
+        CI = CI.repeat(l,1)
+        CE = CE.repeat(l,1)
+        
         
         F_grads_lst = []
         CI_grads_lst = []
@@ -43,25 +51,25 @@ class qpTC:
             #  convert struct array into individual arrays of samples
             F_grads_lst.append(grads_array.F)     # n by l
             CI_grads_lst.append(grads_array.CI)     # n by p
-            CE_grads_lst.append(grads_array.CE)     # n by q 
-        F_grads_tmp = np.array(F_grads_lst) 
-        n = int(F_grads_tmp.size/l)
-        F_grads = F_grads_tmp.reshape((n,l))
-        CI_grads = np.array(CI_grads_lst).reshape((n,p)) 
-        CE_grads = np.array(CE_grads_lst).reshape((n,q))
+            CE_grads_lst.append(grads_array.CE)     # n by q
+        F_grads = torch.cat(F_grads_lst,1) 
+        # n = int(F_grads_tmp.size/l)
+        # F_grads = F_grads_tmp.reshape((n,l))
+        CI_grads = torch.cat(CI_grads_lst,1) 
+        CE_grads = torch.cat(CE_grads_lst,1) 
 
         dbg_print("check qpTerminationCondition dimension here. line 50")
 
         #  Set up arguments for quadprog interface
-        self.all_grads   = np.hstack((CE_grads, F_grads, CI_grads))
+        self.all_grads   = torch.hstack((CE_grads, F_grads, CI_grads))
         Hinv_grads  = apply_Hinv(self.all_grads)
-        self.H           = conj(self.all_grads.T) @ Hinv_grads
+        self.H           = torch.conj(self.all_grads.t()) @ Hinv_grads
         #  Fix H since numerically, it is unlikely to be _perfectly_ symmetric 
-        self.H           = (self.H + conj(self.H.T)) / 2
-        f           = -np.vstack((CE, F, CI))
-        LB          = np.vstack((-np.ones((q,1)), np.zeros((l+p,1))))
-        UB          = np.vstack((np.ones((q,1)), mu*np.ones((l,1)), np.ones((p,1))))  
-        Aeq         = np.hstack((np.zeros((1,q)), np.ones((1,l)), np.zeros((1,p))))  
+        self.H           = (self.H + torch.conj(self.H.t())) / 2
+        f           = -torch.vstack((CE, F, CI))
+        LB          = torch.vstack( (-torch.ones((q,1),device=device, dtype=torch.double), torch.zeros((l+p,1),device=device, dtype=torch.double)) ) 
+        UB          = torch.vstack((torch.ones((q,1),device=device, dtype=torch.double), mu*torch.ones((l,1),device=device, dtype=torch.double), torch.ones((p,1),device=device, dtype=torch.double))  ) 
+        Aeq         = torch.hstack((torch.zeros((1,q),device=device, dtype=torch.double), torch.ones((1,l),device=device, dtype=torch.double), torch.zeros((1,p),device=device, dtype=torch.double)) ) 
         beq         = mu
 
         # Choose solver

@@ -159,7 +159,7 @@ class pgP:
         return pen_args
 
     def penaltyFunctionValuesConstrained(self,penfn_at_x):
-        pen_args = (self.mu_c.format_fn(penfn_at_x.mu),self.pen_c.format_fn(penfn_at_x.p))
+        pen_args = (self.mu_c.format_fn(penfn_at_x.mu),self.pen_c.format_fn(penfn_at_x.p.item()))
         return pen_args
 
     def violationValues(self,varargin):

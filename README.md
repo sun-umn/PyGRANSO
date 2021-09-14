@@ -12,16 +12,27 @@ normalize line search direction. norm(d) = 1, d is the searching direction
 
 If the last fallback strategy failed, make a movement anyway. NOTE: make sure not restore the previous snapshot
 
-Diablae the 2nd wolfe condtion so that the line search becomes backtraking line search
+Disable the 2nd wolfe condtion so that the line search becomes backtraking line search
 
 Set maxiter = 25 for line search so that there is a lower bound for step size t
 
+reset Hessian every 100 iters helps avoid non-positive definite matrices in BFGS
+
+osqp-GPU is not necessary as it's not the main cost
+
+
 TODO:
 
-profiling
+Modify line search: currently eval [f,isfeasible] for each line search iter and [f,g,is_feasible] before returning line search. Try to check function evaluated
 
-osqp-GPU
+warm start
 
+SR1
+
+Comparison based on
+Simple Algorithms for Optimization on Riemannian Manifolds with Constraints
+
+Manopt new autodiff version
 
 ## References
 

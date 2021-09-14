@@ -2,10 +2,7 @@ from pygransoStruct import general_struct
 import torch
 import torch.nn as nn
 
-
-def combinedFunctionDL(model,parameters = None):
-    
-    
+def eval_obj(model,parameters = None):
     # objective function
     inputs = parameters.inputs
     labels = parameters.labels
@@ -13,7 +10,13 @@ def combinedFunctionDL(model,parameters = None):
     criterion = nn.CrossEntropyLoss()
     # criterion = nn.MSELoss()
     f = criterion(outputs, labels)
+    return f
 
+def combinedFunction(model,parameters = None):
+    
+    
+    
+    f = eval_obj(model,parameters)
 
     # print("Exact Hessian Test: ")
     # model_cpu = model.to(device="cpu" )

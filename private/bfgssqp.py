@@ -1,3 +1,4 @@
+import torch
 from private import pygransoConstants as pC, bfgsDamping as bD, regularizePosDefMatrix as rPDM, linesearchWeakWolfe as lWW
 from private.neighborhoodCache import nC
 from private.qpSteeringStrategy import qpSS
@@ -12,11 +13,14 @@ from numpy import conjugate as conj
 from numpy.random import default_rng
 # import torch
 
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
+
 class AlgBFGSSQP():
     def __init__(self):
         pass
-
-    def bfgssqp(self,penaltyfn_obj, bfgs_obj, opts, printer):
+    # @profile
+    def bfgssqp(self,f_eval_fn, penaltyfn_obj, bfgs_obj, opts, printer):
         """
         bfgssqp:
         Minimizes a penalty function.  Note that bfgssqp operates on the
@@ -24,6 +28,7 @@ class AlgBFGSSQP():
         states.  The result of bfgssqp's optimization process is obtained
         by querying these objects after bfgssqp has been run.
         """
+        self.f_eval_fn = f_eval_fn
         self.penaltyfn_obj = penaltyfn_obj
         self.bfgs_obj = bfgs_obj
         self.printer = printer
@@ -167,7 +172,8 @@ class AlgBFGSSQP():
                                 steering_c_mu,      self.QPsolver           )
 
         self.linesearch_fn   = lambda x,f,g,p,ls_maxit: lWW.linesearchWeakWolfe( 
-                                x, f, g, p,                                  
+                                x, f, g, p,
+                                lambda x_in: self.penaltyfn_obj.evaluatePenaltyFunction4linesearch(x_in),                                  
                                 lambda x_in: self.penaltyfn_obj.evaluatePenaltyFunction(x_in),      
                                 wolfe1, wolfe2, self.fvalquit, ls_maxit, step_tol)
                                                         
@@ -241,9 +247,9 @@ class AlgBFGSSQP():
                 self.random_attempts = self.random_attempts + 1
             
             dbg_print_1("start rescaling search direction p:") 
-            p_norm = LA.norm(p)
+            p_norm = torch.norm(p).item()
             p =  1 * p / p_norm
-            dbg_print_1("norm of d = {}".format(LA.norm(p)))
+            dbg_print_1("norm of d = {}".format(torch.norm(p).item()))
             dbg_print_1("end rescaling search direction p.")
                 
             [p,is_descent,fallback_on_this_direction] = self.checkDirection(p,g)
@@ -399,7 +405,8 @@ class AlgBFGSSQP():
     
     def checkDirection(self,p,g):    
         fallback            = False
-        gtp                 = conj(g.T)@p
+        gtp                 = torch.conj(g.t())@p
+        gtp = gtp.item()
         if math.isnan(gtp) or math.isinf(gtp):
             is_descent      = False
             fallback        = True    
@@ -429,7 +436,8 @@ class AlgBFGSSQP():
 
     #  only try a few line search iterations if p is not a descent direction
     def linesearchNondescent(self,x,f,g,p):
-        [alpha,x,f,g,fail,_,_,_] = self.linesearch_fn( x,f,g,p,self.linesearch_nondescent_maxit )
+        # [alpha,x,f,g,fail,_,_,_] = self.linesearch_fn( x,f,g,p,self.linesearch_nondescent_maxit )
+        [alpha,x,f,g,fail] = self.linesearch_fn( x,f,g,p,self.linesearch_nondescent_maxit )
         fail = 0 + 3*(fail > 0)
         return [alpha, x, f, g, fail]
 
@@ -439,7 +447,8 @@ class AlgBFGSSQP():
         
         #  we need to keep around f and g so use _ls names for ls results
         ls_fn                       = lambda f,g: self.linesearch_fn(x,f,g,p,float("inf"))
-        [alpha,x_ls,f_ls,g_ls,fail,_,_,_] = ls_fn(f,g)
+        # [alpha,x_ls,f_ls,g_ls,fail,_,_,_] = ls_fn(f,g)
+        [alpha,x_ls,f_ls,g_ls,fail] = ls_fn(f,g)
                         
         #  If the problem is constrained and the line search fails without 
         #  bracketing a minimizer, it may be because the objective is 
@@ -483,13 +492,15 @@ class AlgBFGSSQP():
         #  snapshot to be restored.
         return [alpha, x_ls, f_ls, g_ls, fail]
 
+    # @profile
     def computeApproxStationarityVector(self):
             
         #  first check the smooth case (gradient of the penalty function).
         #  If its norm is small, that indicates that we are at a smooth 
         #  stationary point and we can return this measure and terminate
         stat_vec        = self.penaltyfn_at_x.p_grad
-        stat_value      = LA.norm(stat_vec)
+        stat_value      = torch.norm(stat_vec)
+        self.opt_tol = torch.as_tensor(self.opt_tol,device = device, dtype=torch.double)
         if stat_value <= self.opt_tol:
             n_qps       = 0
             n_samples   = 1
@@ -513,7 +524,7 @@ class AlgBFGSSQP():
         qPTC_obj = qpTC()
         [stat_vec,n_qps,ME] = qPTC_obj.qpTerminationCondition(   self.penaltyfn_at_x, grad_samples,
                                                         self.apply_H_QP_fn, self.QPsolver)
-        stat_value = LA.norm(stat_vec)
+        stat_value = torch.norm(stat_vec).item()
         self.penaltyfn_obj.addStationarityMeasure(stat_value)
         
         if self.print_level > 2 and  len(ME) > 0:
@@ -547,7 +558,7 @@ class AlgBFGSSQP():
                     
         s               = alpha*p
         y               = g - gprev
-        sty             = conj(s.T)@y
+        sty             = torch.conj(s.t())@y
         
         if self.damping > 0:
             [y,sty,damped] = bD.bfgsDamping(self.damping,self.apply_H_fn,s,y,sty)

@@ -1,4 +1,5 @@
 from numpy import conjugate as conj
+import torch
 
 def bfgsDamping(damping,applyH,s,y,sty):
     """
@@ -9,7 +10,7 @@ def bfgsDamping(damping,applyH,s,y,sty):
 
     damped      = False
     Hs          = applyH(s)
-    stHs        = conj(s.T)@Hs 
+    stHs        = torch.conj(s.t())@Hs 
     
     if sty < damping * stHs:
         theta   = ((1 - damping) * stHs) / (stHs - sty)

@@ -1,4 +1,5 @@
 from numpy.core.numeric import Inf
+import torch
 from private import pygransoConstants as pgC
 from private.optionValidator import oV
 import numpy as np
@@ -7,6 +8,8 @@ from pygransoStruct import Options
 from dbg_print import dbg_print
 from private.isAnInteger import isAnInteger
 from numpy.random import default_rng
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def pygransoOptions(n,options):
     """
@@ -262,6 +265,7 @@ def pygransoOptions(n,options):
 
     """
     
+
     #  Storing information in mememory
     # persistent default_opts;
     # persistent LAST_FALLBACK_LEVEL;
@@ -453,7 +457,7 @@ def postProcess(n,opts):
     
     # If an initial inverse Hessian was not provided, use the identity
     if np.any(opts.H0) == None:
-        opts.H0 = sparse.eye(n).toarray()
+        opts.H0 = torch.eye(n,device=device, dtype=torch.double) 
     
     
     if hasattr(opts,"QPsolver"):

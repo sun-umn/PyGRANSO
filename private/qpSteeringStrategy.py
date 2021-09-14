@@ -1,9 +1,12 @@
 from math import inf
 import numpy as np
 import numpy.linalg as LA
+import torch
 from private.solveQP import solveQP
 from dbg_print import dbg_print
 from numpy import conjugate as conj
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
 
 class qpSS:
     def __init__(self):
@@ -41,18 +44,18 @@ class qpSS:
          
         #  Set up arguments for quadprog interface
         #  Update (Buyun): Set up arguments for QPALM interface
-        self.c_grads             = np.hstack((self.eq_grad, self.ineq_grad))
+        self.c_grads             = torch.hstack((self.eq_grad, self.ineq_grad))
         self.Hinv_c_grads        = apply_Hinv(self.c_grads)
-        self.H                   = conj(self.c_grads.T) @ self.Hinv_c_grads
+        self.H                   = torch.conj(self.c_grads.t()) @ self.Hinv_c_grads
         #  Fix H since numerically, it is unlikely to be _perfectly_ symmetric 
-        self.H                   = (self.H + conj(self.H.T)) / 2
+        self.H                   = (self.H + torch.conj(self.H.t())) / 2
         self.mu_Hinv_f_grad      = mu * self.Hinv_f_grad
-        self.f                   = conj(self.c_grads.T) @ self.mu_Hinv_f_grad - np.vstack((self.eq, self.ineq)) 
-        self.LB                  = np.vstack((-np.ones((n_eq,1)), np.zeros((self.n_ineq,1))  ))  
-        self.UB                  = np.ones((n_eq + self.n_ineq, 1))
+        self.f                   = torch.conj(self.c_grads.t()) @ self.mu_Hinv_f_grad - torch.vstack((self.eq, self.ineq)) 
+        self.LB                  = torch.vstack((-torch.ones((n_eq,1)), torch.zeros((self.n_ineq,1))  )).to(device=device, dtype=torch.double)   
+        self.UB                  = torch.ones((n_eq + self.n_ineq, 1),device=device, dtype=torch.double) 
         
         #  Identity matrix: compatible with the constraint form in QPALM
-        self.A                   = np.identity(n_eq + self.n_ineq)
+        self.A                   = torch.eye(n_eq + self.n_ineq,device=device, dtype=torch.double) 
     
         #  Check predicted violation reduction for search direction
         #  given by current penalty parameter
@@ -66,7 +69,7 @@ class qpSS:
         #  feasible, i.e., at least ineq_margin away from the feasible boundary,
         #  and no equality constraints are present.
         #  Explicitly check for infinity in case ineq contains -inf 
-        if ineq_margin != np.inf and not np.any(self.ineq >= -ineq_margin) and n_eq == 0:
+        if ineq_margin != np.inf and not torch.any(self.ineq >= -ineq_margin) and n_eq == 0:
             return [d,mu,reduction]
         
             
@@ -111,7 +114,7 @@ class qpSS:
         tmp_arr = self.ineq + self.ineq_grad.T @ d
         tmp_arr[tmp_arr < 0] = 0
 
-        dL = self.violation - np.sum(tmp_arr) - LA.norm(self.eq + self.eq_grad.T@d,1)
+        dL = self.violation - torch.sum(tmp_arr) - torch.norm(self.eq + self.eq_grad.t()@d, p = 1)
         return dL
 
     #  l-infinity total violation
@@ -144,5 +147,5 @@ class qpSS:
     #  update penalty parameter dependent values for QP
     def updateSteeringQP(self,mu):
         self.mu_Hinv_f_grad  = mu * self.Hinv_f_grad
-        self.f               = conj(self.c_grads.T) @ self.mu_Hinv_f_grad - np.vstack((self.eq, self.ineq))
+        self.f               = torch.conj(self.c_grads.t()) @ self.mu_Hinv_f_grad - torch.vstack((self.eq, self.ineq))
         return

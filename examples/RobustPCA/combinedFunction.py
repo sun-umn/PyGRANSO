@@ -1,7 +1,7 @@
 from pygransoStruct import general_struct
 import torch
 
-def combinedFunction(X_struct,parameters = None):
+def eval_obj(X_struct,data_in = None):
     
     # user defined variable, matirx form. torch tensor
     M = X_struct.M
@@ -9,12 +9,29 @@ def combinedFunction(X_struct,parameters = None):
     M.requires_grad_(True)
     S.requires_grad_(True)
     
-    # obtain parameters from runExample.py
-    eta = parameters.eta
-    Y = parameters.Y
+    # obtain data_in from runExample.py
+    eta = data_in.eta
+    Y = data_in.Y
     
     # objective function
     f = torch.norm(M, p = 'nuc') + eta * torch.norm(S, p = 1)
+    return f
+
+def combinedFunction(X_struct,data_in = None):
+    
+    # user defined variable, matirx form. torch tensor
+    M = X_struct.M
+    S = X_struct.S
+    M.requires_grad_(True)
+    S.requires_grad_(True)
+    
+    # # obtain data_in from runExample.py
+    # eta = data_in.eta
+    Y = data_in.Y
+    
+    # objective function
+    # f = torch.norm(M, p = 'nuc') + eta * torch.norm(S, p = 1)
+    f = eval_obj(X_struct,data_in)
 
     # inequality constraint, matrix form
     ci = None

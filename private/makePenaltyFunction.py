@@ -2,6 +2,7 @@ from sys import flags
 import types
 import numpy as np
 import numpy.linalg as LA
+import torch
 from pygransoStruct import general_struct
 from dbg_print import dbg_print
 
@@ -26,16 +27,19 @@ def assertFnOutputs(n,f,g,fn_name):
         dbg_print("f is float")
     else:
         dbg_print("f is not float")
-    assertFn(np.isreal(f),arg1,fn_name,'should be real valued')
+    assertFn(torch.isreal(f) if torch.is_tensor(f) else np.isreal(f),arg1,fn_name,'should be real valued')
     # assertFn(np.isreal(f.all()),arg1,fn_name,'should be real valued')
-    assertFn(np.isreal(g.all()),arg2,fn_name,'should be real valued')
-    assertFn(np.isfinite(f),arg1,fn_name,'should be finite valued')
+    assertFn(torch.isreal(g)==True,arg2,fn_name,'should be real valued')
+    assertFn(torch.isfinite(f) if torch.is_tensor(f) else np.isfinite(f) ,arg1,fn_name,'should be finite valued')
     # assertFn(np.isfinite(f.all()),arg1,fn_name,'should be finite valued')
-    assertFn(np.isfinite(g.all()),arg2,fn_name,'should be finite valued')
+    assertFn(torch.isfinite(g),arg2,fn_name,'should be finite valued')
     return
 
 def assertFn(cond,arg_name,fn_name,msg):
-    assert np.all(cond),("PyGRANSO userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(arg_name,fn_name,msg)  )                                 
+    if torch.is_tensor(cond):
+        assert torch.all(cond),("PyGRANSO userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(arg_name,fn_name,msg)  )   
+    else:
+        assert np.all(cond),("PyGRANSO userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(arg_name,fn_name,msg)  )                                 
 
 class Class_splitEvalAtX:
     def __init__(self):
@@ -47,8 +51,8 @@ class Class_splitEvalAtX:
         [f,f_grad,self.ci,self.ci_grad,self.ce,self.ce_grad] = self.eval_at_x_fn(x0)
     
         obj_fn = lambda x : self.objective(x)
-        ineq_fn = (lambda varargin: self.inequality(varargin) ) if (isinstance(self.ci,np.ndarray)) else (None)
-        eq_fn = (lambda varargin: self.equality(varargin) ) if (isinstance(self.ce,np.ndarray)) else (None)
+        ineq_fn = (lambda varargin: self.inequality(varargin) ) if ( torch.is_tensor(self.ci) ) else (None)
+        eq_fn = (lambda varargin: self.equality(varargin) ) if (torch.is_tensor(self.ce)) else (None)
         
         return [f,f_grad,obj_fn,ineq_fn,eq_fn] 
 
@@ -73,9 +77,10 @@ def rescaleObjective(x,fn,scaling):
     return [f,g]
 
 def violationsInequality(ci):
-    vi = ci.copy()
+    vi = ci.detach().clone()
     violated_indx = ci >= 0
-    vi[ ~violated_indx] = 0
+    not_violated_indx = ~violated_indx
+    vi[not_violated_indx] = 0
     return [vi,violated_indx]
 
 def violationsEquality(ce):
@@ -84,10 +89,10 @@ def violationsEquality(ce):
     return [ve,violated_indx]
 
 def totalViolationMax(v):
-    if np.all(v==0):
+    if torch.all(v==0):
         v_max = 0
     else:
-        v_max = np.max(v)
+        v_max = torch.max(v).item()
     return v_max
 
 def totalViolationInequality(ci,ci_grad):
@@ -97,9 +102,9 @@ def totalViolationInequality(ci,ci_grad):
     tvi = totalViolationMax(vi)
     
     #  l_1 penalty term for penalty function
-    tvi_l1 = np.sum(vi)
+    tvi_l1 = torch.sum(vi)
     # indx used for select certain cols
-    tvi_l1_grad = np.sum(ci_grad[:,indx[:,0]],1)
+    tvi_l1_grad = torch.sum(ci_grad[:,indx[:,0]],1)
     return [tvi,tvi_l1,tvi_l1_grad]
 
 def totalViolationEquality(ce,ce_grad):
@@ -109,8 +114,8 @@ def totalViolationEquality(ce,ce_grad):
     tve = totalViolationMax(ve)
     
     # l_1 penalty term for penalty function
-    tve_l1 = np.sum(ve)
-    tve_l1_grad = np.sum(ce_grad[:,indx[:,0]],1) - np.sum(ce_grad[:,np.logical_not(indx[:,0])],1)
+    tve_l1 = torch.sum(ve)
+    tve_l1_grad = torch.sum(ce_grad[:,indx[:,0]],1) - torch.sum(ce_grad[:,(~indx[:,0])],1)
 
     return [tve,tve_l1,tve_l1_grad]
 
@@ -126,7 +131,9 @@ def unscaleValues(values,scalars):
     return values
 
 def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_threshold):
-                                        
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
     n = len(x0)
                             
     #  eval_fn is either a function handle for evaluateInequality or
@@ -144,8 +151,8 @@ def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_thresh
         eval_fn_ret             = lambda x : None
         # These must have the right dimensions for computations to be 
         # done even if there are no such constraints
-        c                   = np.zeros((0,1))
-        c_grad              = np.zeros((len(x0),0))
+        c                   = torch.zeros((0,1),device=device, dtype=torch.double)
+        c_grad              = torch.zeros((len(x0),0),device=device, dtype=torch.double)
         c_grad_norms        = 0
         tv                  = 0
         tv_l1               = 0
@@ -162,10 +169,10 @@ def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_thresh
         # dbg_print("Skip try & except in makepenalty function.setupconstraint")
 
         assertFnOutputs(n,c,c_grad,type_str+"equality constraints") 
-        c_grad_norms        = np.sqrt(np.sum(np.square(c_grad),0)) 
+        c_grad_norms        = torch.sqrt(torch.sum(torch.square(c_grad),0)) 
         # indices of gradients whose norms are larger than limit
         indx                = c_grad_norms > prescaling_threshold
-        if np.any(indx !=0 ):
+        if torch.any(indx !=0 ):
             scalings        = np.ones(len(c),1)
             # we want to rescale these "too large" functions so that 
             # the norms of their gradients are set to limit at x0
@@ -208,7 +215,36 @@ class PanaltyFuctions:
     def __init__(self):
         pass
 
-    ############## PUBLIC helper functions ##############
+    # evaluate objective, constraints, violation, and penalty function at x
+    def evaluateAtX4linesearch(self,x_in):
+        try: 
+            self.at_snap_shot    = False
+            self.stat_value      = float("nan")
+            self.fn_evals        += 1
+            # evaluate objective and its gradient
+            self.f      = self.f_eval_fn(x_in)
+            # evaluate constraints and their violations (nested update)
+            self.eval_ineq_fn(x_in) 
+            self.eval_eq_fn(x_in)
+        except Exception as e:
+            print(e)   
+            print("PyGRANSO userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x for line search.")
+
+        self.x                   = x_in
+        self.feasible_to_tol     = self.is_feasible_to_tol_fn(self.tvi,self.tve);  
+        self.tv                  = np.maximum(self.tvi,self.tve)
+        self.tv_l1               = self.tvi_l1 + self.tve_l1
+        # self.tv_l1_grad          = self.tvi_l1_grad + self.tve_l1_grad
+        self.p                   = self.mu*self.f + self.tv_l1
+        
+        # # update best points encountered so far
+        # self.update_best_fn()
+        
+        # copy nested variables values to output arguments
+        p_out               = self.p
+        feasible_to_tol_out = self.feasible_to_tol
+
+        return [p_out,feasible_to_tol_out]
 
     # evaluate objective, constraints, violation, and penalty function at x
     def evaluateAtX(self,x_in):
@@ -224,17 +260,6 @@ class PanaltyFuctions:
         except Exception as e:
             print(e)   
             print("PyGRANSO userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x.")
-        
-        # self.at_snap_shot    = False
-        # self.stat_value      = float("nan")
-        # self.fn_evals        += 1
-        # # evaluate objective and its gradient
-        # [self.f,self.f_grad]      = self.obj_fn(x_in)
-        # # evaluate constraints and their violations (nested update)
-        # self.eval_ineq_fn(x_in) 
-        # self.eval_eq_fn(x_in)
-
-        # dbg_print("skip try & except in  makePenaltyFunction.evaluateAtX")
 
         self.x                   = x_in
         self.feasible_to_tol     = self.is_feasible_to_tol_fn(self.tvi,self.tve);  
@@ -521,7 +546,7 @@ class PanaltyFuctions:
             unscaled_data   = ([name+"_unscaled"],self.unscale_fields_fn(data))
         return unscaled_data
 
-    def makePenaltyFunction(self,params,obj_fn,varargin=None):
+    def makePenaltyFunction(self,params,f_eval_fn,obj_fn,varargin=None):
         """
         makePenaltyFunction: 
             creates an object representing the penalty function for 
@@ -534,7 +559,7 @@ class PanaltyFuctions:
                 mu*obj_fn   + sum of active inequality constraints 
                             + sum of absolute value of eq. constraints
         """
-
+        self.f_eval_fn = f_eval_fn 
         self.obj_fn = obj_fn 
         # assert (isinstance(obj_fn,types.LambdaType), 'PyGRANSO userSuppliedFunctionsError: obj_fn must be a lambda function of x.' )
         
@@ -560,7 +585,7 @@ class PanaltyFuctions:
 
         prescaling_threshold = params.prescaling_threshold
         # checking scaling of objective and rescale if necessary
-        f_grad_norm = LA.norm(self.f_grad)
+        f_grad_norm = torch.norm(self.f_grad)
         if f_grad_norm > prescaling_threshold:
             self.scaling_f = prescaling_threshold / f_grad_norm
             self.obj_fn = lambda x : rescaleObjective(x,self.obj_fn,self.scaling_f)
@@ -635,6 +660,7 @@ class PanaltyFuctions:
 
         # output object with methods
         penalty_fn_object = general_struct()
+        setattr(penalty_fn_object,"evaluatePenaltyFunction4linesearch",lambda x_in: self.evaluateAtX4linesearch(x_in))
         setattr(penalty_fn_object,"evaluatePenaltyFunction",lambda x_in: self.evaluateAtX(x_in))
         setattr(penalty_fn_object,"updatePenaltyParameter",update_penalty_parameter_fn)
         setattr(penalty_fn_object,"getX",lambda : self.getX())

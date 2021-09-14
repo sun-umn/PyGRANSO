@@ -1,3 +1,4 @@
+import torch
 from dbg_print import dbg_print
 import numpy as np
 
@@ -13,6 +14,10 @@ def isRealValued(X):
     """
     dbg_print("private.isRealValued: Skip imag validate")
     # tf = np.isreal(X) or not np.any(np.imag(X))
-    tf = np.any(np.isreal(X) == True)  
+
+    if torch.is_tensor(X):
+      tf = torch.all(torch.isreal(X) == True).item()  
+    else:
+      tf = np.isreal(X)
 
     return tf

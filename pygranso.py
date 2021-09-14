@@ -10,11 +10,32 @@ import copy
 from dbg_print import dbg_print
 from private.wrapToLines import wrapToLines
 from time import sleep
-from private.mat2vec import mat2vec_autodiff,tensor2vec_autodiff
+from private.mat2vec import mat2vec_autodiff, tensor2vec_autodiff, obj_eval, obj_eval_DL
 from private.getNvar import getNvar,getNvarTorch
 
 
-def pygranso(var_dim_map=None,user_parameters=None,user_opts=None,nn_model=None):
+import cProfile, pstats, io
+
+def profile(fnc):
+    
+    def inner(*args, **kwargs):
+        
+        pr = cProfile.Profile()
+        pr.enable()
+        retval = fnc(*args, **kwargs)
+        pr.disable()
+        s = io.StringIO()
+        # sortby = 'cumulative'
+        sortby = 'tottime'
+        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        ps.print_stats()
+        print(s.getvalue())
+        return retval
+
+    return inner
+
+@profile
+def pygranso(var_dim_map=None,user_data=None,user_opts=None,nn_model=None):
     """
     PyGRANSO: Python version GRadient-based Algorithm for Non-Smooth Optimization
 
@@ -352,12 +373,15 @@ def pygranso(var_dim_map=None,user_parameters=None,user_opts=None,nn_model=None)
 
     if var_dim_map == None and nn_model != None:
         n = getNvarTorch(nn_model.parameters())
-        obj_fn = lambda x: tensor2vec_autodiff(x,nn_model,n,user_parameters)
+        obj_fn = lambda x: tensor2vec_autodiff(x,nn_model,n,user_data)
+        f_eval_fn = lambda x: obj_eval_DL(x,nn_model,user_data)
 
     else:
         # call the functions getNvar to get the total number of (scalar) variables
         n = getNvar(var_dim_map)
-        obj_fn = lambda x: mat2vec_autodiff(x,var_dim_map,n,user_parameters)
+        obj_fn = lambda x: mat2vec_autodiff(x,var_dim_map,n,user_data)
+        f_eval_fn = lambda x: obj_eval(x,var_dim_map, user_data)
+        print("TODO: f_eval for non-DL problem")
 
     try: 
         [problem_fns,opts] = processArguments(n,obj_fn,user_opts)
@@ -367,7 +391,7 @@ def pygranso(var_dim_map=None,user_parameters=None,user_opts=None,nn_model=None)
         # construct the penalty function object and evaluate at x0
         # unconstrained problems will reset mu to one and mu will be fixed
         mPF = PanaltyFuctions() # make penalty functions 
-        [ penaltyfn_obj, grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, problem_fns)
+        [ penaltyfn_obj, grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, f_eval_fn, problem_fns)
     except Exception as e:
             print(e)   
             print("pygranso main loop Error")
@@ -398,7 +422,7 @@ def pygranso(var_dim_map=None,user_parameters=None,user_opts=None,nn_model=None)
 
     try:
         bfgssqp_obj = AlgBFGSSQP()
-        info = bfgssqp_obj.bfgssqp(penaltyfn_obj,bfgs_hess_inv_obj,opts,printer)
+        info = bfgssqp_obj.bfgssqp(f_eval_fn, penaltyfn_obj,bfgs_hess_inv_obj,opts,printer)
     except Exception as e:
         print(e)   
         print("Error: pygranso bfgssqp ")
