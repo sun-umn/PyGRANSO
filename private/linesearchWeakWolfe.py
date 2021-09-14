@@ -20,11 +20,12 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
         NOTE: the values assigned to output argument "fail" have been changed 
                 so that all error cases are assigned positive codes.
     """
+    is_backtrack_linesearch = False
 
     # eval_limit = 25
     # dbg_print_1("hard coding eval_limit = %d: initial t = 10"%eval_limit)
     
-    d_rescale = d.detach().clone()
+    # d_rescale = d.detach().clone()
 
     alpha = 0  # lower bound on steplength conditions
     xalpha = x0.detach().clone()
@@ -34,8 +35,8 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
 
     # gradbeta = torch.empty(x0.shape,device=device)
     # gradbeta[:] = float('nan')
-    g0 = (torch.conj(grad0.t()) @ d_rescale).item() 
-    dnorm = torch.norm(d_rescale).item()
+    g0 = (torch.conj(grad0.t()) @ d).item() 
+    dnorm = torch.norm(d).item()
     # t = 1  # important to try steplength one first
     # t = 1e-2  # important to try steplength one first
     t = init_step_size
@@ -51,10 +52,15 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
 
     test_flag = 0
 
-    while (beta - alpha) > (torch.norm(x0 + alpha*d_rescale).item()/dnorm)*step_tol and n_evals < maxit:
-        x = x0 + t*d_rescale
-        [f,is_feasible] = f_eval_fn(x)
-        # [f,grad,is_feasible] = obj_fn(x)
+    while (beta - alpha) > (torch.norm(x0 + alpha*d).item()/dnorm)*step_tol and n_evals < maxit:
+        x = x0 + t*d
+
+        if is_backtrack_linesearch:
+            [f,is_feasible] = f_eval_fn(x)
+        else:
+            [f,grad,is_feasible] = obj_fn(x)
+            gtd = torch.conj(grad.t()) @ d
+
         if torch.is_tensor(f):
             f = f.item()
         n_evals = n_evals + 1
@@ -73,6 +79,15 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
             beta = t
             # gradbeta = grad.detach().clone() # discard f
             test_flag = 1
+
+        
+        elif not is_backtrack_linesearch and gtd <= c2*g0 or torch.isnan(gtd): # second condition violated, not gone far enough
+            alpha = t
+            xalpha = x.detach().clone()
+            falpha = f
+            gradalpha = grad.detach().clone()
+
+
 
         else:   # quit, both conditions are satisfied
             fail = 0
@@ -107,14 +122,15 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
     
 
     #####################################################################
-    dbg_print_1("return t when line searhc fails:")
-    alpha = t
-    xalpha = x.detach().clone()
-    [f,grad,is_feasible] = obj_fn(x)
-    falpha = f
-    gradalpha = grad.detach().clone()
-    beta = t
-    # gradbeta = grad.detach().clone()
-    dbg_print_1("final step size t = %f \n"%t)
-    # return [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals]  
+    if is_backtrack_linesearch:
+        dbg_print_1("return t when line searhc fails:")
+        alpha = t
+        xalpha = x.detach().clone()
+        [f,grad,is_feasible] = obj_fn(x)
+        falpha = f
+        gradalpha = grad.detach().clone()
+        beta = t
+        # gradbeta = grad.detach().clone()
+        dbg_print_1("final step size t = %f \n"%t)
+         
     return [alpha, xalpha, falpha, gradalpha, fail]                              
