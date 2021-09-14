@@ -9,7 +9,7 @@ import sys
 sys.path.append(r'C:\Users\Buyun\Documents\GitHub\PyGRANSO')
 sys.path.append(r'C:\Users\Buyun\Documents\GitHub\PyGRANSO\examples\DL_CIFAR10')
 from pygranso import pygranso
-from pygransoStruct import Options, Parameters
+from pygransoStruct import Options, Data
 from private.getNvar import getNvarTorch
 # from private.numpyVec2TorchTensor import numpyVec2DLTorchTensor
 
@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # debugging
-os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+# os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 def mainFun():
 
@@ -129,7 +129,7 @@ def mainFun():
 
         ################### PyGRANSO
 
-        # parameters
+        # data_in
         for i, data in enumerate(trainloader, 0):        
                 if i >= 1:
                         break   
@@ -137,14 +137,14 @@ def mainFun():
                 inputs, labels = data
                 # print(inputs.shape)
 
-        parameters = Parameters()
-        parameters.labels = labels.cuda() # label/target [256]
-        parameters.inputs = inputs.double().cuda() # input data [256,3,32,32]
+        data_in = Data()
+        data_in.labels = labels.cuda() # label/target [256]
+        data_in.inputs = inputs.double().cuda() # input data [256,3,32,32]
 
         opts = Options()
         nvar = getNvarTorch(model.parameters())
         opts.QPsolver = 'osqp' 
-        opts.maxit = 1500
+        opts.maxit = 100
         # opts.x0 = .1 * np.ones((nvar,1))
         opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach().reshape(nvar,1)
         # opts.x0 = np.double(np.reshape(x0_vec,(-1,1)))
@@ -174,7 +174,7 @@ def mainFun():
 
         #  main algorithm  
         start = time.time()
-        soln = pygranso(user_parameters = parameters, user_opts = opts, nn_model = model)
+        soln = pygranso(user_data = data_in, user_opts = opts, nn_model = model)
         end = time.time()
 
         # numpyVec2DLTorchTensor(soln.final.x,model) # update model paramters
@@ -195,7 +195,7 @@ def mainFun():
 
         #         #  main algorithm  
         #         start = time.time()
-        #         soln = pygranso(user_parameters = parameters, user_opts = opts, nn_model = model)
+        #         soln = pygranso(user_data = data_in, user_opts = opts, nn_model = model)
         #         end = time.time()
 
         #         numpyVec2DLTorchTensor(soln.final.x,model) # update model paramters

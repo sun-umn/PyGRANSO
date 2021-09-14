@@ -7,30 +7,32 @@ import sys
 ## Adding PyGRANSO directories. Should be modified by user
 sys.path.append(r'C:\Users\Buyun\Documents\GitHub\PyGRANSO')
 from pygranso import pygranso
-from pygransoStruct import Options, Parameters
+from pygransoStruct import Options, Data
 
 # Please read the documentation on https://pygranso.readthedocs.io/en/latest/
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # variables and corresponding dimensions.
-n = 30
+n = 100
 var_in = {"q": (n,1)}
 
-# parameters
-parameters = Parameters()
+# data_in
+data_in = Data()
 m = 10*n**2   # sample complexity
 theta = 0.3   # sparsity level
 Y = norm.ppf(np.random.rand(n,m)) * (norm.ppf(np.random.rand(n,m)) <= theta)  # Bernoulli-Gaussian model
-parameters.Y = torch.from_numpy(Y) 
-parameters.m = m
+data_in.Y = torch.from_numpy(Y).to(device=device, dtype=torch.double)
+data_in.m = m
 
 # user defined options
 opts = Options()
 opts.QPsolver = 'osqp' 
-opts.maxit = 10000
+opts.maxit = 500
 # User defined initialization. 
 np.random.seed(1)
 x0 = norm.ppf(np.random.rand(n,1))
 x0 /= la.norm(x0,2)
+x0 = torch.from_numpy(x0).to(device=device, dtype=torch.double)
 opts.x0 = x0
 opts.opt_tol = 1e-6
 opts.fvalquit = 1e-6
@@ -40,7 +42,7 @@ opts.print_ascii = True
 
 #  main algorithm  
 start = time.time()
-soln = pygranso(var_in,parameters,opts)
+soln = pygranso(var_dim_map = var_in,user_data = data_in, user_opts = opts)
 end = time.time()
 print("Total Wall Time: {}s".format(end - start))
 

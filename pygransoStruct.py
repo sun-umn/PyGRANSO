@@ -4,8 +4,8 @@
 class Options:
     pass
 
-# struct for parameters
-class Parameters:
+# struct for Data
+class Data:
     pass
 
 # options for optimization variable X

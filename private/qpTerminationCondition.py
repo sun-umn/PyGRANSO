@@ -31,11 +31,14 @@ class qpTC:
         
         CI = penaltyfn_at_x.ci
         CE = penaltyfn_at_x.ce
-        for i in range(l-1):
-            CI_new          = torch.vstack((CI,CI))
-            CE_new          = torch.vstack((CE,CE))
-            CI = CI_new
-            CE = CE_new
+        # for i in range(l-1):
+        #     CI_new          = torch.vstack((CI_new,CI))
+        #     CE_new          = torch.vstack((CE_new,CE))
+        # if l > 1:
+        #     CI = CI_new
+        #     CE = CE_new
+        CI = CI.repeat(l,1)
+        CE = CE.repeat(l,1)
         
         
         F_grads_lst = []

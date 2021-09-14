@@ -79,7 +79,8 @@ def rescaleObjective(x,fn,scaling):
 def violationsInequality(ci):
     vi = ci.detach().clone()
     violated_indx = ci >= 0
-    vi[ not violated_indx] = 0
+    not_violated_indx = ~violated_indx
+    vi[not_violated_indx] = 0
     return [vi,violated_indx]
 
 def violationsEquality(ce):
@@ -113,8 +114,8 @@ def totalViolationEquality(ce,ce_grad):
     tve = totalViolationMax(ve)
     
     # l_1 penalty term for penalty function
-    tve_l1 = np.sum(ve)
-    tve_l1_grad = np.sum(ce_grad[:,indx[:,0]],1) - np.sum(ce_grad[:,np.logical_not(indx[:,0])],1)
+    tve_l1 = torch.sum(ve)
+    tve_l1_grad = torch.sum(ce_grad[:,indx[:,0]],1) - torch.sum(ce_grad[:,(~indx[:,0])],1)
 
     return [tve,tve_l1,tve_l1_grad]
 

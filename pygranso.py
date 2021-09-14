@@ -10,7 +10,7 @@ import copy
 from dbg_print import dbg_print
 from private.wrapToLines import wrapToLines
 from time import sleep
-from private.mat2vec import mat2vec_autodiff, tensor2vec_autodiff, obj_eval
+from private.mat2vec import mat2vec_autodiff, tensor2vec_autodiff, obj_eval, obj_eval_DL
 from private.getNvar import getNvar,getNvarTorch
 
 
@@ -35,7 +35,7 @@ def profile(fnc):
     return inner
 
 @profile
-def pygranso(var_dim_map=None,user_parameters=None,user_opts=None,nn_model=None):
+def pygranso(var_dim_map=None,user_data=None,user_opts=None,nn_model=None):
     """
     PyGRANSO: Python version GRadient-based Algorithm for Non-Smooth Optimization
 
@@ -373,14 +373,14 @@ def pygranso(var_dim_map=None,user_parameters=None,user_opts=None,nn_model=None)
 
     if var_dim_map == None and nn_model != None:
         n = getNvarTorch(nn_model.parameters())
-        obj_fn = lambda x: tensor2vec_autodiff(x,nn_model,n,user_parameters)
-        f_eval_fn = lambda x: obj_eval(x,nn_model,user_parameters)
+        obj_fn = lambda x: tensor2vec_autodiff(x,nn_model,n,user_data)
+        f_eval_fn = lambda x: obj_eval_DL(x,nn_model,user_data)
 
     else:
         # call the functions getNvar to get the total number of (scalar) variables
         n = getNvar(var_dim_map)
-        obj_fn = lambda x: mat2vec_autodiff(x,var_dim_map,n,user_parameters)
-        f_eval_fn = None
+        obj_fn = lambda x: mat2vec_autodiff(x,var_dim_map,n,user_data)
+        f_eval_fn = lambda x: obj_eval(x,var_dim_map, user_data)
         print("TODO: f_eval for non-DL problem")
 
     try: 

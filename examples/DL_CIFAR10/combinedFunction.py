@@ -12,7 +12,7 @@ def eval_obj(model,parameters = None):
     f = criterion(outputs, labels)
     return f
 
-def combinedFunctionDL(model,parameters = None):
+def combinedFunction(model,parameters = None):
     
     
     

@@ -1,5 +1,5 @@
 import numpy as np
-from combinedFunction import combinedFunctionDL, eval_obj
+from combinedFunction import combinedFunction, eval_obj
 from pygransoStruct import VariableStruct, general_struct
 import torch
 from private.getObjGrad import getObjGradDL,getObjGrad
@@ -7,7 +7,7 @@ from private.vec2mat import vec2mat
 from private.getCiVec import getCiVec
 from private.getCiGradVec import getCiGradVec
 
-def obj_eval(x,model,parameters = None):
+def obj_eval_DL(x,model,parameters = None):
     torch.nn.utils.vector_to_parameters(x, model.parameters()) # update model paramters
     
     # obtain objective and constraint function and their corresponding gradient
@@ -20,15 +20,26 @@ def obj_eval(x,model,parameters = None):
     
     return f
 
+def obj_eval(x, var_dim_map, parameters = None):
+    
+    X_struct = vec2mat(x,var_dim_map)
+
+    if parameters == None:
+        f = eval_obj(X_struct)
+    else:
+        f = eval_obj(X_struct,parameters)
+    
+    return f
+
 def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None):
     X = vec2mat(x,var_dim_map)
     # obtain objective and constraint function and their corresponding gradient
     # matrix form functions    
     
     if parameters == None:
-        [f,ci,ce] = combinedFunctionDL(X)
+        [f,ci,ce] = combinedFunction(X)
     else:
-        [f,ci,ce] = combinedFunctionDL(X,parameters)
+        [f,ci,ce] = combinedFunction(X,parameters)
         
     # obj function is a scalar form
     f_vec = f.item()    
@@ -63,9 +74,9 @@ def tensor2vec_autodiff(x,model,nvar,parameters = None):
     # matrix form functions    
     
     if parameters == None:
-        [f,ci,ce] = combinedFunctionDL(model)
+        [f,ci,ce] = combinedFunction(model)
     else:
-        [f,ci,ce] = combinedFunctionDL(model,parameters)
+        [f,ci,ce] = combinedFunction(model,parameters)
         
     # obj function is a scalar form
     f_vec = f.item()    
