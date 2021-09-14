@@ -404,12 +404,15 @@ def pygransoOptions(n,options):
         #  wolfe2: conventionally wolfe2 should be > wolfe1 but it is
         #  sometimes okay for both to be zero (e.g. Shor)
         validator.setRealInIntervalCC("wolfe1",0,0.5); 
-        validator.setRealInIntervalCO("wolfe2",validator.getValue('wolfe1'),1);                             
+        validator.setRealInIntervalCO("wolfe2",validator.getValue('wolfe1'),1)                             
         validator.setIntegerNonnegative("linesearch_nondescent_maxit")
         validator.setIntegerNonnegative("linesearch_reattempts")
         validator.setIntegerNonnegative("linesearch_reattempts_x0")
         validator.setRealInIntervalOO("linesearch_c_mu",0,1)   
         validator.setRealInIntervalOO("linesearch_c_mu_x0",0,1)    
+
+        validator.setIntegerNonnegative("linesearch_maxit")
+        validator.setRealNonnegative("init_step_size")
 
         #  LOGGING PARAMETERS
         validator.setIntegerInRange("print_level",0,3)
@@ -521,6 +524,10 @@ def getDefaults(n):
     setattr(default_opts,'linesearch_reattempts_x0',10)
     setattr(default_opts,'linesearch_c_mu',0.5)
     setattr(default_opts,'linesearch_c_mu_x0',0.5)
+
+    setattr(default_opts,'linesearch_maxit',np.inf)
+    setattr(default_opts,'init_step_size',1)
+
     setattr(default_opts,'print_level',1)
     setattr(default_opts,'print_frequency',1)
     setattr(default_opts,'print_width',14)

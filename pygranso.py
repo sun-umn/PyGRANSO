@@ -381,7 +381,6 @@ def pygranso(var_dim_map=None,user_data=None,user_opts=None,nn_model=None):
         n = getNvar(var_dim_map)
         obj_fn = lambda x: mat2vec_autodiff(x,var_dim_map,n,user_data)
         f_eval_fn = lambda x: obj_eval(x,var_dim_map, user_data)
-        print("TODO: f_eval for non-DL problem")
 
     try: 
         [problem_fns,opts] = processArguments(n,obj_fn,user_opts)

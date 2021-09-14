@@ -163,6 +163,10 @@ def mainFun():
         # opts.max_random_attempts = 10
         # opts.linesearch_nondescent_maxit = 25
         # opts.linesearch_nondescent_maxit = 8
+        
+        # new user options
+        opts.init_step_size = 1e-2
+        opts.linesearch_maxit = 25
 
 
         outputs = model(inputs.to(device=device, dtype=torch.double) )

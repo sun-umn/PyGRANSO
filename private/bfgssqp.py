@@ -88,6 +88,9 @@ class AlgBFGSSQP():
         self.linesearch_c_mu             = opts.linesearch_c_mu
         self.linesearch_c_mu_x0          = opts.linesearch_c_mu_x0
 
+        self.linesearch_maxit = opts.linesearch_maxit
+        self.init_step_size = opts.init_step_size
+
         #  logging parameters
         self.print_level                 = opts.print_level
         print_frequency             = opts.print_frequency
@@ -175,7 +178,7 @@ class AlgBFGSSQP():
                                 x, f, g, p,
                                 lambda x_in: self.penaltyfn_obj.evaluatePenaltyFunction4linesearch(x_in),                                  
                                 lambda x_in: self.penaltyfn_obj.evaluatePenaltyFunction(x_in),      
-                                wolfe1, wolfe2, self.fvalquit, ls_maxit, step_tol)
+                                wolfe1, wolfe2, self.fvalquit, ls_maxit, step_tol, self.init_step_size, self.linesearch_maxit)
                                                         
         #  we'll use a while loop so we can explicitly update the counter only
         #  for successful updates.  This way, if the search direction direction

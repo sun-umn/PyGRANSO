@@ -8,7 +8,7 @@ from dbg_print import dbg_print_1
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
 
 # @profile
-def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, fvalquit = -np.inf, eval_limit = np.inf, step_tol = 1e-12):
+def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, fvalquit = -np.inf, eval_limit = np.inf, step_tol = 1e-12, init_step_size = 1, linesearch_maxit = np.inf):
     """
     linesearchWeakWolfe:
         Line search enforcing weak Wolfe conditions, suitable for minimizing 
@@ -21,8 +21,8 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
                 so that all error cases are assigned positive codes.
     """
 
-    eval_limit = 25
-    dbg_print_1("hard coding eval_limit = %d: initial t = 10"%eval_limit)
+    # eval_limit = 25
+    # dbg_print_1("hard coding eval_limit = %d: initial t = 10"%eval_limit)
     
     d_rescale = d.detach().clone()
 
@@ -37,9 +37,12 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
     g0 = (torch.conj(grad0.t()) @ d_rescale).item() 
     dnorm = torch.norm(d_rescale).item()
     # t = 1  # important to try steplength one first
-    t = 1e-2  # important to try steplength one first
+    # t = 1e-2  # important to try steplength one first
+    t = init_step_size
     n_evals = 0
     nexpand = 0
+    maxit = min(eval_limit,linesearch_maxit)
+
     # the following limit is rather arbitrary
     # don't use HANSO's nexpandmax, which could much larger, since BFGS-SQP 
     # will automatically reattempt the line search with a lower penalty 
@@ -48,7 +51,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
 
     test_flag = 0
 
-    while (beta - alpha) > (torch.norm(x0 + alpha*d_rescale).item()/dnorm)*step_tol and n_evals < eval_limit:
+    while (beta - alpha) > (torch.norm(x0 + alpha*d_rescale).item()/dnorm)*step_tol and n_evals < maxit:
         x = x0 + t*d_rescale
         [f,is_feasible] = f_eval_fn(x)
         # [f,grad,is_feasible] = obj_fn(x)

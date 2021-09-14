@@ -14,7 +14,9 @@ If the last fallback strategy failed, make a movement anyway. NOTE: make sure no
 
 Disable the 2nd wolfe condtion so that the line search becomes backtraking line search
 
-Set maxiter = 25 for line search so that there is a lower bound for step size t
+Two new user opts: linesearch_maxit and linesearch_step_size
+
+in deep learning problem. t = 1e-2. Set maxiter = 25 for line search so that there is a lower bound for step size t
 
 reset Hessian every 100 iters helps avoid non-positive definite matrices in BFGS
 
