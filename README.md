@@ -14,7 +14,7 @@ If the last fallback strategy failed, make a movement anyway. NOTE: make sure no
 
 Disable the 2nd wolfe condtion so that the line search becomes backtraking line search
 
-Five new user opts: linesearch_maxit, linesearch_step_size, is_backtrack_linesearch, searching_direction_rescaling, disable_terminationcode_6
+Five new user opts: linesearch_maxit, linesearch_step_size, is_backtrack_linesearch, searching_direction_rescaling, disable_terminationcode_6, device
 
 in deep learning problem. t = 1e-2. Set maxiter = 25 for line search so that there is a lower bound for step size t
 
@@ -24,8 +24,6 @@ osqp-GPU is not necessary as it's not the main cost
 
 
 TODO:
-
-Modify line search: currently eval [f,isfeasible] for each line search iter and [f,g,is_feasible] before returning line search. Try to check function evaluated
 
 warm start
 

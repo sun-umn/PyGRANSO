@@ -119,7 +119,7 @@ def mainFun():
 
         torch.manual_seed(0)
         # setting device on GPU if available, else CPU
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        device = torch.device('cuda')
         print('Using device:', device)
 
         model = Net().to(device=device, dtype=torch.double)
@@ -170,6 +170,7 @@ def mainFun():
         opts.is_backtrack_linesearch = True
         opts.searching_direction_rescaling = True
         opts.disable_terminationcode_6 = True
+        # opts.use_cuda = use_cuda
 
 
         outputs = model(inputs.to(device=device, dtype=torch.double) )
@@ -181,7 +182,7 @@ def mainFun():
 
         #  main algorithm  
         start = time.time()
-        soln = pygranso(user_data = data_in, user_opts = opts, nn_model = model)
+        soln = pygranso(user_data = data_in, user_opts = opts, nn_model = model, torch_device = device)
         end = time.time()
 
         # numpyVec2DLTorchTensor(soln.final.x,model) # update model paramters

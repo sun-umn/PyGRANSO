@@ -1,3 +1,4 @@
+import torch
 from private import pygransoPrinter
 from private.makePenaltyFunction import PanaltyFuctions
 from private import bfgsHessianInverse as bfgsHI, printMessageBox as pMB
@@ -35,7 +36,7 @@ def profile(fnc):
     return inner
 
 @profile
-def pygranso(var_dim_map=None,user_data=None,user_opts=None,nn_model=None):
+def pygranso(var_dim_map=None,user_data=None,user_opts=None,nn_model=None, torch_device = torch.device('cpu')):
     """
     PyGRANSO: Python version GRadient-based Algorithm for Non-Smooth Optimization
 
@@ -373,13 +374,13 @@ def pygranso(var_dim_map=None,user_data=None,user_opts=None,nn_model=None):
 
     if var_dim_map == None and nn_model != None:
         n = getNvarTorch(nn_model.parameters())
-        obj_fn = lambda x: tensor2vec_autodiff(x,nn_model,n,user_data)
+        obj_fn = lambda x: tensor2vec_autodiff(x,nn_model,n,user_data,torch_device)
         f_eval_fn = lambda x: obj_eval_DL(x,nn_model,user_data)
 
     else:
         # call the functions getNvar to get the total number of (scalar) variables
         n = getNvar(var_dim_map)
-        obj_fn = lambda x: mat2vec_autodiff(x,var_dim_map,n,user_data)
+        obj_fn = lambda x: mat2vec_autodiff(x,var_dim_map,n,user_data,torch_device)
         f_eval_fn = lambda x: obj_eval(x,var_dim_map, user_data)
 
     try: 
@@ -421,7 +422,7 @@ def pygranso(var_dim_map=None,user_data=None,user_opts=None,nn_model=None):
 
     try:
         bfgssqp_obj = AlgBFGSSQP()
-        info = bfgssqp_obj.bfgssqp(f_eval_fn, penaltyfn_obj,bfgs_hess_inv_obj,opts,printer)
+        info = bfgssqp_obj.bfgssqp(f_eval_fn, penaltyfn_obj,bfgs_hess_inv_obj,opts,printer, torch_device)
     except Exception as e:
         print(e)   
         print("Error: pygranso bfgssqp ")

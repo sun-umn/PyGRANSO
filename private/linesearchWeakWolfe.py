@@ -5,10 +5,10 @@ from numpy import conjugate as conj
 import torch
 from dbg_print import dbg_print_1
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
 
 # @profile
-def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, fvalquit = -np.inf, eval_limit = np.inf, step_tol = 1e-12, init_step_size = 1, linesearch_maxit = np.inf, is_backtrack_linesearch = False):
+def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, fvalquit = -np.inf, eval_limit = np.inf, step_tol = 1e-12, init_step_size = 1, linesearch_maxit = np.inf, is_backtrack_linesearch = False, torch_device = torch.device('cpu')):
     """
     linesearchWeakWolfe:
         Line search enforcing weak Wolfe conditions, suitable for minimizing 

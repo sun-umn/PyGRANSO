@@ -31,7 +31,7 @@ def obj_eval(x, var_dim_map, parameters = None):
     
     return f
 
-def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None):
+def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None,  torch_device = torch.device('cpu')):
     X = vec2mat(x,var_dim_map)
     # obtain objective and constraint function and their corresponding gradient
     # matrix form functions    
@@ -43,7 +43,7 @@ def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None):
         
     # obj function is a scalar form
     f_vec = f.item()    
-    f_grad_vec = getObjGrad(nvar,var_dim_map,f,X)
+    f_grad_vec = getObjGrad(nvar,var_dim_map,f,X,torch_device)
 
     ##  ci and ci_grad
     if ci != None:
@@ -66,7 +66,7 @@ def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None):
     return [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec]
 
 
-def tensor2vec_autodiff(x,model,nvar,parameters = None):
+def tensor2vec_autodiff(x,model,nvar,parameters = None, torch_device = torch.device('cpu') ):
 
     torch.nn.utils.vector_to_parameters(x, model.parameters()) # update model paramters
     
@@ -80,7 +80,7 @@ def tensor2vec_autodiff(x,model,nvar,parameters = None):
         
     # obj function is a scalar form
     f_vec = f.item()    
-    f_grad_vec = getObjGradDL(nvar,model,f)
+    f_grad_vec = getObjGradDL(nvar,model,f, torch_device)
 
     # print("\n\n\n\n\nPrint Gradient\n\n\n\n\n")
 

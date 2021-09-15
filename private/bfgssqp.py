@@ -14,13 +14,13 @@ from numpy.random import default_rng
 # import torch
 
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
 
 class AlgBFGSSQP():
     def __init__(self):
         pass
     # @profile
-    def bfgssqp(self,f_eval_fn, penaltyfn_obj, bfgs_obj, opts, printer):
+    def bfgssqp(self,f_eval_fn, penaltyfn_obj, bfgs_obj, opts, printer, torch_device):
         """
         bfgssqp:
         Minimizes a penalty function.  Note that bfgssqp operates on the
@@ -120,6 +120,8 @@ class AlgBFGSSQP():
         #  regularizes H for QP solvers but only if cond(H) > regularize_limit
         #  if isinf(regularize_limit), no work is done
 
+        self.torch_device = torch_device
+
         if full_memory and self.regularize_threshold < float("inf"):
             get_apply_H_QP_fn   = lambda : self.getApplyHRegularized()
         else:
@@ -181,7 +183,7 @@ class AlgBFGSSQP():
                                 x, f, g, p,
                                 lambda x_in: self.penaltyfn_obj.evaluatePenaltyFunction4linesearch(x_in),                                  
                                 lambda x_in: self.penaltyfn_obj.evaluatePenaltyFunction(x_in),      
-                                wolfe1, wolfe2, self.fvalquit, ls_maxit, step_tol, self.init_step_size, self.linesearch_maxit, self.is_backtrack_linesearch)
+                                wolfe1, wolfe2, self.fvalquit, ls_maxit, step_tol, self.init_step_size, self.linesearch_maxit, self.is_backtrack_linesearch, self.torch_device)
                                                         
         #  we'll use a while loop so we can explicitly update the counter only
         #  for successful updates.  This way, if the search direction direction
@@ -507,7 +509,10 @@ class AlgBFGSSQP():
         #  stationary point and we can return this measure and terminate
         stat_vec        = self.penaltyfn_at_x.p_grad
         stat_value      = torch.norm(stat_vec)
-        self.opt_tol = torch.as_tensor(self.opt_tol,device = device, dtype=torch.double)
+
+        
+
+        self.opt_tol = torch.as_tensor(self.opt_tol,device = self.torch_device, dtype=torch.double)
         if stat_value <= self.opt_tol:
             n_qps       = 0
             n_samples   = 1

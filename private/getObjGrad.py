@@ -3,9 +3,9 @@ import numpy as np
 from pygransoStruct import general_struct
 import torch
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def getObjGrad(nvar,var_dim_map,f,X):
+def getObjGrad(nvar,var_dim_map,f,X, torch_device):
     # f_grad = genral_struct()
     f.backward(retain_graph=True)
     # transform f_grad form matrix form to vector form
@@ -13,7 +13,7 @@ def getObjGrad(nvar,var_dim_map,f,X):
 
     
     dbg_print_1('Using device in getObjGrad')
-    f_grad_vec = torch.zeros((nvar,1),device=device, dtype=torch.double)
+    f_grad_vec = torch.zeros((nvar,1),device=torch_device, dtype=torch.double)
 
     curIdx = 0
     # current variable, e.g., U
@@ -30,11 +30,11 @@ def getObjGrad(nvar,var_dim_map,f,X):
         getattr(X,var).grad.zero_()
     return f_grad_vec
 # @profile
-def getObjGradDL(nvar,model,f):
+def getObjGradDL(nvar,model,f, torch_device):
     # f_grad = genral_struct()
     f.backward()
     # transform f_grad form matrix form to vector form
-    f_grad_vec = torch.zeros((nvar,1),device=device, dtype=torch.double)
+    f_grad_vec = torch.zeros((nvar,1),device=torch_device, dtype=torch.double)
 
     curIdx = 0
     parameter_lst = list(model.parameters())
