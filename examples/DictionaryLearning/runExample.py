@@ -13,7 +13,7 @@ from pygransoStruct import Options, Data
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # variables and corresponding dimensions.
-n = 100
+n = 200
 var_in = {"q": (n,1)}
 
 # data_in

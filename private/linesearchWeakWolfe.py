@@ -8,7 +8,7 @@ from dbg_print import dbg_print_1
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
 
 # @profile
-def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, fvalquit = -np.inf, eval_limit = np.inf, step_tol = 1e-12, init_step_size = 1, linesearch_maxit = np.inf):
+def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, fvalquit = -np.inf, eval_limit = np.inf, step_tol = 1e-12, init_step_size = 1, linesearch_maxit = np.inf, is_backtrack_linesearch = False):
     """
     linesearchWeakWolfe:
         Line search enforcing weak Wolfe conditions, suitable for minimizing 
@@ -20,7 +20,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
         NOTE: the values assigned to output argument "fail" have been changed 
                 so that all error cases are assigned positive codes.
     """
-    is_backtrack_linesearch = False
+    # is_backtrack_linesearch = False
 
     # eval_limit = 25
     # dbg_print_1("hard coding eval_limit = %d: initial t = 10"%eval_limit)
@@ -57,6 +57,8 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
 
         if is_backtrack_linesearch:
             [f,is_feasible] = f_eval_fn(x)
+            # random setting, avoid 2nd wolfe condition
+            gtd = 2*(torch.conj(grad0.t()) @ d)
         else:
             [f,grad,is_feasible] = obj_fn(x)
             gtd = torch.conj(grad.t()) @ d
@@ -82,10 +84,10 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
 
         
         elif not is_backtrack_linesearch and gtd <= c2*g0 or torch.isnan(gtd): # second condition violated, not gone far enough
-            alpha = t
-            xalpha = x.detach().clone()
-            falpha = f
-            gradalpha = grad.detach().clone()
+                alpha = t
+                xalpha = x.detach().clone()
+                falpha = f
+                gradalpha = grad.detach().clone()
 
 
 
@@ -93,7 +95,8 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
             fail = 0
             alpha = t
             xalpha = x.detach().clone()
-            [f,grad,is_feasible] = obj_fn(x)
+            if is_backtrack_linesearch:
+                [f,grad,is_feasible] = obj_fn(x)
             falpha = f
             gradalpha = grad.detach().clone()
             beta = t
@@ -132,5 +135,5 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
         beta = t
         # gradbeta = grad.detach().clone()
         dbg_print_1("final step size t = %f \n"%t)
-         
+
     return [alpha, xalpha, falpha, gradalpha, fail]                              

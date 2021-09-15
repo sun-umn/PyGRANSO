@@ -14,7 +14,7 @@ If the last fallback strategy failed, make a movement anyway. NOTE: make sure no
 
 Disable the 2nd wolfe condtion so that the line search becomes backtraking line search
 
-Two new user opts: linesearch_maxit and linesearch_step_size
+Five new user opts: linesearch_maxit, linesearch_step_size, is_backtrack_linesearch, searching_direction_rescaling, disable_terminationcode_6
 
 in deep learning problem. t = 1e-2. Set maxiter = 25 for line search so that there is a lower bound for step size t
 

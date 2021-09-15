@@ -167,6 +167,9 @@ def mainFun():
         # new user options
         opts.init_step_size = 1e-2
         opts.linesearch_maxit = 25
+        opts.is_backtrack_linesearch = True
+        opts.searching_direction_rescaling = True
+        opts.disable_terminationcode_6 = True
 
 
         outputs = model(inputs.to(device=device, dtype=torch.double) )

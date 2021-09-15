@@ -413,6 +413,10 @@ def pygransoOptions(n,options):
 
         validator.setIntegerNonnegative("linesearch_maxit")
         validator.setRealNonnegative("init_step_size")
+        validator.setLogical("is_backtrack_linesearch")
+        validator.setLogical("searching_direction_rescaling")
+        validator.setLogical("disable_terminationcode_6")
+        
 
         #  LOGGING PARAMETERS
         validator.setIntegerInRange("print_level",0,3)
@@ -527,6 +531,9 @@ def getDefaults(n):
 
     setattr(default_opts,'linesearch_maxit',np.inf)
     setattr(default_opts,'init_step_size',1)
+    setattr(default_opts,'is_backtrack_linesearch',False)
+    setattr(default_opts,'searching_direction_rescaling',False)
+    setattr(default_opts,'disable_terminationcode_6',False)
 
     setattr(default_opts,'print_level',1)
     setattr(default_opts,'print_frequency',1)

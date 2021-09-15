@@ -34,8 +34,7 @@ def combinedFunction(X_struct,data_in = None):
     # objective function
     M           = A + B@X@C
     [D,_]       = LA.eig(M)
-    # f = torch.max(D.imag)
-    f = eval_obj(X_struct,data_in)
+    f = torch.max(D.imag)
 
     # inequality constraint, matrix form
     ci = general_struct()

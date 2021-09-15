@@ -90,6 +90,9 @@ class AlgBFGSSQP():
 
         self.linesearch_maxit = opts.linesearch_maxit
         self.init_step_size = opts.init_step_size
+        self.is_backtrack_linesearch = opts.is_backtrack_linesearch
+        self.searching_direction_rescaling = opts.searching_direction_rescaling
+        self.disable_terminationcode_6 = opts.disable_terminationcode_6
 
         #  logging parameters
         self.print_level                 = opts.print_level
@@ -178,7 +181,7 @@ class AlgBFGSSQP():
                                 x, f, g, p,
                                 lambda x_in: self.penaltyfn_obj.evaluatePenaltyFunction4linesearch(x_in),                                  
                                 lambda x_in: self.penaltyfn_obj.evaluatePenaltyFunction(x_in),      
-                                wolfe1, wolfe2, self.fvalquit, ls_maxit, step_tol, self.init_step_size, self.linesearch_maxit)
+                                wolfe1, wolfe2, self.fvalquit, ls_maxit, step_tol, self.init_step_size, self.linesearch_maxit, self.is_backtrack_linesearch)
                                                         
         #  we'll use a while loop so we can explicitly update the counter only
         #  for successful updates.  This way, if the search direction direction
@@ -249,11 +252,12 @@ class AlgBFGSSQP():
                 p = rng.standard_normal(size=(n,1))
                 self.random_attempts = self.random_attempts + 1
             
-            dbg_print_1("start rescaling search direction p:") 
-            p_norm = torch.norm(p).item()
-            p =  1 * p / p_norm
-            dbg_print_1("norm of d = {}".format(torch.norm(p).item()))
-            dbg_print_1("end rescaling search direction p.")
+            if self.searching_direction_rescaling:
+                dbg_print_1("start rescaling search direction p:") 
+                p_norm = torch.norm(p).item()
+                p =  1 * p / p_norm
+                dbg_print_1("norm of d = {}".format(torch.norm(p).item()))
+                dbg_print_1("end rescaling search direction p.")
                 
             [p,is_descent,fallback_on_this_direction] = self.checkDirection(p,g)
 
@@ -295,11 +299,11 @@ class AlgBFGSSQP():
                 # this will also update gprev if it lowers mu and it succeeds
                 [alpha,x_new,f,g,linesearch_failed] = ls_procedure_fn(x,f,g,p)
 
-
-            if linesearch_failed and self.fallback_level == 3:
-                dbg_print_1("make movement after the third fallback failing")
-                linesearch_failed = 0
-                dbg_print_1("end modification")
+            if self.disable_terminationcode_6:
+                if linesearch_failed and self.fallback_level == 3:
+                    dbg_print_1("make movement after the third fallback failing")
+                    linesearch_failed = 0
+                    dbg_print_1("end modification")
 
             if linesearch_failed:
                 #  first get lowest mu attempted (restore will erase it)
