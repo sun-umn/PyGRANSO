@@ -3,7 +3,6 @@ import numpy as np
 from pygransoStruct import general_struct
 import torch
 
-# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def getObjGrad(nvar,var_dim_map,f,X, torch_device):
     # f_grad = genral_struct()

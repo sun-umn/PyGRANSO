@@ -130,9 +130,8 @@ def unscaleValues(values,scalars):
         values = np.divide(values,scalars)  
     return values
 
-def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_threshold):
+def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_threshold, torch_device):
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     n = len(x0)
                             
@@ -151,8 +150,8 @@ def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_thresh
         eval_fn_ret             = lambda x : None
         # These must have the right dimensions for computations to be 
         # done even if there are no such constraints
-        c                   = torch.zeros((0,1),device=device, dtype=torch.double)
-        c_grad              = torch.zeros((len(x0),0),device=device, dtype=torch.double)
+        c                   = torch.zeros((0,1),device=torch_device, dtype=torch.double)
+        c_grad              = torch.zeros((len(x0),0),device=torch_device, dtype=torch.double)
         c_grad_norms        = 0
         tv                  = 0
         tv_l1               = 0
@@ -546,7 +545,7 @@ class PanaltyFuctions:
             unscaled_data   = ([name+"_unscaled"],self.unscale_fields_fn(data))
         return unscaled_data
 
-    def makePenaltyFunction(self,params,f_eval_fn,obj_fn,varargin=None):
+    def makePenaltyFunction(self,params,f_eval_fn,obj_fn,varargin=None,torch_device = torch.device('cpu')):
         """
         makePenaltyFunction: 
             creates an object representing the penalty function for 
@@ -596,9 +595,9 @@ class PanaltyFuctions:
 
         # setup inequality and equality constraints, violations, and scalings
         
-        [ self.eval_ineq_fn,self.ci,self.ci_grad,self.tvi,self.tvi_l1,self.tvi_l1_grad,ci_grad_norms,self.scaling_ci,ineq_constrained] = setupConstraint(self.x,ineq_fn,lambda x, fn: self.evalInequality(x,fn),True,prescaling_threshold)
+        [ self.eval_ineq_fn,self.ci,self.ci_grad,self.tvi,self.tvi_l1,self.tvi_l1_grad,ci_grad_norms,self.scaling_ci,ineq_constrained] = setupConstraint(self.x,ineq_fn,lambda x, fn: self.evalInequality(x,fn),True,prescaling_threshold,torch_device)
 
-        [self.eval_eq_fn,self.ce,self.ce_grad,self.tve,self.tve_l1,self.tve_l1_grad,ce_grad_norms,self.scaling_ce,eq_constrained] = setupConstraint(self.x,eq_fn,lambda x, fn: self.evalEquality(x,fn),False,prescaling_threshold)
+        [self.eval_eq_fn,self.ce,self.ce_grad,self.tve,self.tve_l1,self.tve_l1_grad,ce_grad_norms,self.scaling_ce,eq_constrained] = setupConstraint(self.x,eq_fn,lambda x, fn: self.evalEquality(x,fn),False,prescaling_threshold,torch_device)
 
         grad_norms_at_x0 = general_struct()
         setattr(grad_norms_at_x0,"f",f_grad_norm)

@@ -3,11 +3,10 @@ import torch
 from pygransoStruct import general_struct
 import numpy.linalg as LA
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  
 
 class nC:
-    def __init__(self):
-        pass
+    def __init__(self,torch_device):
+        self.torch_device = torch_device
 
     def neighborhoodCache(self,max_size,radius):
         """
@@ -20,7 +19,7 @@ class nC:
         self.max_size = max_size
         self.radius = radius
         #  by default, inf distances indicate empty slots for samples
-        self.distances       = torch.ones((1,self.max_size),device=device, dtype=torch.double)*float('inf')
+        self.distances       = torch.ones((1,self.max_size),device=self.torch_device, dtype=torch.double)*float('inf')
         self.samples         = None
         # self.data            = self.max_size * [None]
         self.data            = np.empty((1,self.max_size),dtype=object)
@@ -31,13 +30,12 @@ class nC:
         get_neighborhood_fn = lambda x,x_data: self.getCachedNeighborhoodAbout(x,x_data)
         return get_neighborhood_fn
 
-    # @profile
     def getCachedNeighborhoodAbout(self,x,x_data):
         if self.last_added_ind == 0:
             self.n               = 1
             self.last_added_ind  = 1
             self.distances[0,0]    = 0
-            self.samples         = torch.zeros((len(x),self.max_size),device=device, dtype=torch.double) 
+            self.samples         = torch.zeros((len(x),self.max_size),device=self.torch_device, dtype=torch.double) 
             self.samples[:,0]    = x[:,0]
             self.data[0]         = x_data
             computed        = 0

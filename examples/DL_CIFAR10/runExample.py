@@ -120,6 +120,7 @@ def mainFun():
         torch.manual_seed(0)
         # setting device on GPU if available, else CPU
         device = torch.device('cuda')
+        # device = torch.device('cpu')
         print('Using device:', device)
 
         model = Net().to(device=device, dtype=torch.double)
@@ -138,8 +139,11 @@ def mainFun():
                 # print(inputs.shape)
 
         data_in = Data()
-        data_in.labels = labels.cuda() # label/target [256]
-        data_in.inputs = inputs.double().cuda() # input data [256,3,32,32]
+        # data_in.labels = labels.cuda() # label/target [256]
+        # data_in.inputs = inputs.double().cuda() # input data [256,3,32,32]
+
+        data_in.labels = labels.to(device=device ) # label/target [256]
+        data_in.inputs = inputs.to(device=device, dtype=torch.double) # input data [256,3,32,32]
 
         opts = Options()
         nvar = getNvarTorch(model.parameters())

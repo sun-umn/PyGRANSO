@@ -5,12 +5,10 @@ from dbg_print import dbg_print
 from numpy import conjugate as conj
 from numpy import linalg as LA
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  
-
 class qpTC:
     def __init__(self):
         pass
-    def qpTerminationCondition(self,penaltyfn_at_x, gradient_samples, apply_Hinv, QPsolver):
+    def qpTerminationCondition(self,penaltyfn_at_x, gradient_samples, apply_Hinv, QPsolver, torch_device):
         """
         qpTerminationCondition:
         computes the smallest vector in the convex hull of gradient samples
@@ -27,7 +25,7 @@ class qpTC:
         # # debug here:
         # l = 1
 
-        F           = penaltyfn_at_x.f * torch.ones((l,1),device=device, dtype=torch.double) 
+        F           = penaltyfn_at_x.f * torch.ones((l,1),device=torch_device, dtype=torch.double) 
         
         CI = penaltyfn_at_x.ci
         CE = penaltyfn_at_x.ce
@@ -67,18 +65,18 @@ class qpTC:
         #  Fix H since numerically, it is unlikely to be _perfectly_ symmetric 
         self.H           = (self.H + torch.conj(self.H.t())) / 2
         f           = -torch.vstack((CE, F, CI))
-        LB          = torch.vstack( (-torch.ones((q,1),device=device, dtype=torch.double), torch.zeros((l+p,1),device=device, dtype=torch.double)) ) 
-        UB          = torch.vstack((torch.ones((q,1),device=device, dtype=torch.double), mu*torch.ones((l,1),device=device, dtype=torch.double), torch.ones((p,1),device=device, dtype=torch.double))  ) 
-        Aeq         = torch.hstack((torch.zeros((1,q),device=device, dtype=torch.double), torch.ones((1,l),device=device, dtype=torch.double), torch.zeros((1,p),device=device, dtype=torch.double)) ) 
+        LB          = torch.vstack( (-torch.ones((q,1),device=torch_device, dtype=torch.double), torch.zeros((l+p,1),device=torch_device, dtype=torch.double)) ) 
+        UB          = torch.vstack((torch.ones((q,1),device=torch_device, dtype=torch.double), mu*torch.ones((l,1),device=torch_device, dtype=torch.double), torch.ones((p,1),device=torch_device, dtype=torch.double))  ) 
+        Aeq         = torch.hstack((torch.zeros((1,q),device=torch_device, dtype=torch.double), torch.ones((1,l),device=torch_device, dtype=torch.double), torch.zeros((1,p),device=torch_device, dtype=torch.double)) ) 
         beq         = mu
 
         # Choose solver
         if QPsolver == "gurobi":
             #  formulation of QP has no 1/2
-            self.solveQP_fn = lambda H: solveQP(H,f,Aeq,beq,LB,UB,QPsolver)
+            self.solveQP_fn = lambda H: solveQP(H,f,Aeq,beq,LB,UB,QPsolver,torch_device)
         elif QPsolver == "osqp":
             #  formulation of QP has no 1/2
-            self.solveQP_fn = lambda H: solveQP(H,f,Aeq,beq,LB,UB,QPsolver)
+            self.solveQP_fn = lambda H: solveQP(H,f,Aeq,beq,LB,UB,QPsolver,torch_device)
 
         [y,_,qps_solved,ME] = self.solveQPRobust()
       

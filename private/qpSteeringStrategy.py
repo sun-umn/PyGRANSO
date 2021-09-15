@@ -6,18 +6,18 @@ from private.solveQP import solveQP
 from dbg_print import dbg_print
 from numpy import conjugate as conj
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
 
 class qpSS:
     def __init__(self):
         pass
 
-    def qpSteeringStrategy( self,penaltyfn_at_x, apply_Hinv, l1_model, ineq_margin, maxit, c_viol, c_mu, QPsolver):
+    def qpSteeringStrategy( self,penaltyfn_at_x, apply_Hinv, l1_model, ineq_margin, maxit, c_viol, c_mu, QPsolver, torch_device):
         """
         qpSteeringStrategy:
         attempts to find a search direction which promotes progress towards
         feasibility.  
         """
+        self.device = torch_device
         self.QPsolver = QPsolver
         mu                  = penaltyfn_at_x.mu
         f_grad              = penaltyfn_at_x.f_grad
@@ -51,11 +51,11 @@ class qpSS:
         self.H                   = (self.H + torch.conj(self.H.t())) / 2
         self.mu_Hinv_f_grad      = mu * self.Hinv_f_grad
         self.f                   = torch.conj(self.c_grads.t()) @ self.mu_Hinv_f_grad - torch.vstack((self.eq, self.ineq)) 
-        self.LB                  = torch.vstack((-torch.ones((n_eq,1)), torch.zeros((self.n_ineq,1))  )).to(device=device, dtype=torch.double)   
-        self.UB                  = torch.ones((n_eq + self.n_ineq, 1),device=device, dtype=torch.double) 
+        self.LB                  = torch.vstack((-torch.ones((n_eq,1)), torch.zeros((self.n_ineq,1))  )).to(device=self.device, dtype=torch.double)   
+        self.UB                  = torch.ones((n_eq + self.n_ineq, 1),device=self.device, dtype=torch.double) 
         
         #  Identity matrix: compatible with the constraint form in QPALM
-        self.A                   = torch.eye(n_eq + self.n_ineq,device=device, dtype=torch.double) 
+        self.A                   = torch.eye(n_eq + self.n_ineq,device=self.device, dtype=torch.double) 
     
         #  Check predicted violation reduction for search direction
         #  given by current penalty parameter
@@ -130,10 +130,10 @@ class qpSS:
             # qpalm only for linux
             if self.QPsolver == "gurobi":
                 #  formulation of QP has no 1/2
-                y = solveQP(self.H,self.f,None,None,self.LB,self.UB, "gurobi")
+                y = solveQP(self.H,self.f,None,None,self.LB,self.UB, "gurobi", self.device)
             elif self.QPsolver == "osqp":
                 #  formulation of QP has no 1/2
-                y = solveQP(self.H,self.f,None,None,self.LB,self.UB, "osqp")
+                y = solveQP(self.H,self.f,None,None,self.LB,self.UB, "osqp", self.device)
         except Exception as e:
             print(e)
             print("PyGRANSO steeringQuadprogFailure: Steering aborted due to a quadprog failure.")

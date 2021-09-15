@@ -14,7 +14,6 @@ from numpy.random import default_rng
 # import torch
 
 
-# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
 
 class AlgBFGSSQP():
     def __init__(self):
@@ -138,7 +137,7 @@ class AlgBFGSSQP():
         #  those which are sufficently close to the current iterate x. 
         #  The gradients from the current iterate are simultaneously added to 
         #  the cache. 
-        nC_obj = nC()
+        nC_obj = nC(torch_device)
         get_nbd_grads_fn        = nC_obj.neighborhoodCache(ngrad,evaldist)
         self.get_nearby_grads_fn     = lambda : getNearbyGradients( self.penaltyfn_obj, get_nbd_grads_fn)
 
@@ -177,7 +176,7 @@ class AlgBFGSSQP():
                                 penaltyfn_parts,    H, 
                                 steering_l1_model,  steering_ineq_margin, 
                                 steering_maxit,     steering_c_viol, 
-                                steering_c_mu,      self.QPsolver           )
+                                steering_c_mu,      self.QPsolver, torch_device           )
 
         self.linesearch_fn   = lambda x,f,g,p,ls_maxit: lWW.linesearchWeakWolfe( 
                                 x, f, g, p,
@@ -535,7 +534,7 @@ class AlgBFGSSQP():
         #  nonsmooth optimality measure
         qPTC_obj = qpTC()
         [stat_vec,n_qps,ME] = qPTC_obj.qpTerminationCondition(   self.penaltyfn_at_x, grad_samples,
-                                                        self.apply_H_QP_fn, self.QPsolver)
+                                                        self.apply_H_QP_fn, self.QPsolver, self.torch_device)
         stat_value = torch.norm(stat_vec).item()
         self.penaltyfn_obj.addStationarityMeasure(stat_value)
         

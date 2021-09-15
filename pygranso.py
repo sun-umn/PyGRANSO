@@ -384,14 +384,14 @@ def pygranso(var_dim_map=None,user_data=None,user_opts=None,nn_model=None, torch
         f_eval_fn = lambda x: obj_eval(x,var_dim_map, user_data)
 
     try: 
-        [problem_fns,opts] = processArguments(n,obj_fn,user_opts)
+        [problem_fns,opts] = processArguments(n,obj_fn,user_opts, torch_device)
         # check realted function: np.matrix.H is recommened, consider np.transpose/conjugate 
         [bfgs_hess_inv_obj,opts] = getBfgsManager(opts)
 
         # construct the penalty function object and evaluate at x0
         # unconstrained problems will reset mu to one and mu will be fixed
         mPF = PanaltyFuctions() # make penalty functions 
-        [ penaltyfn_obj, grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, f_eval_fn, problem_fns)
+        [ penaltyfn_obj, grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, f_eval_fn, problem_fns, torch_device = torch_device)
     except Exception as e:
             print(e)   
             print("pygranso main loop Error")
@@ -490,10 +490,10 @@ def pygranso(var_dim_map=None,user_data=None,user_opts=None,nn_model=None, torch
 
 # only combined function allowed here. simpler form compare with GRANSO
 # different cases needed if seperate obj eq and ineq are using
-def processArguments(n,combined_fns,opts):
+def processArguments(n,combined_fns,opts,torch_device):
     problem_fns = combined_fns
     options = opts
-    options = pygransoOptions(n,options)
+    options = pygransoOptions(n,options,torch_device)
     return [problem_fns,options]
 
 def getBfgsManager(opts):

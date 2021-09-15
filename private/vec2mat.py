@@ -17,9 +17,6 @@ def vec2mat(x,var_dim_map):
         curIdx += tmpDim1 * tmpDim2
     return X
 
-# def numpyVec2DLTorchTensor(x,model):
-#     x_torch = torch.from_numpy(x).cuda()
-#     torch.nn.utils.vector_to_parameters(x_torch, model.parameters())
 
     
     

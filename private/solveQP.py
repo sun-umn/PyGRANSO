@@ -6,8 +6,6 @@ import osqp
 import numpy as np
 from scipy import sparse
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 QP_REQUESTS = 0
 
 
@@ -17,7 +15,7 @@ def getErr():
     errors = 0
     return [QP_REQUESTS,errors]
 
-def solveQP(H,f,A,b,LB,UB,QPsolver):
+def solveQP(H,f,A,b,LB,UB,QPsolver,torch_device):
     
 
     # persistent requests;
@@ -78,7 +76,7 @@ def solveQP(H,f,A,b,LB,UB,QPsolver):
             solution = res.x
             sol_len = solution.size
             solution = solution.reshape((sol_len,1))
-            solution = torch.from_numpy(solution).to(device=device, dtype=torch.double) 
+            solution = torch.from_numpy(solution).to(device=torch_device, dtype=torch.double) 
             return solution
 
     except Exception as e:

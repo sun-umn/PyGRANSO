@@ -52,7 +52,6 @@ class H_obj_struct:
         
 
         dbg_print_1("start torch accelaeration")
-        # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         # # sty_gpu = torch.from_numpy(sty).to(device=device)
         # H_gpu = torch.from_numpy(self.H).to(device=device)
         # s_gpu = torch.from_numpy(s).to(device=device)

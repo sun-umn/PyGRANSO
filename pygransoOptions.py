@@ -9,9 +9,7 @@ from dbg_print import dbg_print
 from private.isAnInteger import isAnInteger
 from numpy.random import default_rng
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-def pygransoOptions(n,options):
+def pygransoOptions(n,options, torch_device):
     """
     pygransoOptions:
         Validate user options struct for pygranso.py.  If user_opts is [] or
@@ -284,7 +282,7 @@ def pygransoOptions(n,options):
         [default_opts, LAST_FALLBACK_LEVEL] = getDefaults(n)
 
     if options == None:
-        opts = postProcess(n,default_opts)
+        opts = postProcess(n,default_opts, torch_device)
         return opts
     else:
         user_opts = options
@@ -441,7 +439,7 @@ def pygransoOptions(n,options):
 
 
     #  GET THE VALIDATED OPTIONS AND POST PROCESS THEM
-    opts = postProcess(n,validator.getValidatedOpts())
+    opts = postProcess(n,validator.getValidatedOpts(), torch_device)
     
     #  For temperarily use
     # user_opts.__dict__.update(default_opts.__dict__)
@@ -450,7 +448,7 @@ def pygransoOptions(n,options):
 
     return opts
 
-def postProcess(n,opts):
+def postProcess(n,opts, torch_device):
     
     # bump up the max fallback level if necessary
     if opts.max_fallback_level < opts.min_fallback_level:
@@ -465,7 +463,7 @@ def postProcess(n,opts):
     
     # If an initial inverse Hessian was not provided, use the identity
     if np.any(opts.H0) == None:
-        opts.H0 = torch.eye(n,device=device, dtype=torch.double) 
+        opts.H0 = torch.eye(n,device=torch_device, dtype=torch.double) 
     
     
     if hasattr(opts,"QPsolver"):
