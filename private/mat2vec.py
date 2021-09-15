@@ -47,8 +47,8 @@ def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None,  torch_device = torch
 
     ##  ci and ci_grad
     if ci != None:
-        [ci_vec,ci_vec_torch,nconstr_ci_total] = getCiVec(ci)
-        ci_grad_vec = getCiGradVec(nvar,nconstr_ci_total,var_dim_map,X,ci_vec_torch)
+        [ci_vec,ci_vec_torch,nconstr_ci_total] = getCiVec(ci,torch_device)
+        ci_grad_vec = getCiGradVec(nvar,nconstr_ci_total,var_dim_map,X,ci_vec_torch,torch_device)
         # print(ci_grad_vec)
     else:
         ci_vec = None
@@ -56,8 +56,8 @@ def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None,  torch_device = torch
 
     ##  ce and ce_grad
     if ce != None:
-        [ce_vec,ce_vec_torch,nconstr_ce_total] = getCiVec(ce)
-        ce_grad_vec = getCiGradVec(nvar,nconstr_ce_total,var_dim_map,X,ce_vec_torch)
+        [ce_vec,ce_vec_torch,nconstr_ce_total] = getCiVec(ce,torch_device)
+        ce_grad_vec = getCiGradVec(nvar,nconstr_ce_total,var_dim_map,X,ce_vec_torch,torch_device)
         
     else:
         ce_vec = None

@@ -10,7 +10,9 @@ from pygranso import pygranso
 from pygransoStruct import Options, Data
 
 # Please read the documentation on https://pygranso.readthedocs.io/en/latest/
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cuda' )
+device = torch.device( 'cpu')
+
 
 # variables and corresponding dimensions.
 d1 = 5
@@ -30,7 +32,7 @@ opts.x0 = .2 * torch.ones((2*d1*d2,1)).to(device=device, dtype=torch.double)
 
 #  main algorithm  
 start = time.time()
-soln = pygranso(var_in,data_in,opts)
+soln = pygranso(var_in,data_in,opts,torch_device=device)
 end = time.time()
 print("Total Wall Time: {}s".format(end - start))
 
