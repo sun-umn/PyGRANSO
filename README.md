@@ -23,17 +23,6 @@ reset Hessian every 100 iters helps avoid non-positive definite matrices in BFGS
 osqp-GPU is not necessary as it's not the main cost
 
 
-TODO:
-
-warm start
-
-SR1
-
-Comparison based on
-Simple Algorithms for Optimization on Riemannian Manifolds with Constraints
-
-Manopt new autodiff version
-
 ## References
 
 Frank E. Curtis, Tim Mitchell, and Michael L. Overton. "A BFGS-SQP method for nonsmooth, nonconvex, constrained optimization and its evaluation using relative minimization profiles." Optimization Methods and Software 32.1 (2017): 148-181.
