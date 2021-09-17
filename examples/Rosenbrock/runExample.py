@@ -1,8 +1,5 @@
 import time
-import numpy as np
 import torch
-import numpy.linalg as la
-from scipy.stats import norm
 import sys
 ## Adding PyGRANSO directories. Should be modified by user
 sys.path.append(r'C:\Users\Buyun\Documents\GitHub\PyGRANSO')
