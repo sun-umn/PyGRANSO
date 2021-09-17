@@ -8,12 +8,13 @@ from pygranso import pygranso
 from pygransoStruct import Options, Data
 
 # Please read the documentation on https://pygranso.readthedocs.io/en/latest/
-# device = torch.device( 'cuda' )
-device = torch.device( 'cpu' )
 
 # variables and corresponding dimensions.
 n = 80
 var_in = {"x": (n,1)}
+
+# device = torch.device( 'cuda' )
+device = torch.device( 'cpu' )
 
 # data_in
 data_in = Data()
