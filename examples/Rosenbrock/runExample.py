@@ -24,7 +24,7 @@ opts.x0 = torch.ones((2,1), device=device, dtype=torch.double)
 
 #  main algorithm  
 start = time.time()
-soln = pygranso(var_dim_map = var_in, user_opts = opts, torch_device=device)
+soln = pygranso(var_dim_map = var_in, torch_device=device, user_opts = opts)
 end = time.time()
 print("Total Wall Time: {}s".format(end - start))
 
