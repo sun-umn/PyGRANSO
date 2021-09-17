@@ -15,7 +15,7 @@ device = torch.device('cuda' )
 
 
 # variables and corresponding dimensions.
-n = 30
+n = 200
 var_in = {"q": (n,1)}
 
 # data_in

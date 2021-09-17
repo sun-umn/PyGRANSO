@@ -13,27 +13,10 @@ def eval_obj(model,parameters = None):
     return f
 
 def combinedFunction(model,parameters = None):
-    
-    
-    
+    # objective function
     f = eval_obj(model,parameters)
-
-    # print("Exact Hessian Test: ")
-    # model_cpu = model.to(device="cpu" )
-    # labels_cpu = labels.to(device="cpu" )
-    # inputs_cpu = inputs.to(device="cpu" )
-
-    # model_cpu = model 
-    # labels_cpu = labels 
-    # inputs_cpu = inputs
-    # obj_fn          = lambda x: criterion(model_cpu(x), labels_cpu)
-    # H = torch.autograd.functional.hessian(obj_fn,inputs_cpu)
-
-    # inequality constraint, matrix form
+    # inequality constraint
     ci = None
-
     # equality constraint 
     ce = None
-
-
     return [f,ci,ce]

@@ -17,25 +17,25 @@ from private.getNvar import getNvar,getNvarTorch
 
 import cProfile, pstats, io
 
-def profile(fnc):
+# def profile(fnc):
     
-    def inner(*args, **kwargs):
+#     def inner(*args, **kwargs):
         
-        pr = cProfile.Profile()
-        pr.enable()
-        retval = fnc(*args, **kwargs)
-        pr.disable()
-        s = io.StringIO()
-        # sortby = 'cumulative'
-        sortby = 'tottime'
-        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-        ps.print_stats()
-        print(s.getvalue())
-        return retval
+#         pr = cProfile.Profile()
+#         pr.enable()
+#         retval = fnc(*args, **kwargs)
+#         pr.disable()
+#         s = io.StringIO()
+#         # sortby = 'cumulative'
+#         sortby = 'tottime'
+#         ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+#         ps.print_stats()
+#         print(s.getvalue())
+#         return retval
 
-    return inner
+#     return inner
 
-@profile
+# @profile
 def pygranso(var_dim_map=None,user_data=None,user_opts=None,nn_model=None, torch_device = torch.device('cpu')):
     """
     PyGRANSO: Python version GRadient-based Algorithm for Non-Smooth Optimization
