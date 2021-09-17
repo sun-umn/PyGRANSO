@@ -11,7 +11,7 @@ from time import sleep
 from private.mat2vec import mat2vec_autodiff, tensor2vec_autodiff, obj_eval, obj_eval_DL
 from private.getNvar import getNvar,getNvarTorch
 
-def pygranso(var_dim_map=None,user_data=None,user_opts=None,nn_model=None, torch_device = torch.device('cpu')):
+def pygranso(var_dim_map=None,nn_model=None, torch_device = torch.device('cpu'),user_data=None,user_opts=None):
     """
     PyGRANSO: Python version GRadient-based Algorithm for Non-Smooth Optimization
 
