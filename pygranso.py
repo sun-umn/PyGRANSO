@@ -1,41 +1,16 @@
 import torch
-from private import pygransoPrinter
 from private.makePenaltyFunction import PanaltyFuctions
 from private import bfgsHessianInverse as bfgsHI, printMessageBox as pMB
 from private.bfgssqp import AlgBFGSSQP
 from private.pygransoPrinter import pgP
 from pygransoOptions import pygransoOptions
 from private.solveQP import getErr
-import numpy as np
-import copy
 from dbg_print import dbg_print
 from private.wrapToLines import wrapToLines
 from time import sleep
 from private.mat2vec import mat2vec_autodiff, tensor2vec_autodiff, obj_eval, obj_eval_DL
 from private.getNvar import getNvar,getNvarTorch
 
-
-import cProfile, pstats, io
-
-# def profile(fnc):
-    
-#     def inner(*args, **kwargs):
-        
-#         pr = cProfile.Profile()
-#         pr.enable()
-#         retval = fnc(*args, **kwargs)
-#         pr.disable()
-#         s = io.StringIO()
-#         # sortby = 'cumulative'
-#         sortby = 'tottime'
-#         ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-#         ps.print_stats()
-#         print(s.getvalue())
-#         return retval
-
-#     return inner
-
-# @profile
 def pygranso(var_dim_map=None,user_data=None,user_opts=None,nn_model=None, torch_device = torch.device('cpu')):
     """
     PyGRANSO: Python version GRadient-based Algorithm for Non-Smooth Optimization

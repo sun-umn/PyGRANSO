@@ -13,11 +13,12 @@ from pygransoStruct import Options, Data
 device = torch.device('cuda' )
 # device = torch.device('cpu' )
 
-
 # variables and corresponding dimensions.
 n = 200
 var_in = {"q": (n,1)}
 
+# User defined initialization. 
+np.random.seed(1)
 # data_in
 data_in = Data()
 m = 10*n**2   # sample complexity
@@ -30,8 +31,6 @@ data_in.m = m
 opts = Options()
 opts.QPsolver = 'osqp' 
 opts.maxit = 500
-# User defined initialization. 
-np.random.seed(1)
 x0 = norm.ppf(np.random.rand(n,1))
 x0 /= la.norm(x0,2)
 x0 = torch.from_numpy(x0).to(device=device, dtype=torch.double)
