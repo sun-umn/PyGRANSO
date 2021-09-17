@@ -27,8 +27,7 @@ def combinedFunction(X_struct,data_in = None):
     eta = data_in.eta
     
     # objective function
-    # f = (x-b).t() @ (x-b)  + eta * torch.norm( F@x, p = 1)
-    f = eval_obj(X_struct,data_in)
+    f = (x-b).t() @ (x-b)  + eta * torch.norm( F@x, p = 1)
 
     # inequality constraint, matrix form
     ci = None
