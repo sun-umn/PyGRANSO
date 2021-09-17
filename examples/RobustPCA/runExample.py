@@ -7,14 +7,14 @@ from pygranso import pygranso
 from pygransoStruct import Options, Data
 
 # Please read the documentation on https://pygranso.readthedocs.io/en/latest/
-# device = torch.device('cuda' )
-device = torch.device( 'cpu')
-
 
 # variables and corresponding dimensions.
 d1 = 5
 d2 = 10
 var_in = {"M": (d1,d2),"S": (d1,d2)}
+
+# device = torch.device('cuda' )
+device = torch.device( 'cpu')
 
 # data_in
 data_in = Data()
@@ -29,7 +29,7 @@ opts.x0 = .2 * torch.ones((2*d1*d2,1)).to(device=device, dtype=torch.double)
 
 #  main algorithm  
 start = time.time()
-soln = pygranso(var_in,data_in,opts,torch_device=device)
+soln = pygranso(var_dim_map = var_in, torch_device=device, user_data = data_in, user_opts = opts)
 end = time.time()
 print("Total Wall Time: {}s".format(end - start))
 
