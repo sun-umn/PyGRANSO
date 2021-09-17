@@ -39,7 +39,6 @@ data_in.stability_margin = 1
 opts = Options()
 opts.QPsolver = 'osqp' 
 opts.maxit = 200
-# opts.x0 = np.zeros((p*m,1))
 opts.x0 = torch.zeros(p*m,1).to(device=device, dtype=torch.double)
 opts.print_level = 1
 opts.print_frequency = 1
@@ -47,7 +46,7 @@ opts.print_frequency = 1
 #  main algorithm
 
 start = time.time()
-soln = pygranso(var_dim_map = var_in, user_data = data_in, user_opts = opts, torch_device=device)
+soln = pygranso(var_dim_map = var_in, torch_device=device, user_data = data_in, user_opts = opts)
 end = time.time()
 print("Total Wall Time: {}s".format(end - start))
 pass
