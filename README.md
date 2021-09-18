@@ -77,7 +77,7 @@ Main improvements includes:
 5. Added several new user options to solve common numerical issues in deep learning: linesearch_maxit, linesearch_step_size, 
    is_backtrack_linesearch, searching_direction_rescaling, disable_terminationcode_6. Check the settings page for more information.
 
-## Acknowlegements
+## Acknowledgements
 
 Buyun Liang was supported by the UMII Seed Grant Program (https://research.umn.edu/units/umii).
 
