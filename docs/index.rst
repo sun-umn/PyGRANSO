@@ -7,17 +7,10 @@ PyGRANSO's documentation
 
 Toward a user-friendly and scalable numerical package for nonsmooth, nonconvex, constrained optimization
 
-Overall Goal
------------------
-
-1. Build scalable and user-friendly numerical optimization packages for solving general nonconvex, nonsmooth, constrained optimization problems.  
-
-2. Perform a computational and theoretical study of constrained deep learning.
-
 Get the Code
 -------------
 
-The `source <https://github.com/sun-umn>`_ is available on Github. 
+The `source <https://github.com/sun-umn/PyGRANSO>`_ is available on Github. 
 
 
 Contents
@@ -30,6 +23,11 @@ Contents
    install
    settings
    examples/index
+
+Acknowledgements
+----------------------
+
+Buyun Liang was supported by the UMII Seed Grant Program (https://research.umn.edu/units/umii).
 
 Contact
 ----------------------
