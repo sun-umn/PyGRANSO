@@ -37,6 +37,14 @@ is challenging and even infeasible, especially in deep learning.
 4. MATLAB that GRANSO is written in is a proprietary programming language and entails considerable 
 license fees for researchers and developers. 
 
+## Current Limitations
+
+1. L-BFGS methods didn't implemented yet. The standard BFGS is memory consuming and weakens the ability of PyGRANSO to explore large-scale deep learning problem.
+
+2. Constrained deep learning problem cannot be handdled by the current version.
+
+3. No validators for some user provided inputs, such as nn_model and device.
+
 ## Our Contributions
 
 By revamping several key components of GRANSO, we built a scalable and user-friendly python numerical optimization 
