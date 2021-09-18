@@ -15,11 +15,6 @@ import torch.nn.functional as F
 
 def mainFun():
 
-        transform = transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-        batch_size = 1000
-        trainset = torchvision.datasets.CIFAR10(root='C:/Users/Buyun/Documents/GitHub/PyGRANSO/examples/DL_CIFAR10/data', train=True, download=False, transform=transform)
-        trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, num_workers=2)
-
         class Net(nn.Module):
                 def __init__(self):
                         super().__init__()
@@ -50,6 +45,11 @@ def mainFun():
         print('Using device:', device)
         model = Net().to(device=device, dtype=torch.double)
         ################### PyGRANSO
+
+        transform = transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+        batch_size = 1000
+        trainset = torchvision.datasets.CIFAR10(root='C:/Users/Buyun/Documents/GitHub/PyGRANSO/examples/DL_CIFAR10/data', train=True, download=False, transform=transform)
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, num_workers=2)
 
         # data_in
         for i, data in enumerate(trainloader, 0):        
@@ -90,7 +90,7 @@ def mainFun():
 
         #  main algorithm  
         start = time.time()
-        soln = pygranso(user_data = data_in, user_opts = opts, nn_model = model, torch_device = device)
+        soln = pygranso(nn_model = model, torch_device = device, user_data = data_in, user_opts = opts)
         end = time.time()
 
         # numpyVec2DLTorchTensor(soln.final.x,model) # update model paramters
