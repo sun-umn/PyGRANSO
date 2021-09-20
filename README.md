@@ -77,6 +77,12 @@ Main improvements includes:
 
 3. No validators for some user provided inputs, such as nn_model and device.
 
+## Update Logs
+
+v1.0.1-alpha: Update contirbutions, limitations and acknowledgement sections in docs.
+
+v1.0.0-alpha: Initial release of pygranso. Main features: Python translation, autodifferentiation, GPU-support with PyTorch, matrix/tensor inputs, more powerful solver and several new settings to avoid numerical issues in deep learning problem.
+
 ## Acknowledgements
 
 Buyun Liang was supported by the UMII Seed Grant Program (https://research.umn.edu/units/umii).

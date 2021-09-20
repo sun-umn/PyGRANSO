@@ -9,11 +9,19 @@ Installing PyGRANSO is simple. Here is a step by step plan on how to do it:
 
     conda create -n pygranso python=3.9.6
 
-3. In new conda environment, run::
+3.  For Windows User, run::
 
      conda install -c oxfordcontrol osqp
 
      conda install pytorch torchvision torchaudio cudatoolkit=11 -c pytorch
+
+For Linux user, run::
+
+    TODO
+
+For Mac user, run::
+
+    TODO
 
 4. Check the examples page in the documentation and example codes in PyGRANSO package for detailed instruction.
 
