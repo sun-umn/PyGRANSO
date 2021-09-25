@@ -1,6 +1,10 @@
 PyGRANSO's documentation
 =======================================
 
+.. image:: images/PyGRANSO_logo.png
+   :width: 600
+
+
 .. warning::
    The software is under development. Use it at your own risk, and please send your feedback to Buyun Liang via liang664@umn.edu.
 
