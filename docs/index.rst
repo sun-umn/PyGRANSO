@@ -1,7 +1,7 @@
 PyGRANSO's documentation
 =======================================
 
-.. image:: images/PyGRANSO_logo.png
+.. image:: examples/images/PyGRANSO_logo.png
    :width: 600
 
 
