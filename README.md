@@ -1,6 +1,6 @@
 # PyGRANSO
 
-![Example screenshot](./logo.png)
+![Example screenshot](./PyGRANSO_logo.png)
 
 PyGRANSO: a Python numerical package using GRadient-based Algorithm for Non-Smooth Optimization
 
