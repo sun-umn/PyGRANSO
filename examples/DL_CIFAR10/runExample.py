@@ -1,9 +1,9 @@
 import time
 import sys
 ## Adding PyGRANSO directories. Should be modified by user
-sys.path.append(r'C:\Users\Buyun\Documents\GitHub\PyGRANSO')
+sys.path.append('/home/buyun/Documents/GitHub/PyGRANSO')
 ## Adding training data directories. Should be modified by user
-sys.path.append(r'C:\Users\Buyun\Documents\GitHub\PyGRANSO\examples\DL_CIFAR10')
+sys.path.append('/home/buyun/Documents/GitHub/PyGRANSO/examples/DL_CIFAR10')
 from pygranso import pygranso
 from pygransoStruct import Options, Data
 from private.getNvar import getNvarTorch
@@ -48,7 +48,7 @@ def mainFun():
 
         transform = transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
         batch_size = 1000
-        trainset = torchvision.datasets.CIFAR10(root='C:/Users/Buyun/Documents/GitHub/PyGRANSO/examples/DL_CIFAR10/data', train=True, download=False, transform=transform)
+        trainset = torchvision.datasets.CIFAR10(root='/home/buyun/Documents/GitHub/PyGRANSO/examples/DL_CIFAR10/data', train=True, download=True, transform=transform)
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, num_workers=2)
 
         # data_in

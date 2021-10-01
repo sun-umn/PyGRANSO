@@ -6,7 +6,7 @@ PyGRANSO: a Python numerical package using GRadient-based Algorithm for Non-Smoo
 
 Toward a user-friendly and scalable numerical package for nonsmooth, nonconvex, constrained optimization
 
-Please check https://pygranso.readthedocs.io/en/latest for detailed documentation.
+Please check https://pygranso.readthedocs.io/en/latest for detailed instructions (installation, settings, examples...).
 
 ## Motivation and Background
 
@@ -80,6 +80,8 @@ Main improvements includes:
 3. No validators for some user provided inputs, such as nn_model and device.
 
 ## Update Logs
+
+v1.0.2-alpha: Update installation guide for Linux and windows users
 
 v1.0.1-alpha: Update contirbutions, limitations and acknowledgement sections in docs.
 
