@@ -19,12 +19,6 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
         NOTE: the values assigned to output argument "fail" have been changed 
                 so that all error cases are assigned positive codes.
     """
-    # is_backtrack_linesearch = False
-
-    # eval_limit = 25
-    # dbg_print_1("hard coding eval_limit = %d: initial t = 10"%eval_limit)
-    
-    # d_rescale = d.detach().clone()
 
     alpha = 0  # lower bound on steplength conditions
     xalpha = x0.detach().clone()
@@ -32,12 +26,8 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
     gradalpha = grad0.detach().clone() # need to pass grad0, not grad0'*d, in case line search fails
     beta = float('inf')  # upper bound on steplength satisfying weak Wolfe conditions
 
-    # gradbeta = torch.empty(x0.shape,device=device)
-    # gradbeta[:] = float('nan')
     g0 = (torch.conj(grad0.t()) @ d).item() 
     dnorm = torch.norm(d).item()
-    # t = 1  # important to try steplength one first
-    # t = 1e-2  # important to try steplength one first
     t = init_step_size
     n_evals = 0
     nexpand = 0
@@ -72,13 +62,11 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
             [f,grad,is_feasible] = obj_fn(x)
             falpha = f
             gradalpha = grad.detach().clone()
-            # return [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals]
             return [alpha, xalpha, falpha, gradalpha, fail] 
         
         #  the first condition must be checked first. NOTE THE >=.
         if f >= f0 + c1*t*g0 or np.isnan(f): # first condition violated, gone too far
             beta = t
-            # gradbeta = grad.detach().clone() # discard f
             test_flag = 1
 
         
@@ -118,7 +106,6 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
     if beta == np.inf: # minimizer never bracketed
         fail = 2
     else: # point satisfying Wolfe conditions was bracketed
-        # dbg_print_1("final step size t = %f "%t)
         dbg_print_1("wolfe condition %d fails"%test_flag)
         fail = 1
     
