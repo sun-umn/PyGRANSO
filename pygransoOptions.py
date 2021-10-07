@@ -458,8 +458,9 @@ def postProcess(n,opts, torch_device):
     # If an initial starting point was not provided, use random vector
     if np.all(opts.x0 == None):
         # opts.x0 = np.random.randn(n,1)
-        rng = default_rng()
-        opts.x0 = rng.standard_normal(size=(n,1))
+        # rng = default_rng()
+        # opts.x0 = rng.standard_normal(size=(n,1))
+        opts.x0 = torch.randn(n,1).to(device=torch_device, dtype=torch.double)
     
     # If an initial inverse Hessian was not provided, use the identity
     if np.any(opts.H0) == None:

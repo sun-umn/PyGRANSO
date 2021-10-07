@@ -82,16 +82,6 @@ def tensor2vec_autodiff(x,model,nvar,parameters = None, torch_device = torch.dev
     f_vec = f.item()    
     f_grad_vec = getObjGradDL(nvar,model,f, torch_device)
 
-    # print("\n\n\n\n\nPrint Gradient\n\n\n\n\n")
-
-    # lst = list(model.parameters())
-
-    # for i in range(len(lst)):
-    #         print(lst[i].grad.shape)
-    #         print(lst[i].grad[0])
-
-    
-
     ##  ci and ci_grad
     if ci != None:
         [ci_vec,ci_vec_torch,nconstr_ci_total] = getCiVec(ci)

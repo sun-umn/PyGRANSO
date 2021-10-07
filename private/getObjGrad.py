@@ -18,12 +18,12 @@ def getObjGrad(nvar,var_dim_map,f,X, torch_device):
     # current variable, e.g., U
     for var in var_dim_map.keys():
         # corresponding dimension of the variable, e.g, 3 by 2
-        tmpDim1 = var_dim_map.get(var)[0]
-        tmpDim2 = var_dim_map.get(var)[1]
+        dim = var_dim_map.get(var)
         grad_tmp = getattr(X,var).grad
-        f_grad_reshape = torch.reshape(grad_tmp,(tmpDim1*tmpDim2,1))
-        f_grad_vec[curIdx:curIdx+tmpDim1*tmpDim2] = f_grad_reshape
-        curIdx += tmpDim1 * tmpDim2
+        varLen = np.prod(dim)
+        f_grad_reshape = torch.reshape(grad_tmp,(varLen,1))
+        f_grad_vec[curIdx:curIdx+varLen] = f_grad_reshape
+        curIdx += varLen
 
         # preventing gradient accumulating
         getattr(X,var).grad.zero_()

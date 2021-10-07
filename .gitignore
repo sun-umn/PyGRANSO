@@ -63,3 +63,4 @@ examples/DL_CIFAR10/data/cifar-10-batches-py/readme.html
 examples/DL_CIFAR10/data/cifar-10-batches-py/test_batch
 *.gz
 examples/DL_CIFAR10/.ipynb_checkpoints/DL_PyGRANSO-checkpoint.ipynb
+*.pkl

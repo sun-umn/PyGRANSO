@@ -9,12 +9,11 @@ def vec2mat(x,var_dim_map):
     # current variable, e.g., U
     for var in var_dim_map.keys():
         # corresponding dimension of the variable, e.g, 3 by 2
-        tmpDim1 = var_dim_map.get(var)[0]
-        tmpDim2 = var_dim_map.get(var)[1]
+        dim = var_dim_map.get(var)
         # reshape vector input x in to matrix variables, e.g, X.U, X.V
-        tmpMat = torch.reshape(x[curIdx:curIdx+tmpDim1*tmpDim2],(tmpDim1,tmpDim2))
+        tmpMat = torch.reshape(x[curIdx:curIdx + np.prod(dim)],tuple(dim))
         setattr(X, var, tmpMat)
-        curIdx += tmpDim1 * tmpDim2
+        curIdx += np.prod(dim)
     return X
 
 
