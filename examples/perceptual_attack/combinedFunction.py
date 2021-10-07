@@ -14,15 +14,13 @@ def MarginLoss(logits,labels):
 
 def eval_obj(X_struct,data_in = None):
     # user defined variable, matirx form. torch tensor
-    adv_input = X_struct.x_tilde
-    adv_input.requires_grad_(True)
+    adv_inputs = X_struct.x_tilde
+    adv_inputs.requires_grad_(True)
     
     # objective function
-    epsilon = data_in.epsilon
-    inputs = data_in.inputs
     labels = data_in.labels
     model = data_in.model
-    logits_outputs = model(adv_input)
+    logits_outputs = model(adv_inputs)
 
     f = MarginLoss(logits_outputs,labels)
     return f
@@ -30,21 +28,39 @@ def eval_obj(X_struct,data_in = None):
 def combinedFunction(X_struct, data_in = None):
     
     # user defined variable, matirx form. torch tensor
-    adv_input = X_struct.x_tilde
-    adv_input.requires_grad_(True)
+    adv_inputs = X_struct.x_tilde
+    adv_inputs.requires_grad_(True)
     
     # objective function
-    epsilon = data_in.epsilon
+    # 8/255 for L_inf, 1 for L_2, 0.5 for PPGD/LPA
+    if data_in.attack_type == 'L_2':
+        epsilon = 1
+    elif data_in.attack_type == 'L_inf':
+        epsilon = 8/255
+    else:
+        epsilon = 0.5
+
     inputs = data_in.inputs
     labels = data_in.labels
     model = data_in.model
-    logits_outputs = model(adv_input)
+    logits_outputs = model(adv_inputs)
 
     f = MarginLoss(logits_outputs,labels)
 
     # inequality constraint, matrix form
-    ci = None
-    # ci = general_struct()
+    # ci = None
+    ci = general_struct()
+    if data_in.attack_type == 'L_2':
+        ci.c1 = torch.norm((inputs - adv_inputs).reshape(inputs.size()[0], -1)) - epsilon
+    elif data_in.attack_type == 'L_inf':
+        ci.c1 = torch.norm((inputs - adv_inputs).reshape(inputs.size()[0], -1), float('inf')) - epsilon
+    else:
+        input_features = normalize_flatten_features( self.lpips_model.features(inputs)).detach()
+        adv_features = self.lpips_model.features(adv_inputs)
+        adv_features = normalize_flatten_features(adv_features)
+        lpips_dists = (adv_features - input_features[live]).norm(dim=1)
+        ci.c1 = lpips_dists - epsilon
+    
     # ci.c1 = la.norm(phi(inputs) - phi(adv_input) - epsilon ) 
 
     # equality constraint 

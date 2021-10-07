@@ -128,22 +128,19 @@ def mainFun():
     opts = Options()
     nvar = getNvarTorch(model.parameters())
     opts.QPsolver = 'osqp'
-    opts.maxit = 200
+    opts.maxit = 300
     opts.opt_tol = 1e-6
     opts.fvalquit = 1e-6
     opts.print_level = 1
-    opts.print_frequency = 1
-    # opts.print_ascii = True
-    # opts.wolfe1 = 0.1
-    # opts.wolfe2 = 1e-4
-    opts.halt_on_linesearch_bracket = False
-    opts.max_fallback_level = 3
-    opts.min_fallback_level = 2
-    opts.init_step_size = 1e-2
-    opts.linesearch_maxit = 25
-    opts.is_backtrack_linesearch = True
-    opts.searching_direction_rescaling = True
-    opts.disable_terminationcode_6 = True
+    opts.print_frequency = 10
+    # opts.halt_on_linesearch_bracket = False
+    # opts.max_fallback_level = 3
+    # opts.min_fallback_level = 2
+    # opts.init_step_size = 1e-2
+    # opts.linesearch_maxit = 25
+    # opts.is_backtrack_linesearch = True
+    # opts.searching_direction_rescaling = True
+    # opts.disable_terminationcode_6 = True
 
     with open('soln_batch10.pkl', 'rb') as f:
         soln_old = pickle.load(f)
@@ -153,7 +150,7 @@ def mainFun():
     ################################################
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-    batch_size = 10
+    batch_size = 5
     trainset = torchvision.datasets.CIFAR10(
         root='/home/buyun/Documents/GitHub/PyGRANSO/examples/DL_CIFAR10/data', train=True, download=True, transform=transform)
     trainloader = torch.utils.data.DataLoader(
@@ -170,7 +167,7 @@ def mainFun():
     # variables and corresponding dimensions.
     var_in = {"x_tilde": list(inputs.shape)}
 
-    # opts.x0 = inputs
+    opts.x0 = torch.reshape(inputs,(torch.numel(inputs),1)) .to(device=device, dtype=torch.double)
 
     with open('soln_batch10.pkl', 'rb') as f:
         soln_old = pickle.load(f)
@@ -182,22 +179,17 @@ def mainFun():
 
     print("Initial acc = {}".format(acc))
 
-    # perturbations = torch.zeros_like(inputs)
-    # perturbations.normal_(10, 0.5)
-    # adv_input1 = inputs + perturbations
-    # adv_outputs1 = model(adv_input1.to(device=device, dtype=torch.double))
-    # acc1 = (adv_outputs1.max(1)[1] == labels.to(
-    #     device=device, dtype=torch.double)).sum().item()/labels.size(0)
-
-    # print("adv acc 1 = {}".format(acc1))
+ 
 
     data_in = Data()
     data_in.labels = labels.to(device=device)  # label/target [256]
     # input data [256,3,32,32]
     data_in.inputs = inputs.to(device=device, dtype=torch.double)
     data_in.model = model
-    data_in.epsilon = 0.5 # 8/255 for L_inf, 1 for L_2, 0.5 for PPGD/LPA
 
+    # data_in.attack_type = 'L_2'
+    data_in.attack_type = 'L_inf'
+    # data_in.attack_type = 'perceptual'
 
     #  main algorithm  
     start = time.time()
@@ -205,13 +197,20 @@ def mainFun():
     end = time.time()
     print("Total Wall Time: {}s".format(end - start))
 
-    final_adv_input = torch.reshape(soln.final.x,(10,3,32,32))
+    final_adv_input = torch.reshape(soln.final.x,inputs.shape)
     adv_outputs2 = model(final_adv_input.to(device=device, dtype=torch.double))
     acc2 = (adv_outputs2.max(1)[1] == labels.to(
         device=device, dtype=torch.double)).sum().item()/labels.size(0)
 
     print("adv acc final = {}".format(acc2))
 
+    if data_in.attack_type == 'L_2':
+        print("adv diff L2 = {}".format( ( torch.norm((inputs.to(device=device, dtype=torch.double) - final_adv_input).reshape(inputs.size()[0], -1)) )))
+    elif data_in.attack_type == 'L_inf':
+        print("adv diff Linf = {}".format( ( torch.norm((inputs.to(device=device, dtype=torch.double) - final_adv_input).reshape(inputs.size()[0], -1), float('inf') ) )))
+    else:
+        print("adv diff perceptual = {}".format(torch.norm(final_adv_input-data_in.inputs)))
+    
 
 if __name__ == "__main__":
    
