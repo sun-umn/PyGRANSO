@@ -64,3 +64,7 @@ examples/DL_CIFAR10/data/cifar-10-batches-py/test_batch
 *.gz
 examples/DL_CIFAR10/.ipynb_checkpoints/DL_PyGRANSO-checkpoint.ipynb
 *.pkl
+mnist/MNIST/raw/t10k-images-idx3-ubyte
+mnist/MNIST/raw/t10k-labels-idx1-ubyte
+mnist/MNIST/raw/train-images-idx3-ubyte
+mnist/MNIST/raw/train-labels-idx1-ubyte

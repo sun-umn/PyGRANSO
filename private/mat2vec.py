@@ -7,43 +7,46 @@ from private.vec2mat import vec2mat
 from private.getCiVec import getCiVec
 from private.getCiGradVec import getCiGradVec
 
-def obj_eval_DL(x,model,parameters = None):
+def obj_eval_DL(x,model,data_in = None):
     torch.nn.utils.vector_to_parameters(x, model.parameters()) # update model paramters
     
     # obtain objective and constraint function and their corresponding gradient
     # matrix form functions    
     
-    if parameters == None:
+    if data_in == None:
         f = eval_obj(model)
     else:
-        f = eval_obj(model,parameters)
+        f = eval_obj(model,data_in)
     
     return f
 
-def obj_eval(x, var_dim_map, parameters = None):
+def obj_eval(x, var_dim_map, data_in = None):
     
     X_struct = vec2mat(x,var_dim_map)
 
-    if parameters == None:
+    if data_in == None:
         f = eval_obj(X_struct)
     else:
-        f = eval_obj(X_struct,parameters)
+        f = eval_obj(X_struct,data_in)
     
     return f
 
-def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None,  torch_device = torch.device('cpu')):
+def mat2vec_autodiff(x,var_dim_map,nvar,data_in = None,  torch_device = torch.device('cpu')):
     X = vec2mat(x,var_dim_map)
     # obtain objective and constraint function and their corresponding gradient
     # matrix form functions    
     
-    if parameters == None:
+    if data_in == None:
         [f,ci,ce] = combinedFunction(X)
     else:
-        [f,ci,ce] = combinedFunction(X,parameters)
+        [f,ci,ce] = combinedFunction(X,data_in)
         
     # obj function is a scalar form
     f_vec = f.item()    
-    f_grad_vec = getObjGrad(nvar,var_dim_map,f,X,torch_device)
+    if data_in.model == None:
+        f_grad_vec = getObjGrad(nvar,var_dim_map,f,X,torch_device)
+    else:
+        f_grad_vec = getObjGradDL(nvar,data_in.model,f, torch_device)
 
     ##  ci and ci_grad
     if ci != None:
@@ -66,17 +69,17 @@ def mat2vec_autodiff(x,var_dim_map,nvar,parameters = None,  torch_device = torch
     return [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec]
 
 
-def tensor2vec_autodiff(x,model,nvar,parameters = None, torch_device = torch.device('cpu') ):
+def tensor2vec_autodiff(x,model,nvar,data_in = None, torch_device = torch.device('cpu') ):
 
     torch.nn.utils.vector_to_parameters(x, model.parameters()) # update model paramters
     
     # obtain objective and constraint function and their corresponding gradient
     # matrix form functions    
     
-    if parameters == None:
+    if data_in == None:
         [f,ci,ce] = combinedFunction(model)
     else:
-        [f,ci,ce] = combinedFunction(model,parameters)
+        [f,ci,ce] = combinedFunction(model,data_in)
         
     # obj function is a scalar form
     f_vec = f.item()    
