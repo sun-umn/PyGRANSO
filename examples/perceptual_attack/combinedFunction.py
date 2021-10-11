@@ -1,4 +1,5 @@
 from pygransoStruct import general_struct
+from perceptual_advex.distances import normalize_flatten_features
 import torch
 
 def MarginLoss(logits,labels):
@@ -55,10 +56,11 @@ def combinedFunction(X_struct, data_in = None):
     elif data_in.attack_type == 'L_inf':
         ci.c1 = torch.norm((inputs - adv_inputs).reshape(inputs.size()[0], -1), float('inf')) - epsilon
     else:
-        input_features = normalize_flatten_features( self.lpips_model.features(inputs)).detach()
-        adv_features = self.lpips_model.features(adv_inputs)
+        lpips_model = data_in.lpips_model
+        input_features = normalize_flatten_features( lpips_model.features(inputs)).detach()
+        adv_features = lpips_model.features(adv_inputs)
         adv_features = normalize_flatten_features(adv_features)
-        lpips_dists = (adv_features - input_features[live]).norm(dim=1)
+        lpips_dists = (adv_features - input_features).norm(dim=1)
         ci.c1 = lpips_dists - epsilon
     
     # ci.c1 = la.norm(phi(inputs) - phi(adv_input) - epsilon ) 
