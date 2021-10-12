@@ -43,9 +43,8 @@ def combinedFunction(X_struct, data_in = None):
     inputs = data_in.inputs
     labels = data_in.labels
     logits = model(inputs)
-    # correct = model.correct(logits, labels)
-    criterion = nn.CrossEntropyLoss()
-    f = criterion(logits, labels)
+    # criterion = nn.CrossEntropyLoss()
+    f = model.loss(logits, labels)
     # inequality constraint
     ci = None
     # equality constraint 

@@ -20,7 +20,7 @@ def eval_obj(X_struct,data_in = None):
     
     # objective function
     labels = data_in.labels
-    model = data_in.model
+    model = data_in.model_nn
     logits_outputs = model(adv_inputs)
 
     f = MarginLoss(logits_outputs,labels)
@@ -43,7 +43,7 @@ def combinedFunction(X_struct, data_in = None):
 
     inputs = data_in.inputs
     labels = data_in.labels
-    model = data_in.model
+    model = data_in.model_nn
     logits_outputs = model(adv_inputs)
 
     f = MarginLoss(logits_outputs,labels)

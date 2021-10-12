@@ -19,6 +19,7 @@ from torchvision import datasets
 from orthogonal import OrthogonalRNN
 from initialization import cayley_init_
 from trivializations import expm
+import pickle
 
 
 
@@ -56,7 +57,9 @@ class Model(nn.Module):
     def correct(self, logits, y):
         return torch.eq(torch.argmax(logits, dim=1), y).float().sum()
 
-
+def save_object(obj, filename):
+    with open(filename, 'wb') as outp:  # Overwrites any existing file.
+        pickle.dump(obj, outp, pickle.HIGHEST_PROTOCOL)
 
 def mainFun():
 
@@ -99,12 +102,12 @@ def mainFun():
         opts = Options()
         nvar = getNvarTorch(model.parameters())
         opts.QPsolver = 'osqp' 
-        opts.maxit = 200
+        opts.maxit = 100
         opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach().reshape(nvar,1)
         opts.opt_tol = 1e-6
         opts.fvalquit = 1e-6
         opts.print_level = 1
-        opts.print_frequency = 10
+        opts.print_frequency = 1
         # opts.print_ascii = True
         # opts.wolfe1 = 0.1
         # opts.wolfe2 = 1e-4
@@ -117,10 +120,16 @@ def mainFun():
         opts.searching_direction_rescaling = True
         opts.disable_terminationcode_6 = True
 
+            
+
+        # with open('orthogonalRNN_300iter.pkl', 'rb') as f:
+        #     soln_old = pickle.load(f)
+        # opts.x0 = soln_old.final.x
+        # torch.nn.utils.vector_to_parameters(soln_old.final.x, model.parameters())
+
         logits = model(inputs)
         correct = model.correct(logits, labels)
-        print("Initial acc = {:.2f}%".format((100 * correct/len(inputs)).item()))      
-
+        print("Initial acc = {:.2f}%".format((100 * correct/len(inputs)).item()))  
 
         #  main algorithm  
         start = time.time()
@@ -134,6 +143,8 @@ def mainFun():
         print("Final acc = {:.2f}%".format((100 * correct/len(inputs)).item()))     
         
         print("total time = {} s".format(end-start))
+
+        save_object(soln, 'orthogonalRNN.pkl')
 
 
 if __name__ == "__main__":

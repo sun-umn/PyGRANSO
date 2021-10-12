@@ -52,7 +52,8 @@ def mainFun():
     opts.print_frequency = 1
 
     ################################################
-    total_count = 100
+    total_count = 10
+    total_diff = 0
     original_count = 0
     attack_count = 0
     # attack_type = 'L_2'
@@ -86,7 +87,7 @@ def mainFun():
         data_in.labels = labels.to(device=device)  # label/target [256]
         # input data [256,3,32,32]
         data_in.inputs = inputs.to(device=device, dtype=torch.double)
-        data_in.model = model
+        data_in.model_nn = model
         data_in.attack_type = attack_type
 
         if data_in.attack_type == 'Perceptual':
@@ -111,19 +112,23 @@ def mainFun():
         # print("adv acc final = {}".format(acc2))
 
         if data_in.attack_type == 'L_2':
-            print("adv diff L2 = {}".format( ( torch.norm((inputs.to(device=device, dtype=torch.double) - final_adv_input).reshape(inputs.size()[0], -1)) )))
+            diff = torch.norm((inputs.to(device=device, dtype=torch.double) - final_adv_input).reshape(inputs.size()[0], -1))
         elif data_in.attack_type == 'L_inf':
-            print("adv diff Linf = {}".format( ( torch.norm((inputs.to(device=device, dtype=torch.double) - final_adv_input).reshape(inputs.size()[0], -1), float('inf') ) )))
+            diff = ( torch.norm((inputs.to(device=device, dtype=torch.double) - final_adv_input).reshape(inputs.size()[0], -1), float('inf') ) )
         else:
             input_features = normalize_flatten_features( lpips_model.features(inputs)).detach()
             adv_features = lpips_model.features(final_adv_input)
             adv_features = normalize_flatten_features(adv_features)
             lpips_dists = torch.mean((adv_features - input_features).norm(dim=1))
-            print("adv diff perceptual = {}".format(lpips_dists))
+            diff = lpips_dists
+
+        total_diff += diff
         
 
+    
     print("\n\n\nNatural acc = {}".format(( original_count/total_count )))
     print("Success rate of attack = {}".format( (original_count-attack_count)/original_count ))
+    print("Mean diff = {}".format(total_diff/original_count))
     print("Mean time = {}s, mean f_eval = {} iters".format(total_time/original_count,total_iterations/original_count))
     
 

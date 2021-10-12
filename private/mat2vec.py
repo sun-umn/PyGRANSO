@@ -43,7 +43,7 @@ def mat2vec_autodiff(x,var_dim_map,nvar,data_in = None,  torch_device = torch.de
         
     # obj function is a scalar form
     f_vec = f.item()    
-    if data_in.model == None:
+    if not hasattr(data_in,'model'):
         f_grad_vec = getObjGrad(nvar,var_dim_map,f,X,torch_device)
     else:
         f_grad_vec = getObjGradDL(nvar,data_in.model,f, torch_device)
