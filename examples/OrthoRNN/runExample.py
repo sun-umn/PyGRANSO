@@ -30,7 +30,8 @@ class Model(nn.Module):
         self.permute = permute
         permute = np.random.RandomState(92916)
         self.register_buffer("permutation", torch.LongTensor(permute.permutation(784)))
-        self.rnn = OrthogonalRNN(1, hidden_size, initializer_skew=cayley_init_, mode=("dynamic", 100, 100), param=expm)
+        # self.rnn = OrthogonalRNN(1, hidden_size, initializer_skew=cayley_init_, mode=("dynamic", 100, 100), param=expm)
+        self.rnn = nn.LSTMCell(1, hidden_size)
 
         self.lin = nn.Linear(hidden_size, 10)
         self.loss_func = nn.CrossEntropyLoss()
