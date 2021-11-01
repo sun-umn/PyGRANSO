@@ -26,7 +26,7 @@ from torchvision.transforms import ToTensor
 
 sequence_length = 28
 input_size = 28
-hidden_size = 50
+hidden_size = 30
 num_layers = 1
 num_classes = 10
 batch_size = 100
@@ -63,8 +63,9 @@ class RNN(nn.Module):
         return out
        
 
-# model = RNN(input_size, hidden_size, num_layers, num_classes).to(device)
-# print(model)
+def save_object(obj, filename):
+    with open(filename, 'wb') as outp:  # Overwrites any existing file.
+        pickle.dump(obj, outp, pickle.HIGHEST_PROTOCOL)
 
 def mainFun():
 
@@ -125,12 +126,12 @@ def mainFun():
         opts = Options()
         nvar = getNvarTorch(model.parameters())
         opts.QPsolver = 'osqp' 
-        opts.maxit = 10
+        opts.maxit = 1000
         opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach().reshape(nvar,1)
         opts.opt_tol = 1e-6
         opts.fvalquit = 1e-6
         opts.print_level = 1
-        opts.print_frequency = 1
+        opts.print_frequency = 10
         # opts.print_ascii = True
 
 
@@ -138,10 +139,12 @@ def mainFun():
         # opts.max_fallback_level = 3
         # opts.min_fallback_level = 2
         # opts.init_step_size = 1e-2
-        # opts.halt_on_linesearch_bracket = False
+        opts.init_step_size = 1e-1
+        opts.halt_on_linesearch_bracket = False
         # opts.disable_terminationcode_6 = True
 
         opts.linesearch_maxit = 25
+        # opts.linesearch_maxit = 10
         opts.is_backtrack_linesearch = True
         opts.searching_direction_rescaling = True
 
@@ -170,6 +173,8 @@ def mainFun():
         print("Final acc = {:.2f}%".format((100 * correct/len(inputs))))     
         
         print("total time = {} s".format(end-start))
+
+        save_object(soln, 'orthogonalRNN_iter500_hidden30.pkl')
 
 
 

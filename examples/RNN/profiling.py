@@ -31,5 +31,8 @@ def code_to_profile():
    mainFun()
 
 
+import torch
 
-code_to_profile()
+Flag = torch.cuda.is_available()
+pass
+# code_to_profile()

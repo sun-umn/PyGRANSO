@@ -42,6 +42,7 @@ opts.maxit = 200
 opts.x0 = torch.zeros(p*m,1).to(device=device, dtype=torch.double)
 opts.print_level = 1
 opts.print_frequency = 1
+opts.limited_mem_size = 40
 
 #  main algorithm
 

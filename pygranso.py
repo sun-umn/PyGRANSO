@@ -478,10 +478,10 @@ def getBfgsManager(opts):
         dbg_print("CAll BFGS: Skip LBFGS for now")
     else:
         dbg_print("LBFGS:TODO")
-        # get_bfgs_fn = @bfgsHessianInverseLimitedMem;
-        # lbfgs_args  = {     opts.limited_mem_fixed_scaling,     ...
-        #                     opts.limited_mem_size,              ...
-        #                     opts.limited_mem_warm_start         };
+        get_bfgs_fn = @bfgsHessianInverseLimitedMem
+        lbfgs_args  = {     opts.limited_mem_fixed_scaling,     ...
+                            opts.limited_mem_size,              ...
+                            opts.limited_mem_warm_start         };
     
 
 
