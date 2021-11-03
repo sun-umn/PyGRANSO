@@ -1,4 +1,4 @@
-from pygransoStruct import general_struct
+from pygransoStruct import GeneralStruct
 # import torch
 
 def eval_obj(X_struct,data_in = None):
@@ -26,7 +26,7 @@ def combinedFunction(X_struct,data_in = None):
     f = (8 * abs(x1**2 - x2) + (1 - x1)**2)[0,0]
 
     # inequality constraint, matrix form
-    ci = general_struct()
+    ci = GeneralStruct()
     ci.c1 = (2**0.5)*x1-1  
     ci.c2 = 2*x2-1 
 

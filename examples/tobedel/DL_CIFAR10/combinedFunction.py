@@ -1,4 +1,4 @@
-from pygransoStruct import general_struct
+from pygransoStruct import GeneralStruct
 import torch
 import torch.nn as nn
 

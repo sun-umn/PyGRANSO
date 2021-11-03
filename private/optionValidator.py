@@ -1,4 +1,4 @@
-from pygransoStruct import Options, general_struct, sub_validators_struct
+from pygransoStruct import Options, GeneralStruct, sub_validators_struct
 from dbg_print import dbg_print
 import types
 from private.makeStructWithFields import makeStructWithFields
@@ -70,7 +70,7 @@ class oV:
         # dbg_print("optionValidator: currently assume all provided options are legal\n")
         # assertFn = lambda tf,varargin : assert tf, err_id + varargin
         
-        validator = general_struct()
+        validator = GeneralStruct()
         setattr(validator, "setUserOpts", lambda some_user_opts : self.setUserOpts(some_user_opts))
         setattr(validator, "assert", lambda tf, error_msg : self.customAssert(tf, error_msg))
         setattr(validator, "isSpecified", lambda name : self.isSpecified(name))
@@ -186,11 +186,11 @@ class oV:
         return
 
     def setStruct(self,name):
-        self.validateAndSet( name, lambda x: isinstance(x,general_struct) , "a struct" )
+        self.validateAndSet( name, lambda x: isinstance(x,GeneralStruct) , "a struct" )
         return
 
     def setStructWithFields(self,name,varargin):
-        self.validateAndSet( name, lambda x: isinstance(x,general_struct) and [hasattr(x,field) for field in varargin], "a struct with fields: %s" % ", ".join(varargin) )  
+        self.validateAndSet( name, lambda x: isinstance(x,GeneralStruct) and [hasattr(x,field) for field in varargin], "a struct with fields: %s" % ", ".join(varargin) )  
         
         sub_struct      = makeStructWithFields(varargin)
         user_sub_struct = copy.deepcopy(getattr(self.user_opts, name))

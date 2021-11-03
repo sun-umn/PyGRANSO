@@ -1,4 +1,4 @@
-from pygransoStruct import general_struct
+from pygransoStruct import GeneralStruct
 import torch
 from torch import linalg as LA
 
@@ -37,7 +37,7 @@ def combinedFunction(X_struct,data_in = None):
     f = torch.max(D.imag)
 
     # inequality constraint, matrix form
-    ci = general_struct()
+    ci = GeneralStruct()
     ci.c1 = torch.max(D.real) + stability_margin
 
     # equality constraint 

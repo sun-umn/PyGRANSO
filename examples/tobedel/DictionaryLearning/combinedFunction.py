@@ -1,4 +1,4 @@
-from pygransoStruct import general_struct
+from pygransoStruct import GeneralStruct
 import torch
 
 def eval_obj(X_struct,data_in = None):
@@ -33,7 +33,7 @@ def combinedFunction(X_struct, data_in = None):
     ci = None
 
     # equality constraint 
-    ce = general_struct()
+    ce = GeneralStruct()
     ce.c1 = q.t() @ q - 1
 
     return [f,ci,ce]

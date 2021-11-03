@@ -1,4 +1,4 @@
-from pygransoStruct import general_struct
+from pygransoStruct import GeneralStruct
 import torch
 
 def eval_obj(X_struct,data_in = None):

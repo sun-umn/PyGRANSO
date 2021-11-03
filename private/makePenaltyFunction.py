@@ -3,7 +3,7 @@ import types
 import numpy as np
 import numpy.linalg as LA
 import torch
-from pygransoStruct import general_struct
+from pygransoStruct import GeneralStruct
 from dbg_print import dbg_print
 
 def assertFnOutputs(n,f,g,fn_name):
@@ -192,13 +192,13 @@ def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_thresh
     return [eval_fn_ret, c, c_grad, tv, tv_l1, tv_l1_grad, c_grad_norms, scalings, constrained]
 
 def dataStruct(x,f):
-    s = general_struct()
+    s = GeneralStruct()
     setattr(s,"x",x)
     setattr(s,"f",f)
     return s
 
 def dataStructConstrained(x,f,ci,ce,tvi,tve,tv,feasible_to_tol,mu):
-    s = general_struct()
+    s = GeneralStruct()
     setattr(s,"x",x)
     setattr(s,"f",f)
     setattr(s,"ci",ci)
@@ -345,7 +345,7 @@ class PanaltyFuctions:
        
     def snapShot(self):
         # scalings never change so no need to snapshot them
-        self.snap_shot = general_struct()
+        self.snap_shot = GeneralStruct()
         setattr(self.snap_shot,"f",self.f)
         setattr(self.snap_shot,"f_grad",self.f_grad)
         setattr(self.snap_shot,"ci",self.ci)
@@ -477,7 +477,7 @@ class PanaltyFuctions:
             final_unscaled  = ()
             best_unscaled   = ()
         
-        soln = general_struct()
+        soln = GeneralStruct()
         if scalings_field != ():
             setattr(soln,scalings_field[0],scalings_field[1])
         if final_field != ():
@@ -513,7 +513,7 @@ class PanaltyFuctions:
             feas_unscaled   = ()
             best_unscaled   = ()
         
-        soln = general_struct()
+        soln = GeneralStruct()
         if scalings_field != ():
             setattr(soln,scalings_field[0],scalings_field[1])
         if final_field != ():
@@ -599,12 +599,12 @@ class PanaltyFuctions:
 
         [self.eval_eq_fn,self.ce,self.ce_grad,self.tve,self.tve_l1,self.tve_l1_grad,ce_grad_norms,self.scaling_ce,eq_constrained] = setupConstraint(self.x,eq_fn,lambda x, fn: self.evalEquality(x,fn),False,prescaling_threshold,torch_device)
 
-        grad_norms_at_x0 = general_struct()
+        grad_norms_at_x0 = GeneralStruct()
         setattr(grad_norms_at_x0,"f",f_grad_norm)
         setattr(grad_norms_at_x0,"ci",ci_grad_norms)
         setattr(grad_norms_at_x0,"ce",ce_grad_norms)
 
-        self.scalings        = general_struct()
+        self.scalings        = GeneralStruct()
         if np.any(self.scaling_f != None):
             setattr(self.scalings,"f",self.scaling_f)
         if np.any(self.scaling_ci != None):
@@ -658,7 +658,7 @@ class PanaltyFuctions:
         self.update_best_fn()
 
         # output object with methods
-        penalty_fn_object = general_struct()
+        penalty_fn_object = GeneralStruct()
         setattr(penalty_fn_object,"evaluatePenaltyFunction4linesearch",lambda x_in: self.evaluateAtX4linesearch(x_in))
         setattr(penalty_fn_object,"evaluatePenaltyFunction",lambda x_in: self.evaluateAtX(x_in))
         setattr(penalty_fn_object,"updatePenaltyParameter",update_penalty_parameter_fn)

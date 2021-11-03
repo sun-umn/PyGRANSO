@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-from pygransoStruct import general_struct
 import numpy.linalg as LA
 
 

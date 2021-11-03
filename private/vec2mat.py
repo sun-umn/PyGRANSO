@@ -1,9 +1,9 @@
-from pygransoStruct import general_struct
+from pygransoStruct import GeneralStruct
 import numpy as np
 import torch
 
 def vec2mat(x,var_dim_map):
-    X = general_struct()
+    X = GeneralStruct()
     # reshape vector input x to matrix form X, e.g., X.U and X.V
     curIdx = 0
     # current variable, e.g., U

@@ -8,10 +8,10 @@ from private.solveQP import getErr
 from dbg_print import dbg_print
 from private.wrapToLines import wrapToLines
 from time import sleep
-from private.mat2vec import mat2vec_autodiff, tensor2vec_autodiff, obj_eval, obj_eval_DL
+from private.mat2vec import mat2vec_autodiff, obj_eval
 from private.getNvar import getNvar,getNvarTorch
 
-def pygranso(var_dim_map=None,nn_model=None, torch_device = torch.device('cpu'),user_data=None,user_opts=None):
+def pygranso(combinedFunction,objEvalFunction,var_dim_map=None,nn_model=None, torch_device = torch.device('cpu'),user_data=None,user_opts=None):
     """
     PyGRANSO: Python version GRadient-based Algorithm for Non-Smooth Optimization
 
@@ -347,16 +347,16 @@ def pygranso(var_dim_map=None,nn_model=None, torch_device = torch.device('cpu'),
     #  - set initial Hessian inverse approximation
     #  - evaluate functions at x0
 
-    if var_dim_map == None and nn_model != None:
-        n = getNvarTorch(nn_model.parameters())
-        obj_fn = lambda x: tensor2vec_autodiff(x,nn_model,n,user_data,torch_device)
-        f_eval_fn = lambda x: obj_eval_DL(x,nn_model,user_data)
+    if nn_model != None:
+        n = getNvar(var_dim_map)
+        obj_fn = lambda x: mat2vec_autodiff(combinedFunction ,x,var_dim_map,n,user_data,torch_device, model = nn_model)
+        f_eval_fn = lambda x: obj_eval(objEvalFunction,x,var_dim_map, user_data)
 
     else:
         # call the functions getNvar to get the total number of (scalar) variables
         n = getNvar(var_dim_map)
-        obj_fn = lambda x: mat2vec_autodiff(x,var_dim_map,n,user_data,torch_device)
-        f_eval_fn = lambda x: obj_eval(x,var_dim_map, user_data)
+        obj_fn = lambda x: mat2vec_autodiff(combinedFunction ,x,var_dim_map,n,user_data,torch_device)
+        f_eval_fn = lambda x: obj_eval(objEvalFunction,x,var_dim_map, user_data)
 
     try: 
         [problem_fns,opts] = processArguments(n,obj_fn,user_opts, torch_device)

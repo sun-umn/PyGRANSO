@@ -1,7 +1,7 @@
 import torch
 from torch import conj
 from dbg_print import dbg_print
-from pygransoStruct import general_struct
+from pygransoStruct import GeneralStruct
 
 def bfgsHessianInverseLimitedMem(H0,scaleH0,fixed_scaling,nvec,restart_data,device):
 #    bfgsHessianInverseLimitedMem:
@@ -137,7 +137,7 @@ class H_obj_struct:
         return r
 
     def getState(self):
-        data = general_struct()
+        data = GeneralStruct()
         setattr(data,'S',self.S[:,0:self.count])
         setattr(data,'Y',self.Y[:,0:self.count])
         setattr(data,'rho',self.rho[0:self.count])
@@ -145,7 +145,7 @@ class H_obj_struct:
         return data
 
     def getCounts(self):
-        counts = general_struct()
+        counts = GeneralStruct()
         setattr(counts,"requests",self.requests)
         setattr(counts,"updates",self.updates)
         setattr(counts,"damped_requests",self.damped_requests)

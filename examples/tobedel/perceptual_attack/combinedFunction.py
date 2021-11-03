@@ -1,4 +1,4 @@
-from pygransoStruct import general_struct
+from pygransoStruct import GeneralStruct
 from perceptual_advex.distances import normalize_flatten_features
 import torch
 
@@ -50,7 +50,7 @@ def combinedFunction(X_struct, data_in = None):
 
     # inequality constraint, matrix form
     # ci = None
-    ci = general_struct()
+    ci = GeneralStruct()
     if data_in.attack_type == 'L_2':
         ci.c1 = torch.norm((inputs - adv_inputs).reshape(inputs.size()[0], -1)) - epsilon
     elif data_in.attack_type == 'L_inf':
