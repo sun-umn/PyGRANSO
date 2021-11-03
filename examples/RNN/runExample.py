@@ -126,7 +126,7 @@ def mainFun():
         opts = Options()
         nvar = getNvarTorch(model.parameters())
         opts.QPsolver = 'osqp' 
-        opts.maxit = 1000
+        opts.maxit = 100
         opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach().reshape(nvar,1)
         opts.opt_tol = 1e-6
         opts.fvalquit = 1e-6
@@ -147,6 +147,7 @@ def mainFun():
         # opts.linesearch_maxit = 10
         opts.is_backtrack_linesearch = True
         opts.searching_direction_rescaling = True
+        opts.limited_mem_size = 200
 
             
 

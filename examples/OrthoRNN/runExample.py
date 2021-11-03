@@ -121,6 +121,9 @@ def mainFun():
         opts.searching_direction_rescaling = True
         opts.disable_terminationcode_6 = True
 
+        opts.limited_mem_size = 200
+
+
             
 
         # with open('orthogonalRNN_300iter.pkl', 'rb') as f:

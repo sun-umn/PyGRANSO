@@ -98,8 +98,8 @@ def solveQP(H,f,A,b,LB,UB,QPsolver,torch_device):
             dbg_print_2("NOTE: solveQP.py inefficient convert torch tensor to numpy to sparse")
             H = H.cpu().numpy()
             # avoid numerical issue in ncvx
-            epsilon = 1e-6
-            H = H + epsilon * np.eye(nvar)
+            # epsilon = 1e-6
+            # H = H + epsilon * np.eye(nvar)
             f = f.cpu().numpy()
             if A != None:
                 A = A.cpu().numpy()

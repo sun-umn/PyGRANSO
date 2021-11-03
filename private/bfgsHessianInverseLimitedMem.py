@@ -3,29 +3,30 @@ from torch import conj
 from dbg_print import dbg_print
 from pygransoStruct import general_struct
 
-def bfgsHessianInverseLimitedMem(H0,scaleH0,fixed_scaling,nvec,restart_data):
+def bfgsHessianInverseLimitedMem(H0,scaleH0,fixed_scaling,nvec,restart_data,device):
 #    bfgsHessianInverseLimitedMem:
 #        An object that maintains and updates a L-BFGS approximation to the 
 #        inverse Hessian.
 
     # H,scaleH0,fixed_scaling,mem_size,warm_start
-    H_obj = H_obj_struct(H0,scaleH0,fixed_scaling,nvec,restart_data)
+    H_obj = H_obj_struct(H0,scaleH0,fixed_scaling,nvec,restart_data,device)
 
     return H_obj
 
 
 class H_obj_struct:
 
-    def __init__(self,H0,scaleH0,fixed_scaling,nvec,restart_data):
+    def __init__(self,H0,scaleH0,fixed_scaling,nvec,restart_data,device):
 
         self.H0 = H0
         self.fixed_scaling = fixed_scaling
         self.nvec = nvec
+        self.device = device
 
         n = H0.shape[0]
-        self.S = torch.zeros((n,nvec))
-        self.Y = torch.zeros((n,nvec))
-        self.rho = torch.zeros((1,nvec))
+        self.S = torch.zeros((n,nvec)).to(device=self.device, dtype=torch.double)
+        self.Y = torch.zeros((n,nvec)).to(device=self.device, dtype=torch.double)
+        self.rho = torch.zeros((1,nvec)).to(device=self.device, dtype=torch.double)
         self.gamma = 1
         self.count = 0
         self.update_gamma = scaleH0
@@ -71,7 +72,7 @@ class H_obj_struct:
         
         #  We should also check that s and y only have finite entries.
         dbg_print("check torch isinf if statement")
-        if  torch.any(torch.isinf(s) or torch.isnan(s) or torch.isinf(y) or torch.isnan(y)): 
+        if  torch.any(torch.isinf(s)) or torch.any(torch.isnan(s)) or torch.any(torch.isinf(y)) or torch.any(torch.isnan(y)): 
             skipped = 3
             self.infnan_fails += 1
             return skipped
@@ -94,14 +95,15 @@ class H_obj_struct:
                 
         
         if self.count < self.nvec:
+            
+            self.S[:,self.count] = s[:,0]
+            self.Y[:,self.count] = y[:,0]
+            self.rho[0,self.count] = rho_new    
             self.count += 1
-            self.S[:,self.count] = s
-            self.Y[:,self.count] = y
-            self.rho[self.count] = rho_new    
         else:
-            self.S = torch.hstack(self.S[:,1:], s) 
-            self.Y = torch.hstack(self.Y[:,1:], y) 
-            self.rho = torch.hstack(self.rho[1:], rho_new) 
+            self.S = torch.hstack((self.S[:,1:], s)) 
+            self.Y = torch.hstack((self.Y[:,1:], y)) 
+            self.rho = torch.hstack((self.rho[:,1:], torch.tensor(rho_new)))
         
         self.updates += 1
         if damped:
@@ -109,16 +111,16 @@ class H_obj_struct:
 
         return skipped
 
-    def applyHreg(self,q):
-             
+    def applyH(self,q_in):
+        q = q_in.detach().clone()
         #  q might be a matrix, not just a vector, so we want to apply
         #  multiplication to all columns of q
         self.cols    = q.shape[1]
-        alpha   = torch.zeros((self.count,self.cols))
+        alpha   = torch.zeros((self.count,self.cols)).to(device=self.device, dtype=torch.double)
       
         #  Now apply first updates to the columns of q
         for j in reversed(range(self.count)):
-            alpha[j,:]  = self.rho[j] * (self.S[:,j].T  @ q)
+            alpha[j,:]  = self.rho[0,j] * (self.S[:,j].T  @ q)
             y = self.Y[:,j]
             for k in range(self.cols):
                 q[:,k]  = q[:,k] - alpha[j,k] * y
@@ -128,7 +130,7 @@ class H_obj_struct:
         
         #  Finally apply updates to the columns of r
         for j in range(self.count):
-            beta = self.rho[j] * ( conj(self.Y[:,j]).T @ r)
+            beta = self.rho[0,j] * ( conj(self.Y[:,j]).T @ r)
             s = self.S[:,j]
             for k in range(self.cols):
                 r[:,k] = r[:,k] + (alpha[j,k] - beta[k]) * s

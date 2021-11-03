@@ -1,6 +1,6 @@
 import torch
 from private.makePenaltyFunction import PanaltyFuctions
-from private import bfgsHessianInverse as bfgsHI, printMessageBox as pMB
+from private import bfgsHessianInverse as bfgsHI, printMessageBox as pMB, bfgsHessianInverseLimitedMem as lbfgsHI
 from private.bfgssqp import AlgBFGSSQP
 from private.pygransoPrinter import pgP
 from pygransoOptions import pygransoOptions
@@ -361,7 +361,7 @@ def pygranso(var_dim_map=None,nn_model=None, torch_device = torch.device('cpu'),
     try: 
         [problem_fns,opts] = processArguments(n,obj_fn,user_opts, torch_device)
         # check realted function: np.matrix.H is recommened, consider np.transpose/conjugate 
-        [bfgs_hess_inv_obj,opts] = getBfgsManager(opts)
+        [bfgs_hess_inv_obj,opts] = getBfgsManager(opts,torch_device)
 
         # construct the penalty function object and evaluate at x0
         # unconstrained problems will reset mu to one and mu will be fixed
@@ -471,22 +471,16 @@ def processArguments(n,combined_fns,opts,torch_device):
     options = pygransoOptions(n,options,torch_device)
     return [problem_fns,options]
 
-def getBfgsManager(opts):
+def getBfgsManager(opts,torch_device):
     if opts.limited_mem_size == 0:
-        get_bfgs_fn = lambda H,scaleH0, *_ : bfgsHI.bfgsHessianInverse(H,scaleH0)
-        lbfgs_args  = None
+        get_bfgs_fn = lambda H,scaleH0 : bfgsHI.bfgsHessianInverse(H,scaleH0)
+        # lbfgs_args  = None
         dbg_print("CAll BFGS: Skip LBFGS for now")
     else:
         dbg_print("LBFGS:TODO")
-        get_bfgs_fn = @bfgsHessianInverseLimitedMem
-        lbfgs_args  = {     opts.limited_mem_fixed_scaling,     ...
-                            opts.limited_mem_size,              ...
-                            opts.limited_mem_warm_start         };
+        get_bfgs_fn = lambda H,scaleH0 : lbfgsHI.bfgsHessianInverseLimitedMem(H,scaleH0,opts.limited_mem_fixed_scaling,opts.limited_mem_size,opts.limited_mem_warm_start,torch_device)
     
-
-
-    
-    bfgs_obj = get_bfgs_fn(opts.H0,opts.scaleH0,lbfgs_args)
+    bfgs_obj = get_bfgs_fn(opts.H0,opts.scaleH0)
     # DEBUG TEST:
     # print(bfgs_obj.getState() )
     # print(bfgs_obj.getCounts() )
