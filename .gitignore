@@ -68,14 +68,7 @@ mnist/MNIST/raw/t10k-images-idx3-ubyte
 mnist/MNIST/raw/t10k-labels-idx1-ubyte
 mnist/MNIST/raw/train-images-idx3-ubyte
 mnist/MNIST/raw/train-labels-idx1-ubyte
-examples/.ipynb_checkpoints/demo_DictLearning-checkpoint.ipynb
-examples/.ipynb_checkpoints/demo_Rosenbrock-checkpoint.ipynb
-examples/.ipynb_checkpoints/demo_SpectralRadiusOpt-checkpoint.ipynb
-examples/.ipynb_checkpoints/demo_GeneralizedLASSO-checkpoint.ipynb
-examples/.ipynb_checkpoints/demo_RobustPCA-checkpoint.ipynb
-examples/.ipynb_checkpoints/demo_OrthogonalRNN-checkpoint.ipynb
-examples/.ipynb_checkpoints/demo_orthogonalRNN-checkpoint.ipynb
-examples/.ipynb_checkpoints/demo_PerceptualAttack-checkpoint.ipynb
+examples/.ipynb_checkpoints/*
 examples/data/mnist/MNIST/raw/t10k-images-idx3-ubyte
 examples/data/mnist/MNIST/raw/t10k-labels-idx1-ubyte
 examples/data/mnist/MNIST/raw/train-images-idx3-ubyte

@@ -333,10 +333,6 @@ def pygranso(combinedFunction,objEvalFunction,var_dim_map=None,nn_model=None, to
        See also pygransoOptions, gransoOptionsAdvanced, makeHaltLogFunctions.
     """
     
-    # if nargin < 2
-    #     error(  'GRANSO:inputArgumentsMissing',     ...
-    #             'not all input arguments provided.' );
-    # end
     
     # % First reset solveQP's persistent counters to zero
     # clear solveQP;
