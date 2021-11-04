@@ -96,7 +96,7 @@ class H_obj_struct:
         else:
             self.S = torch.hstack((self.S[:,1:], s)) 
             self.Y = torch.hstack((self.Y[:,1:], y)) 
-            self.rho = torch.hstack((self.rho[:,1:], torch.tensor(rho_new)))
+            self.rho = torch.hstack((self.rho[:,1:], rho_new))
         
         self.updates += 1
         if damped:

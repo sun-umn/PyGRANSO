@@ -59,9 +59,11 @@ def solveQP(H,f,A,b,LB,UB,QPsolver,torch_device):
                 LB_new = np.vstack((beq,LB))
                 UB_new = np.vstack((beq,UB))
                 A_new = sparse.vstack([Aeq,speye])
+                A_new = sparse.csc_matrix(A_new)
             else:
                 #  no constraint A*x == b
                 A_new = sparse.eye(nvar)
+                A_new = sparse.csc_matrix(A_new)
                 LB_new = LB
                 UB_new = UB
 

@@ -490,8 +490,9 @@ def getTableRows(nums,num_width,cols,indent,brackets):
     pass
 
 def quadprogInfoMsg():
-    msg = ["PyGRANSO requires a quadratic program (QP) solver that has a quadprog-compatible ",
-            "interface, as defined by osqp and Gurobi..."]  
+    msg = ["PyGRANSO requires a quadratic program (QP) solver that has a quadprog-compatible interface,",
+            "the default is osqp. Users may provide their own wrapper for the QP solver.", ""
+            "To disable this notice, set opts.quadprog_info_msg = False"]  
     return msg                   
 
 def poorScalingDetectedMsgs():

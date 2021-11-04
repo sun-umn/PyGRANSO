@@ -458,7 +458,6 @@ class AlgBFGSSQP():
         #  snapshot to be restored.
         return [alpha, x_ls, f_ls, g_ls, fail]
 
-    # @profile
     def computeApproxStationarityVector(self):
             
         #  first check the smooth case (gradient of the penalty function).
