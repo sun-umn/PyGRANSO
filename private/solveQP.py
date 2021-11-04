@@ -1,5 +1,4 @@
 import torch
-from dbg_print import dbg_print
 import osqp
 import numpy as np
 from scipy import sparse
@@ -8,29 +7,13 @@ QP_REQUESTS = 0
 
 
 def getErr():
-    dbg_print("TODO: getErr")
+    # getErr NOT used
     global QP_REQUESTS
     errors = 0
     return [QP_REQUESTS,errors]
 
-
 def solveQP(H,f,A,b,LB,UB,QPsolver,torch_device):
     
-
-    # persistent requests;
-    # persistent errors;
-
-    # if isempty(requests)
-    #     requests    = 0;
-    #     errors      = 0;
-    # end
-    
-    # if nargin < 4 && nargin > 0 && strcmpi(varargin{1},'counts')
-    #     varargout   = {requests,errors};
-    #     return
-    # end
-    
-    # Todo: update requests
     global QP_REQUESTS
     QP_REQUESTS += 1
 

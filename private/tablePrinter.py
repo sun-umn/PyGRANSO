@@ -2,13 +2,9 @@ from numpy.core.defchararray import isspace
 from pygransoStruct import GeneralStruct
 from private import formatOrange as fO, truncate as TR
 from private.centerString import centerString
-
 from itertools import compress
-
 import numpy as np
 import math
-
-from dbg_print import dbg_print
 
 class tP:
    def __init__(self):
@@ -284,7 +280,7 @@ def processSpannedLabels(   labels, widths, span_labels, row_str, vs  ):
    delim_width         = len(vs)
    n_cols = len(labels)
    n_lines = 1
-   dbg_print("HARDCODE: processSpannedLabels")
+   # spannLabel hardcode here
 
    n_multicols         = len(spans)
    

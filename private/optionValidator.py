@@ -1,5 +1,4 @@
 from pygransoStruct import Options, GeneralStruct, sub_validators_struct
-from dbg_print import dbg_print
 import types
 from private.makeStructWithFields import makeStructWithFields
 from private.isAnInteger import isAnInteger
@@ -298,7 +297,7 @@ class oV:
         return
 
     def setSparse(self,name):
-        dbg_print("TODO: optionValidator.setSparse")
+        # optionValidator.setSparse NOT used
         # self.validateAndSet(name, lambda x: issparse(x), "a sparse matrix")
         return
       

@@ -1,7 +1,6 @@
 from pygransoStruct import GeneralStruct
 from private import copyrightNotice, pygransoConstants as pC, pygransoPrinterColumns as pPC, printMessageBox as pMB
 from private.tablePrinter import tP
-from dbg_print import dbg_print
 from private.nDigitsInWholePart import nDigitsInWholePart
 from private.copyrightNotice import copyrightNotice
 
@@ -209,29 +208,11 @@ class pgP:
 
     def printQPError(self,iter,err,loc):
 
+        # QPErr NOT used 
         #  title to appear in top/bottom borders
         t1 = "PyGRANSO: QUADPROG ERROR IN %s QP (Iter %d) - START"%(loc,iter)   
-        t2 = "PyGRANSO: QUADPROG ERROR IN %s QP - END"%(loc)    
-
-        # err_str                 = getReport(err)
-        dbg_print("TODO: skip pygransoPrinter.printQPError for now")
-        
-        #  Get rid of the stack trace info and just show the root cause
-        # indx                    = strfind(err_str,'Caused by:');
-        # if ~isempty(indx)
-        #     err_str             = err_str(indx(1):end);
-        # end    
-        # % split the error into a cell of lines
-        # err_lines               = strsplit(err_str,'\n');
-        # blank_indx              = cellfun(@isBlankStr,err_lines);
-        # err_lines(blank_indx)   = [];
-        # % insert a blank line for the second line
-        # err_lines               = [{err.message} {''} err_lines];
-
-        # fprintf('\n');
-        # self.msg_box_fn(1,t1,t2,err_lines,false,80);
-        # fprintf('\n');
-    
+        t2 = "PyGRANSO: QUADPROG ERROR IN %s QP - END"%(loc)   
+            
 
     def quadprogFailureRate(self,rate):    
         self.table_printer.msgOrange(quadprogFailureRateMsg(rate))
