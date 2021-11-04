@@ -3,11 +3,8 @@ import torch
 from private import pygransoConstants as pgC
 from private.optionValidator import oV
 import numpy as np
-from scipy import sparse
 from pygransoStruct import Options
-from dbg_print import dbg_print
 from private.isAnInteger import isAnInteger
-from numpy.random import default_rng
 
 def pygransoOptions(n,options, torch_device):
     """
@@ -265,8 +262,6 @@ def pygransoOptions(n,options, torch_device):
     
 
     #  Storing information in mememory
-    # persistent default_opts;
-    # persistent LAST_FALLBACK_LEVEL;
     default_opts = None
     LAST_FALLBACK_LEVEL = -1
 
@@ -327,15 +322,8 @@ def pygransoOptions(n,options, torch_device):
             [n_Y,cols_Y]    = ws.Y.shape
             cols_rho        = ws.rho.shape[1]
             
-            dbg_print("skip pygransoOptions lbfgs_validator.assert")
-            # lbfgs_validator.assert(                                     ...
-            #     n == n_S && n == n_Y,                                   ...
-            #     [   'the number of rows in both subfields S and Y must '...
-            #         'match the number of optimization variables'        ]);
-            # lbfgs_validator.assert(                                     ...
-            #     cols_S > 0 && cols_S == cols_Y && cols_S == cols_rho,   ...
-            #     [   'subfields S, Y, and rho must all have the same '   ...
-            #         '(positive) number of columns'                      ]);
+            assert n == n_S and n == n_Y,'PyGRANSO invalidUserOption: the number of rows in both subfields S and Y must match the number of optimization variables'
+            assert cols_S > 0 and cols_S == cols_Y and cols_S == cols_rho,'PyGRANSO invalidUserOption: subfields S, Y, and rho must all have the same (positive) number of columns'
             
             lbfgs_validator.setRow("rho")            
             
@@ -437,14 +425,8 @@ def pygransoOptions(n,options, torch_device):
     except Exception as e:
         print(e)
 
-
     #  GET THE VALIDATED OPTIONS AND POST PROCESS THEM
     opts = postProcess(n,validator.getValidatedOpts(), torch_device)
-    
-    #  For temperarily use
-    # user_opts.__dict__.update(default_opts.__dict__)
-    # opts = postProcess(n,user_opts)
-    # dbg_print('pygransoOptions: currently assume all options are legal \n') 
 
     return opts
 
@@ -457,9 +439,6 @@ def postProcess(n,opts, torch_device):
     
     # If an initial starting point was not provided, use random vector
     if np.all(opts.x0 == None):
-        # opts.x0 = np.random.randn(n,1)
-        # rng = default_rng()
-        # opts.x0 = rng.standard_normal(size=(n,1))
         opts.x0 = torch.randn(n,1).to(device=torch_device, dtype=torch.double)
     
     # If an initial inverse Hessian was not provided, use the identity
@@ -479,11 +458,9 @@ def postProcess(n,opts, torch_device):
 def getDefaults(n):
     [*_, LAST_FALLBACK_LEVEL] = pgC.pygransoConstants()
 
-    # default options for GRANSO
+    # default options for PyGRANSO
     default_opts = Options()
     setattr(default_opts,'x0',None)
-    # setattr(default_opts,'x0',np.ones((14,1)))  
-    # dbg_print("pygransoOptions: set default x0 to a all ones for now. Original: None")
     setattr(default_opts,'mu0',1)
     setattr(default_opts,'H0',None)
     setattr(default_opts,'checkH0',True)
@@ -500,10 +477,7 @@ def getDefaults(n):
     setattr(default_opts,'viol_ineq_tol',1e-6)
     setattr(default_opts,'viol_eq_tol',1e-6)
     setattr(default_opts,'ngrad',min([100,2*n,n+10]))
-    dbg_print("pygransoOptions: set default maxit to a small # for now. Original: 1e-4. Fail for example 6. neighboorhood Cache line 81")
     setattr(default_opts,'evaldist',1e-4)
-    # setattr(default_opts,'evaldist',1e-8)
-    # dbg_print("pygransoOptions: set default maxit to a small # for now. Original: 1000")
     setattr(default_opts,'maxit',1000)
     setattr(default_opts,'maxclocktime',Inf)
     setattr(default_opts,'fvalquit',-Inf)

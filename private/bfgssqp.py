@@ -6,19 +6,13 @@ from private.qpTerminationCondition import qpTC
 import time
 from pygransoStruct import GeneralStruct
 import math
-import numpy.linalg as LA
 import numpy as np
-from dbg_print import dbg_print,dbg_print_1
-from numpy import conjugate as conj
 from numpy.random import default_rng
-# import torch
-
-
 
 class AlgBFGSSQP():
     def __init__(self):
         pass
-    # @profile
+
     def bfgssqp(self,f_eval_fn, penaltyfn_obj, bfgs_obj, opts, printer, torch_device):
         """
         bfgssqp:
@@ -229,58 +223,27 @@ class AlgBFGSSQP():
                 except Exception as e:
                     print(e)
                     print("PyGRANSO:steeringQuadprogFailure")
-
-                # dbg_print("Skip try & except in bfgssqp")
                 
-
                 penalty_parameter_changed = (mu_new != self.mu)
                 if penalty_parameter_changed: 
                     [f,g,self.mu] = self.penaltyfn_obj.updatePenaltyParameter(mu_new)
                 
             elif self.fallback_level == 2:
-                dbg_print_1( " try standard BFGS ")
                 p = -self.apply_H_fn(g)   # standard BFGS 
             elif self.fallback_level == 3:
-                dbg_print_1( " try steep_descent ")
                 p = -g;     # steepest descent
 
                 
             else:
-                # p = np.random.randn(n,1)
-                # new version of randn
-                dbg_print_1( " try random search ")
                 rng = default_rng()
                 p = rng.standard_normal(size=(n,1))
                 self.random_attempts = self.random_attempts + 1
             
             if self.searching_direction_rescaling:
-                dbg_print_1("start rescaling search direction p:") 
                 p_norm = torch.norm(p).item()
                 p =  1 * p / p_norm
-                dbg_print_1("norm of d = {}".format(torch.norm(p).item()))
-                dbg_print_1("end rescaling search direction p.")
                 
             [p,is_descent,fallback_on_this_direction] = self.checkDirection(p,g)
-
-            # dbg_print_1("begin 1D plot for obj function: ")
-            # if self.iter == 2:
-            #     plot_x = []
-            #     plot_y = []
-            #     for i in range(100):
-            #         factor = (-1 + i * 1/50)
-            #         x_tmp = factor * p
-            #         [plot_f,plot_grad,is_feasible] = self.penaltyfn_obj.evaluatePenaltyFunction(x_tmp)
-            #         plot_x.append(factor)
-            #         plot_y.append(plot_f)
-            #     plot_x = np.array(plot_x)
-            #     plot_y = np.array(plot_y)
-            #     import matplotlib.pyplot as plt
-            #     plt.plot(plot_x,plot_y)
-            #     plt.ylabel('x along searching direction')
-            #     plt.ylabel('obj val')
-            #     plt.show()
-
-            # dbg_print_1("end 1D plot for obj function: ")
 
             if fallback_on_this_direction:
                 if self.bumpFallbackLevel():
@@ -302,9 +265,7 @@ class AlgBFGSSQP():
 
             if self.disable_terminationcode_6:
                 if linesearch_failed and self.fallback_level == 3:
-                    dbg_print_1("make movement after the third fallback failing")
                     linesearch_failed = 0
-                    dbg_print_1("end modification")
 
             if linesearch_failed:
                 #  first get lowest mu attempted (restore will erase it)
@@ -342,10 +303,7 @@ class AlgBFGSSQP():
                 self.rel_diff = float("inf")
             else:
                 self.rel_diff = abs(f - f_prev) / abs(f_prev)
-
-            dbg_print_1("self.rel_diff = %f"%self.rel_diff)
-
-            
+     
             # update x to accepted iterate from line search
             # mu is already updated by line search if lowered
             x = x_new

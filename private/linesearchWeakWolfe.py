@@ -1,9 +1,6 @@
 import numpy as np
-import numpy.linalg as LA
 import math
-from numpy import conjugate as conj
 import torch
-from dbg_print import dbg_print_1
 
 
 # @profile
@@ -87,9 +84,6 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
             falpha = f
             gradalpha = grad.detach().clone()
             beta = t
-            # gradbeta = grad.detach().clone()
-            dbg_print_1("final step size t = %f "%t)
-            # return [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals] 
             return [alpha, xalpha, falpha, gradalpha, fail] 
         
         #  setup next function evaluation
@@ -106,20 +100,16 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
     if beta == np.inf: # minimizer never bracketed
         fail = 2
     else: # point satisfying Wolfe conditions was bracketed
-        dbg_print_1("wolfe condition %d fails"%test_flag)
         fail = 1
     
 
     #####################################################################
     if is_backtrack_linesearch:
-        dbg_print_1("return t when line searhc fails:")
         alpha = t
         xalpha = x.detach().clone()
         [f,grad,is_feasible] = obj_fn(x)
         falpha = f
         gradalpha = grad.detach().clone()
         beta = t
-        # gradbeta = grad.detach().clone()
-        dbg_print_1("final step size t = %f \n"%t)
 
     return [alpha, xalpha, falpha, gradalpha, fail]                              

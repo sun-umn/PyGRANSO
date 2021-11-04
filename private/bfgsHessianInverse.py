@@ -1,8 +1,5 @@
 import numpy as np
-from numpy.core.numeric import Inf
 from pygransoStruct import GeneralStruct
-from numpy import conjugate as conj
-from dbg_print import dbg_print_1
 import torch
 
 class H_obj_struct:
@@ -51,27 +48,8 @@ class H_obj_struct:
             self.scaleH0         = False # only allow first update to be scaled
         
 
-        dbg_print_1("start torch accelaeration")
-        # # sty_gpu = torch.from_numpy(sty).to(device=device)
-        # H_gpu = torch.from_numpy(self.H).to(device=device)
-        # s_gpu = torch.from_numpy(s).to(device=device)
-        # # y_gpu = torch.from_numpy(y).to(device=device)
-        # s_gpu = torch.from_numpy(s).to(device=device)
-
-        # for formula, see Nocedal and Wright's book
-        # M = I - rho*s*y', H = M*H*M' + rho*s*s', so we have
-        # H = H - rho*s*y'*H - rho*H*y*s' + rho^2*s*y'*H*y*s' + rho*s*s'
-        #  note that the last two terms combine: (rho^2*y'Hy + rho)ss'
         rho = (1./sty)[0][0]
-
-        # Hy = np.dot(self.H,y)
-        # rhoHyst = np.dot((rho*Hy),np.transpose(s) ) 
         Hy = self.H @ y
-        # Hy_gpu = torch.from_numpy(Hy).to(device=device)
-        
-        
-
-        # rhoHyst = (rho*Hy) @ conj(s.T)
         rhoHyst = (rho*Hy) @ torch.conj(s.t())
 
         #   old version: update may not be symmetric because of rounding
@@ -82,25 +60,16 @@ class H_obj_struct:
         
         #  ytHy could be < 0 if H not numerically pos def
         
-        # ytHy = np.dot(np.transpose(y),Hy)
         ytHy = torch.conj(y.t()) @ Hy
         sstfactor = max([(rho*rho*ytHy + rho).item(),  0])
-        # sscaled = np.sqrt(sstfactor)*s
         sscaled = np.sqrt(sstfactor)*s
-        # H_new = self.H - (conj(rhoHyst.T) + rhoHyst) + sscaled @ conj(sscaled.T)
         H_new = self.H - (torch.conj(rhoHyst.t()) + rhoHyst) + sscaled @ torch.conj(sscaled.t())
-        # H_new = H_new.cpu().numpy()
 
-        #  only update H if H_new doesn't contain any infs or nans
-        # H_vec = np.reshape(H_new, (H_new.size,1))
-        # if np.all( (np.logical_or(np.isinf(H_vec),np.isnan(H_vec))) == False ): 
         
         H_vec = torch.reshape(H_new, (torch.numel(H_new),1))
         notInf_flag = torch.all(torch.isinf(H_vec) == False)
         notNan_flag = torch.all(torch.isnan(H_vec) == False)
-        dbg_print_1("notInf_flag = {}".format( notInf_flag ) )
-        dbg_print_1("notNan_flag = {}".format( notNan_flag ) )
-        # if torch.all( (torch.logical_or(torch.isfinite(H_vec),torch.isnan(H_vec))) == False ): 
+
         if notInf_flag and notNan_flag:
             self.H = H_new
             self.updates += 1
@@ -120,11 +89,6 @@ class H_obj_struct:
 
     def applyH(self,q):
         r = self.H @q 
-        # dbg_print_1("Second-derivative test:")
-        # pos_definite_flag = np.sum(np.linalg.eigvals(self.H) > 0)
-        # dbg_print_1(pos_definite_flag)
-        # dbg_print_1(pos_definite_flag/self.H.shape[0])
-
         return r
 
     def getState(self):

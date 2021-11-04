@@ -1,5 +1,4 @@
 import torch
-from dbg_print import dbg_print
 import numpy as np
 
 def isRealValued(X):
@@ -12,8 +11,6 @@ def isRealValued(X):
       imaginary part allocated, i.e., isreal returns false if an
       imaginary part is allocated, even if it is zero.
     """
-    dbg_print("private.isRealValued: Skip imag validate")
-    # tf = np.isreal(X) or not np.any(np.imag(X))
 
     if torch.is_tensor(X):
       tf = torch.all(torch.isreal(X) == True).item()  

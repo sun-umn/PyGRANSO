@@ -1,8 +1,9 @@
 from pygransoStruct import GeneralStruct
-from private import pygransoConstants as pC, pygransoPrinterColumns as pPC, printMessageBox as pMB
+from private import copyrightNotice, pygransoConstants as pC, pygransoPrinterColumns as pPC, printMessageBox as pMB
 from private.tablePrinter import tP
 from dbg_print import dbg_print
 from private.nDigitsInWholePart import nDigitsInWholePart
+from private.copyrightNotice import copyrightNotice
 
 class pgP:
     def __init__(self):
@@ -239,8 +240,8 @@ class pgP:
     #  private function to print PyGRANSO's opening header with name, author,
     #  copyright, problem specs, and whether limited-memory mode is active
     def gransoHeader(self):
-        dbg_print("TODO: gransoHeader print copyright")
-        # self.table_printer.msg(copyrightNotice());
+        copyrightNotice_msg = copyrightNotice()
+        self.table_printer.msg(copyrightNotice_msg)
         
         #  print the problem specs
         w       = nDigitsInWholePart(max([self.n, self.n_ineq, self.n_eq])) + 2

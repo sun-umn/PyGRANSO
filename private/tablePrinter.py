@@ -1,9 +1,3 @@
-from operator import imod
-from os import truncate
-
-from numpy.lib.function_base import append
-from private.linesearchWeakWolfe import linesearchWeakWolfe
-
 from numpy.core.defchararray import isspace
 from pygransoStruct import GeneralStruct
 from private import formatOrange as fO, truncate as TR
@@ -12,7 +6,7 @@ from private.centerString import centerString
 from itertools import compress
 
 import numpy as np
-import math, string
+import math
 
 from dbg_print import dbg_print
 
@@ -98,9 +92,7 @@ class tP:
       
       
       print(r,end="")
-      # if np.ischar(msg_lines):
-      #       dbg_print("TODO: tablePrinter np.ischar(msg_lines)")
-      #       msg_lines   = msg_lines
+ 
       
       if use_orange: 
             msg_line_fn = lambda s: self.messageLineOrange(s)
@@ -218,10 +210,7 @@ def processLabel(label,width,add_arrows):
    return [processed,n]
 
 def getEmptyStrings(n):
-   dbg_print("TODO: get getEmptyStrings")
    c = np.empty((n,1),dtype=object)
-   # if n > 0: 
-   #   c = cellfun(@(x) '', c,'UniformOutput',false);
    
    return c
 
@@ -293,7 +282,6 @@ def processSpannedLabels(   labels, widths, span_labels, row_str, vs  ):
    [span_labels,spans, *_] = parseSpanningLabels(span_labels)
    
    delim_width         = len(vs)
-   # [n_lines,n_cols]    = len(labels)
    n_cols = len(labels)
    n_lines = 1
    dbg_print("HARDCODE: processSpannedLabels")

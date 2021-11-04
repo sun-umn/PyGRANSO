@@ -5,11 +5,10 @@ from private.bfgssqp import AlgBFGSSQP
 from private.pygransoPrinter import pgP
 from pygransoOptions import pygransoOptions
 from private.solveQP import getErr
-from dbg_print import dbg_print
 from private.wrapToLines import wrapToLines
 from time import sleep
 from private.mat2vec import mat2vec_autodiff, obj_eval
-from private.getNvar import getNvar,getNvarTorch
+from private.getNvar import getNvar
 
 def pygranso(combinedFunction,objEvalFunction,var_dim_map=None,nn_model=None, torch_device = torch.device('cpu'),user_data=None,user_opts=None):
     """
@@ -470,16 +469,10 @@ def processArguments(n,combined_fns,opts,torch_device):
 def getBfgsManager(opts,torch_device):
     if opts.limited_mem_size == 0:
         get_bfgs_fn = lambda H,scaleH0 : bfgsHI.bfgsHessianInverse(H,scaleH0)
-        # lbfgs_args  = None
-        dbg_print("CAll BFGS: Skip LBFGS for now")
     else:
-        dbg_print("LBFGS:TODO")
         get_bfgs_fn = lambda H,scaleH0 : lbfgsHI.bfgsHessianInverseLimitedMem(H,scaleH0,opts.limited_mem_fixed_scaling,opts.limited_mem_size,opts.limited_mem_warm_start,torch_device)
     
     bfgs_obj = get_bfgs_fn(opts.H0,opts.scaleH0)
-    # DEBUG TEST:
-    # print(bfgs_obj.getState() )
-    # print(bfgs_obj.getCounts() )
     
     # remove potentially large and unnecessary data from the opts structure
     delattr(opts,'H0')

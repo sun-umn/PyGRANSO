@@ -1,10 +1,7 @@
-from sys import flags
 import types
 import numpy as np
-import numpy.linalg as LA
 import torch
 from pygransoStruct import GeneralStruct
-from dbg_print import dbg_print
 
 def assertFnOutputs(n,f,g,fn_name):
     if fn_name == "objective":
@@ -23,15 +20,10 @@ def assertFnOutputs(n,f,g,fn_name):
 
     assertFn(r == n,arg2,fn_name,'have dimension matching the number of variables')
 
-    if isinstance(f,float):
-        dbg_print("f is float")
-    else:
-        dbg_print("f is not float")
+
     assertFn(torch.isreal(f) if torch.is_tensor(f) else np.isreal(f),arg1,fn_name,'should be real valued')
-    # assertFn(np.isreal(f.all()),arg1,fn_name,'should be real valued')
     assertFn(torch.isreal(g)==True,arg2,fn_name,'should be real valued')
     assertFn(torch.isfinite(f) if torch.is_tensor(f) else np.isfinite(f) ,arg1,fn_name,'should be finite valued')
-    # assertFn(np.isfinite(f.all()),arg1,fn_name,'should be finite valued')
     assertFn(torch.isfinite(g),arg2,fn_name,'should be finite valued')
     return
 
@@ -163,9 +155,6 @@ def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_thresh
         except Exception as e:
             print(e)
             print("PyGRANSO userSuppliedFunctionsError : failed to evaluate [c,c_grad] = {}eq_fn(x0).".format(type_str))
-            
-        # [c,c_grad]      = c_fn(x0)
-        # dbg_print("Skip try & except in makepenalty function.setupconstraint")
 
         assertFnOutputs(n,c,c_grad,type_str+"equality constraints") 
         c_grad_norms        = torch.sqrt(torch.sum(torch.square(c_grad),0)) 
@@ -576,9 +565,6 @@ class PanaltyFuctions:
         except Exception as e:
             print(e)         
             print("\n error handler TODO: failed to evaluate [f,grad,ci,ci_grad,ce,ce_grad] = obj_fn(x0). \n")
-        
-        # dbg_print("Skip try & except in makepenalty function.makePenaltyFunction")
-        # [self.f,self.f_grad,self.obj_fn,ineq_fn,eq_fn] = splitEvalAtX(self.obj_fn,self.x)
 
         assertFnOutputs(n,self.f,self.f_grad,'objective')
 

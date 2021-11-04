@@ -1,10 +1,8 @@
-from dbg_print import dbg_print_1
 import numpy as np
 import torch
 
 def getCiGradVec(nvar,nconstr_ci_total,var_dim_map,X,ci_vec_torch, torch_device):
 
-    dbg_print_1('Using device in getObjGrad')
     # gradient of inquality constraints
     ci_grad_vec = torch.zeros((nvar,nconstr_ci_total),device=torch_device, dtype=torch.double)
     

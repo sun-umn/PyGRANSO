@@ -59,16 +59,12 @@ class oV:
 
         # Optional suboptname 4th argument
         if sub_optname != None:
-            # dbg_print("optionValidator sub_optname: TODO")
             assert isinstance(sub_optname,str), self.id_str + "Input ''sub_optname'' must be a string!"
             self.invalid_str = err_id + ": ." + sub_optname + ".%s must be %s." 
             self.custom_str  = err_id + ": ." + sub_optname + ": %s"
         else:
             self.invalid_str = err_id + ": .%s must be %s."
             self.custom_str  = err_id + ": %s"
-        
-        # dbg_print("optionValidator: currently assume all provided options are legal\n")
-        # assertFn = lambda tf,varargin : assert tf, err_id + varargin
         
         validator = GeneralStruct()
         setattr(validator, "setUserOpts", lambda some_user_opts : self.setUserOpts(some_user_opts))
@@ -314,14 +310,10 @@ class oV:
         self.validateAndSet( name,lambda x: isString(x), "a string")
         return
 
-    # Todo
     def checkAndSetSubValidators(self):
         if self.sub_validators != None:
-            # cellfun(@checkAndSetSubValidator,fieldnames(sub_validators)); 
             for name in sub_validators_struct.__dict__:
                 self.checkAndSetSubValidator(name)
-               
-        # dbg_print('optionValidator checkAndSetSubValidators: TODO')
 
 
     def checkAndSetSubValidator(self,name):

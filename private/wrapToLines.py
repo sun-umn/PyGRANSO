@@ -1,4 +1,3 @@
-from dbg_print import dbg_print
 import numpy as np
 
 def wrapToLines(str_in,width,indent):
@@ -78,6 +77,5 @@ def trimWord(w,width):
 
 def strToTrimmedWords(str_in,width):
     words = str_in.split()
-    dbg_print("skip strToTrimmedWords")
 
     return words

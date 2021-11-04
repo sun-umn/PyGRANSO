@@ -1,6 +1,5 @@
 import torch
 from torch import conj
-from dbg_print import dbg_print
 from pygransoStruct import GeneralStruct
 
 def bfgsHessianInverseLimitedMem(H0,scaleH0,fixed_scaling,nvec,restart_data,device):
@@ -8,7 +7,6 @@ def bfgsHessianInverseLimitedMem(H0,scaleH0,fixed_scaling,nvec,restart_data,devi
 #        An object that maintains and updates a L-BFGS approximation to the 
 #        inverse Hessian.
 
-    # H,scaleH0,fixed_scaling,mem_size,warm_start
     H_obj = H_obj_struct(H0,scaleH0,fixed_scaling,nvec,restart_data,device)
 
     return H_obj
@@ -40,7 +38,6 @@ class H_obj_struct:
         self.infnan_fails = 0
 
         if restart_data != None:
-            dbg_print("check the if statement when limited memory warm start data is not None")
             self.cols = restart_data.S.shape[1]
             if self.cols > self.nvec:
                 self.S = restart_data.S[:,0:self.nvec]
@@ -53,8 +50,6 @@ class H_obj_struct:
                 self.rho[0:self.cols] = restart_data.rho
             self.gamma = restart_data.gamma
         
-
-       
     def update(self,s,y,sty,damped = False):
   
         self.requests += 1
@@ -71,7 +66,6 @@ class H_obj_struct:
             return skipped
         
         #  We should also check that s and y only have finite entries.
-        dbg_print("check torch isinf if statement")
         if  torch.any(torch.isinf(s)) or torch.any(torch.isnan(s)) or torch.any(torch.isinf(y)) or torch.any(torch.isnan(y)): 
             skipped = 3
             self.infnan_fails += 1
@@ -81,7 +75,6 @@ class H_obj_struct:
         
         if self.update_gamma: 
             gamma_new       = 1 / (rho_new * (y.T @ y))
-            dbg_print("check torch isinf if statement")
             if torch.isinf(gamma_new) or torch.isnan(gamma_new):
                 #  can still apply update with scaling disabled and/or
                 #  previous value of scaling parameter.  We'll update the

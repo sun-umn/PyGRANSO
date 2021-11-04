@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 from private.solveQP import solveQP
-from dbg_print import dbg_print
 from numpy import conjugate as conj
 from numpy import linalg as LA
 
@@ -22,19 +21,12 @@ class qpTC:
         p           = l * len(penaltyfn_at_x.ci)
         q           = l * len(penaltyfn_at_x.ce)                                
     
-        # # debug here:
-        # l = 1
 
         F           = penaltyfn_at_x.f * torch.ones((l,1),device=torch_device, dtype=torch.double) 
         
         CI = penaltyfn_at_x.ci
         CE = penaltyfn_at_x.ce
-        # for i in range(l-1):
-        #     CI_new          = torch.vstack((CI_new,CI))
-        #     CE_new          = torch.vstack((CE_new,CE))
-        # if l > 1:
-        #     CI = CI_new
-        #     CE = CE_new
+
         CI = CI.repeat(l,1)
         CE = CE.repeat(l,1)
         
@@ -51,12 +43,8 @@ class qpTC:
             CI_grads_lst.append(grads_array.CI)     # n by p
             CE_grads_lst.append(grads_array.CE)     # n by q
         F_grads = torch.cat(F_grads_lst,1) 
-        # n = int(F_grads_tmp.size/l)
-        # F_grads = F_grads_tmp.reshape((n,l))
         CI_grads = torch.cat(CI_grads_lst,1) 
         CE_grads = torch.cat(CE_grads_lst,1) 
-
-        dbg_print("check qpTerminationCondition dimension here. line 50")
 
         #  Set up arguments for quadprog interface
         self.all_grads   = torch.hstack((CE_grads, F_grads, CI_grads))
@@ -121,28 +109,9 @@ class qpTC:
             print(e)
             print("PyGRANSO:qpTerminationCondition type 2 failure")
     
-        dbg_print("ignore revert to MATLAB quadprog")
-
         # % Fall back strategy #2: revert to MATLAB's quadprog, if user is
         # % using a different quadprog solver and reattempt with original H
-        # if ~isDefaultQuadprog() 
-        #     users_paths = path;
-        #     % put MATLAB's quadprog on top of path so that it is called
-        #     addpath(getDefaultQuadprogPath());
-        #     try 
-        #         stat_type   = 3;
-        #         [x,lambdas] = solveQP_fn(H);  
-        #     catch err
-        #         ME = ME.addCause(err);
-        #     end
-        #     % restore user's original list of paths (and their order!)
-        #     path(users_paths); 
-            
-        #     % solve succeeded
-        #     if ~isempty(x)
-        #         return
-        #     end
-        # end 
+        # Skip in PyGRANSO
 
         #  Fall back strategy #3: regularize H - this could be expensive
         #  Even though min(eig(Hreg)) may still be tiny negative number,

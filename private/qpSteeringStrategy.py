@@ -1,10 +1,7 @@
-from math import inf
 import numpy as np
 import numpy.linalg as LA
 import torch
 from private.solveQP import solveQP
-from dbg_print import dbg_print
-from numpy import conjugate as conj
 
 
 class qpSS:
@@ -136,10 +133,7 @@ class qpSS:
                 y = solveQP(self.H,self.f,None,None,self.LB,self.UB, "osqp", self.device)
         except Exception as e:
             print(e)
-            print("PyGRANSO steeringQuadprogFailure: Steering aborted due to a quadprog failure.")
-
-        # dbg_print("Skip try & except in qpsteering strategy")
-        
+            print("PyGRANSO steeringQuadprogFailure: Steering aborted due to a quadprog failure.")        
 
         d = -self.mu_Hinv_f_grad - (self.Hinv_c_grads @ y)
         return d
