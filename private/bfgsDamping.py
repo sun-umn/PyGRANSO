@@ -15,7 +15,7 @@ def bfgsDamping(damping,applyH,s,y,sty):
     if sty < damping * stHs:
         theta   = ((1 - damping) * stHs) / (stHs - sty)
         y       = theta * y + (1 - theta) * Hs
-        sty     = theta * sty + (1- theta) * stHs; # s.T@y;
+        sty     = theta * sty + (1- theta) * stHs # s.T@y;
         damped  = True
 
     return [y,sty,damped]

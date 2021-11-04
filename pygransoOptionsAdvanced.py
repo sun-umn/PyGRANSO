@@ -1,4 +1,4 @@
-def pygransoOptionsAvanced(varargin):
+def pygransoOptionsAdvanced(varargin):
     """
     gransoOptionsAdvanced:
        Process user options struct for pygranso.py.  If user_opts is None or
@@ -6,7 +6,7 @@ def pygransoOptionsAvanced(varargin):
        Standard or advanced options may be set.
 
        Type:
-       >> help(gransoOptions)
+       >> help(pygransoOptions)
        to see documentation for the standard user options.
    
 
@@ -121,12 +121,6 @@ def pygransoOptionsAvanced(varargin):
             maintain numerical positive definiteness.  Also, if an eigenvalue 
             of H is exactly zero, this mode will instead resort to raising the 
             smallest eigenvalues of H on that particular iteration of PyGRANSO.
-
-        .quadprog_opts                  [struct | {[]}]
-            Struct of options to pass to underlying QP quadprog solver, with 
-            one additional parameter for selectively suppressing warning
-            messages that the QP solver may produce: 
-            .suppress_warnings          [logical | {true}]
 
         LINE SEARCH PARAMETERS
         .wolfe1                         [real in (0,0.5] | {1e-4}]
