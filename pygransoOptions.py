@@ -5,6 +5,7 @@ from private.optionValidator import oV
 import numpy as np
 from pygransoStruct import Options
 from private.isAnInteger import isAnInteger
+import copy
 
 def pygransoOptions(n,options, torch_device):
     """
@@ -14,7 +15,7 @@ def pygransoOptions(n,options, torch_device):
         Standard or advanced options may be set.  
 
        Type:
-       >> help(gransoOptionsAdvanced) 
+       help(pygransoOptionsAdvanced) 
        to see documentation for the advanced user options.
    
        USAGE:
@@ -232,8 +233,7 @@ def pygransoOptions(n,options, torch_device):
        character map, which may look better when captured by diary().
 
        .print_use_orange               [logical | {true}]
-       By default, PyGRANSO's printed output makes use of an undocumented
-       MATLAB feature for printing orange text.  PyGRANSO's uses orange
+       PyGRANSO's uses orange
        printing to highlight pertinent information.  However, the user
        is the given option to disable it, since support cannot be
        guaranteed (since it is an undocumented feature).
@@ -315,23 +315,27 @@ def pygransoOptions(n,options, torch_device):
             
             #  Ensure all the necessary subfields for L-BFGS data exist and 
             #  if so, it returns a validator for this sub-struct of data.
-            lbfgs_validator = validator.setStructWithFields( "limited_mem_warm_start","S","Y","rho","gamma")
+
+            # lbfgs_validator = validator.setStructWithFields( "limited_mem_warm_start",["S","Y","rho","gamma"])
             
             ws              = user_opts.limited_mem_warm_start
-            [n_S,cols_S]    = ws.S.shape
-            [n_Y,cols_Y]    = ws.Y.shape
-            cols_rho        = ws.rho.shape[1]
+            [n_S,cols_S]    = ws['S'].shape
+            [n_Y,cols_Y]    = ws['Y'].shape
+            cols_rho        = ws['rho'].shape[1]
             
             assert n == n_S and n == n_Y,'PyGRANSO invalidUserOption: the number of rows in both subfields S and Y must match the number of optimization variables'
             assert cols_S > 0 and cols_S == cols_Y and cols_S == cols_rho,'PyGRANSO invalidUserOption: subfields S, Y, and rho must all have the same (positive) number of columns'
             
-            lbfgs_validator.setRow("rho")            
+            # lbfgs_validator.setRow("rho")            
             
-            lbfgs_validator.setRealFiniteValued("S")
-            lbfgs_validator.setRealFiniteValued("Y")
-            lbfgs_validator.setRealFiniteValued("rho")
-            lbfgs_validator.setReal("gamma")
-            lbfgs_validator.setFiniteValued("gamma")
+            # lbfgs_validator.setRealFiniteValued("S")
+            # lbfgs_validator.setRealFiniteValued("Y")
+            # lbfgs_validator.setRealFiniteValued("rho")
+            # lbfgs_validator.setReal("gamma")
+            # lbfgs_validator.setFiniteValued("gamma")          
+            # LBFGS validator TODO
+            validator.setRestartData("limited_mem_warm_start")
+            
         
         if hasattr(user_opts,"H0") and torch.any(user_opts.H0) != None:
             validator.setDimensioned("H0",n,n)

@@ -1,6 +1,6 @@
 import torch
 from torch import conj
-from pygransoStruct import GeneralStruct
+from pygransoStruct import GeneralStruct, Options
 
 def bfgsHessianInverseLimitedMem(H0,scaleH0,fixed_scaling,nvec,restart_data,device):
 #    bfgsHessianInverseLimitedMem:
@@ -38,17 +38,17 @@ class H_obj_struct:
         self.infnan_fails = 0
 
         if restart_data != None:
-            self.cols = restart_data.S.shape[1]
+            self.cols = restart_data['S'].shape[1]
             if self.cols > self.nvec:
-                self.S = restart_data.S[:,0:self.nvec]
-                self.Y = restart_data.Y[:,0:self.nvec]
-                self.rho = restart_data.rho[0:self.nvec]
+                self.S = restart_data['S'][:,0:self.nvec]
+                self.Y = restart_data['Y'][:,0:self.nvec]
+                self.rho = restart_data['rho'][0:self.nvec]
                 self.count = self.nvec
             else:
-                self.S[:,0:self.cols] = restart_data.S
-                self.Y[:,0:self.cols] = restart_data.Y
-                self.rho[0:self.cols] = restart_data.rho
-            self.gamma = restart_data.gamma
+                self.S[:,0:self.cols] = restart_data['S']
+                self.Y[:,0:self.cols] = restart_data['Y']
+                self.rho[0:self.cols] = restart_data['rho']
+            self.gamma = restart_data['gamma']
         
     def update(self,s,y,sty,damped = False):
   
@@ -130,11 +130,12 @@ class H_obj_struct:
         return r
 
     def getState(self):
-        data = GeneralStruct()
-        setattr(data,'S',self.S[:,0:self.count])
-        setattr(data,'Y',self.Y[:,0:self.count])
-        setattr(data,'rho',self.rho[0:self.count])
-        setattr(data,'gamma',self.gamma) 
+        data = {'S':self.S[:,0:self.count], 'Y':self.Y[:,0:self.count], 'rho':self.rho[0:self.count], 'gamma':self.gamma}
+        # data = Options()
+        # setattr(data,'S',self.S[:,0:self.count])
+        # setattr(data,'Y',self.Y[:,0:self.count])
+        # setattr(data,'rho',self.rho[0:self.count])
+        # setattr(data,'gamma',self.gamma) 
         return data
 
     def getCounts(self):

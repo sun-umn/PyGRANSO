@@ -1,4 +1,4 @@
-from pygransoStruct import GeneralStruct
+from pygransoStruct import Options
 
 def makeStructWithFields(varargin):
     """
@@ -6,6 +6,8 @@ def makeStructWithFields(varargin):
       Returns an empty struct with the fieldnames specified as input
       arguments but all set to [].
     """
-    s = GeneralStruct()
+    s = Options()
+    for arg in varargin:
+      setattr(s,arg,None)
     
     return s

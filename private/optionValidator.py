@@ -34,8 +34,8 @@ class oV:
         self.sub_validators = sub_validators
 
         self.ov_str          = "optionValidator"
-        id_str          = self.ov_str + ":invalidUsage"
-        unknown_str     = self.ov_str + ": it is not a recognized option."
+        self.id_str          = self.ov_str + ":invalidUsage"
+        self.unknown_str     = self.ov_str + ": it is not a recognized option."
 
         #  CHECK INPUT OPTIONS
         # need error handler
@@ -107,6 +107,7 @@ class oV:
         setattr(validator, "setPositiveDefinite", lambda name : self.setPositiveDefinite(name))
 
         setattr(validator, "setString", lambda name : self.setString(name))
+        setattr(validator,"setRestartData",lambda name: self.setRestartData(name))
 
         return validator
 
@@ -153,7 +154,7 @@ class oV:
         #  first make sure the name of the user option exists 
         assert hasattr(self.default_opts,opt_name),self.id_str + self.unknown_str + opt_name
         if hasattr(self.user_opts,opt_name):
-            value = getattr(self.user_opts, opt_name)  
+            value = getattr(self.user_opts, opt_name)
             #  make sure the user's value is not empty 
             assert np.any(value != None), self.invalid_str + opt_name + " nonempty"
             #  finally check the specific validation criteria
@@ -185,10 +186,11 @@ class oV:
         return
 
     def setStructWithFields(self,name,varargin):
-        self.validateAndSet( name, lambda x: isinstance(x,GeneralStruct) and [hasattr(x,field) for field in varargin], "a struct with fields: %s" % ", ".join(varargin) )  
+        self.validateAndSet( name, lambda x: isinstance(x,GeneralStruct) or isinstance(x,Options) and [hasattr(x,field) for field in varargin], "a struct with fields: %s" % ", ".join(varargin) )  
         
         sub_struct      = makeStructWithFields(varargin)
-        user_sub_struct = copy.deepcopy(getattr(self.user_opts, name))
+        # user_sub_struct = copy.deepcopy(getattr(self.user_opts, name))
+        user_sub_struct = getattr(self.user_opts, name)
         sub_validator   = self.optionValidator(self.program_name,sub_struct,None,name)
         sub_validator.setUserOpts(user_sub_struct)
         return sub_validator
@@ -294,6 +296,10 @@ class oV:
 
     def setDimensioned(self,name,m,n):                                          
         self.validateAndSet( name, lambda x: isMbyN(x,m,n), "%d by %d"%(m,n) )
+        return
+
+    def setRestartData(self,name):                                          
+        self.validateAndSet( name, lambda x: True, "%lbfgs_warm_start" )
         return
 
     def setSparse(self,name):
