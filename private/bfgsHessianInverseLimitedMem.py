@@ -48,6 +48,7 @@ class H_obj_struct:
                 self.S[:,0:self.cols] = restart_data['S']
                 self.Y[:,0:self.cols] = restart_data['Y']
                 self.rho[0:self.cols] = restart_data['rho']
+                self.count = self.cols
             self.gamma = restart_data['gamma']
         
     def update(self,s,y,sty,damped = False):
