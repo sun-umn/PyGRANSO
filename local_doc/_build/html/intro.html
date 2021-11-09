@@ -1,0 +1,194 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Introduction &#8212; PyGRANSO  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="install.html" />
+    <link rel="prev" title="PyGRANSO’s documentation" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<section id="motivation-and-background">
+<h2>Motivation and Background<a class="headerlink" href="#motivation-and-background" title="Permalink to this headline">¶</a></h2>
+<p>Mathematical optimization is an indispensable modeling and computational tool for all science and
+engineering fields. Over the past decades, researchers have developed numerous foolproof techniques
+and user-friendly software packages to solve convex optimization problems—a subset of optimization
+problems with benign global structures (Boyd et al., 2004; Grant et al., 2008). These software
+packages have substantially lowered the barrier for non-expert practitioners to access and deploy
+these advanced techniques. However, practical problems are often nonconvex, nonsmooth, and constrained,
+and hence unamenable to convex optimization techniques. A notable family of examples is deep learning
+problems—which underpins the ongoing revolutions in AI and countless scientific and applied fields.
+Reliably solving such problems often entails substantial optimization expertise  (Bagirov et al., 2014),
+and practical problems are becoming increasingly more complex and large-scale that outpace what the existing
+software packages can handle.</p>
+<p>The GRANSO package (<a class="reference external" href="http://www.timmitchell.com/software/GRANSO/">http://www.timmitchell.com/software/GRANSO/</a>) is the first numerical optimization package that can handle general nonconvex,
+nonsmooth, constrained optimization problems based on MATLAB  (Curtis et al., 2017). The package is very stable and
+produces meaningful results when other carefully crafted solvers fail. However, several
+limitations of GRANSO preclude its potential broad deployment by general users:</p>
+<p>1. It only allows vector variables but not matrices or tensors, while the latter two are common
+computational units in modern optimization problems such as machine/deep learning.</p>
+<p>2. The default MATLAB quadratic programming solver struggles to scale up to medium- to large-scale
+problems, which is a bottleneck for scalability.</p>
+<p>3. GRANSO requires deriving analytic subgradients for the objective and constraint functions, which
+is challenging and even infeasible, especially in deep learning.</p>
+<p>4. MATLAB that GRANSO is written in is a proprietary programming language and entails considerable
+license fees for researchers and developers.</p>
+</section>
+<section id="our-contributions">
+<h2>Our Contributions<a class="headerlink" href="#our-contributions" title="Permalink to this headline">¶</a></h2>
+<p>By revamping several key components of GRANSO, we built a scalable and user-friendly python numerical optimization
+packages called PyGRANSO for solving general nonconvex, nonsmooth, constrained optimization problems.</p>
+<p>Main improvements includes:</p>
+<ol class="arabic simple">
+<li><p>Revamping GRANSO and translating it into Python (PyGRANSO) for following advantages:</p>
+<ol class="arabic simple">
+<li><p>Autodifferentiation. Pytorch provide first-rate autodifferentiation capabilities,
+removing the pain of deriving analytic subgradients. Powerful matrix/tensor
+computation and autodifferentiation will substantially boost the usability and
+scalability of GRANSO for non-experts, and turn the impossible, e.g., constrained deep
+learning, into possible.</p></li>
+<li><p>GPU support. Pytorch is a modern Python computational frameworks, which enables highly optimized
+and parallelizable matrix/tensor computations that take the full advantage of modern massively
+parallel hardware, e.g., GPUs.</p></li>
+</ol>
+</li>
+<li><p>Allowing matrix and tensor optimization variables in PyGRANSO.</p></li>
+<li><p>Replacing the current MATLAB builtin quadratic solver with the osqp package (<a class="reference external" href="https://osqp.org/docs/index.html">https://osqp.org/docs/index.html</a>).
+The osqp package is a great alternative to MATLAB’s slow quadratic solver,
+and has consistently and significantly outperformed popular commercial solvers
+in terms of speed and scalability.</p></li>
+<li><p>Enabling PyGRANSO to solve small scale unconstrained deep learning problems. The new version that could
+handle constrained deep learning problem will be released soon.</p></li>
+<li><p>Added several new user options to solve common numerical issues in deep learning: linesearch_maxit, linesearch_step_size,
+is_backtrack_linesearch, searching_direction_rescaling, disable_terminationcode_6. Check the settings page for more information.</p></li>
+</ol>
+</section>
+<section id="current-limitations">
+<h2>Current Limitations<a class="headerlink" href="#current-limitations" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>L-BFGS methods didn’t implemented yet. The standard BFGS is memory consuming and weakens the ability of PyGRANSO to explore large-scale deep learning problem.</p></li>
+<li><p>Constrained deep learning problem cannot be handdled by the current version.</p></li>
+<li><p>No validators for some user provided inputs, such as nn_model and device.</p></li>
+</ol>
+</section>
+<section id="update-logs">
+<h2>Update Logs<a class="headerlink" href="#update-logs" title="Permalink to this headline">¶</a></h2>
+<p>v1.0.1-alpha: Update contirbutions, limitations and acknowledgement sections in docs.</p>
+<p>v1.0.0-alpha: Initial release of pygranso. Main features: Python translation, autodifferentiation, GPU-support with PyTorch, matrix/tensor inputs, more powerful solver and several new settings to avoid numerical issues in deep learning problem.</p>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
+<p>Frank E. Curtis, Tim Mitchell, and Michael L. Overton. “A BFGS-SQP method for nonsmooth, nonconvex, constrained optimization and its evaluation using relative minimization profiles.” Optimization Methods and Software 32.1 (2017): 148-181.</p>
+<p>Stephen Boyd, Stephen P Boyd, and Lieven Vandenberghe.Convex optimization. Cambridge university press, 2004</p>
+<p>Michael Grant, Stephen Boyd, and Yinyu Ye. Cvx:  Matlab software for disciplined convex programming, 2008</p>
+<p>Adil Bagirov, Napsu Karmitsa, and Marko M M ̈akel ̈a.Introduction to Nonsmooth Optimization: theory, practice and software. Springer, 2014</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PyGRANSO</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#motivation-and-background">Motivation and Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#our-contributions">Our Contributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#current-limitations">Current Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#update-logs">Update Logs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="settings/index.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Examples</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">PyGRANSO’s documentation</a></li>
+      <li>Next: <a href="install.html" title="next chapter">Installation</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Buyun Liang.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/intro.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

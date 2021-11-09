@@ -1,0 +1,1306 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Getting started with 2-variable nonsmooth Rosenbrock objective function &#8212; PyGRANSO  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Robust PCA" href="robustPCA.html" />
+    <link rel="prev" title="Rosenbrock objective function" href="Rosenbrock.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    /*background: #f5f5f5;*/
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+    margin: 0;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt a.copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+</style>
+<section id="Getting-started-with-2-variable-nonsmooth-Rosenbrock-objective-function">
+<h1>Getting started with 2-variable nonsmooth Rosenbrock objective function<a class="headerlink" href="#Getting-started-with-2-variable-nonsmooth-Rosenbrock-objective-function" title="Permalink to this headline">¶</a></h1>
+<p>This notebook contains examples of how to solve optimization problem with 2-variable nonsmooth Rosenbrock objective function, which subject to simple bound constraints.</p>
+<p>For more details, please check the documentation website <a class="reference external" href="https://pygranso.readthedocs.io/en/latest/">https://pygranso.readthedocs.io/en/latest/</a></p>
+<section id="Import-all-necessary-modules-and-add-PyGRANSO-src-folder-to-system-path.">
+<h2>Import all necessary modules and add PyGRANSO src folder to system path.<a class="headerlink" href="#Import-all-necessary-modules-and-add-PyGRANSO-src-folder-to-system-path." title="Permalink to this headline">¶</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="c1">## Adding PyGRANSO directories. Should be modified by user</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;/home/buyun/Documents/GitHub/PyGRANSO&#39;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pygranso</span> <span class="kn">import</span> <span class="n">pygranso</span>
+<span class="kn">from</span> <span class="nn">pygransoStruct</span> <span class="kn">import</span> <span class="n">Options</span><span class="p">,</span> <span class="n">Data</span><span class="p">,</span> <span class="n">GeneralStruct</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Spceify-torch-device,-optimization-variables,-and-corresponding-objective-and-constrained-function.">
+<h2>Spceify torch device, optimization variables, and corresponding objective and constrained function.<a class="headerlink" href="#Spceify-torch-device,-optimization-variables,-and-corresponding-objective-and-constrained-function." title="Permalink to this headline">¶</a></h2>
+<p>Note: please strictly follow the format of evalObjFunction and combinedFunction, which will be used in the PyGRANSO main algortihm.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+<span class="c1"># variables and corresponding dimensions.</span>
+<span class="n">var_in</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;x1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;x2&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]}</span>
+
+
+<span class="k">def</span> <span class="nf">evalObjFunction</span><span class="p">(</span><span class="n">X_struct</span><span class="p">):</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">X_struct</span><span class="o">.</span><span class="n">x1</span>
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">X_struct</span><span class="o">.</span><span class="n">x2</span>
+
+    <span class="c1"># enable autodifferentiation</span>
+    <span class="n">x1</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">x2</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># objective function</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x1</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="n">x2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">f</span>
+
+<span class="k">def</span> <span class="nf">combinedFunction</span><span class="p">(</span><span class="n">X_struct</span><span class="p">):</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">X_struct</span><span class="o">.</span><span class="n">x1</span>
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">X_struct</span><span class="o">.</span><span class="n">x2</span>
+    <span class="c1"># enable autodifferentiation</span>
+    <span class="n">x1</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">x2</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># objective function</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x1</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="n">x2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># inequality constraint, matrix form</span>
+    <span class="n">ci</span> <span class="o">=</span> <span class="n">GeneralStruct</span><span class="p">()</span>
+    <span class="n">ci</span><span class="o">.</span><span class="n">c1</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mf">0.5</span><span class="p">)</span><span class="o">*</span><span class="n">x1</span><span class="o">-</span><span class="mi">1</span>
+    <span class="n">ci</span><span class="o">.</span><span class="n">c2</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">x2</span><span class="o">-</span><span class="mi">1</span>
+
+    <span class="c1"># equality constraint</span>
+    <span class="n">ce</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="p">[</span><span class="n">f</span><span class="p">,</span><span class="n">ci</span><span class="p">,</span><span class="n">ce</span><span class="p">]</span>
+
+<span class="n">obj_eval_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">X_struct</span> <span class="p">:</span> <span class="n">evalObjFunction</span><span class="p">(</span><span class="n">X_struct</span><span class="p">)</span>
+<span class="n">comb_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">X_struct</span> <span class="p">:</span> <span class="n">combinedFunction</span><span class="p">(</span><span class="n">X_struct</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Specify-user-defined-options-for-PyGRANSO-algorithm">
+<h2>Specify user-defined options for PyGRANSO algorithm<a class="headerlink" href="#Specify-user-defined-options-for-PyGRANSO-algorithm" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">opts</span> <span class="o">=</span> <span class="n">Options</span><span class="p">()</span>
+<span class="c1"># option for switching QP solver. We only have osqp as the only qp solver in current version. Default is osqp</span>
+<span class="c1"># opts.QPsolver = &#39;osqp&#39;</span>
+
+<span class="c1"># set an intial point</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">x0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Run-main-algorithm">
+<h2>Run main algorithm<a class="headerlink" href="#Run-main-algorithm" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="n">soln</span> <span class="o">=</span> <span class="n">pygranso</span><span class="p">(</span><span class="n">combinedFunction</span> <span class="o">=</span> <span class="n">comb_fn</span><span class="p">,</span> <span class="n">objEvalFunction</span> <span class="o">=</span> <span class="n">obj_eval_fn</span><span class="p">,</span><span class="n">var_dim_map</span> <span class="o">=</span> <span class="n">var_in</span><span class="p">,</span> <span class="n">torch_device</span> <span class="o">=</span> <span class="n">device</span><span class="p">,</span> <span class="n">user_opts</span> <span class="o">=</span> <span class="n">opts</span><span class="p">)</span>
+<span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Total Wall Time: </span><span class="si">{}</span><span class="s2">s&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">soln</span><span class="o">.</span><span class="n">final</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+
+<span class="ansi-yellow-fg">╔═════ QP SOLVER NOTICE ════════════════════════════════════════════════════════════════════════╗
+</span><span class="ansi-yellow-fg">║  PyGRANSO requires a quadratic program (QP) solver that has a quadprog-compatible interface,  ║
+</span><span class="ansi-yellow-fg">║  the default is osqp. Users may provide their own wrapper for the QP solver.                  ║
+</span><span class="ansi-yellow-fg">║  To disable this notice, set opts.quadprog_info_msg = False                                   ║
+</span><span class="ansi-yellow-fg">╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+</span>═════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+PyGRANSO: Python numerical package using GRadient-based Algorithm for Non-Smooth Optimization                    ║
+Version 1.1.0                                                                                                    ║
+MIT License Copyright (c) 2021 SUN Group @ UMN                                                                   ║
+═════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+Problem specifications:                                                                                          ║
+ # of variables                     :   2                                                                        ║
+ # of inequality constraints        :   2                                                                        ║
+ # of equality constraints          :   0                                                                        ║
+═════╦═══════════════════════════╦════════════════╦═════════════════╦═══════════════════════╦════════════════════╣
+     ║ &lt;--- Penalty Function --&gt; ║                ║ Total Violation ║ &lt;--- Line Search ---&gt; ║ &lt;- Stationarity -&gt; ║
+Iter ║    Mu    │      Value     ║    Objective   ║   Ineq   │  Eq  ║ SD │ Evals │     t    ║ Grads │    Value   ║
+═════╬═══════════════════════════╬════════════════╬═════════════════╬═══════════════════════╬════════════════════╣
+   0 ║ 1.000000 │  1.41421356237 ║  0.00000000000 ║ 1.000000 │   -  ║ -  │     1 │ 0.000000 ║     1 │ 0.579471   ║
+   1 ║ 1.000000 │  0.70773811042 ║  0.70773811042 ║ 0.000000 │   -  ║ S  │     3 │ 1.500000 ║     1 │ 10.07293   ║
+   2 ║ 1.000000 │  0.25401310554 ║  0.25401310554 ║ 0.000000 │   -  ║ S  │     3 │ 0.250000 ║     1 │ 0.198885   ║
+   3 ║ 1.000000 │  0.21478744238 ║  0.21478744238 ║ 0.000000 │   -  ║ S  │     3 │ 0.250000 ║     1 │ 0.135710   ║
+   4 ║ 1.000000 │  0.21422378595 ║  0.21422378595 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.332997   ║
+   5 ║ 1.000000 │  0.15330884270 ║  0.15330884270 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.122526   ║
+   6 ║ 1.000000 │  0.14804462353 ║  0.14804462353 ║ 0.000000 │   -  ║ S  │     2 │ 0.500000 ║     1 │ 0.012623   ║
+   7 ║ 1.000000 │  0.10856024489 ║  0.10856024489 ║ 0.000000 │   -  ║ S  │     3 │ 4.000000 ║     1 │ 0.042111   ║
+   8 ║ 1.000000 │  0.10482600240 ║  0.10482593538 ║ 6.70e-08 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.003212   ║
+   9 ║ 0.590490 │  0.05930348165 ║  0.09776366663 ║ 0.001575 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 0.028507   ║
+  10 ║ 0.590490 │  0.05288121922 ║  0.08955480909 ║ 0.000000 │   -  ║ S  │     2 │ 0.500000 ║     1 │ 0.013736   ║
+  11 ║ 0.590490 │  0.05256976230 ║  0.08902735406 ║ 0.000000 │   -  ║ S  │     6 │ 0.031250 ║     1 │ 0.005027   ║
+  12 ║ 0.590490 │  0.05213546649 ║  0.08829187029 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.001898   ║
+  13 ║ 0.590490 │  0.05097806280 ║  0.08624466915 ║ 5.14e-05 │   -  ║ S  │     4 │ 1.750000 ║     1 │ 2.18e-05   ║
+  14 ║ 0.590490 │  0.05079563998 ║  0.08602286233 ║ 0.000000 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 5.10e-05   ║
+  15 ║ 0.590490 │  0.05077733823 ║  0.08599186816 ║ 0.000000 │   -  ║ S  │     3 │ 0.250000 ║     1 │ 3.47e-04   ║
+  16 ║ 0.590490 │  0.05071543228 ║  0.08588702943 ║ 2.70e-10 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 1.05e-05   ║
+  17 ║ 0.590490 │  0.05067270160 ║  0.08581466510 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 8.76e-06   ║
+  18 ║ 0.590490 │  0.05066273369 ║  0.08579778436 ║ 0.000000 │   -  ║ S  │     4 │ 0.125000 ║     1 │ 4.48e-05   ║
+  19 ║ 0.590490 │  0.05066184116 ║  0.08579627286 ║ 0.000000 │   -  ║ S  │     2 │ 0.500000 ║     1 │ 2.46e-06   ║
+═════╬═══════════════════════════╬════════════════╬═════════════════╬═══════════════════════╬════════════════════╣
+     ║ &lt;--- Penalty Function --&gt; ║                ║ Total Violation ║ &lt;--- Line Search ---&gt; ║ &lt;- Stationarity -&gt; ║
+Iter ║    Mu    │      Value     ║    Objective   ║   Ineq   │  Eq  ║ SD │ Evals │     t    ║ Grads │    Value   ║
+═════╬═══════════════════════════╬════════════════╬═════════════════╬═══════════════════════╬════════════════════╣
+  20 ║ 0.590490 │  0.05065742201 ║  0.08578809116 ║ 2.85e-07 │   -  ║ S  │     3 │ 1.500000 ║     1 │ 4.06e-06   ║
+  21 ║ 0.228768 │  0.01962567651 ║  0.08578802937 ║ 1.27e-07 │   -  ║ <span class="ansi-yellow-fg">SI</span> │    24 │ 1.19e-07 ║     1 │ 4.30e-07   ║
+  22 ║ 0.228768 │  0.01962563551 ║  0.08578840563 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 1.69e-06   ║
+  23 ║ 0.228768 │  0.01962558257 ║  0.08578817425 ║ 0.000000 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 1.76e-07   ║
+  24 ║ 0.228768 │  0.01962531715 ║  0.08578701404 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 1.17e-07   ║
+  25 ║ 0.228768 │  0.01962530099 ║  0.08578694338 ║ 0.000000 │   -  ║ S  │     2 │ 0.500000 ║     1 │ 1.12e-07   ║
+  26 ║ 0.228768 │  0.01962527238 ║  0.08578681833 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 7.24e-08   ║
+  27 ║ 0.228768 │  0.01962526814 ║  0.08578679978 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 1.03e-07   ║
+  28 ║ 0.228768 │  0.01962525407 ║  0.08578673829 ║ 0.000000 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 1.23e-07   ║
+  29 ║ 0.228768 │  0.01962521414 ║  0.08578643555 ║ 1.94e-08 │   -  ║ S  │     8 │ 4.250000 ║     1 │ 1.85e-07   ║
+  30 ║ 0.228768 │  0.01962521395 ║  0.08578643827 ║ 1.94e-08 │   -  ║ <span class="ansi-yellow-fg">SI</span> │    33 │ 2.33e-10 ║     1 │ 2.32e-08   ║
+  31 ║ 0.109419 │  0.00938668494 ║  0.08578653377 ║ 9.14e-09 │   -  ║ <span class="ansi-yellow-fg">SI</span> │    27 │ 1.49e-08 ║     1 │ 1.23e-08   ║
+  32 ║ 0.109419 │  0.00938667939 ║  0.08578656654 ║ 0.000000 │   -  ║ S  │     2 │ 0.500000 ║     1 │ 9.53e-08   ║
+  33 ║ 0.109419 │  0.00938666755 ║  0.08578645832 ║ 0.000000 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 6.77e-09   ║
+═════╩═══════════════════════════╩════════════════╩═════════════════╩═══════════════════════╩════════════════════╣
+Optimization results:                                                                                            ║
+F = final iterate, B = Best (to tolerance), MF = Most Feasible                                                   ║
+═════╦═══════════════════════════╦════════════════╦═════════════════╦═══════════════════════╦════════════════════╣
+   F ║          │                ║  0.08578645832 ║ 0.000000 │   -  ║    │       │          ║       │            ║
+   B ║          │                ║  0.08578632948 ║ 5.69e-07 │   -  ║    │       │          ║       │            ║
+  MF ║          │                ║  0.08578643763 ║ 0.000000 │   -  ║    │       │          ║       │            ║
+═════╩═══════════════════════════╩════════════════╩═════════════════╩═══════════════════════╩════════════════════╣
+Iterations:              33                                                                                      ║
+Function evaluations:    155                                                                                     ║
+PyGRANSO termination code: 0 --- converged to stationarity and feasibility tolerances.                           ║
+═════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+Total Wall Time: 0.40601372718811035s
+tensor([[0.7071],
+        [0.5000]], dtype=torch.float64)
+</pre></div></div>
+</div>
+</section>
+</section>
+<section id="Advanced-Tutorial-1">
+<h1>Advanced Tutorial 1<a class="headerlink" href="#Advanced-Tutorial-1" title="Permalink to this headline">¶</a></h1>
+<p>the following example shows how to set PyGRANSO options and how to restart PyGRASNO</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">opts</span> <span class="o">=</span> <span class="n">Options</span><span class="p">()</span>
+<span class="c1"># set an infeasible initial point</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">x0</span> <span class="o">=</span> <span class="mf">5.5</span><span class="o">*</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">)</span>
+
+<span class="c1"># By default PyGRANSO will print using extended ASCII characters to &#39;draw&#39; table borders and some color prints.</span>
+<span class="c1"># If user wants to create a log txt file of the console output, please set opts.print_ascii = True</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">print_ascii</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="c1"># By default, PyGRANSO prints an info message about QP solvers, since</span>
+<span class="c1"># PyGRANSO can be used with any QP solver that has a quadprog-compatible</span>
+<span class="c1"># interface.  Let&#39;s disable this message since we&#39;ve already seen it</span>
+<span class="c1"># hundreds of times and can now recite it from memory.  ;-)</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">quadprog_info_msg</span>  <span class="o">=</span> <span class="kc">False</span>
+
+<span class="c1"># Try a very short run.</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">maxit</span> <span class="o">=</span> <span class="mi">10</span> <span class="c1"># default is 1000</span>
+
+<span class="c1"># PyGRANSO&#39;s penalty parameter is on the *objective* function, thus</span>
+<span class="c1"># higher penalty parameter values favor objective minimization more</span>
+<span class="c1"># highly than attaining feasibility.  Let&#39;s set PyGRANSO to start off</span>
+<span class="c1"># with a higher initial value of the penalty parameter.  PyGRANSO will</span>
+<span class="c1"># automatically tune the penalty parameter to promote progress towards</span>
+<span class="c1"># feasibility.  PyGRANSO only adjusts the penalty parameter in a</span>
+<span class="c1"># monotonically decreasing fashion.</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">mu0</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># default is 1</span>
+
+<span class="c1"># start main algorithm</span>
+<span class="n">soln</span> <span class="o">=</span> <span class="n">pygranso</span><span class="p">(</span><span class="n">combinedFunction</span> <span class="o">=</span> <span class="n">comb_fn</span><span class="p">,</span> <span class="n">objEvalFunction</span> <span class="o">=</span> <span class="n">obj_eval_fn</span><span class="p">,</span><span class="n">var_dim_map</span> <span class="o">=</span> <span class="n">var_in</span><span class="p">,</span> <span class="n">torch_device</span> <span class="o">=</span> <span class="n">device</span><span class="p">,</span> <span class="n">user_opts</span> <span class="o">=</span> <span class="n">opts</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+
+==================================================================================================================
+PyGRANSO: Python numerical package using GRadient-based Algorithm for Non-Smooth Optimization                    |
+Version 1.1.0                                                                                                    |
+MIT License Copyright (c) 2021 SUN Group @ UMN                                                                   |
+==================================================================================================================
+Problem specifications:                                                                                          |
+ # of variables                     :   2                                                                        |
+ # of inequality constraints        :   2                                                                        |
+ # of equality constraints          :   0                                                                        |
+==================================================================================================================
+     | &lt;--- Penalty Function --&gt; |                | Total Violation | &lt;--- Line Search ---&gt; | &lt;- Stationarity -&gt; |
+Iter |    Mu    |      Value     |    Objective   |   Ineq   |  Eq  | SD | Evals |     t    | Grads |    Value   |
+=====|===========================|================|=================|=======================|====================|
+   0 | 100.0000 |  21841.7781746 |  218.250000000 | 10.00000 |   -  | -  |     1 | 0.000000 |     1 | 9732.768   |
+   1 | 34.86784 |  1509.66611872 |  42.9789783006 | 11.08181 |   -  | S  |    10 | 0.001953 |     1 | 546.6038   |
+   2 | 34.86784 |  1378.57842221 |  39.2815768212 | 8.914529 |   -  | S  |     3 | 1.500000 |     1 | 4.455384   |
+   3 | 12.15767 |  285.452828054 |  22.6935200208 | 9.552604 |   -  | S  |     2 | 2.000000 |     1 | 0.297144   |
+   4 | 12.15767 |  264.999595731 |  21.0732808630 | 8.797697 |   -  | S  |     2 | 2.000000 |     1 | 0.603629   |
+   5 | 4.239116 |  60.5144787250 |  12.1478493778 | 9.018338 |   -  | S  |     2 | 2.000000 |     1 | 0.111610   |
+   6 | 4.239116 |  53.5399399407 |  10.5181947367 | 8.952094 |   -  | S  |     2 | 0.500000 |     1 | 0.164082   |
+   7 | 3.815204 |  48.9917031616 |  10.4947962860 | 8.951912 |   -  | S  |     4 | 0.125000 |     1 | 0.033640   |
+   8 | 3.815204 |  48.7011303503 |  10.4372013183 | 8.881076 |   -  | S  |     2 | 2.000000 |     1 | 0.018555   |
+   9 | 3.815204 |  48.2564717826 |  10.3422772655 | 8.798572 |   -  | S  |     2 | 2.000000 |     1 | 0.057946   |
+  10 | 3.815204 |  39.4225027901 |  9.27057783616 | 4.053355 |   -  | S  |     5 | 16.00000 |     1 | 0.001796   |
+==================================================================================================================
+Optimization results:                                                                                            |
+F = final iterate, B = Best (to tolerance), MF = Most Feasible                                                   |
+==================================================================================================================
+   F |          |                |  9.27057783616 | 4.053355 |   -  |    |       |          |       |            |
+  MF |          |                |  9.27057783616 | 4.053355 |   -  |    |       |          |       |            |
+==================================================================================================================
+Iterations:              10                                                                                      |
+Function evaluations:    35                                                                                      |
+PyGRANSO termination code: 4 --- max iterations reached.                                                         |
+==================================================================================================================
+</pre></div></div>
+</div>
+<section id="Let’s-restart-PyGRANSO-from-the-last-iterate-of-the-previous-run">
+<h2>Let’s restart PyGRANSO from the last iterate of the previous run<a class="headerlink" href="#Let’s-restart-PyGRANSO-from-the-last-iterate-of-the-previous-run" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">opts</span> <span class="o">=</span> <span class="n">Options</span><span class="p">()</span>
+<span class="c1"># set the initial point and penalty parameter to their final values from the previous run</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">x0</span> <span class="o">=</span> <span class="n">soln</span><span class="o">.</span><span class="n">final</span><span class="o">.</span><span class="n">x</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">mu0</span> <span class="o">=</span> <span class="n">soln</span><span class="o">.</span><span class="n">final</span><span class="o">.</span><span class="n">mu</span>
+
+<span class="c1"># PREPARE TO RESTART PyGRANSO IN FULL-MEMORY MODE</span>
+<span class="c1"># Set the last BFGS inverse Hessian approximation as the initial</span>
+<span class="c1"># Hessian for the next run.  Generally this is a good thing to do, and</span>
+<span class="c1"># often it is necessary to retain this information when restarting (as</span>
+<span class="c1"># on difficult nonsmooth problems, PyGRANSO may not be able to restart</span>
+<span class="c1"># without it).  However, your mileage may vary.  In the test, with</span>
+<span class="c1"># the above settings, omitting H0 causes PyGRANSO to take an additional</span>
+<span class="c1"># 16 iterations to converge on this problem.</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">H0</span> <span class="o">=</span> <span class="n">soln</span><span class="o">.</span><span class="n">H_final</span>     <span class="c1"># try running with this commented out</span>
+
+<span class="c1"># When restarting, soln.H_final may fail PyGRANSO&#39;s initial check to</span>
+<span class="c1"># assess whether or not the user-provided H0 is positive definite.  If</span>
+<span class="c1"># it fails this test, the test may be disabled by setting opts.checkH0</span>
+<span class="c1"># to false.</span>
+<span class="c1"># opts.checkH0 = False       % Not needed for this example</span>
+
+<span class="c1"># If one desires to restart PyGRANSO as if it had never stopped (e.g.</span>
+<span class="c1"># to continue optimization after it hit its maxit limit), then one must</span>
+<span class="c1"># also disable scaling the initial BFGS inverse Hessian approximation</span>
+<span class="c1"># on the very first iterate.</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">scaleH0</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="c1"># Restart PyGRANSO</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">maxit</span> <span class="o">=</span> <span class="mi">100</span> <span class="c1"># increase maximum allowed iterations</span>
+
+<span class="c1"># Main algorithm</span>
+<span class="n">soln</span> <span class="o">=</span> <span class="n">pygranso</span><span class="p">(</span><span class="n">combinedFunction</span> <span class="o">=</span> <span class="n">comb_fn</span><span class="p">,</span> <span class="n">objEvalFunction</span> <span class="o">=</span> <span class="n">obj_eval_fn</span><span class="p">,</span><span class="n">var_dim_map</span> <span class="o">=</span> <span class="n">var_in</span><span class="p">,</span> <span class="n">torch_device</span> <span class="o">=</span> <span class="n">device</span><span class="p">,</span> <span class="n">user_opts</span> <span class="o">=</span> <span class="n">opts</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+
+<span class="ansi-yellow-fg">╔═════ QP SOLVER NOTICE ════════════════════════════════════════════════════════════════════════╗
+</span><span class="ansi-yellow-fg">║  PyGRANSO requires a quadratic program (QP) solver that has a quadprog-compatible interface,  ║
+</span><span class="ansi-yellow-fg">║  the default is osqp. Users may provide their own wrapper for the QP solver.                  ║
+</span><span class="ansi-yellow-fg">║  To disable this notice, set opts.quadprog_info_msg = False                                   ║
+</span><span class="ansi-yellow-fg">╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+</span>═════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+PyGRANSO: Python numerical package using GRadient-based Algorithm for Non-Smooth Optimization                    ║
+Version 1.1.0                                                                                                    ║
+MIT License Copyright (c) 2021 SUN Group @ UMN                                                                   ║
+═════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+Problem specifications:                                                                                          ║
+ # of variables                     :   2                                                                        ║
+ # of inequality constraints        :   2                                                                        ║
+ # of equality constraints          :   0                                                                        ║
+═════╦═══════════════════════════╦════════════════╦═════════════════╦═══════════════════════╦════════════════════╣
+     ║ &lt;--- Penalty Function --&gt; ║                ║ Total Violation ║ &lt;--- Line Search ---&gt; ║ &lt;- Stationarity -&gt; ║
+Iter ║    Mu    │      Value     ║    Objective   ║   Ineq   │  Eq  ║ SD │ Evals │     t    ║ Grads │    Value   ║
+═════╬═══════════════════════════╬════════════════╬═════════════════╬═══════════════════════╬════════════════════╣
+   0 ║ 3.815204 │  39.4225027901 ║  9.27057783616 ║ 4.053355 │   -  ║ -  │     1 │ 0.000000 ║     1 │ 0.161642   ║
+   1 ║ 2.503156 │  27.1660390047 ║  9.40556725606 ║ 3.622442 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 0.052571   ║
+   2 ║ 2.252840 │  24.6945188331 ║  9.60502524451 ║ 3.055934 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 0.123979   ║
+   3 ║ 2.027556 │  22.2891460635 ║  9.93652597262 ║ 2.142284 │   -  ║ S  │     3 │ 4.000000 ║     1 │ 0.327613   ║
+   4 ║ 1.642320 │  17.8466435973 ║  10.2831224354 ║ 0.958463 │   -  ║ S  │     3 │ 4.000000 ║     1 │ 0.398584   ║
+   5 ║ 1.642320 │  13.1469532601 ║  8.00510901881 ║ 0.000000 │   -  ║ S  │     4 │ 8.000000 ║     1 │ 1.153853   ║
+   6 ║ 1.642320 │  11.5677181190 ║  6.66995318506 ║ 0.613518 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 1.564958   ║
+   7 ║ 1.642320 │  9.63991621171 ║  5.86969305211 ║ 0.000000 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 1.134645   ║
+   8 ║ 1.642320 │  3.23065556144 ║  1.96712876817 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.753291   ║
+   9 ║ 1.642320 │  3.19199390360 ║  1.94358789297 ║ 0.000000 │   -  ║ S  │     3 │ 0.250000 ║     1 │ 0.220689   ║
+  10 ║ 1.642320 │  2.57723379203 ║  1.56926377268 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.043112   ║
+  11 ║ 1.642320 │  2.11077078156 ║  1.28523695840 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.278753   ║
+  12 ║ 1.642320 │  1.72174318816 ║  1.04836015242 ║ 0.000000 │   -  ║ S  │     2 │ 0.500000 ║     1 │ 0.273228   ║
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/buyun/Documents/GitHub/PyGRANSO/private/isPositiveDefinite.py:11: UserWarning: torch.cholesky is deprecated in favor of torch.linalg.cholesky and will be removed in a future PyTorch release.
+L = torch.cholesky(A)
+should be replaced with
+L = torch.linalg.cholesky(A)
+and
+U = torch.cholesky(A, upper=True)
+should be replaced with
+U = torch.linalg.cholesky(A.transpose(-2, -1).conj()).transpose(-2, -1).conj() (Triggered internally at  /opt/conda/conda-bld/pytorch_1623448255797/work/aten/src/ATen/native/BatchLinearAlgebra.cpp:1284.)
+  torch.cholesky(A)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+  13 ║ 1.642320 │  1.66162812265 ║  1.01175641287 ║ 0.000000 │   -  ║ S  │     3 │ 1.500000 ║     1 │ 0.197106   ║
+  14 ║ 1.642320 │  1.51013716905 ║  0.91951438729 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.016625   ║
+  15 ║ 1.642320 │  1.40855704482 ║  0.85766279684 ║ 0.000000 │   -  ║ S  │     3 │ 4.000000 ║     1 │ 0.150379   ║
+  16 ║ 1.642320 │  1.10624910806 ║  0.67358912265 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.019717   ║
+  17 ║ 1.642320 │  0.90861102677 ║  0.55324835961 ║ 0.000000 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 0.230252   ║
+  18 ║ 1.642320 │  0.82413380278 ║  0.50181063299 ║ 0.000000 │   -  ║ S  │     3 │ 0.250000 ║     1 │ 0.047605   ║
+  19 ║ 1.642320 │  0.70684162613 ║  0.43039205847 ║ 0.000000 │   -  ║ S  │     3 │ 4.000000 ║     1 │ 0.072818   ║
+═════╬═══════════════════════════╬════════════════╬═════════════════╬═══════════════════════╬════════════════════╣
+     ║ &lt;--- Penalty Function --&gt; ║                ║ Total Violation ║ &lt;--- Line Search ---&gt; ║ &lt;- Stationarity -&gt; ║
+Iter ║    Mu    │      Value     ║    Objective   ║   Ineq   │  Eq  ║ SD │ Evals │     t    ║ Grads │    Value   ║
+═════╬═══════════════════════════╬════════════════╬═════════════════╬═══════════════════════╬════════════════════╣
+  20 ║ 1.642320 │  0.67487089933 ║  0.41092525514 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.140841   ║
+  21 ║ 1.642320 │  0.49036957566 ║  0.29858339305 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.118111   ║
+  22 ║ 1.642320 │  0.43406924561 ║  0.26430242537 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.160415   ║
+  23 ║ 1.642320 │  0.41702334710 ║  0.25392326959 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.004060   ║
+  24 ║ 1.642320 │  0.37559615670 ║  0.22869847652 ║ 0.000000 │   -  ║ S  │     3 │ 4.000000 ║     1 │ 0.111828   ║
+  25 ║ 1.642320 │  0.29024087957 ║  0.17672610808 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.005157   ║
+  26 ║ 1.642320 │  0.25791630950 ║  0.15704385149 ║ 0.000000 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 0.127527   ║
+  27 ║ 1.642320 │  0.24673783035 ║  0.15023733575 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.118576   ║
+  28 ║ 1.642320 │  0.20514988793 ║  0.12491466164 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.011870   ║
+  29 ║ 1.642320 │  0.19891501154 ║  0.12111827899 ║ 0.000000 │   -  ║ S  │     4 │ 0.375000 ║     1 │ 0.075359   ║
+  30 ║ 1.642320 │  0.18406531410 ║  0.11207637822 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.012464   ║
+  31 ║ 1.642320 │  0.16901328180 ║  0.10291127683 ║ 0.000000 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 0.014262   ║
+  32 ║ 1.642320 │  0.15339413804 ║  0.08640798215 ║ 0.007472 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 0.005132   ║
+  33 ║ 0.572642 │  0.05991491352 ║  0.08505118218 ║ 0.007543 │   -  ║ S  │     6 │ 0.031250 ║     1 │ 0.010332   ║
+  34 ║ 0.572642 │  0.05113925215 ║  0.08930410250 ║ 0.000000 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 0.001097   ║
+  35 ║ 0.572642 │  0.05025659626 ║  0.08776272696 ║ 0.000000 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 7.67e-04   ║
+  36 ║ 0.572642 │  0.04988222679 ║  0.08710896828 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.001675   ║
+  37 ║ 0.572642 │  0.04959729366 ║  0.08661139164 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.001251   ║
+  38 ║ 0.572642 │  0.04933484653 ║  0.08579607199 ║ 1.39e-04 │   -  ║ S  │     5 │ 1.125000 ║     1 │ 8.10e-05   ║
+  39 ║ 0.572642 │  0.04931772560 ║  0.08612318399 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 4.33e-05   ║
+═════╬═══════════════════════════╬════════════════╬═════════════════╬═══════════════════════╬════════════════════╣
+     ║ &lt;--- Penalty Function --&gt; ║                ║ Total Violation ║ &lt;--- Line Search ---&gt; ║ &lt;- Stationarity -&gt; ║
+Iter ║    Mu    │      Value     ║    Objective   ║   Ineq   │  Eq  ║ SD │ Evals │     t    ║ Grads │    Value   ║
+═════╬═══════════════════════════╬════════════════╬═════════════════╬═══════════════════════╬════════════════════╣
+  40 ║ 0.572642 │  0.04919508084 ║  0.08590901033 ║ 0.000000 │   -  ║ S  │     2 │ 0.500000 ║     1 │ 1.99e-04   ║
+  41 ║ 0.572642 │  0.04917818471 ║  0.08587950474 ║ 0.000000 │   -  ║ S  │     2 │ 0.500000 ║     1 │ 4.03e-05   ║
+  42 ║ 0.572642 │  0.04917261715 ║  0.08586978215 ║ 0.000000 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 5.13e-05   ║
+  43 ║ 0.572642 │  0.04914808881 ║  0.08582694850 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 2.59e-05   ║
+  44 ║ 0.572642 │  0.04914677634 ║  0.08582465655 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 4.43e-05   ║
+  45 ║ 0.572642 │  0.04913920509 ║  0.08578613105 ║ 9.51e-06 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 8.10e-07   ║
+  46 ║ 0.246503 │  0.02116068291 ║  0.08578637308 ║ 9.51e-06 │   -  ║ <span class="ansi-yellow-fg">SI</span> │    24 │ 1.19e-07 ║     1 │ 8.57e-07   ║
+  47 ║ 0.117902 │  0.01012526231 ║  0.08584031809 ║ 4.53e-06 │   -  ║ <span class="ansi-yellow-fg">SI</span> │    18 │ 7.63e-06 ║     1 │ 9.85e-07   ║
+  48 ║ 0.117902 │  0.01011518477 ║  0.08579326903 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 1.04e-05   ║
+  49 ║ 0.117902 │  0.01011481608 ║  0.08579014190 ║ 0.000000 │   -  ║ S  │     3 │ 0.250000 ║     1 │ 1.45e-06   ║
+  50 ║ 0.117902 │  0.01011467671 ║  0.08578895979 ║ 0.000000 │   -  ║ S  │     2 │ 0.500000 ║     1 │ 4.48e-07   ║
+  51 ║ 0.117902 │  0.01011467305 ║  0.08578892876 ║ 0.000000 │   -  ║ S  │     5 │ 0.062500 ║     1 │ 3.23e-07   ║
+  52 ║ 0.117902 │  0.01011465493 ║  0.08578680516 ║ 1.87e-07 │   -  ║ S  │    11 │ 23.50000 ║     1 │ 2.99e-07   ║
+  53 ║ 0.117902 │  0.01011458893 ║  0.08578783166 ║ 4.52e-08 │   -  ║ <span class="ansi-yellow-fg">SI</span> │    23 │ 2.38e-07 ║     1 │ 1.36e-07   ║
+  54 ║ 0.117902 │  0.01011446924 ║  0.08578720017 ║ 0.000000 │   -  ║ S  │     2 │ 0.500000 ║     1 │ 8.81e-07   ║
+  55 ║ 0.117902 │  0.01011440224 ║  0.08578663190 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 5.24e-08   ║
+  56 ║ 0.117902 │  0.01011439467 ║  0.08578656770 ║ 0.000000 │   -  ║ S  │     3 │ 0.250000 ║     1 │ 4.59e-08   ║
+  57 ║ 0.117902 │  0.01011439445 ║  0.08578656582 ║ 0.000000 │   -  ║ S  │     3 │ 0.250000 ║     1 │ 8.48e-09   ║
+═════╩═══════════════════════════╩════════════════╩═════════════════╩═══════════════════════╩════════════════════╣
+Optimization results:                                                                                            ║
+F = final iterate, B = Best (to tolerance), MF = Most Feasible                                                   ║
+═════╦═══════════════════════════╦════════════════╦═════════════════╦═══════════════════════╦════════════════════╣
+   F ║          │                ║  0.08578656582 ║ 0.000000 │   -  ║    │       │          ║       │            ║
+   B ║          │                ║  0.08578656582 ║ 0.000000 │   -  ║    │       │          ║       │            ║
+  MF ║          │                ║  0.08578656582 ║ 0.000000 │   -  ║    │       │          ║       │            ║
+═════╩═══════════════════════════╩════════════════╩═════════════════╩═══════════════════════╩════════════════════╣
+Iterations:              57                                                                                      ║
+Function evaluations:    187                                                                                     ║
+PyGRANSO termination code: 0 --- converged to stationarity and feasibility tolerances.                           ║
+═════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">soln</span><span class="o">.</span><span class="n">final</span><span class="o">.</span><span class="n">x</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+tensor([[0.7071],
+        [0.5000]], dtype=torch.float64)
+</pre></div></div>
+</div>
+</section>
+</section>
+<section id="Advanced-Tutorial-2">
+<h1>Advanced Tutorial 2<a class="headerlink" href="#Advanced-Tutorial-2" title="Permalink to this headline">¶</a></h1>
+<p>opts below shows the importance of using an initial point that is neither near nor on a nonsmooth manifold, that is, the functions (objective and constraints) should be smooth at and <em>about</em> the initial point.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">opts</span> <span class="o">=</span> <span class="n">Options</span><span class="p">()</span>
+<span class="c1"># Set a randomly generated starting point.  In theory, with probability</span>
+<span class="c1"># one, a randomly selected point will not be on a nonsmooth manifold.</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">x0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">)</span>   <span class="c1"># randomly generated is okay</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">maxit</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># we&#39;ll use this value of maxit later</span>
+
+<span class="c1"># However, (0,0) or (1,1) are on the nonsmooth manifold and if GRANSO</span>
+<span class="c1"># is started at either of them, it will break down on the first</span>
+<span class="c1"># iteration.  This example highlights that it is imperative to start</span>
+<span class="c1"># GRANSO at a point where the functions are smooth.</span>
+
+<span class="c1"># Uncomment either of the following two lines to try starting GRANSO</span>
+<span class="c1"># from (0,0) or (1,1), where the functions are not differentiable.</span>
+
+<span class="c1"># opts.x0 = torch.ones((2,1), device=device, dtype=torch.double)     # uncomment this line to try this point</span>
+<span class="c1"># opts.x0 = torch.zeros((2,1), device=device, dtype=torch.double)    # uncomment this line to try this point</span>
+
+<span class="c1"># Uncomment the following two lines to try starting GRANSO from a</span>
+<span class="c1"># uniformly perturbed version of (1,1).  pert_level needs to be at</span>
+<span class="c1"># least 1e-3 or so to get consistently reliable optimization quality.</span>
+
+<span class="c1"># pert_level = 1e-3</span>
+<span class="c1"># opts.x0 = (torch.ones((2,1)) + pert_level * (torch.randn((2,1)) - 0.5)).to(device=device, dtype=torch.double)</span>
+</pre></div>
+</div>
+</div>
+<p>The opts below shows how to use opts.halt_log_fn to create a history of iterates</p>
+<p>NOTE: NO NEED TO CHANGE ANYTHING BELOW</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># SETUP THE LOGGING FEATURES</span>
+
+<span class="c1"># Set up PyGRANSO&#39;s logging functions; pass opts.maxit to it so that</span>
+<span class="c1"># storage can be preallocated for efficiency.</span>
+
+<span class="k">class</span> <span class="nc">HaltLog</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">haltLog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iteration</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">penaltyfn_parts</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span><span class="n">get_BFGS_state_fn</span><span class="p">,</span> <span class="n">H_regularized</span><span class="p">,</span>
+                <span class="n">ls_evals</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">n_gradients</span><span class="p">,</span> <span class="n">stat_vec</span><span class="p">,</span> <span class="n">stat_val</span><span class="p">,</span> <span class="n">fallback_level</span><span class="p">):</span>
+
+        <span class="c1"># DON&#39;T CHANGE THIS</span>
+        <span class="c1"># increment the index/count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># EXAMPLE:</span>
+        <span class="c1"># store history of x iterates in a preallocated cell array</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_iterates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">penaltyfn_parts</span><span class="o">.</span><span class="n">f</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tv</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">penaltyfn_parts</span><span class="o">.</span><span class="n">tv</span><span class="p">)</span>
+
+        <span class="c1"># keep this false unless you want to implement a custom termination</span>
+        <span class="c1"># condition</span>
+        <span class="n">halt</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="n">halt</span>
+
+    <span class="c1"># Once PyGRANSO has run, you may call this function to get retreive all</span>
+    <span class="c1"># the logging data stored in the shared variables, which is populated</span>
+    <span class="c1"># by haltLog being called on every iteration of PyGRANSO.</span>
+    <span class="k">def</span> <span class="nf">getLog</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># EXAMPLE</span>
+        <span class="c1"># return x_iterates, trimmed to correct size</span>
+        <span class="n">log</span> <span class="o">=</span> <span class="n">GeneralStruct</span><span class="p">()</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">x</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_iterates</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">f</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">tv</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tv</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">log</span>
+
+    <span class="k">def</span> <span class="nf">makeHaltLogFunctions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">maxit</span><span class="p">):</span>
+        <span class="c1"># don&#39;t change these lambda functions</span>
+        <span class="n">halt_log_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">iteration</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">penaltyfn_parts</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span><span class="n">get_BFGS_state_fn</span><span class="p">,</span> <span class="n">H_regularized</span><span class="p">,</span> <span class="n">ls_evals</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">n_gradients</span><span class="p">,</span> <span class="n">stat_vec</span><span class="p">,</span> <span class="n">stat_val</span><span class="p">,</span> <span class="n">fallback_level</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">haltLog</span><span class="p">(</span><span class="n">iteration</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">penaltyfn_parts</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span><span class="n">get_BFGS_state_fn</span><span class="p">,</span> <span class="n">H_regularized</span><span class="p">,</span> <span class="n">ls_evals</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">n_gradients</span><span class="p">,</span> <span class="n">stat_vec</span><span class="p">,</span> <span class="n">stat_val</span><span class="p">,</span> <span class="n">fallback_level</span><span class="p">)</span>
+
+        <span class="n">get_log_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">getLog</span><span class="p">()</span>
+
+        <span class="c1"># Make your shared variables here to store PyGRANSO history data</span>
+        <span class="c1"># EXAMPLE - store history of iterates x_0,x_1,...,x_k</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span>       <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_iterates</span>  <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span>           <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tv</span>          <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Only modify the body of logIterate(), not its name or arguments.</span>
+        <span class="c1"># Store whatever data you wish from the current PyGRANSO iteration info,</span>
+        <span class="c1"># given by the input arguments, into shared variables of</span>
+        <span class="c1"># makeHaltLogFunctions, so that this data can be retrieved after PyGRANSO</span>
+        <span class="c1"># has been terminated.</span>
+        <span class="c1">#</span>
+        <span class="c1"># DESCRIPTION OF INPUT ARGUMENTS</span>
+        <span class="c1">#   iter                current iteration number</span>
+        <span class="c1">#   x                   current iterate x</span>
+        <span class="c1">#   penaltyfn_parts     struct containing the following</span>
+        <span class="c1">#       OBJECTIVE AND CONSTRAINTS VALUES</span>
+        <span class="c1">#       .f              objective value at x</span>
+        <span class="c1">#       .f_grad         objective gradient at x</span>
+        <span class="c1">#       .ci             inequality constraint at x</span>
+        <span class="c1">#       .ci_grad        inequality gradient at x</span>
+        <span class="c1">#       .ce             equality constraint at x</span>
+        <span class="c1">#       .ce_grad        equality gradient at x</span>
+        <span class="c1">#       TOTAL VIOLATION VALUES (inf norm, for determining feasibiliy)</span>
+        <span class="c1">#       .tvi            total violation of inequality constraints at x</span>
+        <span class="c1">#       .tve            total violation of equality constraints at x</span>
+        <span class="c1">#       .tv             total violation of all constraints at x</span>
+        <span class="c1">#       TOTAL VIOLATION VALUES (one norm, for L1 penalty function)</span>
+        <span class="c1">#       .tvi_l1         total violation of inequality constraints at x</span>
+        <span class="c1">#       .tvi_l1_grad    its gradient</span>
+        <span class="c1">#       .tve_l1         total violation of equality constraints at x</span>
+        <span class="c1">#       .tve_l1_grad    its gradient</span>
+        <span class="c1">#       .tv_l1          total violation of all constraints at x</span>
+        <span class="c1">#       .tv_l1_grad     its gradient</span>
+        <span class="c1">#       PENALTY FUNCTION VALUES</span>
+        <span class="c1">#       .p              penalty function value at x</span>
+        <span class="c1">#       .p_grad         penalty function gradient at x</span>
+        <span class="c1">#       .mu             current value of the penalty parameter</span>
+        <span class="c1">#       .feasible_to_tol logical indicating whether x is feasible</span>
+        <span class="c1">#   d                   search direction</span>
+        <span class="c1">#   get_BFGS_state_fn   function handle to get the (L)BFGS state data</span>
+        <span class="c1">#                       FULL MEMORY:</span>
+        <span class="c1">#                       - returns BFGS inverse Hessian approximation</span>
+        <span class="c1">#                       LIMITED MEMORY:</span>
+        <span class="c1">#                       - returns a struct with current L-BFGS state:</span>
+        <span class="c1">#                           .S          matrix of the BFGS s vectors</span>
+        <span class="c1">#                           .Y          matrix of the BFGS y vectors</span>
+        <span class="c1">#                           .rho        row vector of the 1/sty values</span>
+        <span class="c1">#                           .gamma      H0 scaling factor</span>
+        <span class="c1">#   H_regularized       regularized version of H</span>
+        <span class="c1">#                       [] if no regularization was applied to H</span>
+        <span class="c1">#   fn_evals            number of function evaluations incurred during</span>
+        <span class="c1">#                       this iteration</span>
+        <span class="c1">#   alpha               size of accepted size</span>
+        <span class="c1">#   n_gradients         number of previous gradients used for computing</span>
+        <span class="c1">#                       the termination QP</span>
+        <span class="c1">#   stat_vec            stationarity measure vector</span>
+        <span class="c1">#   stat_val            approximate value of stationarity:</span>
+        <span class="c1">#                           norm(stat_vec)</span>
+        <span class="c1">#                       gradients (result of termination QP)</span>
+        <span class="c1">#   fallback_level      number of strategy needed for a successful step</span>
+        <span class="c1">#                       to be taken.  See bfgssqpOptionsAdvanced.</span>
+        <span class="c1">#</span>
+        <span class="c1"># OUTPUT ARGUMENT</span>
+        <span class="c1">#   halt                set this to true if you wish optimization to</span>
+        <span class="c1">#                       be halted at the current iterate.  This can be</span>
+        <span class="c1">#                       used to create a custom termination condition,</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">halt_log_fn</span><span class="p">,</span> <span class="n">get_log_fn</span><span class="p">]</span>
+
+<span class="n">mHLF_obj</span> <span class="o">=</span> <span class="n">HaltLog</span><span class="p">()</span>
+<span class="p">[</span><span class="n">halt_log_fn</span><span class="p">,</span> <span class="n">get_log_fn</span><span class="p">]</span> <span class="o">=</span> <span class="n">mHLF_obj</span><span class="o">.</span><span class="n">makeHaltLogFunctions</span><span class="p">(</span><span class="n">opts</span><span class="o">.</span><span class="n">maxit</span><span class="p">)</span>
+
+<span class="c1">#  Set PyGRANSO&#39;s logging function in opts</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">halt_log_fn</span> <span class="o">=</span> <span class="n">halt_log_fn</span>
+
+<span class="c1"># Main algorithm with logging enabled.</span>
+<span class="n">soln</span> <span class="o">=</span> <span class="n">pygranso</span><span class="p">(</span><span class="n">combinedFunction</span> <span class="o">=</span> <span class="n">comb_fn</span><span class="p">,</span> <span class="n">objEvalFunction</span> <span class="o">=</span> <span class="n">obj_eval_fn</span><span class="p">,</span><span class="n">var_dim_map</span> <span class="o">=</span> <span class="n">var_in</span><span class="p">,</span> <span class="n">torch_device</span> <span class="o">=</span> <span class="n">device</span><span class="p">,</span> <span class="n">user_opts</span> <span class="o">=</span> <span class="n">opts</span><span class="p">)</span>
+
+<span class="c1"># GET THE HISTORY OF ITERATES</span>
+<span class="c1"># Even if an error is thrown, the log generated until the error can be</span>
+<span class="c1"># obtained by calling get_log_fn()</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">get_log_fn</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+
+<span class="ansi-yellow-fg">╔═════ QP SOLVER NOTICE ════════════════════════════════════════════════════════════════════════╗
+</span><span class="ansi-yellow-fg">║  PyGRANSO requires a quadratic program (QP) solver that has a quadprog-compatible interface,  ║
+</span><span class="ansi-yellow-fg">║  the default is osqp. Users may provide their own wrapper for the QP solver.                  ║
+</span><span class="ansi-yellow-fg">║  To disable this notice, set opts.quadprog_info_msg = False                                   ║
+</span><span class="ansi-yellow-fg">╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+</span>═════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+PyGRANSO: Python numerical package using GRadient-based Algorithm for Non-Smooth Optimization                    ║
+Version 1.1.0                                                                                                    ║
+MIT License Copyright (c) 2021 SUN Group @ UMN                                                                   ║
+═════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+Problem specifications:                                                                                          ║
+ # of variables                     :   2                                                                        ║
+ # of inequality constraints        :   2                                                                        ║
+ # of equality constraints          :   0                                                                        ║
+═════╦═══════════════════════════╦════════════════╦═════════════════╦═══════════════════════╦════════════════════╣
+     ║ &lt;--- Penalty Function --&gt; ║                ║ Total Violation ║ &lt;--- Line Search ---&gt; ║ &lt;- Stationarity -&gt; ║
+Iter ║    Mu    │      Value     ║    Objective   ║   Ineq   │  Eq  ║ SD │ Evals │     t    ║ Grads │    Value   ║
+═════╬═══════════════════════════╬════════════════╬═════════════════╬═══════════════════════╬════════════════════╣
+   0 ║ 1.000000 │  30.8380561216 ║  29.3145238826 ║ 1.523532 │   -  ║ -  │     1 │ 0.000000 ║     1 │ 30.71113   ║
+   1 ║ 0.430467 │  10.0543351705 ║  23.3567968405 ║ 0.000000 │   -  ║ S  │     3 │ 0.250000 ║     1 │ 10.83232   ║
+   2 ║ 0.430467 │  1.21581280615 ║  2.82440283002 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.462328   ║
+   3 ║ 0.430467 │  1.13652421105 ║  2.64021087935 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.538228   ║
+   4 ║ 0.430467 │  0.37006241162 ║  0.85967619141 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.292596   ║
+   5 ║ 0.430467 │  0.35714445705 ║  0.82966704258 ║ 0.000000 │   -  ║ S  │     5 │ 0.062500 ║     1 │ 0.141994   ║
+   6 ║ 0.430467 │  0.30978797390 ║  0.71965521810 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.007787   ║
+   7 ║ 0.430467 │  0.26743995981 ║  0.62127835429 ║ 0.000000 │   -  ║ S  │     3 │ 4.000000 ║     1 │ 0.077982   ║
+   8 ║ 0.430467 │  0.22676441597 ║  0.52678673474 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.163625   ║
+   9 ║ 0.430467 │  0.21095628139 ║  0.49006353211 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.007874   ║
+  10 ║ 0.430467 │  0.17110315696 ║  0.39748243997 ║ 0.000000 │   -  ║ S  │     3 │ 4.000000 ║     1 │ 0.223454   ║
+  11 ║ 0.430467 │  0.13984473846 ║  0.32486734230 ║ 0.000000 │   -  ║ S  │     2 │ 0.500000 ║     1 │ 0.027147   ║
+  12 ║ 0.430467 │  0.10123922906 ║  0.23518453138 ║ 0.000000 │   -  ║ S  │     3 │ 4.000000 ║     1 │ 0.237212   ║
+  13 ║ 0.430467 │  0.09480633416 ║  0.22024054784 ║ 0.000000 │   -  ║ S  │     3 │ 0.250000 ║     1 │ 0.167135   ║
+  14 ║ 0.430467 │  0.07590038267 ║  0.17632093899 ║ 0.000000 │   -  ║ S  │     3 │ 4.000000 ║     1 │ 0.060212   ║
+  15 ║ 0.430467 │  0.06659526568 ║  0.15470461891 ║ 0.000000 │   -  ║ S  │     2 │ 0.500000 ║     1 │ 0.096236   ║
+  16 ║ 0.430467 │  0.05735378211 ║  0.13323612293 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.053536   ║
+  17 ║ 0.430467 │  0.05062719287 ║  0.11760987062 ║ 0.000000 │   -  ║ S  │     3 │ 1.500000 ║     1 │ 0.068976   ║
+  18 ║ 0.430467 │  0.05039206362 ║  0.11706365189 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.002114   ║
+  19 ║ 0.430467 │  0.04284829657 ║  0.08996472683 ║ 0.003130 │   -  ║ S  │     3 │ 4.000000 ║     1 │ 0.002194   ║
+═════╬═══════════════════════════╬════════════════╬═════════════════╬═══════════════════════╬════════════════════╣
+     ║ &lt;--- Penalty Function --&gt; ║                ║ Total Violation ║ &lt;--- Line Search ---&gt; ║ &lt;- Stationarity -&gt; ║
+Iter ║    Mu    │      Value     ║    Objective   ║   Ineq   │  Eq  ║ SD │ Evals │     t    ║ Grads │    Value   ║
+═════╬═══════════════════════════╬════════════════╬═════════════════╬═══════════════════════╬════════════════════╣
+  20 ║ 0.387420 │  0.03831629562 ║  0.08866900207 ║ 0.002348 │   -  ║ S  │     3 │ 0.250000 ║     1 │ 0.033866   ║
+  21 ║ 0.387420 │  0.03335024134 ║  0.08608280225 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 4.70e-04   ║
+  22 ║ 0.387420 │  0.03334997832 ║  0.08608212336 ║ 0.000000 │   -  ║ S  │     7 │ 0.015625 ║     1 │ 2.57e-04   ║
+  23 ║ 0.387420 │  0.03324461653 ║  0.08581016593 ║ 8.41e-11 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 1.85e-05   ║
+  24 ║ 0.387420 │  0.03324375485 ║  0.08580794201 ║ 0.000000 │   -  ║ S  │     3 │ 0.250000 ║     1 │ 1.08e-04   ║
+  25 ║ 0.387420 │  0.03324213266 ║  0.08580375484 ║ 0.000000 │   -  ║ S  │     6 │ 0.093750 ║     1 │ 4.07e-05   ║
+  26 ║ 0.387420 │  0.03323968255 ║  0.08579743069 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 4.16e-06   ║
+  27 ║ 0.387420 │  0.03323946232 ║  0.08579686222 ║ 0.000000 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 9.06e-06   ║
+  28 ║ 0.387420 │  0.03323734550 ║  0.08579139834 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 6.58e-07   ║
+  29 ║ 0.387420 │  0.03323674050 ║  0.08578983673 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 5.57e-06   ║
+  30 ║ 0.387420 │  0.03323623557 ║  0.08578853343 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 3.90e-06   ║
+  31 ║ 0.387420 │  0.03323607603 ║  0.08578686379 ║ 2.82e-07 │   -  ║ S  │     3 │ 0.750000 ║     1 │ 3.42e-06   ║
+  32 ║ 0.228768 │  0.01962572944 ║  0.08578758230 ║ 2.82e-07 │   -  ║ <span class="ansi-yellow-fg">SI</span> │    25 │ 5.96e-08 ║     1 │ 1.32e-07   ║
+  33 ║ 0.228768 │  0.01962525791 ║  0.08578675507 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 6.37e-07   ║
+  34 ║ 0.228768 │  0.01962524271 ║  0.08578668864 ║ 0.000000 │   -  ║ S  │     2 │ 0.500000 ║     1 │ 1.10e-07   ║
+  35 ║ 0.228768 │  0.01962521876 ║  0.08578658394 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 2.13e-08   ║
+  36 ║ 0.228768 │  0.01962521464 ║  0.08578656591 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 4.60e-08   ║
+  37 ║ 0.228768 │  0.01962520651 ║  0.08578653036 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 3.53e-08   ║
+  38 ║ 0.228768 │  0.01962520449 ║  0.08578652156 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 5.15e-08   ║
+  39 ║ 0.228768 │  0.01962518650 ║  0.08578644250 ║ 9.40e-11 │   -  ║ S  │     7 │ 3.375000 ║     1 │ 9.24e-08   ║
+═════╬═══════════════════════════╬════════════════╬═════════════════╬═══════════════════════╬════════════════════╣
+     ║ &lt;--- Penalty Function --&gt; ║                ║ Total Violation ║ &lt;--- Line Search ---&gt; ║ &lt;- Stationarity -&gt; ║
+Iter ║    Mu    │      Value     ║    Objective   ║   Ineq   │  Eq  ║ SD │ Evals │     t    ║ Grads │    Value   ║
+═════╬═══════════════════════════╬════════════════╬═════════════════╬═══════════════════════╬════════════════════╣
+  40 ║ 0.228768 │  0.01962518571 ║  0.08578643948 ║ 0.000000 │   -  ║ <span class="ansi-yellow-fg">SI</span> │    33 │ 2.33e-10 ║     1 │ 1.87e-08   ║
+  41 ║ 0.228768 │  0.01962518545 ║  0.08578643832 ║ 0.000000 │   -  ║ S  │     7 │ 0.015625 ║     1 │ 1.01e-07   ║
+  42 ║ 0.228768 │  0.01962518544 ║  0.08578643829 ║ 0.000000 │   -  ║ S  │     3 │ 0.250000 ║     1 │ 4.90e-11   ║
+═════╩═══════════════════════════╩════════════════╩═════════════════╩═══════════════════════╩════════════════════╣
+Optimization results:                                                                                            ║
+F = final iterate, B = Best (to tolerance), MF = Most Feasible                                                   ║
+═════╦═══════════════════════════╦════════════════╦═════════════════╦═══════════════════════╦════════════════════╣
+   F ║          │                ║  0.08578643829 ║ 0.000000 │   -  ║    │       │          ║       │            ║
+   B ║          │                ║  0.08578643087 ║ 6.62e-08 │   -  ║    │       │          ║       │            ║
+  MF ║          │                ║  0.08578643829 ║ 0.000000 │   -  ║    │       │          ║       │            ║
+═════╩═══════════════════════════╩════════════════╩═════════════════╩═══════════════════════╩════════════════════╣
+Iterations:              42                                                                                      ║
+Function evaluations:    154                                                                                     ║
+PyGRANSO termination code: 0 --- converged to stationarity and feasibility tolerances.                           ║
+═════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="nb">print</span><span class="p">(</span><span class="n">log</span><span class="o">.</span><span class="n">f</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">log</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[29.314523882565325, 23.356796840501126, 2.8244028300199737]
+[tensor([[ 1.7844],
+        [-0.4033]], dtype=torch.float64), tensor([[-1.4569],
+        [-0.0424]], dtype=torch.float64), tensor([[-0.0193],
+        [ 0.2235]], dtype=torch.float64)]
+</pre></div></div>
+</div>
+</section>
+<section id="Advanced-Tutorial-3">
+<h1>Advanced Tutorial 3<a class="headerlink" href="#Advanced-Tutorial-3" title="Permalink to this headline">¶</a></h1>
+<p>PREPARE TO RESTART GRANSO IN LIMITED-MEMORY MODE</p>
+<p>(Note that this example problem only has two variables!)</p>
+<p>If PyGRANSO was running in limited-memory mode, that is, if opts.limited_mem_size &gt; 0, then PyGRANSO’s restart procedure is slightly different, as soln.H_final will instead contain the most current L-BFGS state, not a full inverse Hessian approximation.</p>
+<p>Instead, do the following: 1) If you set a specific H0, you will need to set opts.H0 to whatever you used previously. By default, PyGRANSO uses the identity for H0.</p>
+<ol class="arabic simple" start="2">
+<li><p>Warm-start GRANSO with the most recent L-BFGS data by setting: opts.limited_mem_warm_start = soln.H_final;</p></li>
+</ol>
+<p>NOTE: how to set opts.scaleH0 so that PyGRANSO will be restarted as if it had never terminated depends on the previously used values of opts.scaleH0 and opts.limited_mem_fixed_scaling.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">opts</span> <span class="o">=</span> <span class="n">Options</span><span class="p">()</span>
+<span class="c1"># set an infeasible initial point</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">x0</span> <span class="o">=</span> <span class="mf">5.5</span><span class="o">*</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">)</span>
+
+<span class="n">opts</span><span class="o">.</span><span class="n">print_ascii</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">quadprog_info_msg</span>  <span class="o">=</span> <span class="kc">False</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">maxit</span> <span class="o">=</span> <span class="mi">10</span> <span class="c1"># default is 1000</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">mu0</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># default is 1</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">print_frequency</span> <span class="o">=</span> <span class="mi">2</span>
+
+
+<span class="c1"># By default, PyGRANSO uses full-memory BFGS updating.  For nonsmooth</span>
+<span class="c1"># problems, full-memory BFGS is generally recommended.  However, if</span>
+<span class="c1"># this is not feasible, one may optionally enable limited-memory BFGS</span>
+<span class="c1"># updating by setting opts.limited_mem_size to a positive integer</span>
+<span class="c1"># (significantly) less than the number of variables.</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">limited_mem_size</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="c1"># start main algorithm</span>
+<span class="n">soln</span> <span class="o">=</span> <span class="n">pygranso</span><span class="p">(</span><span class="n">combinedFunction</span> <span class="o">=</span> <span class="n">comb_fn</span><span class="p">,</span> <span class="n">objEvalFunction</span> <span class="o">=</span> <span class="n">obj_eval_fn</span><span class="p">,</span><span class="n">var_dim_map</span> <span class="o">=</span> <span class="n">var_in</span><span class="p">,</span> <span class="n">torch_device</span> <span class="o">=</span> <span class="n">device</span><span class="p">,</span> <span class="n">user_opts</span> <span class="o">=</span> <span class="n">opts</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+
+==================================================================================================================
+PyGRANSO: Python numerical package using GRadient-based Algorithm for Non-Smooth Optimization                    |
+Version 1.1.0                                                                                                    |
+MIT License Copyright (c) 2021 SUN Group @ UMN                                                                   |
+==================================================================================================================
+Problem specifications:                                                                                          |
+ # of variables                     :   2                                                                        |
+ # of inequality constraints        :   2                                                                        |
+ # of equality constraints          :   0                                                                        |
+==================================================================================================================
+Limited-memory mode enabled with size = 1.                                                                       |
+NOTE: limited-memory mode is generally NOT                                                                       |
+recommended for nonsmooth problems.                                                                              |
+==================================================================================================================
+     | &lt;--- Penalty Function --&gt; |                | Total Violation | &lt;--- Line Search ---&gt; | &lt;- Stationarity -&gt; |
+Iter |    Mu    |      Value     |    Objective   |   Ineq   |  Eq  | SD | Evals |     t    | Grads |    Value   |
+=====|===========================|================|=================|=======================|====================|
+   0 | 100.0000 |  21841.7781746 |  218.250000000 | 10.00000 |   -  | -  |     1 | 0.000000 |     1 | 9732.768   |
+   2 | 34.86784 |  1378.57842221 |  39.2815768212 | 8.914529 |   -  | S  |     3 | 1.500000 |     1 | 4.455384   |
+   4 | 12.15767 |  262.610250639 |  20.8774186596 | 8.789579 |   -  | S  |     2 | 2.000000 |     1 | 0.604009   |
+   6 | 4.239116 |  57.9458175917 |  11.5708792009 | 8.895520 |   -  | S  |     3 | 0.750000 |     1 | 0.165224   |
+   8 | 1.642320 |  26.2056730861 |  10.5532019880 | 8.873935 |   -  | S  |     1 | 1.000000 |     1 | 0.027766   |
+  10 | 1.642320 |  25.9163909350 |  10.4174724535 | 8.807564 |   -  | S  |     2 | 2.000000 |     1 | 0.021455   |
+==================================================================================================================
+Optimization results:                                                                                            |
+F = final iterate, B = Best (to tolerance), MF = Most Feasible                                                   |
+==================================================================================================================
+   F |          |                |  10.4174724535 | 8.807564 |   -  |    |       |          |       |            |
+  MF |          |                |  75.6886238113 | 8.192103 |   -  |    |       |          |       |            |
+==================================================================================================================
+Iterations:              10                                                                                      |
+Function evaluations:    29                                                                                      |
+PyGRANSO termination code: 4 --- max iterations reached.                                                         |
+==================================================================================================================
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># Restart</span>
+<span class="n">opts</span> <span class="o">=</span> <span class="n">Options</span><span class="p">()</span>
+<span class="c1"># set the initial point and penalty parameter to their final values from the previous run</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">x0</span> <span class="o">=</span> <span class="n">soln</span><span class="o">.</span><span class="n">final</span><span class="o">.</span><span class="n">x</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">mu0</span> <span class="o">=</span> <span class="n">soln</span><span class="o">.</span><span class="n">final</span><span class="o">.</span><span class="n">mu</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">limited_mem_size</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">quadprog_info_msg</span>  <span class="o">=</span> <span class="kc">False</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">print_frequency</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="n">opts</span><span class="o">.</span><span class="n">limited_mem_warm_start</span> <span class="o">=</span> <span class="n">soln</span><span class="o">.</span><span class="n">H_final</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">scaleH0</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="c1"># In contrast to full-memory BFGS updating, limited-memory BFGS</span>
+<span class="c1"># permits that H0 can be scaled on every iteration.  By default,</span>
+<span class="c1"># PyGRANSO will reuse the scaling parameter that is calculated on the</span>
+<span class="c1"># very first iteration for all subsequent iterations as well.  Set</span>
+<span class="c1"># this option to false to force PyGRANSO to calculate a new scaling</span>
+<span class="c1"># parameter on every iteration.  Note that opts.scaleH0 has no effect</span>
+<span class="c1"># when opts.limited_mem_fixed_scaling is set to true.</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">limited_mem_fixed_scaling</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="c1"># Restart PyGRANSO</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">maxit</span> <span class="o">=</span> <span class="mi">100</span> <span class="c1"># increase maximum allowed iterations</span>
+
+<span class="c1"># Main algorithm</span>
+<span class="n">soln</span> <span class="o">=</span> <span class="n">pygranso</span><span class="p">(</span><span class="n">combinedFunction</span> <span class="o">=</span> <span class="n">comb_fn</span><span class="p">,</span> <span class="n">objEvalFunction</span> <span class="o">=</span> <span class="n">obj_eval_fn</span><span class="p">,</span><span class="n">var_dim_map</span> <span class="o">=</span> <span class="n">var_in</span><span class="p">,</span> <span class="n">torch_device</span> <span class="o">=</span> <span class="n">device</span><span class="p">,</span> <span class="n">user_opts</span> <span class="o">=</span> <span class="n">opts</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+
+═════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+PyGRANSO: Python numerical package using GRadient-based Algorithm for Non-Smooth Optimization                    ║
+Version 1.1.0                                                                                                    ║
+MIT License Copyright (c) 2021 SUN Group @ UMN                                                                   ║
+═════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+Problem specifications:                                                                                          ║
+ # of variables                     :   2                                                                        ║
+ # of inequality constraints        :   2                                                                        ║
+ # of equality constraints          :   0                                                                        ║
+═════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+<span class="ansi-yellow-fg">Limited-memory mode enabled with size = 1.                                                                      </span> ║
+<span class="ansi-yellow-fg">NOTE: limited-memory mode is generally NOT                                                                      </span> ║
+<span class="ansi-yellow-fg">recommended for nonsmooth problems.                                                                             </span> ║
+═════╦═══════════════════════════╦════════════════╦═════════════════╦═══════════════════════╦════════════════════╣
+     ║ &lt;--- Penalty Function --&gt; ║                ║ Total Violation ║ &lt;--- Line Search ---&gt; ║ &lt;- Stationarity -&gt; ║
+Iter ║    Mu    │      Value     ║    Objective   ║   Ineq   │  Eq  ║ SD │ Evals │     t    ║ Grads │    Value   ║
+═════╬═══════════════════════════╬════════════════╬═════════════════╬═══════════════════════╬════════════════════╣
+   0 ║ 1.642320 │  25.9163909350 ║  10.4174724535 ║ 8.807564 │   -  ║ -  │     1 │ 0.000000 ║     1 │ 0.142170   ║
+   2 ║ 1.642320 │  13.8166377151 ║  6.50513006006 ║ 3.133130 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 3.836719   ║
+   4 ║ 1.642320 │  6.43974928744 ║  3.92112865088 ║ 1.56e-13 │   -  ║ S  │     4 │ 8.000000 ║     1 │ 3.894981   ║
+   6 ║ 1.642320 │  4.83427546820 ║  2.94356429086 ║ 0.000000 │   -  ║ S  │     3 │ 0.250000 ║     1 │ 0.051608   ║
+   8 ║ 1.642320 │  4.65430930433 ║  2.83398386314 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.018191   ║
+  10 ║ 1.642320 │  3.93919956761 ║  2.39855739667 ║ 0.000000 │   -  ║ S  │     3 │ 4.000000 ║     1 │ 0.007872   ║
+  12 ║ 1.642320 │  3.11104049392 ║  1.89429579791 ║ 0.000000 │   -  ║ S  │     3 │ 4.000000 ║     1 │ 0.063040   ║
+  14 ║ 1.642320 │  2.65451447016 ║  1.61631956129 ║ 0.000000 │   -  ║ S  │     7 │ 0.046875 ║     1 │ 0.585910   ║
+  16 ║ 1.642320 │  2.32306544006 ║  1.41450203235 ║ 0.000000 │   -  ║ S  │     3 │ 0.250000 ║     1 │ 0.127928   ║
+  18 ║ 1.642320 │  2.07124162996 ║  1.26116787092 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.018703   ║
+  20 ║ 1.642320 │  1.90787285994 ║  1.16169350691 ║ 0.000000 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 0.021251   ║
+  22 ║ 1.642320 │  1.60077882488 ║  0.97470560325 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.037526   ║
+  24 ║ 1.642320 │  1.37747254615 ║  0.83873561306 ║ 0.000000 │   -  ║ S  │     3 │ 0.750000 ║     1 │ 0.208555   ║
+  26 ║ 1.642320 │  1.21777494948 ║  0.74149660671 ║ 0.000000 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 0.033868   ║
+  28 ║ 1.642320 │  1.01253469891 ║  0.61652692375 ║ 0.000000 │   -  ║ S  │     3 │ 4.000000 ║     1 │ 0.002344   ║
+  30 ║ 1.642320 │  0.84593009064 ║  0.51508227525 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.031023   ║
+  32 ║ 1.642320 │  0.72210526247 ║  0.43968600441 ║ 0.000000 │   -  ║ S  │     4 │ 0.375000 ║     1 │ 0.165332   ║
+  34 ║ 1.642320 │  0.68391370499 ║  0.41643137080 ║ 0.000000 │   -  ║ S  │     2 │ 2.000000 ║     1 │ 0.010301   ║
+  36 ║ 1.642320 │  0.62489126430 ║  0.38049292461 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.018075   ║
+  38 ║ 1.642320 │  0.54510958156 ║  0.33191428776 ║ 0.000000 │   -  ║ S  │     3 │ 0.250000 ║     1 │ 0.533453   ║
+═════╬═══════════════════════════╬════════════════╬═════════════════╬═══════════════════════╬════════════════════╣
+     ║ &lt;--- Penalty Function --&gt; ║                ║ Total Violation ║ &lt;--- Line Search ---&gt; ║ &lt;- Stationarity -&gt; ║
+Iter ║    Mu    │      Value     ║    Objective   ║   Ineq   │  Eq  ║ SD │ Evals │     t    ║ Grads │    Value   ║
+═════╬═══════════════════════════╬════════════════╬═════════════════╬═══════════════════════╬════════════════════╣
+  40 ║ 1.642320 │  0.38201145515 ║  0.23260471719 ║ 0.000000 │   -  ║ S  │     4 │ 0.125000 ║     1 │ 0.005206   ║
+  42 ║ 1.642320 │  0.33958095984 ║  0.20676901716 ║ 0.000000 │   -  ║ S  │     2 │ 0.500000 ║     1 │ 0.112707   ║
+  44 ║ 1.642320 │  0.29638191200 ║  0.18046534964 ║ 0.000000 │   -  ║ S  │     3 │ 0.250000 ║     1 │ 0.058435   ║
+  46 ║ 1.642320 │  0.19928152602 ║  0.12134144768 ║ 0.000000 │   -  ║ S  │     2 │ 0.500000 ║     1 │ 0.003281   ║
+  48 ║ 1.642320 │  0.17678383973 ║  0.10764272770 ║ 0.000000 │   -  ║ S  │     3 │ 4.000000 ║     1 │ 0.003585   ║
+  50 ║ 1.642320 │  0.17212152724 ║  0.10480387074 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 0.001687   ║
+  52 ║ 1.077526 │  0.09728331223 ║  0.09028392739 ║ 0.000000 │   -  ║ S  │     6 │ 0.031250 ║     1 │ 0.053275   ║
+  54 ║ 1.077526 │  0.09371809464 ║  0.08697522173 ║ 0.000000 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 2.51e-04   ║
+  56 ║ 1.077526 │  0.09247845216 ║  0.08582476962 ║ 0.000000 │   -  ║ S  │     2 │ 0.500000 ║     1 │ 6.80e-04   ║
+  58 ║ 1.077526 │  0.09244693219 ║  0.08579470133 ║ 8.79e-07 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 1.87e-06   ║
+  60 ║ 0.785517 │  0.06738712706 ║  0.08578700523 ║ 0.000000 │   -  ║ S  │     8 │ 0.007812 ║     1 │ 2.07e-04   ║
+  62 ║ 0.785517 │  0.06738668881 ║  0.08578644649 ║ 6.41e-10 │   -  ║ S  │     1 │ 1.000000 ║     1 │ 8.60e-10   ║
+═════╩═══════════════════════════╩════════════════╩═════════════════╩═══════════════════════╩════════════════════╣
+Optimization results:                                                                                            ║
+F = final iterate, B = Best (to tolerance), MF = Most Feasible                                                   ║
+═════╦═══════════════════════════╦════════════════╦═════════════════╦═══════════════════════╦════════════════════╣
+   F ║          │                ║  0.08578644649 ║ 6.41e-10 │   -  ║    │       │          ║       │            ║
+   B ║          │                ║  0.08578644649 ║ 6.41e-10 │   -  ║    │       │          ║       │            ║
+  MF ║          │                ║  0.08578698770 ║ 0.000000 │   -  ║    │       │          ║       │            ║
+═════╩═══════════════════════════╩════════════════╩═════════════════╩═══════════════════════╩════════════════════╣
+Iterations:              62                                                                                      ║
+Function evaluations:    171                                                                                     ║
+PyGRANSO termination code: 0 --- converged to stationarity and feasibility tolerances.                           ║
+═════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+</pre></div></div>
+</div>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">PyGRANSO</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings/index.html">Settings</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="unconstrained_deep_learning.html">Unconstrained Deep Learning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dictionary_learning.html">Dictionary Learning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spectral_radius_opt.html">Spectral Radius Optimization</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="Rosenbrock.html">Rosenbrock objective function</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robustPCA.html">Robust PCA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tv_denoising.html">Generalized LASSO</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Examples</a><ul>
+  <li><a href="Rosenbrock.html">Rosenbrock objective function</a><ul>
+      <li>Previous: <a href="Rosenbrock.html" title="previous chapter">Rosenbrock objective function</a></li>
+      <li>Next: <a href="robustPCA.html" title="next chapter">Robust PCA</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Buyun Liang.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/examples/1.demo_Rosenbrock.ipynb.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

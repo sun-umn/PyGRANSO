@@ -1,0 +1,367 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Standard Parameters &#8212; PyGRANSO  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Searching Direction Strategies" href="searching_direction.html" />
+    <link rel="prev" title="Settings" href="index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="standard-parameters">
+<h1>Standard Parameters<a class="headerlink" href="#standard-parameters" title="Permalink to this headline">¶</a></h1>
+<section id="x0">
+<h2>x0<a class="headerlink" href="#x0" title="Permalink to this headline">¶</a></h2>
+<p>n by 1 double precision torch tensor. Default value: torch.randn(n,1).to(device=torch_device, dtype=torch.double)</p>
+<p>Initial starting point. One should pick x0 such that the objective
+and constraint functions are smooth at and about x0. If this is
+difficult to ascertain, it is generally recommended to initialize
+PyGRANSO at randomly-generated starting points.</p>
+</section>
+<section id="mu0">
+<h2>mu0<a class="headerlink" href="#mu0" title="Permalink to this headline">¶</a></h2>
+<p>Positive real value. Default value: 1</p>
+<p>Initial value of the penalty parameter.
+NOTE: irrelevant for unconstrained optimization problems.</p>
+</section>
+<section id="h0">
+<h2>H0<a class="headerlink" href="#h0" title="Permalink to this headline">¶</a></h2>
+<p>n by n double precision torch tensor. Default value: torch.eye(n,device=torch_device, dtype=torch.double)</p>
+<p>Initial inverse Hessian approximation.  In full-memory mode, and
+if opts.checkH0 is true, PyGRANSO will numerically assert that this
+matrix is positive definite. In limited-memory mode, that is, if
+opts.limited_mem_size &gt; 0, no numerical checks are done but this
+matrix must be a sparse matrix.</p>
+</section>
+<section id="checkh0">
+<h2>checkH0<a class="headerlink" href="#checkh0" title="Permalink to this headline">¶</a></h2>
+<p>Boolean value. Default value: True</p>
+<p>By default, PyGRANSO will check whether or not H0 is numerically
+positive definite (by checking whether or not cholesky() succeeds).
+However, when restarting PyGRANSO from the last iterate of an earlier
+run, using soln.H_final (the last BFGS approximation to the inverse
+Hessian), soln.H_final may sometimes fail this check.  Set this
+option to False to disable it. No positive definite check is done
+when limited-memory mode is enabled.</p>
+</section>
+<section id="scaleh0">
+<h2>scaleH0<a class="headerlink" href="#scaleh0" title="Permalink to this headline">¶</a></h2>
+<p>Boolean value. Default value: True</p>
+<p>Scale H0 during BFGS/L-BFGS updates.  For full-memory BFGS, scaling
+is only applied on the first iteration only, and is generally only
+recommended when H0 is the identity (which is PyGRANSO’s default).
+For limited-memory BFGS, H0 is scaled on every update.  For more
+details, see opts.limited_mem_fixed_scaling.</p>
+</section>
+<section id="bfgs-damping">
+<h2>bfgs_damping<a class="headerlink" href="#bfgs-damping" title="Permalink to this headline">¶</a></h2>
+<p>Real value in [0,1]. Default value: 1e-4</p>
+<p>This feature will adaptively damp potentially problematic BFGS
+updates in order to help ensure that the (L)BFGS inverse Hessian
+approximation always remains positive definite numerically.  The
+closer this value is to one, the more frequently and aggressively
+damping will be applied to (L)BFGS updates.  Setting this value to
+zero completely disables damping.</p>
+</section>
+<section id="limited-mem-size">
+<h2>limited_mem_size<a class="headerlink" href="#limited-mem-size" title="Permalink to this headline">¶</a></h2>
+<p>Non-negative integer. Default value: 0</p>
+<p>By default, PyGRANSO uses full-memory BFGS updating.  For nonsmooth
+problems, full-memory BFGS is generally recommended.  However, if
+this is not feasible, one may optionally enable limited-memory BFGS
+updating by setting opts.limited_mem_size to a positive integer
+(significantly) less than the number of variables.</p>
+</section>
+<section id="limited-mem-fixed-scaling">
+<h2>limited_mem_fixed_scaling<a class="headerlink" href="#limited-mem-fixed-scaling" title="Permalink to this headline">¶</a></h2>
+<p>Boolean value. Default value: True</p>
+<p>In contrast to full-memory BFGS updating, limited-memory BFGS
+permits that H0 can be scaled on every iteration.  By default,
+PyGRANSO will reuse the scaling parameter that is calculated on the
+very first iteration for all subsequent iterations as well.  Set
+this option to False to force PyGRANSO to calculate a new scaling
+parameter on every iteration.  Note that opts.scaleH0 has no effect
+when opts.limited_mem_fixed_scaling is set to True.</p>
+</section>
+<section id="limited-mem-warm-start">
+<h2>limited_mem_warm_start<a class="headerlink" href="#limited-mem-warm-start" title="Permalink to this headline">¶</a></h2>
+<p>Python dictionary with key to be ‘S’, ‘Y’, ‘rho’ and ‘gamma’. Default value: None</p>
+<p>If one is restarting PyGRANSO, the previous L-BFGS information can be
+recycled by setting opts.limited_mem_warm_start = soln.H_final,
+where soln is PyGRANSO’s output struct from a previous run.  Note
+that one can either reuse the previous H0 or set a new one.</p>
+</section>
+<section id="prescaling-threshold">
+<h2>prescaling_threshold<a class="headerlink" href="#prescaling-threshold" title="Permalink to this headline">¶</a></h2>
+<p>Positive real value. Default value: Inf</p>
+<p>Pre-scales objective/constraint functions such that the norms of
+their gradients evaluated at x0 do not exceed prescaling_threshold.
+Inf (default) disables all pre-scaling.  Problems that are poorly
+scaled, that is, the gradients have norms that are large, may cause
+difficulties for optimization.  Pre-scaling can help mitigate these
+issues in an automatic way but, ideally, the user should consider
+whether an alterative formulation of the optimization problem with
+better inherent scaling is possible.
+NOTE: solutions obtained for a pre-scaled problem MAY NOT BE a
+solutions for the originally specified problem.</p>
+</section>
+<section id="prescaling-info-msg">
+<h2>prescaling_info_msg<a class="headerlink" href="#prescaling-info-msg" title="Permalink to this headline">¶</a></h2>
+<p>Boolean value. Default value: True</p>
+<p>Prints a notice that PyGRANSO has either automatically pre-scaled at
+least one of the objective or constraint functions or it has
+deteced that the optimization problem may be poorly scaled.  For
+more details, see opts.prescaling_threshold.</p>
+</section>
+<section id="opt-tol">
+<h2>opt_tol<a class="headerlink" href="#opt-tol" title="Permalink to this headline">¶</a></h2>
+<p>Positive real value. Default value: 1e-8</p>
+<p>Tolerance for reaching (approximate) optimality/stationarity.
+See opts.ngrad, opts.evaldist, and the description of PyGRANSO’s
+output argument soln, specifically the subsubfield .dnorm for more
+information.</p>
+</section>
+<section id="rel-tol">
+<h2>rel_tol<a class="headerlink" href="#rel-tol" title="Permalink to this headline">¶</a></h2>
+<p>Non-negative real value. Default value: 0</p>
+<p>Tolerance for determining when the relative decrease in the penalty
+function is sufficiently small.  PyGRANSO will terminate if when
+the relative decrease in the penalty function is at or below this
+tolerance and the current iterate is feasible to tolerances.
+Generally, we don’t recommend using this feature since small steps
+are not necessarily indicative of being near a stationary point,
+particularly for nonsmooth problems.</p>
+</section>
+<section id="step-tol">
+<h2>step_tol<a class="headerlink" href="#step-tol" title="Permalink to this headline">¶</a></h2>
+<p>Positive real value. Default value: 1e-12</p>
+<p>Tolerance for how small of a step the line search will attempt
+before terminating.</p>
+</section>
+<section id="viol-ineq-tol">
+<h2>viol_ineq_tol<a class="headerlink" href="#viol-ineq-tol" title="Permalink to this headline">¶</a></h2>
+<p>Non-negative real value. Default value: 0</p>
+<p>Acceptable total violation tolerance of the inequality constraints.</p>
+</section>
+<section id="viol-eq-tol">
+<h2>viol_eq_tol<a class="headerlink" href="#viol-eq-tol" title="Permalink to this headline">¶</a></h2>
+<p>Non-negative real value. Default value: 1e-6</p>
+<p>Acceptable total violation tolerance of the equality constraints.</p>
+</section>
+<section id="ngrad">
+<h2>ngrad<a class="headerlink" href="#ngrad" title="Permalink to this headline">¶</a></h2>
+<p>Positive integer. Default value: min([100, 2*n, n+10])</p>
+<p>Max number of previous gradients to be cached.  The QP defining
+PyGRANSO’s measure of stationarity requires a history of previous
+gradients.  Note that large values of ngrad can make the related QP
+expensive to solve, if a significant fraction of the currently
+cached gradients were evaluated at points within evaldist of the
+current iterate.  Using 1 is recommended if and only if the problem
+is unconstrained and the objective is known to be smooth.  See
+opts.opt_tol, opts.evaldist, and the description of PyGRANSO’s output
+argument soln, specifically the subsubfield .dnorm for more
+information.</p>
+</section>
+<section id="evaldist">
+<h2>evaldist<a class="headerlink" href="#evaldist" title="Permalink to this headline">¶</a></h2>
+<p>Positive real value. Default value: 1e-4</p>
+<p>Previously evaluated gradients are only used in the stationarity
+test if they were evaluated at points that are within distance
+evaldist of the current iterate x.  See opts.opt_tol, opts.ngrad,
+and the description of PyGRANSO’s output argument soln, specifically
+the subsubfield .dnorm for more information.</p>
+</section>
+<section id="maxit">
+<h2>maxit<a class="headerlink" href="#maxit" title="Permalink to this headline">¶</a></h2>
+<p>Positive integer. Default value: 1000</p>
+<p>Max number of iterations.</p>
+</section>
+<section id="maxclocktime">
+<h2>maxclocktime<a class="headerlink" href="#maxclocktime" title="Permalink to this headline">¶</a></h2>
+<p>Positive real number Default value: Inf</p>
+<p>Quit if the elapsed clock time in seconds exceeds this.</p>
+</section>
+<section id="fvalquit">
+<h2>fvalquit<a class="headerlink" href="#fvalquit" title="Permalink to this headline">¶</a></h2>
+<p>Positive real value. Default value: -Inf</p>
+<p>Quit if objective function drops below this value at a feasible
+iterate (that is, satisfying feasibility tolerances
+opts.viol_ineq_tol and opts.viol_eq_tol).</p>
+</section>
+<section id="halt-on-linesearch-bracket">
+<h2>halt_on_linesearch_bracket<a class="headerlink" href="#halt-on-linesearch-bracket" title="Permalink to this headline">¶</a></h2>
+<p>Boolean value. Default value: True</p>
+<p>If the line search brackets a minimizer but fails to satisfy the
+weak Wolfe conditions (necessary for a step to be accepted), PyGRANSO
+will terminate at this iterate when this option is set to true
+(default).  For unconstrained nonsmooth problems, it has been
+observed that this type of line search failure is often an
+indication that a stationarity has in fact been reached.  By
+setting this parameter to False, PyGRANSO will instead first attempt
+alternative optimization strategies (if available) to see if
+further progress can be made before terminating.   See
+gransoOptionsAdvanced for more details on PyGRANSO’s available
+fallback optimization strategies and how they can be configured.</p>
+</section>
+<section id="quadprog-info-msg">
+<h2>quadprog_info_msg<a class="headerlink" href="#quadprog-info-msg" title="Permalink to this headline">¶</a></h2>
+<p>Boolean value. Default value: True</p>
+<p>Prints a notice that PyGRANSO’s requires a quadprog-compatible QP
+solver and that the choice of QP solver may affect PyGRANSO’s quality
+of performance, in terms of efficiency and level of optimization.</p>
+</section>
+<section id="print-level">
+<h2>print_level<a class="headerlink" href="#print-level" title="Permalink to this headline">¶</a></h2>
+<p>Integer in {0,1}. Default value: 1</p>
+<p>Level of detail printed to console regarding optimization progress:</p>
+<p>0 - no printing whatsoever</p>
+<p>1 - prints info for each iteration</p>
+</section>
+<section id="print-frequency">
+<h2>print_frequency<a class="headerlink" href="#print-frequency" title="Permalink to this headline">¶</a></h2>
+<p>Positive integer. Default value: 1</p>
+<p>Sets how often the iterations are printed.  When set to 1, every
+iteration is printed; when set to 10, only every 10th iteration is
+printed.  When set to Inf, no iterations are printed, except for
+at x0.  Note that this only affects .print_level == 1 printing;
+all messages from higher values of .print_level will still be
+printed no matter what iteration they occurred on.</p>
+</section>
+<section id="print-width">
+<h2>print_width<a class="headerlink" href="#print-width" title="Permalink to this headline">¶</a></h2>
+<p>Integer in [9,23]. Default value: 14</p>
+<p>Number of characters wide to print values for the penalty function,
+the objective function, and the total violations of the inequality
+and equality constraints.</p>
+</section>
+<section id="print-print-ascii">
+<h2>print_print_ascii<a class="headerlink" href="#print-print-ascii" title="Permalink to this headline">¶</a></h2>
+<p>Boolean value. Default value: False</p>
+<p>By default, PyGRANSO’s printed output uses the extended character map,
+so nice looking tables can be made.  But if you need to record the output,
+you can restrict the printed output to only use the basic ASCII character map</p>
+</section>
+<section id="print-use-orange">
+<h2>print_use_orange<a class="headerlink" href="#print-use-orange" title="Permalink to this headline">¶</a></h2>
+<p>Boolean value. Default value: True</p>
+<p>PyGRANSO’s uses orange
+printing to highlight pertinent information.  However, the user
+is the given option to disable it if they need to record the output</p>
+</section>
+<section id="halt-log-fn">
+<h2>halt_log_fn<a class="headerlink" href="#halt-log-fn" title="Permalink to this headline">¶</a></h2>
+<p>Lambda Function. Default value: None</p>
+<p>A user-provided function handle that is called on every iteration
+to allow the user to signal to PyGRANSO for it to halt at that
+iteration and/or create historical logs of the progress of the
+algorithm.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">PyGRANSO</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Settings</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Standard Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="searching_direction.html">Searching Direction Strategies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="steering_strategy.html">Steering Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="line_search.html">Line Search Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="new_para.html">New Parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Settings</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Settings</a></li>
+      <li>Next: <a href="searching_direction.html" title="next chapter">Searching Direction Strategies</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Buyun Liang.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/settings/standard_parameters.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

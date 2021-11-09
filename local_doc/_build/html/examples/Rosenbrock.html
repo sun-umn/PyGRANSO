@@ -1,0 +1,218 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Rosenbrock objective function &#8212; PyGRANSO  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Getting started with 2-variable nonsmooth Rosenbrock objective function" href="1.demo_Rosenbrock.html" />
+    <link rel="prev" title="Spectral Radius Optimization" href="spectral_radius_opt.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="rosenbrock-objective-function">
+<h1>Rosenbrock objective function<a class="headerlink" href="#rosenbrock-objective-function" title="Permalink to this headline">¶</a></h1>
+<p>Modified based on GRANSO’s example.</p>
+<p>2-variable nonsmooth Rosenbrock objective function, subject to simple bound constraints</p>
+<p>Reference: Curtis, Frank E., Tim Mitchell, and Michael L. Overton. “A BFGS-SQP method for nonsmooth, nonconvex, constrained optimization and its evaluation using relative minimization profiles.” Optimization Methods and Software 32.1 (2017): 148-181.</p>
+<a class="reference internal image-reference" href="../_images/Rosenbrock.png"><img alt="../_images/Rosenbrock.png" src="../_images/Rosenbrock.png" style="width: 600px;" /></a>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="1.demo_Rosenbrock.html">Getting started with 2-variable nonsmooth Rosenbrock objective function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="1.demo_Rosenbrock.html#Advanced-Tutorial-1">Advanced Tutorial 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="1.demo_Rosenbrock.html#Advanced-Tutorial-2">Advanced Tutorial 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="1.demo_Rosenbrock.html#Advanced-Tutorial-3">Advanced Tutorial 3</a></li>
+</ul>
+</div>
+<section id="runexample-py">
+<h2>runExample.py<a class="headerlink" href="#runexample-py" title="Permalink to this headline">¶</a></h2>
+<p>The arguments for <code class="docutils literal notranslate"><span class="pre">pygranso()</span></code> is <code class="docutils literal notranslate"><span class="pre">var_dim_map</span></code> (if specify it, please leave nn_model as default None), <code class="docutils literal notranslate"><span class="pre">nn_model</span></code> (only used in deep learning problem. If specify it, please leave var_dim_map as default None), <code class="docutils literal notranslate"><span class="pre">torch_device</span></code> (optional, default torch.device(‘cpu’)), <code class="docutils literal notranslate"><span class="pre">user_data</span></code> (optional) and <code class="docutils literal notranslate"><span class="pre">user_opts</span></code> (optional).</p>
+<ol class="arabic">
+<li><p><code class="docutils literal notranslate"><span class="pre">var_dim_map</span></code></p>
+<p><code class="docutils literal notranslate"><span class="pre">var_in</span></code> is a python dictionary used for indicate variable name and corresponding matrix dimension.
+Since <code class="docutils literal notranslate"><span class="pre">x1</span></code> and <code class="docutils literal notranslate"><span class="pre">x2</span></code> are two scalars here, we set both of their dimensions to <code class="docutils literal notranslate"><span class="pre">(1,1)</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">var_in</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;x1&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="s2">&quot;x2&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)}</span>
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">torch_device</span></code></p>
+<p>In the example, we will use cpu. (recommend cpu for small scale problem):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">user_data</span></code></p>
+<p>user_data is not used in this problem.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">user_opts</span></code></p>
+<p>User-provided options. First initialize a structure for options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pygransoStruct</span> <span class="kn">import</span> <span class="n">Options</span>
+<span class="n">opts</span> <span class="o">=</span> <span class="n">Options</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Then define the options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opts</span><span class="o">.</span><span class="n">QPsolver</span> <span class="o">=</span> <span class="s1">&#39;osqp&#39;</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">maxit</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">print_level</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">print_frequency</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">x0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="../settings/index.html#settings"><span class="std std-ref">settings</span></a> for more information.</p>
+</li>
+</ol>
+<p>Call the main function:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">soln</span> <span class="o">=</span> <span class="n">pygranso</span><span class="p">(</span><span class="n">var_dim_map</span> <span class="o">=</span> <span class="n">var_in</span><span class="p">,</span> <span class="n">torch_device</span> <span class="o">=</span> <span class="n">device</span><span class="p">,</span> <span class="n">user_data</span> <span class="o">=</span> <span class="n">data_in</span><span class="p">,</span> <span class="n">user_opts</span> <span class="o">=</span> <span class="n">opts</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="combinedfunction-py">
+<h2>combinedFunction.py<a class="headerlink" href="#combinedfunction-py" title="Permalink to this headline">¶</a></h2>
+<p>In <code class="docutils literal notranslate"><span class="pre">combinedFunction.py</span></code> , <code class="docutils literal notranslate"><span class="pre">combinedFunction(X_struct,</span> <span class="pre">data_in</span> <span class="pre">=</span> <span class="pre">None)</span></code> is used to generate user defined objection function <code class="docutils literal notranslate"><span class="pre">f</span></code>,
+inequality constraint function <code class="docutils literal notranslate"><span class="pre">ci</span></code> and equality constraint function <code class="docutils literal notranslate"><span class="pre">ce</span></code>.</p>
+<p>Notice that we have auto-differentiation feature implemented, so the analytical gradients are not needed.</p>
+<ol class="arabic">
+<li><p>Obtain the (pytorch) tensor form variables from structure <code class="docutils literal notranslate"><span class="pre">X_struct</span></code>. And require gradient for the autodiff:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">x1</span> <span class="o">=</span> <span class="n">X_struct</span><span class="o">.</span><span class="n">x1</span>
+<span class="n">x2</span> <span class="o">=</span> <span class="n">X_struct</span><span class="o">.</span><span class="n">x2</span>
+<span class="n">x1</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">x2</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p>Obtain data from <code class="docutils literal notranslate"><span class="pre">runExample.py</span></code>: skip</p></li>
+<li><p>Define objective function. Notice that we must use pytorch function:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># [0,0] means obtain scalar from the torch tensor</span>
+<span class="n">f</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x1</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="n">x2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+</li>
+<li><p>Define the inequality constraint function. We must initialize <code class="docutils literal notranslate"><span class="pre">ci</span></code> as a struct,
+then assign different constraints as <code class="docutils literal notranslate"><span class="pre">ci.c1</span></code>, <code class="docutils literal notranslate"><span class="pre">ci.c2</span></code>, <code class="docutils literal notranslate"><span class="pre">ci.c3</span></code>…:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ci</span> <span class="o">=</span> <span class="n">general_struct</span><span class="p">()</span>
+<span class="n">ci</span><span class="o">.</span><span class="n">c1</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mf">0.5</span><span class="p">)</span><span class="o">*</span><span class="n">x1</span><span class="o">-</span><span class="mi">1</span>
+<span class="n">ci</span><span class="o">.</span><span class="n">c2</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">x2</span><span class="o">-</span><span class="mi">1</span>
+</pre></div>
+</div>
+</li>
+<li><p>Since no inequality constraint required in this problem, we set <code class="docutils literal notranslate"><span class="pre">ce</span></code> to <code class="docutils literal notranslate"><span class="pre">None</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ce</span> <span class="o">=</span> <span class="kc">None</span>
+</pre></div>
+</div>
+</li>
+<li><p>Return user-defined results:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">return</span> <span class="p">[</span><span class="n">f</span><span class="p">,</span><span class="n">ci</span><span class="p">,</span><span class="n">ce</span><span class="p">]</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p><code class="docutils literal notranslate"><span class="pre">eval_obj(X_struct,data_in</span> <span class="pre">=</span> <span class="pre">None)</span></code> is similar to <code class="docutils literal notranslate"><span class="pre">combinedFunction()</span></code> described above. The only difference is that this function is only used to generate objective value.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">PyGRANSO</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings/index.html">Settings</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="unconstrained_deep_learning.html">Unconstrained Deep Learning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dictionary_learning.html">Dictionary Learning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spectral_radius_opt.html">Spectral Radius Optimization</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Rosenbrock objective function</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robustPCA.html">Robust PCA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tv_denoising.html">Generalized LASSO</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Examples</a><ul>
+      <li>Previous: <a href="spectral_radius_opt.html" title="previous chapter">Spectral Radius Optimization</a></li>
+      <li>Next: <a href="1.demo_Rosenbrock.html" title="next chapter">Getting started with 2-variable nonsmooth Rosenbrock objective function</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Buyun Liang.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/examples/Rosenbrock.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
