@@ -1,7 +1,0 @@
-Line Search Parameters
-========================
-
-
-
-
-

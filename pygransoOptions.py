@@ -39,7 +39,8 @@ def pygransoOptions(n,options, torch_device):
 
        STANDARD PARAMETERS 
 
-        .x0:
+        x0
+        ----------------
         n by 1 double precision torch tensor. Default value: torch.randn(n,1).to(device=torch_device, dtype=torch.double)
 
         Initial starting point. One should pick x0 such that the objective
@@ -47,13 +48,15 @@ def pygransoOptions(n,options, torch_device):
         difficult to ascertain, it is generally recommended to initialize
         PyGRANSO at randomly-generated starting points.
 
-        .mu0:
-        Positive real value. Default value: 1.
+        mu0
+        ----------------
+        Positive real value. Default value: 1
 
         Initial value of the penalty parameter. 
         NOTE: irrelevant for unconstrained optimization problems.
 
-        .H0:
+        H0
+        ----------------
         n by n double precision torch tensor. Default value: torch.eye(n,device=torch_device, dtype=torch.double) 
 
         Initial inverse Hessian approximation.  In full-memory mode, and 
@@ -61,8 +64,9 @@ def pygransoOptions(n,options, torch_device):
         matrix is positive definite. In limited-memory mode, that is, if
         opts.limited_mem_size > 0, no numerical checks are done but this 
         matrix must be a sparse matrix.
-   
-        .checkH0:
+
+        checkH0
+        ----------------
         Boolean value. Default value: True
 
         By default, PyGRANSO will check whether or not H0 is numerically
@@ -73,7 +77,8 @@ def pygransoOptions(n,options, torch_device):
         option to False to disable it. No positive definite check is done
         when limited-memory mode is enabled.
 
-        .scaleH0: 
+        scaleH0
+        ----------------
         Boolean value. Default value: True
 
         Scale H0 during BFGS/L-BFGS updates.  For full-memory BFGS, scaling
@@ -81,8 +86,9 @@ def pygransoOptions(n,options, torch_device):
         recommended when H0 is the identity (which is PyGRANSO's default).
         For limited-memory BFGS, H0 is scaled on every update.  For more
         details, see opts.limited_mem_fixed_scaling.
- 
-        .bfgs_damping:
+
+        bfgs_damping
+        ----------------
         Real value in [0,1]. Default value: 1e-4 
             
         This feature will adaptively damp potentially problematic BFGS
@@ -92,7 +98,8 @@ def pygransoOptions(n,options, torch_device):
         damping will be applied to (L)BFGS updates.  Setting this value to
         zero completely disables damping.
 
-        .limited_mem_size:
+        limited_mem_size
+        ----------------
         Non-negative integer. Default value: 0
 
         By default, PyGRANSO uses full-memory BFGS updating.  For nonsmooth
@@ -100,8 +107,9 @@ def pygransoOptions(n,options, torch_device):
         this is not feasible, one may optionally enable limited-memory BFGS
         updating by setting opts.limited_mem_size to a positive integer
         (significantly) less than the number of variables.
-  
-        .limited_mem_fixed_scaling:
+
+        limited_mem_fixed_scaling
+        --------------------------------
         Boolean value. Default value: True
 
         In contrast to full-memory BFGS updating, limited-memory BFGS
@@ -112,15 +120,17 @@ def pygransoOptions(n,options, torch_device):
         parameter on every iteration.  Note that opts.scaleH0 has no effect
         when opts.limited_mem_fixed_scaling is set to True.
 
-        .limited_mem_warm_start:
+        limited_mem_warm_start
+        --------------------------------
         Python dictionary with key to be 'S', 'Y', 'rho' and 'gamma'. Default value: None
             
         If one is restarting PyGRANSO, the previous L-BFGS information can be
         recycled by setting opts.limited_mem_warm_start = soln.H_final,
         where soln is PyGRANSO's output struct from a previous run.  Note
         that one can either reuse the previous H0 or set a new one.
-       
-        .prescaling_threshold:
+
+        prescaling_threshold
+        --------------------------------
         Positive real value. Default value: Inf
 
         Pre-scales objective/constraint functions such that the norms of 
@@ -134,15 +144,17 @@ def pygransoOptions(n,options, torch_device):
         NOTE: solutions obtained for a pre-scaled problem MAY NOT BE a
         solutions for the originally specified problem.
 
-        .prescaling_info_msg:
+        prescaling_info_msg
+        --------------------------------
         Boolean value. Default value: True
 
         Prints a notice that PyGRANSO has either automatically pre-scaled at
         least one of the objective or constraint functions or it has
         deteced that the optimization problem may be poorly scaled.  For
-        more details, see opts.prescaling_threshold.
+        more details, see opts.prescaling_threshold.  
 
-        .opt_tol:     
+        opt_tol     
+        ----------------        
         Positive real value. Default value: 1e-8
 
         Tolerance for reaching (approximate) optimality/stationarity.
@@ -150,7 +162,8 @@ def pygransoOptions(n,options, torch_device):
         output argument soln, specifically the subsubfield .dnorm for more
         information.
 
-        .rel_tol:
+        rel_tol
+        ----------------
         Non-negative real value. Default value: 0
 
         Tolerance for determining when the relative decrease in the penalty
@@ -161,23 +174,27 @@ def pygransoOptions(n,options, torch_device):
         are not necessarily indicative of being near a stationary point,
         particularly for nonsmooth problems.
 
-        .step_tol:
+        step_tol
+        ----------------
         Positive real value. Default value: 1e-12
 
         Tolerance for how small of a step the line search will attempt
         before terminating.
 
-        .viol_ineq_tol:                 
+        viol_ineq_tol
+        ----------------                  
         Non-negative real value. Default value: 0
 
-        Acceptable total violation tolerance of the inequality constraints.
+        Acceptable total violation tolerance of the inequality constraints.   
 
-        .viol_eq_tol:                   
+        viol_eq_tol
+        ----------------                   
         Non-negative real value. Default value: 1e-6
 
-        Acceptable total violation tolerance of the equality constraints.        
+        Acceptable total violation tolerance of the equality constraints. 
 
-        .ngrad:
+        ngrad
+        ----------------
         Positive integer. Default value: min([100, 2*n, n+10])
                                 
         Max number of previous gradients to be cached.  The QP defining 
@@ -191,7 +208,8 @@ def pygransoOptions(n,options, torch_device):
         argument soln, specifically the subsubfield .dnorm for more
         information.
 
-        .evaldist:                     
+        evaldist
+        ----------------                       
         Positive real value. Default value: 1e-4
 
         Previously evaluated gradients are only used in the stationarity 
@@ -200,24 +218,30 @@ def pygransoOptions(n,options, torch_device):
         and the description of PyGRANSO's output argument soln, specifically 
         the subsubfield .dnorm for more information.
 
-        .maxit:
+        maxit
+        ----------------
         Positive integer. Default value: 1000
 
         Max number of iterations.
 
-        .maxclocktime:
+        maxclocktime
+        ----------------
         Positive real number Default value: Inf
 
         Quit if the elapsed clock time in seconds exceeds this.
-                   
-        .fvalquit:
+
+
+        fvalquit
+        ----------------
         Positive real value. Default value: -Inf
 
         Quit if objective function drops below this value at a feasible 
         iterate (that is, satisfying feasibility tolerances 
         opts.viol_ineq_tol and opts.viol_eq_tol).
 
-        .halt_on_linesearch_bracket:     
+
+        halt_on_linesearch_bracket     
+        --------------------------------          
         Boolean value. Default value: True
 
         If the line search brackets a minimizer but fails to satisfy the 
@@ -232,7 +256,8 @@ def pygransoOptions(n,options, torch_device):
         gransoOptionsAdvanced for more details on PyGRANSO's available 
         fallback optimization strategies and how they can be configured. 
 
-        .quadprog_info_msg:
+        quadprog_info_msg
+        --------------------------------
         Boolean value. Default value: True
 
         Prints a notice that PyGRANSO's requires a quadprog-compatible QP
@@ -240,7 +265,8 @@ def pygransoOptions(n,options, torch_device):
         of performance, in terms of efficiency and level of optimization. 
 
 
-        .print_level:
+        print_level     
+        ----------------
         Integer in {0,1}. Default value: 1
 
         Level of detail printed to console regarding optimization progress:
@@ -249,7 +275,8 @@ def pygransoOptions(n,options, torch_device):
 
         1 - prints info for each iteration  
 
-        .print_frequency:
+        print_frequency      
+        ----------------          
         Positive integer. Default value: 1
 
         Sets how often the iterations are printed.  When set to 1, every
@@ -259,34 +286,39 @@ def pygransoOptions(n,options, torch_device):
         all messages from higher values of .print_level will still be
         printed no matter what iteration they occurred on.
 
-        .print_width:  
+        print_width  
+        ----------------
         Integer in [9,23]. Default value: 14
 
         Number of characters wide to print values for the penalty function,
         the objective function, and the total violations of the inequality 
         and equality constraints. 
 
-        .print_print_ascii:          
+        print_print_ascii     
+        --------------------------------          
         Boolean value. Default value: False
 
         By default, PyGRANSO's printed output uses the extended character map, 
         so nice looking tables can be made.  But if you need to record the output, 
         you can restrict the printed output to only use the basic ASCII character map
 
-        .print_use_orange:
+
+        print_use_orange   
+        --------------------------------
         Boolean value. Default value: True
 
         PyGRANSO's uses orange
         printing to highlight pertinent information.  However, the user
         is the given option to disable it if they need to record the output
-  
-        .halt_log_fn:
+
+        halt_log_fn
+        --------------------------------
         Lambda Function. Default value: None
 
         A user-provided function handle that is called on every iteration
         to allow the user to signal to PyGRANSO for it to halt at that 
         iteration and/or create historical logs of the progress of the
-        algorithm.
+        algorithm. 
         
         END OF STANDARD PARAMETERS
 
