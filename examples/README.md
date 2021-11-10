@@ -28,10 +28,11 @@ Generalized LASSO: total variation denoising
 
 Reference: Boyd, Stephen, Neal Parikh, and Eric Chu. Distributed optimization and statistical learning via the alternating direction method of multipliers. Now Publishers Inc, 2011.
 
-# Demo 6: Orthogonal RNN
+# Demo 6: Perceptual Attack
+
+Reference: Laidlaw, Cassidy, Sahil Singla, and Soheil Feizi. "Perceptual adversarial robustness: Defense against unseen threat models." arXiv preprint arXiv:2006.12655 (2020).
+
+# Demo 7: Orthogonal RNN
 
 Reference: Lezcano-Casado, Mario, and David Martınez-Rubio. "Cheap orthogonal constraints in neural networks: A simple parametrization of the orthogonal and unitary group." International Conference on Machine Learning. PMLR, 2019.
 
-# Demo 7: Perceptual Attack
-
-Reference: Laidlaw, Cassidy, Sahil Singla, and Soheil Feizi. "Perceptual adversarial robustness: Defense against unseen threat models." arXiv preprint arXiv:2006.12655 (2020).
