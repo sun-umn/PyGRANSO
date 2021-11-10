@@ -2,7 +2,7 @@
 
 ![Example screenshot](./PyGRANSO_logo.png)
 
-PyGRANSO: a Python numerical package using GRadient-based Algorithm for Non-Smooth Optimization
+PyGRANSO: a Python numerical package using GRadient-based Algorithm for Non-Smooth Optimization.
 
 Toward a user-friendly and scalable numerical package for nonsmooth, nonconvex, constrained optimization
 
