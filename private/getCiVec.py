@@ -2,6 +2,9 @@ import torch
 # from pygransoStruct import GeneralStruct
 
 def getCiVec(ci,torch_device):
+    """
+    getCiVec transforms the original tensor form constrained function into vector form
+    """
     #  number of constraints
     nconstr = 0
     # get # of constraints
@@ -9,8 +12,7 @@ def getCiVec(ci,torch_device):
     for constr_i in ci.__dict__.keys():
         constrMatrix = getattr(ci,constr_i)
         nconstr = nconstr + torch.numel(constrMatrix)
-    
-    
+
     # inquality constraints
     ci_vec_torch = torch.zeros((nconstr,1),device=torch_device, dtype=torch.double)
     curIdx = 0

@@ -9,6 +9,7 @@ from private.wrapToLines import wrapToLines
 from time import sleep
 from private.mat2vec import mat2vec_autodiff, obj_eval
 from private.getNvar import getNvar
+import traceback,sys
 
 def pygranso(combinedFunction,objEvalFunction,var_dim_map=None,nn_model=None, torch_device = torch.device('cpu'),user_data=None,user_opts=None):
     """
@@ -332,11 +333,6 @@ def pygranso(combinedFunction,objEvalFunction,var_dim_map=None,nn_model=None, to
        See also pygransoOptions, gransoOptionsAdvanced, makeHaltLogFunctions.
     """
     
-    
-    # % First reset solveQP's persistent counters to zero
-    # clear solveQP;
-
-    
     # Initialization
     #  - process arguments
     #  - set initial Hessian inverse approximation
@@ -355,17 +351,14 @@ def pygranso(combinedFunction,objEvalFunction,var_dim_map=None,nn_model=None, to
 
     try: 
         [problem_fns,opts] = processArguments(n,obj_fn,user_opts, torch_device)
-        # check realted function: np.matrix.H is recommened, consider np.transpose/conjugate 
         [bfgs_hess_inv_obj,opts] = getBfgsManager(opts,torch_device)
-
         # construct the penalty function object and evaluate at x0
         # unconstrained problems will reset mu to one and mu will be fixed
         mPF = PanaltyFuctions() # make penalty functions 
-        [ penaltyfn_obj, grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, f_eval_fn, problem_fns, torch_device = torch_device)
+        [penaltyfn_obj,grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, f_eval_fn, problem_fns, torch_device = torch_device)
     except Exception as e:
-            print(e)   
-            print("pygranso main loop Error")
-
+        print(traceback.format_exc())
+        sys.exit()
 
     msg_box_fn = lambda margin_spaces,title_top,title_bottom,msg_lines,sides=True,user_width=0: pMB.printMessageBox(opts.print_ascii,opts.print_use_orange, margin_spaces,title_top,title_bottom,msg_lines,sides,user_width)
 
@@ -386,16 +379,11 @@ def pygranso(combinedFunction,objEvalFunction,var_dim_map=None,nn_model=None, to
         pygransoPrinter_object = pgP()
         printer         = pygransoPrinter_object.pygransoPrinter(opts,n,n_ineq,n_eq)
     
-
-    
-    
-
     try:
         bfgssqp_obj = AlgBFGSSQP()
         info = bfgssqp_obj.bfgssqp(f_eval_fn, penaltyfn_obj,bfgs_hess_inv_obj,opts,printer, torch_device)
     except Exception as e:
-        print(e)   
-        print("Error: pygranso bfgssqp ")
+        print(traceback.format_exc())
         # recover optimization computed so far
         penaltyfn_obj.restoreSnapShot()
     
@@ -409,7 +397,6 @@ def pygranso(combinedFunction,objEvalFunction,var_dim_map=None,nn_model=None, to
     soln.fn_evals               = penaltyfn_obj.getNumberOfEvaluations()
     soln.termination_code       = info.termination_code
 
-    
     [qp_requests,qp_errs]       = getErr()
     qp_fail_rate                = 100 * (qp_errs / qp_requests)
     soln.quadprog_failure_rate  = qp_fail_rate
@@ -421,13 +408,9 @@ def pygranso(combinedFunction,objEvalFunction,var_dim_map=None,nn_model=None, to
     # python version: new function for printSummary
     printSummary = lambda name,fieldname: printSummaryAux(name,fieldname,soln,printer)
 
-    if opts.print_level:         
-        
-        
+    if opts.print_level:          
         printer.msg({ 'Optimization results:', getResultsLegend() })
-        
-        sleep(0.0001)
-        
+        sleep(0.0001) # Prevent race condition
         printSummary("F","final")
         printSummary("B","best")
         printSummary("MF","most_feasible")
@@ -436,27 +419,19 @@ def pygranso(combinedFunction,objEvalFunction,var_dim_map=None,nn_model=None, to
             printSummary("F","final_unscaled")
             printSummary("B","best_unscaled")
             printSummary("MF","most_feasible_unscaled")
-        
         width = printer.msgWidth()
         printer.msg(getTerminationMsgLines(soln,constrained,width))
-
         if qp_fail_rate > 1:
             printer.quadprogFailureRate(qp_fail_rate)
-        
         printer.close()
     
          
     if hasattr(soln,"error"):
         err = soln.error;      
-        print("ERROR: In the end.")
+        print("ERROR: In the end of main loop.")
+        print(err)
     
-
-    # print("pygranso end")
-
     return soln
-
-
-
 
 # only combined function allowed here. simpler form compare with GRANSO
 # different cases needed if seperate obj eq and ineq are using

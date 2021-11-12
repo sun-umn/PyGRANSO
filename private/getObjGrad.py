@@ -3,6 +3,9 @@ import torch
 
 
 def getObjGrad(nvar,var_dim_map,f,X, torch_device):
+    """
+    getObjGrad obtains gradient of objective function by using pytorch autodiff
+    """
     f.backward(retain_graph=True)
     f_grad_vec = torch.zeros((nvar,1),device=torch_device, dtype=torch.double)
 

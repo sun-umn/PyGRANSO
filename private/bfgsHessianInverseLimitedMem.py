@@ -3,12 +3,12 @@ from torch import conj
 from pygransoStruct import GeneralStruct, Options
 
 def bfgsHessianInverseLimitedMem(H0,scaleH0,fixed_scaling,nvec,restart_data,device):
-#    bfgsHessianInverseLimitedMem:
-#        An object that maintains and updates a L-BFGS approximation to the 
-#        inverse Hessian.
-
+    """
+    bfgsHessianInverseLimitedMem:
+        An object that maintains and updates a L-BFGS approximation to the 
+        inverse Hessian.
+    """
     H_obj = H_obj_struct(H0,scaleH0,fixed_scaling,nvec,restart_data,device)
-
     return H_obj
 
 
@@ -132,11 +132,6 @@ class H_obj_struct:
 
     def getState(self):
         data = {'S':self.S[:,0:self.count], 'Y':self.Y[:,0:self.count], 'rho':self.rho[0:self.count], 'gamma':self.gamma}
-        # data = Options()
-        # setattr(data,'S',self.S[:,0:self.count])
-        # setattr(data,'Y',self.Y[:,0:self.count])
-        # setattr(data,'rho',self.rho[0:self.count])
-        # setattr(data,'gamma',self.gamma) 
         return data
 
     def getCounts(self):

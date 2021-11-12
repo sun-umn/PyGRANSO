@@ -8,6 +8,7 @@ from pygransoStruct import GeneralStruct
 import math
 import numpy as np
 from numpy.random import default_rng
+import traceback,sys
 
 class AlgBFGSSQP():
     def __init__(self):
@@ -221,8 +222,9 @@ class AlgBFGSSQP():
                 try:
                     [p,mu_new,*_] = steering_fn(self.penaltyfn_at_x,apply_H_steer)
                 except Exception as e:
-                    print(e)
                     print("PyGRANSO:steeringQuadprogFailure")
+                    print(traceback.format_exc())
+                    sys.exit()
                 
                 penalty_parameter_changed = (mu_new != self.mu)
                 if penalty_parameter_changed: 

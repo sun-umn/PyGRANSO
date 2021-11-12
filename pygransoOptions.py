@@ -5,7 +5,7 @@ from private.optionValidator import oV
 import numpy as np
 from pygransoStruct import Options
 from private.isAnInteger import isAnInteger
-import copy
+import traceback,sys
 
 def pygransoOptions(n,options, torch_device):
     """
@@ -378,10 +378,7 @@ def pygransoOptions(n,options, torch_device):
         if lim_mem_mode and hasattr(user_opts,"limited_mem_warm_start")  and user_opts.limited_mem_warm_start != None:
             
             #  Ensure all the necessary subfields for L-BFGS data exist and 
-            #  if so, it returns a validator for this sub-struct of data.
-
-            # lbfgs_validator = validator.setStructWithFields( "limited_mem_warm_start",["S","Y","rho","gamma"])
-            
+            #  if so, it returns a validator for this sub-struct of data.            
             ws              = user_opts.limited_mem_warm_start
             [n_S,cols_S]    = ws['S'].shape
             [n_Y,cols_Y]    = ws['Y'].shape
@@ -389,17 +386,7 @@ def pygransoOptions(n,options, torch_device):
             
             assert n == n_S and n == n_Y,'PyGRANSO invalidUserOption: the number of rows in both subfields S and Y must match the number of optimization variables'
             assert cols_S > 0 and cols_S == cols_Y and cols_S == cols_rho,'PyGRANSO invalidUserOption: subfields S, Y, and rho must all have the same (positive) number of columns'
-            
-            # lbfgs_validator.setRow("rho")            
-            
-            # lbfgs_validator.setRealFiniteValued("S")
-            # lbfgs_validator.setRealFiniteValued("Y")
-            # lbfgs_validator.setRealFiniteValued("rho")
-            # lbfgs_validator.setReal("gamma")
-            # lbfgs_validator.setFiniteValued("gamma")          
-            # LBFGS validator TODO
             validator.setRestartData("limited_mem_warm_start")
-            
         
         if hasattr(user_opts,"H0") and torch.any(user_opts.H0) != None:
             validator.setDimensioned("H0",n,n)
@@ -469,9 +456,7 @@ def pygransoOptions(n,options, torch_device):
         validator.setRealNonnegative("init_step_size")
         validator.setLogical("is_backtrack_linesearch")
         validator.setLogical("searching_direction_rescaling")
-        validator.setLogical("disable_terminationcode_6")
-        # validator.setLogical("use_cuda")
-        
+        validator.setLogical("disable_terminationcode_6")        
 
         #  LOGGING PARAMETERS
         validator.setIntegerInRange("print_level",0,3)
@@ -483,15 +468,11 @@ def pygransoOptions(n,options, torch_device):
         if hasattr(user_opts,"halt_log_fn") and user_opts.halt_log_fn != None:
             validator.setFunctionHandle("halt_log_fn")
         
-        #  Extended ASCII chars in MATLAB on Windows are not monospaced so
-        #  don't support them.
         opts = validator.getValidatedOpts()
-        # if not opts.print_ascii:
-        #     validator.assert(~ispc(),                                   ...
-        #         'only opts.print_ascii == true is supported on Windows.');
-        # end
+
     except Exception as e:
-        print(e)
+        print(traceback.format_exc())
+        sys.exit()
 
     #  GET THE VALIDATED OPTIONS AND POST PROCESS THEM
     opts = postProcess(n,validator.getValidatedOpts(), torch_device)
@@ -504,7 +485,6 @@ def postProcess(n,opts, torch_device):
     if opts.max_fallback_level < opts.min_fallback_level:
         opts.max_fallback_level = opts.max_fallback_level
     
-    
     # If an initial starting point was not provided, use random vector
     if opts.x0 == None:
         opts.x0 = torch.randn(n,1).to(device=torch_device, dtype=torch.double)
@@ -513,15 +493,10 @@ def postProcess(n,opts, torch_device):
     if opts.H0 == None:
         opts.H0 = torch.eye(n,device=torch_device, dtype=torch.double) 
     
-    
     if hasattr(opts,"QPsolver"):
         QPsolver = opts.QPsolver
     
-    # % MATLAB default solver
-    # skip MATLAB default solver and QPALM
-    
     return opts
-
 
 def getDefaults(n):
     [*_, LAST_FALLBACK_LEVEL] = pgC.pygransoConstants()
@@ -576,12 +551,10 @@ def getDefaults(n):
     setattr(default_opts,'is_backtrack_linesearch',False)
     setattr(default_opts,'searching_direction_rescaling',False)
     setattr(default_opts,'disable_terminationcode_6',False)
-    # setattr(default_opts,'use_cuda',False)
 
     setattr(default_opts,'print_level',1)
     setattr(default_opts,'print_frequency',1)
     setattr(default_opts,'print_width',14)
-    # Originally, false || ispc(). ispc returns logical 1 (true) if the version of MATLAB® software is for the Microsoft® Windows® platform.
     setattr(default_opts,'print_ascii',False)
     setattr(default_opts,'print_use_orange',True)
     setattr(default_opts,'halt_log_fn',None)

@@ -2,7 +2,7 @@ import numpy as np
 import numpy.linalg as LA
 import torch
 from private.solveQP import solveQP
-
+import traceback,sys
 
 class qpSS:
     def __init__(self):
@@ -132,8 +132,9 @@ class qpSS:
                 #  formulation of QP has no 1/2
                 y = solveQP(self.H,self.f,None,None,self.LB,self.UB, "osqp", self.device)
         except Exception as e:
-            print(e)
             print("PyGRANSO steeringQuadprogFailure: Steering aborted due to a quadprog failure.")        
+            print(traceback.format_exc())
+            sys.exit()
 
         d = -self.mu_Hinv_f_grad - (self.Hinv_c_grads @ y)
         return d

@@ -2,6 +2,14 @@ import numpy as np
 from pygransoStruct import GeneralStruct
 import torch
 
+def bfgsHessianInverse(H,scaleH0):
+    """
+    bfgsHessianInverse:
+        An object that maintains and updates a BFGS approximation to the inverse Hessian.
+    """
+    H_obj = H_obj_struct(H,scaleH0)
+    return H_obj
+
 class H_obj_struct:
     
     def __init__(self,H,scaleH0):
@@ -15,7 +23,6 @@ class H_obj_struct:
         self.H = H
         self.scaleH0 = scaleH0
 
-    # @profile
     def update(self,s,y,sty,damped=False):
         self.requests += 1
         skipped  = 0
@@ -46,26 +53,16 @@ class H_obj_struct:
                 self.H *= gamma
             
             self.scaleH0         = False # only allow first update to be scaled
-        
 
         rho = (1./sty)[0][0]
         Hy = self.H @ y
         rhoHyst = (rho*Hy) @ torch.conj(s.t())
-
-        #   old version: update may not be symmetric because of rounding
-        #  H = H - rhoHyst' - rhoHyst + rho*s*(y'*rhoHyst) + rho*s*s';
-        #  new in HANSO version 2.02: make H explicitly symmetric
-        #  also saves one outer product
-        #  in practice, makes little difference, except H=H' exactly
         
         #  ytHy could be < 0 if H not numerically pos def
-        
         ytHy = torch.conj(y.t()) @ Hy
         sstfactor = max([(rho*rho*ytHy + rho).item(),  0])
         sscaled = np.sqrt(sstfactor)*s
         H_new = self.H - (torch.conj(rhoHyst.t()) + rhoHyst) + sscaled @ torch.conj(sscaled.t())
-
-        
         H_vec = torch.reshape(H_new, (torch.numel(H_new),1))
         notInf_flag = torch.all(torch.isinf(H_vec) == False)
         notNan_flag = torch.all(torch.isnan(H_vec) == False)
@@ -78,12 +75,6 @@ class H_obj_struct:
         else:
             skipped = 3
             self.infnan_fails += 1
-        
-        #  An aside, for an alternative way of doing the BFGS update:
-        #  Add the update terms together first: does not seem to make
-        #  significant difference
-        #    update = sscaled*sscaled' - (rhoHyst' + rhoHyst);
-        #    H = H + update;
 
         return skipped
 
@@ -107,11 +98,3 @@ class H_obj_struct:
         return counts
 
 
-def bfgsHessianInverse(H,scaleH0):
-#    bfgsHessianInverse:
-#        An object that maintains and updates a BFGS approximation to the 
-#        inverse Hessian.
-
-    H_obj = H_obj_struct(H,scaleH0)
-
-    return H_obj

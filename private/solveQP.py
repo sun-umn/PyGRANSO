@@ -2,18 +2,14 @@ import torch
 import osqp
 import numpy as np
 from scipy import sparse
+import traceback,sys
 
 QP_REQUESTS = 0
 
-
-def getErr():
-    # getErr NOT used
-    global QP_REQUESTS
-    errors = 0
-    return [QP_REQUESTS,errors]
-
 def solveQP(H,f,A,b,LB,UB,QPsolver,torch_device):
-    
+    """
+    solveQP will call the QP solver to calculate the given QP
+    """
     global QP_REQUESTS
     QP_REQUESTS += 1
 
@@ -66,4 +62,12 @@ def solveQP(H,f,A,b,LB,UB,QPsolver,torch_device):
             return solution
 
     except Exception as e:
-        print(e)
+        print(traceback.format_exc())
+        sys.exit()
+
+
+def getErr():
+    # getErr NOT used
+    global QP_REQUESTS
+    errors = 0
+    return [QP_REQUESTS,errors]

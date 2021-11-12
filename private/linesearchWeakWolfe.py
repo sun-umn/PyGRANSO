@@ -2,19 +2,13 @@ import numpy as np
 import math
 import torch
 
-
-# @profile
 def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, fvalquit = -np.inf, eval_limit = np.inf, step_tol = 1e-12, init_step_size = 1, linesearch_maxit = np.inf, is_backtrack_linesearch = False, torch_device = torch.device('cpu')):
     """
     linesearchWeakWolfe:
         Line search enforcing weak Wolfe conditions, suitable for minimizing 
-        both smooth and nonsmooth functions.  This routine is a slightly 
-        modified version of linesch_ww.m from HANSO 2.1, to faciliate a few 
-        different input and output arguments but the method itself remains 
-        unchanged.  The function name has been changed so that they are not
-        mistakenly used in lieu of one another.  
-        NOTE: the values assigned to output argument "fail" have been changed 
-                so that all error cases are assigned positive codes.
+        both smooth and nonsmooth functions.  
+
+        The default is backtracking line search as updated in PyGRANSO
     """
 
     alpha = 0  # lower bound on steplength conditions

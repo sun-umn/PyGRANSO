@@ -2,7 +2,9 @@ import numpy as np
 import torch
 
 def getCiGradVec(nvar,nconstr_ci_total,var_dim_map,X,ci_vec_torch, torch_device):
-
+    """
+    getCiGradVec obtains gradient of constraints function by using pytorch autodiff
+    """
     # gradient of inquality constraints
     ci_grad_vec = torch.zeros((nvar,nconstr_ci_total),device=torch_device, dtype=torch.double)
     

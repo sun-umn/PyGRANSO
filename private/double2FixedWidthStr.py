@@ -37,9 +37,6 @@ def double2FixedWidthStr(width, str_in = None):
 
     return out
     
-    
-
-
 def double2FixedWidth(x,width):
     if x == 0:
         x_str       = " 0.%s"%("0"*(width-3))
@@ -72,7 +69,6 @@ def double2FixedWidth(x,width):
         if n_whole < 1:
             digits  = digits - 1
         
-    
         x_str       = "%.*f"%(digits,x)  
         #  get length without sign since the actual number of whole digits 
         #  may be increased by one due to rounding in sprintf (e.g.
@@ -81,7 +77,6 @@ def double2FixedWidth(x,width):
         if len(x_str) > expected:
             x_str   = x_str[0:expected]
         
-    
     if is_negative:
         x_str       = "-" + x_str  
     else:

@@ -13,6 +13,7 @@ from private.isString import isString
 import numpy as np
 import copy
 import torch
+import traceback,sys
 
 class oV:
     def __init__(self):
@@ -327,7 +328,8 @@ class oV:
         try: 
             setattr(self.default_opts,name,getattr(self.sub_validators,name) )   
         except Exception as e:
-            print(e)
+            print(traceback.format_exc())
             s = "Sub-validator %s failed when requesting default values!"
             print(s%name)
+            sys.exit()
         return

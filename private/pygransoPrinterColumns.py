@@ -2,9 +2,11 @@ from pygransoStruct import GeneralStruct
 from private import nDigitsInWholePart as nDIWP, truncate, centerString as cS, double2FixedWidthStr as d2FWS, formatOrange as fO
 
 def pygransoPrinterColumns(opts,ineq_constraints,eq_constraints):
-    #    gransoPrinterColumns:
-    #        Sets up formatters for each column needed for GRANSO's printer,
-    #        gransoPrinter.
+    """       
+    gransoPrinterColumns:
+        Sets up formatters for each column needed for GRANSO's printer,
+        gransoPrinter.
+    """
 
     field_width     = min(max(9,opts.print_width),23)
     constrained     = ineq_constraints or eq_constraints

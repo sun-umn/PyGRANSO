@@ -2,7 +2,7 @@ from pygransoStruct import Options
 
 def makeStructWithFields(varargin):
     """
-    makeStructWithFields.py
+    makeStructWithFields
       Returns an empty struct with the fieldnames specified as input
       arguments but all set to [].
     """

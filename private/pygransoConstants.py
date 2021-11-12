@@ -2,9 +2,9 @@ def pygransoConstants():
     """
     pygransoConstants:
     Simple routine for defining constants for use in:
-        1) granso 
-        2) gransoOptions 
-        3) gransoOptionsAdvanced
+        1) pygranso 
+        2) pygransoOptions 
+        3) pygransoOptionsAdvanced
     """
     # Number of first fallback level after QP approaches have failed
     POSTQP_FALLBACK_LEVEL       = 2

@@ -1,8 +1,7 @@
 def isRow(r):
     """
     isRow:
-      Checks whether r is a nonempty row vector, that is, for 
-      [m,n] = size(r), both m = 1 and n > 0 must hold.
+      Checks whether r is a nonempty row vector.
     """
     [m,n]   = r.shape
     tf      = m == 1 and n > 0
