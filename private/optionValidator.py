@@ -10,6 +10,7 @@ from private.isColumn import isColumn
 from private.isMbyN import isMbyN
 from private.isPositiveDefinite import isPositiveDefinite
 from private.isString import isString
+from private.isRestartData import isRestartData
 import numpy as np
 import copy
 import torch
@@ -300,7 +301,7 @@ class oV:
         return
 
     def setRestartData(self,name):                                          
-        self.validateAndSet( name, lambda x: True, "%lbfgs_warm_start" )
+        self.validateAndSet( name, lambda x: isRestartData(x), "lbfgs_warm_start required form {'S':matrix, 'Y':matrix, 'rho':row vector, 'gamma':scalar}" )
         return
 
     def setSparse(self,name):

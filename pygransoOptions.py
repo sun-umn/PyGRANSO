@@ -378,15 +378,14 @@ def pygransoOptions(n,options, torch_device):
         if lim_mem_mode and hasattr(user_opts,"limited_mem_warm_start")  and user_opts.limited_mem_warm_start != None:
             
             #  Ensure all the necessary subfields for L-BFGS data exist and 
-            #  if so, it returns a validator for this sub-struct of data.            
-            ws              = user_opts.limited_mem_warm_start
+            #  if so, it returns a validator for this sub-struct of data.
+            validator.setRestartData("limited_mem_warm_start")            
+            ws              = user_opts.limited_mem_warm_start  
             [n_S,cols_S]    = ws['S'].shape
             [n_Y,cols_Y]    = ws['Y'].shape
-            cols_rho        = ws['rho'].shape[1]
-            
+            [_,cols_rho]    = ws['rho'].shape
             assert n == n_S and n == n_Y,'PyGRANSO invalidUserOption: the number of rows in both subfields S and Y must match the number of optimization variables'
-            assert cols_S > 0 and cols_S == cols_Y and cols_S == cols_rho,'PyGRANSO invalidUserOption: subfields S, Y, and rho must all have the same (positive) number of columns'
-            validator.setRestartData("limited_mem_warm_start")
+            assert cols_S > 0 and cols_S == cols_Y and cols_S == cols_rho,'PyGRANSO invalidUserOption: subfields S, Y, and rho must all have the same (positive) number of columns'          
         
         if hasattr(user_opts,"H0") and torch.any(user_opts.H0) != None:
             validator.setDimensioned("H0",n,n)
