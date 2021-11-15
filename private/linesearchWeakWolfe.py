@@ -30,14 +30,12 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
     # parameter if it terminates with the "f may be unbounded below" case.
     nexpandmax = max(10, round(math.log2(1e5/dnorm)))  # allows more if ||d|| small
 
-    test_flag = 0
-
     while (beta - alpha) > (torch.norm(x0 + alpha*d).item()/dnorm)*step_tol and n_evals < maxit:
         x = x0 + t*d
 
         if is_backtrack_linesearch:
             [f,is_feasible] = f_eval_fn(x)
-            # random setting, avoid 2nd wolfe condition
+            # random setting, avoid error in 2nd wolfe condition
             gtd = 2*(torch.conj(grad0.t()) @ d)
         else:
             [f,grad,is_feasible] = obj_fn(x)
@@ -58,16 +56,12 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
         #  the first condition must be checked first. NOTE THE >=.
         if f >= f0 + c1*t*g0 or np.isnan(f): # first condition violated, gone too far
             beta = t
-            test_flag = 1
 
-        
         elif not is_backtrack_linesearch and gtd <= c2*g0 or torch.isnan(gtd): # second condition violated, not gone far enough
                 alpha = t
                 xalpha = x.detach().clone()
                 falpha = f
                 gradalpha = grad.detach().clone()
-
-
 
         else:   # quit, both conditions are satisfied
             fail = 0
@@ -96,7 +90,6 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
     else: # point satisfying Wolfe conditions was bracketed
         fail = 1
     
-
     #####################################################################
     if is_backtrack_linesearch:
         alpha = t

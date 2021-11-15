@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from private.getObjGrad import getObjGradDL,getObjGrad
-from private.vec2mat import vec2mat
+from private.vec2tensor import vec2tensor
 from private.getCiVec import getCiVec
 from private.getCiGradVec import getCiGradVec
 
@@ -9,19 +9,19 @@ def obj_eval(eval_obj, x, var_dim_map, data_in = None):
     """
     obj_eval makes an objective evaluation function used for backtrack line search
     """
-    X_struct = vec2mat(x,var_dim_map)
+    X_struct = vec2tensor(x,var_dim_map)
     if data_in == None:
         f = eval_obj(X_struct)
     else:
         f = eval_obj(X_struct,data_in)
     return f
 
-def mat2vec_autodiff(combinedFunction,x,var_dim_map,nvar,data_in = None,  torch_device = torch.device('cpu'), model = None):
+def tensor2vec(combinedFunction,x,var_dim_map,nvar,data_in = None,  torch_device = torch.device('cpu'), model = None):
     """
     mat2vec_autodiff
         Return vector form objective and constraints information required by PyGRANSO
     """
-    X = vec2mat(x,var_dim_map)
+    X = vec2tensor(x,var_dim_map)
     # obtain objective and constraint function and their corresponding gradient
     # matrix form functions    
     

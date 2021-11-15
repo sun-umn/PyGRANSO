@@ -2,9 +2,9 @@ from pygransoStruct import GeneralStruct
 import numpy as np
 import torch
 
-def vec2mat(x,var_dim_map):
+def vec2tensor(x,var_dim_map):
     """
-    vec2mat transforms the vector form result to mnatrix/tensor form, which is used in evaluating objective & constraints function
+    vec2tensor transforms the vector form result to mnatrix/tensor form, which is used in evaluating objective & constraints function
     """
     X = GeneralStruct()
     # reshape vector input x to matrix form X, e.g., X.U and X.V
