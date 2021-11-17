@@ -29,6 +29,6 @@ v1.0.0-alpha: Initial release of pygranso. Main features: Python translation, au
 Buyun Liang was supported by the UMII Seed Grant Program (https://research.umn.edu/units/umii).
 
 ## Contact
-Codes written by Buyun Liang (https://www.linkedin.com/in/buyun-liang/). Questions or bug reports please send email to Buyun Liang, liang664@umn.edu.
+Codes written by Buyun Liang (https://buyunliang.org). Questions or bug reports please send email to Buyun Liang, liang664@umn.edu.
 
 Thanks to bug reporters: 
