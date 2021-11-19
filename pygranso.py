@@ -11,7 +11,7 @@ from private.tensor2vec import tensor2vec, obj_eval
 from private.getNvar import getNvar
 import traceback,sys
 
-def pygranso(combinedFunction,objEvalFunction,var_dim_map=None,nn_model=None, torch_device = torch.device('cpu'),user_data=None,user_opts=None):
+def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, torch_device = torch.device('cpu'),user_data=None,user_opts=None):
     """
     PyGRANSO: Python version GRadient-based Algorithm for Non-Smooth Optimization
 
@@ -341,13 +341,19 @@ def pygranso(combinedFunction,objEvalFunction,var_dim_map=None,nn_model=None, to
     if nn_model != None:
         n = getNvar(var_dim_map)
         obj_fn = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,user_data,torch_device, model = nn_model)
-        f_eval_fn = lambda x: obj_eval(objEvalFunction,x,var_dim_map, user_data)
+        if objEvalFunction != None:
+            f_eval_fn = lambda x: obj_eval(objEvalFunction,x,var_dim_map, user_data)
+        else:
+            f_eval_fn = None
 
     else:
         # call the functions getNvar to get the total number of (scalar) variables
         n = getNvar(var_dim_map)
         obj_fn = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,user_data,torch_device)
-        f_eval_fn = lambda x: obj_eval(objEvalFunction,x,var_dim_map, user_data)
+        if objEvalFunction != None:
+            f_eval_fn = lambda x: obj_eval(objEvalFunction,x,var_dim_map, user_data)
+        else:
+            f_eval_fn = None
 
     try: 
         [problem_fns,opts] = processArguments(n,obj_fn,user_opts, torch_device)
