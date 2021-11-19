@@ -16,6 +16,8 @@ NCVX is python numerical package revamped and translated from the original GRANS
 
 ## Update Logs
 
+v1.1.1-alpha: Rename the package from “PyGRANSO” to “NCVX”
+
 v1.1.0-alpha: Cleaned code, added L-BFGS, updated tutorials and documentation.
 
 v1.0.2-alpha: Update installation guide for Linux and windows users
