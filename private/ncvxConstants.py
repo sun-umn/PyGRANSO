@@ -1,10 +1,10 @@
-def pygransoConstants():
+def ncvxConstants():
     """
-    pygransoConstants:
+    ncvxConstants:
     Simple routine for defining constants for use in:
-        1) pygranso 
-        2) pygransoOptions 
-        3) pygransoOptionsAdvanced
+        1) ncvx 
+        2) ncvxOptions 
+        3) ncvxOptionsAdvanced
     """
     # Number of first fallback level after QP approaches have failed
     POSTQP_FALLBACK_LEVEL       = 2

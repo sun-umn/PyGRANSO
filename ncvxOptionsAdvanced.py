@@ -1,12 +1,12 @@
-def pygransoOptionsAdvanced(varargin):
+def ncvxOptionsAdvanced(varargin):
     """
     gransoOptionsAdvanced:
-       Process user options struct for pygranso.py.  If user_opts is None or
-       not provided, returned opts will be PyGRANSO's default parameters.
+       Process user options struct for ncvx.py.  If user_opts is None or
+       not provided, returned opts will be NCVX's default parameters.
        Standard or advanced options may be set.
 
        Type:
-       >> help(pygransoOptions)
+       >> help(ncvxOptions)
        to see documentation for the standard user options.
    
 
@@ -16,7 +16,7 @@ def pygransoOptionsAdvanced(varargin):
 
         If a step cannot be taken with the current search direction (e.g.
         computed an invalid search direction or the line search failed on a
-        valid search direction), PyGRANSO may attempt up to four optional 
+        valid search direction), NCVX may attempt up to four optional 
         fallback strategies to try to continue making progress from the current
         iterate.  The strategies are as follows and are attempted in order:
                     
@@ -95,7 +95,7 @@ def pygransoOptionsAdvanced(varargin):
         recompute a hopefully better search direction which does adequately
         promote progress towards feasibility.  Setting this to higher
         values may more aggressively lower the penalty parameter per 
-        PyGRANSO iteration.
+        NCVX iteration.
             
         steering_c_viol
         --------------------------------
@@ -107,7 +107,7 @@ def pygransoOptionsAdvanced(varargin):
         reduction does not meet this target, the penalty parameter will be 
         lowered and a new search direction will be computed.  Setting this 
         to higher values may more aggressively lower the penalty parameter 
-        per PyGRANSO iteration.
+        per NCVX iteration.
 
         steering_c_mu
         --------------------------------
@@ -116,10 +116,10 @@ def pygransoOptionsAdvanced(varargin):
         When steering lowers the penalty parameter in order to compute a 
         a search direction which promotes progress towards feasibility, it 
         does by progessively lowering the penalty parameter by factors of 
-        steering_c_mu.  For any given PyGRANSO iteration, the penalty
+        steering_c_mu.  For any given NCVX iteration, the penalty
         parameter can be shrunk up to a factor of steering_c_mu to the 
         power of steering_maxit.  Setting this to lower values may more 
-        aggressively lower the penalty parameter per PyGRANSO iteration.
+        aggressively lower the penalty parameter per NCVX iteration.
 
         QP PARAMETERS
 
@@ -142,7 +142,7 @@ def pygransoOptionsAdvanced(varargin):
         --------------------------------          
         Boolean value. Default value: False
 
-        If opts.regularize_threshold < inf, then PyGRANSO's default strategy
+        If opts.regularize_threshold < inf, then NCVX's default strategy
         to regularize the BFGS inverse Hessian approximation H is done by 
         raising the smallest magnitude eigenvalues such that the condition 
         number of the regularized version of H never exceeds 
@@ -151,11 +151,11 @@ def pygransoOptionsAdvanced(varargin):
         definite, since H may have tiny eigenvalues and in practice, these 
         may have the wrong sign numerically (negative), particularly on 
         nonsmooth problems.  Alternatively, by setting this option to true, 
-        PyGRANSO will instead apply regularization by lowering the largest 
+        NCVX will instead apply regularization by lowering the largest 
         eigenvalues of H but note that this mode does not attempt to 
         maintain numerical positive definiteness.  Also, if an eigenvalue 
         of H is exactly zero, this mode will instead resort to raising the 
-        smallest eigenvalues of H on that particular iteration of PyGRANSO.
+        smallest eigenvalues of H on that particular iteration of NCVX.
 
         LINE SEARCH PARAMETERS
         
@@ -191,9 +191,9 @@ def pygransoOptionsAdvanced(varargin):
         indication that the objective function is unbounded below.  For
         constrained problems, it may be that the objective is only unbouded 
         below off the feasible set, in which case lower values of
-        the penalty parameter mu may be necessary for PyGRANSO to find the
+        the penalty parameter mu may be necessary for NCVX to find the
         feasible region.  For constrained problems, if the line search 
-        fails to bracket a minimizer, PyGRANSO will reattempt the line search 
+        fails to bracket a minimizer, NCVX will reattempt the line search 
         with progressively lower values of mu, up to linesearch_reattempts 
         times.  See opts.linesearch_c_mu, opts.linesearch_reattempts_x0, 
         and opts.linesearch_c_mu_x0.
@@ -231,7 +231,7 @@ def pygransoOptionsAdvanced(varargin):
         
         END OF ADVANCED PARAMETERS
         
-        See also PyGRANSO, gransoOptions, and makeHaltLogFunctions.
+        See also NCVX, gransoOptions, and makeHaltLogFunctions.
 
     """
     #  This "advanced" version exists mostly just to break up the help

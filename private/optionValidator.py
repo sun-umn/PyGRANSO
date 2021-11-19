@@ -1,4 +1,4 @@
-from pygransoStruct import Options, GeneralStruct, sub_validators_struct
+from ncvxStruct import Options, GeneralStruct, sub_validators_struct
 import types
 from private.makeStructWithFields import makeStructWithFields
 from private.isAnInteger import isAnInteger

@@ -1,7 +1,7 @@
 import types
 import numpy as np
 import torch
-from pygransoStruct import GeneralStruct
+from ncvxStruct import GeneralStruct
 import traceback,sys
 
 class PanaltyFuctions:
@@ -23,7 +23,6 @@ class PanaltyFuctions:
         """
         self.f_eval_fn = f_eval_fn 
         self.obj_fn = obj_fn 
-        # assert (isinstance(obj_fn,types.LambdaType), 'PyGRANSO userSuppliedFunctionsError: obj_fn must be a lambda function of x.' )
         
         # local storage for function and gradients and the current x
         
@@ -152,7 +151,7 @@ class PanaltyFuctions:
             self.eval_ineq_fn(x_in) 
             self.eval_eq_fn(x_in)
         except Exception as e:
-            print("PyGRANSO userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x for line search.")
+            print("NCVX userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x for line search.")
             print(traceback.format_exc())
             sys.exit()
 
@@ -184,7 +183,7 @@ class PanaltyFuctions:
             self.eval_ineq_fn(x_in) 
             self.eval_eq_fn(x_in)
         except Exception as e:
-            print("PyGRANSO userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x.")
+            print("NCVX userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x.")
             print(traceback.format_exc())
             sys.exit()
 
@@ -495,9 +494,9 @@ def assertFnOutputs(n,f,g,fn_name):
 
 def assertFn(cond,arg_name,fn_name,msg):
     if torch.is_tensor(cond):
-        assert torch.all(cond),("PyGRANSO userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(arg_name,fn_name,msg)  )   
+        assert torch.all(cond),("NCVX userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(arg_name,fn_name,msg)  )   
     else:
-        assert np.all(cond),("PyGRANSO userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(arg_name,fn_name,msg)  )                                 
+        assert np.all(cond),("NCVX userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(arg_name,fn_name,msg)  )                                 
 
 class Class_splitEvalAtX:
     def __init__(self):
@@ -612,7 +611,7 @@ def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_thresh
         try: 
             [c,c_grad]      = c_fn(x0)
         except Exception as e:
-            print("PyGRANSO userSuppliedFunctionsError : failed to evaluate [c,c_grad] = {}eq_fn(x0).".format(type_str))
+            print("NCVX userSuppliedFunctionsError : failed to evaluate [c,c_grad] = {}eq_fn(x0).".format(type_str))
             print(traceback.format_exc())
             sys.exit()
 
@@ -636,7 +635,7 @@ def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_thresh
         eval_fn_ret             = lambda x: eval_fn(x,c_fn)
         constrained         = True
     else:       
-        print("PyGRANSO userSuppliedFunctionsError: {}eq_fn must be a function handle of x or empty, that is, None.\n".format(type_str))
+        print("NCVX userSuppliedFunctionsError: {}eq_fn must be a function handle of x or empty, that is, None.\n".format(type_str))
     
     return [eval_fn_ret, c, c_grad, tv, tv_l1, tv_l1_grad, c_grad_norms, scalings, constrained]
 

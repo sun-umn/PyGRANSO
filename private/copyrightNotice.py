@@ -1,4 +1,4 @@
 def copyrightNotice():
-    msg = ["PyGRANSO: Python numerical package using GRadient-based Algorithm for Non-Smooth Optimization", 
+    msg = ["NCVX: A User-Friendly and Scalable Package for Nonconvex Optimization in Machine Learning", 
             "Version 1.1.0", "MIT License Copyright (c) 2021 SUN Group @ UMN"]
     return msg

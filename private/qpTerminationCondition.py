@@ -91,7 +91,7 @@ class qpTC:
             x = self.solveQP_fn(self.H)
             return [x,lambdas,stat_type,ME]
         except Exception as e:
-            print("PyGRANSO:qpTerminationCondition type 1 failure")
+            print("NCVX:qpTerminationCondition type 1 failure")
             print(traceback.format_exc())
            
 
@@ -107,12 +107,12 @@ class qpTC:
             x = self.solveQP_fn(R)
             return [x,lambdas,stat_type,ME]
         except Exception as e:
-            print("PyGRANSO:qpTerminationCondition type 2 failure")
+            print("NCVX:qpTerminationCondition type 2 failure")
             print(traceback.format_exc())
     
         # % Fall back strategy #2: revert to MATLAB's quadprog, if user is
         # % using a different quadprog solver and reattempt with original H
-        # Skip in PyGRANSO
+        # Skip in NCVX
 
         #  Fall back strategy #3: regularize H - this could be expensive
         #  Even though min(eig(Hreg)) may still be tiny negative number,
@@ -127,5 +127,5 @@ class qpTC:
             x = self.solveQP_fn(Hreg)
             return [x,lambdas,stat_type,ME]
         except Exception as e:
-            print("PyGRANSO:qpTerminationCondition type 4 failure")
+            print("NCVX:qpTerminationCondition type 4 failure")
             print(traceback.format_exc())

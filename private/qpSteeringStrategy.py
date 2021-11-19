@@ -132,7 +132,7 @@ class qpSS:
                 #  formulation of QP has no 1/2
                 y = solveQP(self.H,self.f,None,None,self.LB,self.UB, "osqp", self.device)
         except Exception as e:
-            print("PyGRANSO steeringQuadprogFailure: Steering aborted due to a quadprog failure.")        
+            print("NCVX steeringQuadprogFailure: Steering aborted due to a quadprog failure.")        
             print(traceback.format_exc())
             sys.exit()
 

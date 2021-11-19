@@ -1,5 +1,4 @@
 import torch
-# from pygransoStruct import GeneralStruct
 
 def getCiVec(ci,torch_device):
     """

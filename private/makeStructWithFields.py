@@ -1,4 +1,4 @@
-from pygransoStruct import Options
+from ncvxStruct import Options
 
 def makeStructWithFields(varargin):
     """

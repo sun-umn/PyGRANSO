@@ -1,6 +1,6 @@
 # Dummy class for MATLAB struct
 
-# options for pygranso
+# options for NCVX
 class Options:
     pass
 

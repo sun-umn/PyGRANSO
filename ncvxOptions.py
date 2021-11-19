@@ -1,26 +1,26 @@
 from numpy.core.numeric import Inf
 import torch
-from private import pygransoConstants as pgC
+from private import ncvxConstants as pgC
 from private.optionValidator import oV
 import numpy as np
-from pygransoStruct import Options
+from ncvxStruct import Options
 from private.isAnInteger import isAnInteger
 import traceback,sys
 
-def pygransoOptions(n,options, torch_device):
+def ncvxOptions(n,options, torch_device):
     """
-    pygransoOptions:
-        Validate user options struct for pygranso.py.  If user_opts is [] or
-        not provided, returned opts will be PyGRANSO's default parameters.
+    ncvxOptions:
+        Validate user options struct for ncvx.py.  If user_opts is [] or
+        not provided, returned opts will be NCVX's default parameters.
         Standard or advanced options may be set.  
 
        Type:
-       help(pygransoOptionsAdvanced) 
+       help(ncvxOptionsAdvanced) 
        to see documentation for the advanced user options.
    
        USAGE:
-       opts = pygransoOptions(n);
-       opts = pygransoOptions(n,user_opts);
+       opts = ncvxOptions(n);
+       opts = ncvxOptions(n,user_opts);
 
        INPUT:
        n           Number of variables being optimized.
@@ -30,12 +30,12 @@ def pygransoOptions(n,options, torch_device):
                    may be given as None.
 
        OUTPUT:
-       opts        Struct of all tunable user parameters for PyGRANSO.
+       opts        Struct of all tunable user parameters for NCVX.
                    If a field is provided in user_opts, then the user's 
                    value is checked to whether or not it is a valid value, 
                    and if so, it is set in opts.  Otherwise, an error is 
                    thrown.  If a field is not provided in user_opts, opts
-                   will contain the field with PyGRANSO's default value.  
+                   will contain the field with NCVX's default value.  
 
        STANDARD PARAMETERS 
 
@@ -46,7 +46,7 @@ def pygransoOptions(n,options, torch_device):
         Initial starting point. One should pick x0 such that the objective
         and constraint functions are smooth at and about x0. If this is
         difficult to ascertain, it is generally recommended to initialize
-        PyGRANSO at randomly-generated starting points.
+        NCVX at randomly-generated starting points.
 
         mu0
         ----------------
@@ -60,7 +60,7 @@ def pygransoOptions(n,options, torch_device):
         n by n double precision torch tensor. Default value: torch.eye(n,device=torch_device, dtype=torch.double) 
 
         Initial inverse Hessian approximation.  In full-memory mode, and 
-        if opts.checkH0 is true, PyGRANSO will numerically assert that this
+        if opts.checkH0 is true, NCVX will numerically assert that this
         matrix is positive definite. In limited-memory mode, that is, if
         opts.limited_mem_size > 0, no numerical checks are done but this 
         matrix must be a sparse matrix.
@@ -69,9 +69,9 @@ def pygransoOptions(n,options, torch_device):
         ----------------
         Boolean value. Default value: True
 
-        By default, PyGRANSO will check whether or not H0 is numerically
+        By default, NCVX will check whether or not H0 is numerically
         positive definite (by checking whether or not cholesky() succeeds).
-        However, when restarting PyGRANSO from the last iterate of an earlier
+        However, when restarting NCVX from the last iterate of an earlier
         run, using soln.H_final (the last BFGS approximation to the inverse
         Hessian), soln.H_final may sometimes fail this check.  Set this
         option to False to disable it. No positive definite check is done
@@ -83,7 +83,7 @@ def pygransoOptions(n,options, torch_device):
 
         Scale H0 during BFGS/L-BFGS updates.  For full-memory BFGS, scaling
         is only applied on the first iteration only, and is generally only
-        recommended when H0 is the identity (which is PyGRANSO's default).
+        recommended when H0 is the identity (which is NCVX's default).
         For limited-memory BFGS, H0 is scaled on every update.  For more
         details, see opts.limited_mem_fixed_scaling.
 
@@ -102,7 +102,7 @@ def pygransoOptions(n,options, torch_device):
         ----------------
         Non-negative integer. Default value: 0
 
-        By default, PyGRANSO uses full-memory BFGS updating.  For nonsmooth
+        By default, NCVX uses full-memory BFGS updating.  For nonsmooth
         problems, full-memory BFGS is generally recommended.  However, if
         this is not feasible, one may optionally enable limited-memory BFGS
         updating by setting opts.limited_mem_size to a positive integer
@@ -114,9 +114,9 @@ def pygransoOptions(n,options, torch_device):
 
         In contrast to full-memory BFGS updating, limited-memory BFGS
         permits that H0 can be scaled on every iteration.  By default,
-        PyGRANSO will reuse the scaling parameter that is calculated on the
+        NCVX will reuse the scaling parameter that is calculated on the
         very first iteration for all subsequent iterations as well.  Set
-        this option to False to force PyGRANSO to calculate a new scaling
+        this option to False to force NCVX to calculate a new scaling
         parameter on every iteration.  Note that opts.scaleH0 has no effect
         when opts.limited_mem_fixed_scaling is set to True.
 
@@ -124,9 +124,9 @@ def pygransoOptions(n,options, torch_device):
         --------------------------------
         Python dictionary with key to be 'S', 'Y', 'rho' and 'gamma'. Default value: None
             
-        If one is restarting PyGRANSO, the previous L-BFGS information can be
+        If one is restarting NCVX, the previous L-BFGS information can be
         recycled by setting opts.limited_mem_warm_start = soln.H_final,
-        where soln is PyGRANSO's output struct from a previous run.  Note
+        where soln is NCVX's output struct from a previous run.  Note
         that one can either reuse the previous H0 or set a new one.
 
         prescaling_threshold
@@ -148,7 +148,7 @@ def pygransoOptions(n,options, torch_device):
         --------------------------------
         Boolean value. Default value: True
 
-        Prints a notice that PyGRANSO has either automatically pre-scaled at
+        Prints a notice that NCVX has either automatically pre-scaled at
         least one of the objective or constraint functions or it has
         deteced that the optimization problem may be poorly scaled.  For
         more details, see opts.prescaling_threshold.  
@@ -158,7 +158,7 @@ def pygransoOptions(n,options, torch_device):
         Positive real value. Default value: 1e-8
 
         Tolerance for reaching (approximate) optimality/stationarity.
-        See opts.ngrad, opts.evaldist, and the description of PyGRANSO's 
+        See opts.ngrad, opts.evaldist, and the description of NCVX's 
         output argument soln, specifically the subsubfield .dnorm for more
         information.
 
@@ -167,7 +167,7 @@ def pygransoOptions(n,options, torch_device):
         Non-negative real value. Default value: 0
 
         Tolerance for determining when the relative decrease in the penalty
-        function is sufficiently small.  PyGRANSO will terminate if when 
+        function is sufficiently small.  NCVX will terminate if when 
         the relative decrease in the penalty function is at or below this
         tolerance and the current iterate is feasible to tolerances.
         Generally, we don't recommend using this feature since small steps
@@ -198,13 +198,13 @@ def pygransoOptions(n,options, torch_device):
         Positive integer. Default value: min([100, 2*n, n+10])
                                 
         Max number of previous gradients to be cached.  The QP defining 
-        PyGRANSO's measure of stationarity requires a history of previous 
+        NCVX's measure of stationarity requires a history of previous 
         gradients.  Note that large values of ngrad can make the related QP
         expensive to solve, if a significant fraction of the currently
         cached gradients were evaluated at points within evaldist of the 
         current iterate.  Using 1 is recommended if and only if the problem 
         is unconstrained and the objective is known to be smooth.  See 
-        opts.opt_tol, opts.evaldist, and the description of PyGRANSO's output
+        opts.opt_tol, opts.evaldist, and the description of NCVX's output
         argument soln, specifically the subsubfield .dnorm for more
         information.
 
@@ -215,7 +215,7 @@ def pygransoOptions(n,options, torch_device):
         Previously evaluated gradients are only used in the stationarity 
         test if they were evaluated at points that are within distance 
         evaldist of the current iterate x.  See opts.opt_tol, opts.ngrad, 
-        and the description of PyGRANSO's output argument soln, specifically 
+        and the description of NCVX's output argument soln, specifically 
         the subsubfield .dnorm for more information.
 
         maxit
@@ -245,23 +245,23 @@ def pygransoOptions(n,options, torch_device):
         Boolean value. Default value: True
 
         If the line search brackets a minimizer but fails to satisfy the 
-        weak Wolfe conditions (necessary for a step to be accepted), PyGRANSO 
+        weak Wolfe conditions (necessary for a step to be accepted), NCVX 
         will terminate at this iterate when this option is set to true 
         (default).  For unconstrained nonsmooth problems, it has been 
         observed that this type of line search failure is often an 
         indication that a stationarity has in fact been reached.  By 
-        setting this parameter to False, PyGRANSO will instead first attempt 
+        setting this parameter to False, NCVX will instead first attempt 
         alternative optimization strategies (if available) to see if
         further progress can be made before terminating.   See
-        gransoOptionsAdvanced for more details on PyGRANSO's available 
+        gransoOptionsAdvanced for more details on NCVX's available 
         fallback optimization strategies and how they can be configured. 
 
         quadprog_info_msg
         --------------------------------
         Boolean value. Default value: True
 
-        Prints a notice that PyGRANSO's requires a quadprog-compatible QP
-        solver and that the choice of QP solver may affect PyGRANSO's quality
+        Prints a notice that NCVX's requires a quadprog-compatible QP
+        solver and that the choice of QP solver may affect NCVX's quality
         of performance, in terms of efficiency and level of optimization. 
 
 
@@ -298,7 +298,7 @@ def pygransoOptions(n,options, torch_device):
         --------------------------------          
         Boolean value. Default value: False
 
-        By default, PyGRANSO's printed output uses the extended character map, 
+        By default, NCVX's printed output uses the extended character map, 
         so nice looking tables can be made.  But if you need to record the output, 
         you can restrict the printed output to only use the basic ASCII character map
 
@@ -307,7 +307,7 @@ def pygransoOptions(n,options, torch_device):
         --------------------------------
         Boolean value. Default value: True
 
-        PyGRANSO's uses orange
+        NCVX's uses orange
         printing to highlight pertinent information.  However, the user
         is the given option to disable it if they need to record the output
 
@@ -316,7 +316,7 @@ def pygransoOptions(n,options, torch_device):
         Lambda Function. Default value: None
 
         A user-provided function handle that is called on every iteration
-        to allow the user to signal to PyGRANSO for it to halt at that 
+        to allow the user to signal to NCVX for it to halt at that 
         iteration and/or create historical logs of the progress of the
         algorithm. 
         
@@ -334,7 +334,7 @@ def pygransoOptions(n,options, torch_device):
     debug_mode = True
     
     #  need error handler here
-    assert isinstance(n,int) and n > 0,'PyGRANSO invalidUserOption: Number of variables n must be a positive integer!'
+    assert isinstance(n,int) and n > 0,'NCVX invalidUserOption: Number of variables n must be a positive integer!'
     
 
     if default_opts == None:
@@ -347,14 +347,14 @@ def pygransoOptions(n,options, torch_device):
         user_opts = options
     
     #  need error handler here
-    assert isinstance(user_opts, Options) ,'PyGRANSO invalidUserOption: PyGRANSO options must provided as an object of class Options!'
+    assert isinstance(user_opts, Options) ,'NCVX invalidUserOption: NCVX options must provided as an object of class Options!'
 
     # USER PROVIDED THEIR OWN OPTIONS SO WE MUST VALIDATE THEM
     validator_obj = oV()
-    validator = validator_obj.optionValidator('PyGRANSO',default_opts)
+    validator = validator_obj.optionValidator('NCVX',default_opts)
     validator.setUserOpts(user_opts)
 
-    # surround the validation so we can rethrow the error from PyGRANSO
+    # surround the validation so we can rethrow the error from NCVX
     try: 
         #  Set debug mode first as we need its value in the catch block
         debug_mode = validator.getValue("debug_mode")
@@ -384,8 +384,8 @@ def pygransoOptions(n,options, torch_device):
             [n_S,cols_S]    = ws['S'].shape
             [n_Y,cols_Y]    = ws['Y'].shape
             [_,cols_rho]    = ws['rho'].shape
-            assert n == n_S and n == n_Y,'PyGRANSO invalidUserOption: the number of rows in both subfields S and Y must match the number of optimization variables'
-            assert cols_S > 0 and cols_S == cols_Y and cols_S == cols_rho,'PyGRANSO invalidUserOption: subfields S, Y, and rho must all have the same (positive) number of columns'          
+            assert n == n_S and n == n_Y,'NCVX invalidUserOption: the number of rows in both subfields S and Y must match the number of optimization variables'
+            assert cols_S > 0 and cols_S == cols_Y and cols_S == cols_rho,'NCVX invalidUserOption: subfields S, Y, and rho must all have the same (positive) number of columns'          
         
         if hasattr(user_opts,"H0") and torch.any(user_opts.H0) != None:
             validator.setDimensioned("H0",n,n)
@@ -498,9 +498,9 @@ def postProcess(n,opts, torch_device):
     return opts
 
 def getDefaults(n):
-    [*_, LAST_FALLBACK_LEVEL] = pgC.pygransoConstants()
+    [*_, LAST_FALLBACK_LEVEL] = pgC.ncvxConstants()
 
-    # default options for PyGRANSO
+    # default options for NCVX
     default_opts = Options()
     setattr(default_opts,'x0',None)
     setattr(default_opts,'mu0',1)

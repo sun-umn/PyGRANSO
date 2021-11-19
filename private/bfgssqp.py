@@ -1,10 +1,10 @@
 import torch
-from private import pygransoConstants as pC, bfgsDamping as bD, regularizePosDefMatrix as rPDM, linesearchWeakWolfe as lWW
+from private import ncvxConstants as pC, bfgsDamping as bD, regularizePosDefMatrix as rPDM, linesearchWeakWolfe as lWW
 from private.neighborhoodCache import nC
 from private.qpSteeringStrategy import qpSS
 from private.qpTerminationCondition import qpTC
 import time
-from pygransoStruct import GeneralStruct
+from ncvxStruct import GeneralStruct
 import math
 import numpy as np
 from numpy.random import default_rng
@@ -29,7 +29,7 @@ class AlgBFGSSQP():
 
         #  "Constants" for controlling fallback levels
         #  currently these are 2 and 4 respectively
-        [POSTQP_FALLBACK_LEVEL, self.LAST_FALLBACK_LEVEL] = pC.pygransoConstants()
+        [POSTQP_FALLBACK_LEVEL, self.LAST_FALLBACK_LEVEL] = pC.ncvxConstants()
                     
         #  initialization parameters
         x                           = opts.x0
@@ -222,7 +222,7 @@ class AlgBFGSSQP():
                 try:
                     [p,mu_new,*_] = steering_fn(self.penaltyfn_at_x,apply_H_steer)
                 except Exception as e:
-                    print("PyGRANSO:steeringQuadprogFailure")
+                    print("NCVX:steeringQuadprogFailure")
                     print(traceback.format_exc())
                     sys.exit()
                 

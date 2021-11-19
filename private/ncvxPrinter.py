@@ -1,5 +1,5 @@
-from pygransoStruct import GeneralStruct
-from private import copyrightNotice, pygransoConstants as pC, pygransoPrinterColumns as pPC, printMessageBox as pMB
+from ncvxStruct import GeneralStruct
+from private import copyrightNotice, ncvxConstants as pC, ncvxPrinterColumns as pPC, printMessageBox as pMB
 from private.tablePrinter import tP
 from private.nDigitsInWholePart import nDigitsInWholePart
 from private.copyrightNotice import copyrightNotice
@@ -8,9 +8,9 @@ class pgP:
     def __init__(self):
         pass
 
-    def pygransoPrinter(self,opts,n,n_ineq,n_eq):
+    def ncvxPrinter(self,opts,n,n_ineq,n_eq):
         """    
-        pygransoPrinter:
+        ncvxPrinter:
         Object for handling printing out info for each iteration and
         messages.
         """
@@ -29,14 +29,14 @@ class pgP:
         setattr(print_opts,"maxit",self.opts.maxit)
         setattr(print_opts,"ls_max_estimate",50*(self.opts.linesearch_reattempts + 1))
 
-        [*_,LAST_FALLBACK_LEVEL]         = pC.pygransoConstants()
+        [*_,LAST_FALLBACK_LEVEL]         = pC.ncvxConstants()
         if self.opts.max_fallback_level < LAST_FALLBACK_LEVEL:
             setattr(print_opts,"random_attempts",0)
         else:
             setattr(print_opts,"random_attempts",self.opts.max_random_attempts)
         print_opts.ngrad                = self.opts.ngrad + 1
 
-        cols        = pPC.pygransoPrinterColumns(print_opts,self.n_ineq, self.n_eq)
+        cols        = pPC.ncvxPrinterColumns(print_opts,self.n_ineq, self.n_eq)
         constrained = self.n_ineq or self.n_eq
         if constrained:
             pen_label           = "Penalty Function"
@@ -210,15 +210,15 @@ class pgP:
 
         # QPErr NOT used 
         #  title to appear in top/bottom borders
-        t1 = "PyGRANSO: QUADPROG ERROR IN %s QP (Iter %d) - START"%(loc,iter)   
-        t2 = "PyGRANSO: QUADPROG ERROR IN %s QP - END"%(loc)   
+        t1 = "NCVX: QUADPROG ERROR IN %s QP (Iter %d) - START"%(loc,iter)   
+        t2 = "NCVX: QUADPROG ERROR IN %s QP - END"%(loc)   
             
 
     def quadprogFailureRate(self,rate):    
         self.table_printer.msgOrange(quadprogFailureRateMsg(rate))
     
 
-    #  private function to print PyGRANSO's opening header with name, author,
+    #  private function to print NCVX's opening header with name, author,
     #  copyright, problem specs, and whether limited-memory mode is active
     def gransoHeader(self):
         copyrightNotice_msg = copyrightNotice()
@@ -246,7 +246,7 @@ class pgP:
 
 def prescalingEndBlockMsg():
     s = ["",
-        "PyGRANSO applied pre-scaling at x0.  Information:",
+        "NCVX applied pre-scaling at x0.  Information:",
         " - ABOVE shows values for the pre-scaled problem",
         " - BELOW shows the unscaled values for the optimization results.",
         "NOTE: the pre-scaled solution MAY NOT be a solution to the original",
@@ -256,7 +256,7 @@ def prescalingEndBlockMsg():
     return s
 
 def quadprogFailureRateMsg(rate):
-    s = ["WARNING: PyGRANSO''s performance may have been hindered by issues with QP solver.",
+    s = ["WARNING: NCVX''s performance may have been hindered by issues with QP solver.",
     "quadprog''s failure rate: {}%".format(rate),
     "Ensure that quadprog is working correctly!"]
     return s

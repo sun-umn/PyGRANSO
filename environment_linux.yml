@@ -1,4 +1,4 @@
-name: pygranso_env
+name: ncvx_env
 channels:
   - pytorch
   - conda-forge
@@ -65,4 +65,4 @@ dependencies:
   - xz=5.2.5=h516909a_1
   - zlib=1.2.11=h36c2ea0_1011
   - zstd=1.4.9=ha95c52a_0
-prefix: /home/buyun/anaconda3/envs/pygranso_env
+prefix: /home/buyun/anaconda3/envs/ncvx_env

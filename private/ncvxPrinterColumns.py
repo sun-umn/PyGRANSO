@@ -1,7 +1,7 @@
-from pygransoStruct import GeneralStruct
+from ncvxStruct import GeneralStruct
 from private import nDigitsInWholePart as nDIWP, truncate, centerString as cS, double2FixedWidthStr as d2FWS, formatOrange as fO
 
-def pygransoPrinterColumns(opts,ineq_constraints,eq_constraints):
+def ncvxPrinterColumns(opts,ineq_constraints,eq_constraints):
     """       
     gransoPrinterColumns:
         Sets up formatters for each column needed for GRANSO's printer,

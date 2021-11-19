@@ -8,7 +8,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
         Line search enforcing weak Wolfe conditions, suitable for minimizing 
         both smooth and nonsmooth functions.  
 
-        The default is backtracking line search as updated in PyGRANSO
+        The default is backtracking line search as updated in NCVX
     """
 
     alpha = 0  # lower bound on steplength conditions

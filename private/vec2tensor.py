@@ -1,4 +1,4 @@
-from pygransoStruct import GeneralStruct
+from ncvxStruct import GeneralStruct
 import numpy as np
 import torch
 
