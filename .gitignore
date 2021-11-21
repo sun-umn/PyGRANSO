@@ -52,15 +52,9 @@ coverage.xml
 
 
 # PyBuilder
+
 target/
-examples/DL_CIFAR10/data/cifar-10-batches-py/data_batch_1
-examples/DL_CIFAR10/data/cifar-10-batches-py/data_batch_2
-examples/DL_CIFAR10/data/cifar-10-batches-py/data_batch_3
-examples/DL_CIFAR10/data/cifar-10-batches-py/data_batch_4
-examples/DL_CIFAR10/data/cifar-10-batches-py/data_batch_5
 *.meta
-examples/DL_CIFAR10/data/cifar-10-batches-py/readme.html
-examples/DL_CIFAR10/data/cifar-10-batches-py/test_batch
 *.gz
 examples/DL_CIFAR10/.ipynb_checkpoints/DL_PyGRANSO-checkpoint.ipynb
 *.pkl
@@ -76,3 +70,5 @@ examples/data/mnist/MNIST/raw/train-labels-idx1-ubyte
 examples/tobedel/DL_CIFAR10/data/*
 test/
 .vscode
+examples/cifar-10-batches-py/data_batch_*
+examples/cifar-10-batches-py/*

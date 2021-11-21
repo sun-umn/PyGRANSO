@@ -36,3 +36,6 @@ Reference: Laidlaw, Cassidy, Sahil Singla, and Soheil Feizi. "Perceptual adversa
 
 Reference: Lezcano-Casado, Mario, and David Martınez-Rubio. "Cheap orthogonal constraints in neural networks: A simple parametrization of the orthogonal and unitary group." International Conference on Machine Learning. PMLR, 2019.
 
+# Demo 8: Unconstrained Deep Learning
+
+Reference: LeCun, Yann. "LeNet-5, convolutional neural networks." URL: http://yann. lecun. com/exdb/lenet 20.5 (2015): 14.
