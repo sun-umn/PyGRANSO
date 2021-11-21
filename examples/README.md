@@ -39,3 +39,7 @@ Reference: Lezcano-Casado, Mario, and David Martınez-Rubio. "Cheap orthogonal c
 # Demo 8: Unconstrained Deep Learning
 
 Reference: LeCun, Yann. "LeNet-5, convolutional neural networks." URL: http://yann. lecun. com/exdb/lenet 20.5 (2015): 14.
+
+# Demo 9: Nonlinear Feasiblity Problem
+
+Reference: https://www.mathworks.com/help/optim/ug/solve-feasibility-problem.html
