@@ -599,8 +599,7 @@ def failedToBracketedMinimizerMsg(soln):
         s_mu = ""
 
     s = ["line search failed to bracket a minimizer, indicating that the objective ",
-        "function may be unbounded below. ",
-        s_mu] 
+        "function may be unbounded below. "] + s_mu
     
     return s
 

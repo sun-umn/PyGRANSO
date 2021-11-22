@@ -43,3 +43,7 @@ Reference: LeCun, Yann. "LeNet-5, convolutional neural networks." URL: http://ya
 # Demo 9: Nonlinear Feasiblity Problem
 
 Reference: https://www.mathworks.com/help/optim/ug/solve-feasibility-problem.html
+
+# Demo 10: Optimization on Sphere Manifold
+
+Reference: https://www.manopt.org/manifold_documentation_sphere.html
