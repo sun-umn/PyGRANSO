@@ -68,7 +68,7 @@ examples/data/mnist/MNIST/raw/t10k-labels-idx1-ubyte
 examples/data/mnist/MNIST/raw/train-images-idx3-ubyte
 examples/data/mnist/MNIST/raw/train-labels-idx1-ubyte
 examples/tobedel/DL_CIFAR10/data/*
-test/
+# test/
 .vscode
 examples/cifar-10-batches-py/data_batch_*
 examples/cifar-10-batches-py/*
