@@ -46,7 +46,7 @@ class nC:
             # dist_to_last_added = LA.norm(diff)
             
             sample = self.samples[:,self.last_added_ind-1]
-            diff_gpu = x - sample
+            diff_gpu = x.reshape(-1) - sample
             dist_to_last_added = torch.norm(diff_gpu)
             self.distances[0,self.last_added_ind-1] = 0 # will be set exactly below
             

@@ -62,6 +62,9 @@ def solveQP(H,f,A,b,LB,UB,QPsolver,torch_device):
             return solution
 
     except Exception as e:
+        [w,v] = np.linalg.eigh(H)
+        w_sorted = np.sort(w)
+        print(w_sorted)
         print(traceback.format_exc())
         sys.exit()
 
