@@ -32,18 +32,14 @@ Reference: Boyd, Stephen, Neal Parikh, and Eric Chu. Distributed optimization an
 
 Reference: Laidlaw, Cassidy, Sahil Singla, and Soheil Feizi. "Perceptual adversarial robustness: Defense against unseen threat models." arXiv preprint arXiv:2006.12655 (2020).
 
-# Demo 7: Orthogonal RNN
-
-Reference: Lezcano-Casado, Mario, and David Martınez-Rubio. "Cheap orthogonal constraints in neural networks: A simple parametrization of the orthogonal and unitary group." International Conference on Machine Learning. PMLR, 2019.
-
-# Demo 8: Unconstrained Deep Learning
+# Demo 7: Unconstrained Deep Learning
 
 Reference: LeCun, Yann. "LeNet-5, convolutional neural networks." URL: http://yann. lecun. com/exdb/lenet 20.5 (2015): 14.
 
-# Demo 9: Nonlinear Feasiblity Problem
+# Demo 8: Nonlinear Feasiblity Problem
 
 Reference: https://www.mathworks.com/help/optim/ug/solve-feasibility-problem.html
 
-# Demo 10: Optimization on Sphere Manifold
+# Demo 9: Optimization on Sphere Manifold
 
 Reference: https://www.manopt.org/manifold_documentation_sphere.html
