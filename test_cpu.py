@@ -1,18 +1,61 @@
+import time
+import torch
+
+from ncvx import ncvx
+from ncvxStruct import Options, GeneralStruct 
+import scipy.io
+from torch import linalg as LA
 import os
 currentdir = os.path.dirname(os.path.realpath(__file__))
+import sys
+## Adding NCVX directories. Should be modified by user
+sys.path.append(currentdir)
+import numpy as np
+
+device = torch.device('cpu')
+from scipy.stats import norm
+import numpy.linalg as la
+
+
+
+
+def rosenbrock():
+    # variables and corresponding dimensions.
+    var_in = {"x1": [1,1], "x2": [1,1]}
+
+    def comb_fn(X_struct):
+        x1 = X_struct.x1
+        x2 = X_struct.x2
+        # enable autodifferentiation
+        x1.requires_grad_(True)
+        x2.requires_grad_(True)
+        
+        # objective function
+        f = (8 * abs(x1**2 - x2) + (1 - x1)**2)
+
+        # inequality constraint, matrix form
+        ci = GeneralStruct()
+        ci.c1 = (2**0.5)*x1-1  
+        ci.c2 = 2*x2-1 
+
+        # equality constraint 
+        ce = None
+
+        return [f,ci,ce]
+
+    opts = Options()
+    # option for switching QP solver. We only have osqp as the only qp solver in current version. Default is osqp
+    # opts.QPsolver = 'osqp'
+
+    # set an intial point
+    opts.x0 = torch.ones((2,1), device=device, dtype=torch.double)
+    opts.print_level = 0
+
+
+    soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    print("test 1/7 passed (Rosenbrock)")
 
 def spectral_radius():
-    import time
-    import torch
-    import os,sys
-    ## Adding NCVX directories. Should be modified by user
-    sys.path.append(currentdir)
-    from ncvx import ncvx
-    from ncvxStruct import Options, Data, GeneralStruct 
-    import scipy.io
-    from torch import linalg as LA
-
-    device = torch.device('cpu')
 
     
     file = "{}/examples/data/spec_radius_opt_data.mat".format(currentdir)
@@ -56,21 +99,11 @@ def spectral_radius():
     opts.print_level = 0
 
     soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
-    print("test 1/3 passed")
+    print("test 2/7 passed (Spectral Radius Optimization)")
 
 def dictionary_learning():
-    import time
-    import numpy as np
-    import torch
-    import numpy.linalg as la
-    from scipy.stats import norm
-    import sys
-    ## Adding NCVX directories. Should be modified by user
-    sys.path.append(currentdir)
-    from ncvx import ncvx
-    from ncvxStruct import Options, GeneralStruct
 
-    device = torch.device('cpu')
+
     n = 30
 
     np.random.seed(1)
@@ -113,18 +146,125 @@ def dictionary_learning():
     opts.print_frequency = 10
 
     soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
-    print("test 2/3 passed")
+    print("test 3/7 passed (Dictionary Learning)")
+
+def robust_PCA():
+    d1 = 3
+    d2 = 4
+    torch.manual_seed(1)
+    eta = .05
+    Y = torch.randn(d1,d2).to(device=device, dtype=torch.double)
+
+    # variables and corresponding dimensions.
+    var_in = {"M": [d1,d2],"S": [d1,d2]}
+
+
+    opts = Options()
+    opts.print_frequency = 10
+    opts.x0 = .2 * torch.ones((2*d1*d2,1)).to(device=device, dtype=torch.double)
+    opts.opt_tol = 1e-6
+    opts.maxit = 50
+    opts.print_level = 0
+
+    def comb_fn(X_struct):
+        M = X_struct.M
+        S = X_struct.S
+        M.requires_grad_(True)
+        S.requires_grad_(True)
+        
+        # objective function
+        f = torch.norm(M, p = 'nuc') + eta * torch.norm(S, p = 1)
+
+        # inequality constraint, matrix form
+        ci = None
+        
+        # equality constraint 
+        ce = GeneralStruct()
+        ce.c1 = M + S - Y
+
+        return [f,ci,ce]
+
+    soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    print("test 4/7 passed (Robust PCA)")
+
+def lasso():
+    n = 80
+    eta = 0.5 # parameter for penalty term
+    torch.manual_seed(1)
+    b = torch.rand(n,1)
+    pos_one = torch.ones(n-1)
+    neg_one = -torch.ones(n-1)
+    F = torch.zeros(n-1,n)
+    F[:,0:n-1] += torch.diag(neg_one,0) 
+    F[:,1:n] += torch.diag(pos_one,0)
+    F = F.to(device=device, dtype=torch.double)  # double precision requireed in torch operations 
+    b = b.to(device=device, dtype=torch.double)
+
+    # variables and corresponding dimensions.
+    var_in = {"x": [n,1]}
+
+
+    def comb_fn(X_struct):
+        x = X_struct.x
+        x.requires_grad_(True)
+        
+        # objective function
+        f = (x-b).t() @ (x-b)  + eta * torch.norm( F@x, p = 1)
+        
+        # inequality constraint, matrix form
+        ci = None
+        # equality constraint 
+        ce = None
+
+        return [f,ci,ce]
+
+    opts = Options()
+    opts.QPsolver = 'osqp' 
+    opts.x0 = torch.ones((n,1)).to(device=device, dtype=torch.double)
+    opts.print_level = 1
+    opts.print_frequency = 10
+    opts.print_level = 0
+    opts.maxit = 30
+    soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+
+    print("test 5/7 passed (LASSO)")
+
+def feasibility():
+    # variables and corresponding dimensions.
+    var_in = {"x": [1,1],"y": [1,1]}
+
+
+    def comb_fn(X_struct):
+        x = X_struct.x
+        y = X_struct.y
+        x.requires_grad_(True)
+        y.requires_grad_(True)
+        # constant objective function
+        f = 0*x+0*y
+
+        # inequality constraint 
+        ci = GeneralStruct()
+        ci.c1 = (y+x**2)**2+0.1*y**2-1
+        ci.c2 = y - torch.exp(-x) - 3
+        ci.c3 = y-x+4
+        
+        # equality constraint 
+        ce = None
+
+        return [f,ci,ce]
+
+    opts = Options()
+    opts.QPsolver = 'osqp' 
+    opts.print_frequency = 1
+    opts.x0 = 0 * torch.ones((2,1)).to(device=device, dtype=torch.double)
+    opts.print_level = 0
+
+    soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    print("test 6/7 passed (Feasibility Problem)")
+
 
 def sphere_manifold():
-    import time
-    import torch
-    import sys
-    ## Adding NCVX directories. Should be modified by user
-    sys.path.append('/home/buyun/Documents/GitHub/NCVX')
-    from ncvx import ncvx
-    from ncvxStruct import Options, GeneralStruct
 
-    device = torch.device( 'cpu')
     torch.manual_seed(0)
     n = 500
     A = torch.randn((n,n)).to(device=device, dtype=torch.double)
@@ -159,19 +299,28 @@ def sphere_manifold():
     opts.print_level = 0
 
     soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
-    print("test 3/3 passed")
+    print("test 7/7 passed (Sphere Manifold)")
 
 
 
 if __name__ == "__main__" :
     count = 1
     try:
+        print("Testing may take several minutes. Thank you for your patience.")
+        rosenbrock()
+        count += 1
         spectral_radius()
         count += 1
         dictionary_learning()
         count += 1
+        robust_PCA()
+        count += 1
+        lasso()
+        count += 1
+        feasibility()
+        count += 1
         sphere_manifold()
         print("Successfully passed all tests!")
     except Exception:
-        print("Test {} fail, please carefully read the instructions on https://ncvx.org/".format(count))
+        print("Test {} fail, please carefully read the instructions on https://ncvx.org/ for installation".format(count))
     
