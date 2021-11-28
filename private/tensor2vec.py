@@ -31,7 +31,11 @@ def tensor2vec(combinedFunction,x,var_dim_map,nvar,data_in = None,  torch_device
         [f,ci,ce] = combinedFunction(X,data_in)
         
     # obj function is a scalar form
-    f_vec = f.item()    
+    try: 
+        f_vec = f.item()    
+    except Exception:
+        f_vec = f
+    
     if model == None:
     # if True:
         f_grad_vec = getObjGrad(nvar,var_dim_map,f,X,torch_device)
