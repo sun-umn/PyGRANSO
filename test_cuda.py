@@ -21,7 +21,7 @@ device = torch.device('cuda')
 double_precision = True
 torch_dtype = torch.double
 
-print_level = 1
+print_level = 0
 
 
 def rosenbrock():

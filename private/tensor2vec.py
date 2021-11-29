@@ -16,7 +16,7 @@ def obj_eval(eval_obj, x, var_dim_map, data_in = None):
         f = eval_obj(X_struct,data_in)
     return f
 
-def tensor2vec(combinedFunction,x,var_dim_map,nvar,data_in = None,  torch_device = torch.device('cpu'), model = None, double_precision=False):
+def tensor2vec(combinedFunction,x,var_dim_map,nvar,data_in = None,  torch_device = torch.device('cpu'), model = None, double_precision=True):
     """
     mat2vec_autodiff
         Return vector form objective and constraints information required by PyGRANSO

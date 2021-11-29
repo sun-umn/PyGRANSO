@@ -8,7 +8,7 @@ class PanaltyFuctions:
     def __init__(self):
         pass
 
-    def makePenaltyFunction(self,params,f_eval_fn,obj_fn,varargin=None,torch_device = torch.device('cpu'), double_precision=False):
+    def makePenaltyFunction(self,params,f_eval_fn,obj_fn,varargin=None,torch_device = torch.device('cpu'), double_precision=True):
         """
         makePenaltyFunction: 
             creates an object representing the penalty function for 

@@ -341,7 +341,7 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
 
     if nn_model != None:
         n = getNvar(var_dim_map)
-        obj_fn = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,user_data,torch_device, model = nn_model)
+        obj_fn = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,user_data,torch_device, model = nn_model,double_precision=opts.double_precision)
         if objEvalFunction != None:
             f_eval_fn = lambda x: obj_eval(objEvalFunction,x,var_dim_map, user_data)
         else:

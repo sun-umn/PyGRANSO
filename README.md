@@ -8,23 +8,20 @@ Please check https://ncvx.org for detailed instructions (introduction, installat
 
 ## Brief Introduction
 
-Optimization for nonconvex problems, especially those nonsmooth and with constraints, is an essential part of machine learning and deep learning, which is hard to reliably solve without optimization expertise. Also existing general purpose non-convex optimization software packages usually cannot handle non-smoothness and require analytical gradients, which raised the technical barrier for general users. GRANSO is the first numerical optimization package that can handle this type of problems. However, it has some limitations such as lack of auto-differentiation and GPU acceleration, which preclude the potential broad deployment by general users. Thus, we introduce NCVX (NonConVeX), a user-friendly and scalable python package for NCVX optimization, which is revamped and translated from the GRANSO package. In order to lower the barriers to general users and solve modern machine/deep learning problems, we introduce several main features including auto-differentiation, GPU acceleration, tensor input, scalable QP solver and open-source dependencies.
+Optimizing nonconvex (NCVX) problems, especially those nonsmooth and constrained, is an essential part of machine learning and deep learning. But it is hard to reliably solve this type of problems without optimization expertise. Existing general-purpose NCVX optimization packages are powerful, but typically cannot handle nonsmoothness. GRANSO is among the first packages targeting NCVX, nonsmooth, constrained problems. However, it has several limitations such as the lack of auto-differentiation and GPU acceleration, which preclude the potential broad deployment by non-experts. To lower the technical barrier for the machine learning community, we revamp GRANSO into a user-friendly and scalable python package named NCVX, featuring auto-differentiation, GPU acceleration, tensor input, scalable QP solver, and zero dependency on proprietary packages. As a highlight, NCVX can solve general constrained deep learning problems, the first of its kind.
 
 ## Update Logs
 
-v1.1.1-alpha: Rename the package from “PyGRANSO” to “NCVX”; multiple examples added: unconstrained DL, feasibility problem, sphere manifold.
+v1.1.1: Multiple examples added: unconstrained DL, feasibility problem, sphere manifold.
 
-v1.1.0-alpha: Cleaned code, added L-BFGS, updated tutorials and documentation.
+v1.1.0: L-BFGS Added.
 
-v1.0.2-alpha: Update installation guide for Linux and windows users
-
-v1.0.1-alpha: Update contirbutions, limitations and acknowledgement sections in docs.
-
-v1.0.0-alpha: Initial release of PyGRANSO. Main features: Python translation, autodifferentiation, GPU-support with PyTorch, matrix/tensor inputs, more powerful solver and several new settings to avoid numerical issues in deep learning problem.
+v1.0.0: Initial release of NCVX. Main features: auto-differentiation, GPU acceleration, tensor input, scalable QP solver, and zero dependency on proprietary packages.
 
 ## Acknowledgements
 
-Buyun Liang was supported by the UMII Seed Grant Program (https://research.umn.edu/units/umii).
+We would like to thank the GRANSO developers. This work was supported by UMII Seed Grant Program and NSF CMMI 2038403.
+
 
 ## Contact
 Codes written by Buyun Liang (https://buyunliang.org). Questions or bug reports please send email to Buyun Liang, liang664@umn.edu.
