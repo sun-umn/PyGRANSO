@@ -1,6 +1,6 @@
 # NCVX
 
-![Example screenshot](./NCVX_logo.png)
+![Example screenshot](./NCVX_logo_banner.png)
 
 NCVX: A User-Friendly and Scalable Package for Nonconvex Optimization in Machine Learning.
 
