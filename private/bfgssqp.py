@@ -87,6 +87,11 @@ class AlgBFGSSQP():
         self.is_backtrack_linesearch = opts.is_backtrack_linesearch
         self.searching_direction_rescaling = opts.searching_direction_rescaling
         self.disable_terminationcode_6 = opts.disable_terminationcode_6
+        self.double_precision = opts.double_precision
+        if self.double_precision:
+            self.torch_dtype = torch.double
+        else:
+            self.torch_dtype = torch.float
 
         #  logging parameters
         self.print_level                 = opts.print_level
@@ -132,7 +137,7 @@ class AlgBFGSSQP():
         #  those which are sufficently close to the current iterate x. 
         #  The gradients from the current iterate are simultaneously added to 
         #  the cache. 
-        nC_obj = nC(torch_device)
+        nC_obj = nC(torch_device,self.double_precision)
         get_nbd_grads_fn        = nC_obj.neighborhoodCache(ngrad,evaldist)
         self.get_nearby_grads_fn     = lambda : getNearbyGradients( self.penaltyfn_obj, get_nbd_grads_fn)
 
@@ -171,7 +176,7 @@ class AlgBFGSSQP():
                                 penaltyfn_parts,    H, 
                                 steering_l1_model,  steering_ineq_margin, 
                                 steering_maxit,     steering_c_viol, 
-                                steering_c_mu,      self.QPsolver, torch_device           )
+                                steering_c_mu,      self.QPsolver, torch_device, self.double_precision           )
 
         self.linesearch_fn   = lambda x,f,g,p,ls_maxit: lWW.linesearchWeakWolfe( 
                                 x, f, g, p,
@@ -469,8 +474,8 @@ class AlgBFGSSQP():
         stat_value      = torch.norm(stat_vec)
 
         
+        self.opt_tol = torch.as_tensor(self.opt_tol,device = self.torch_device, dtype=self.torch_dtype)
 
-        self.opt_tol = torch.as_tensor(self.opt_tol,device = self.torch_device, dtype=torch.double)
         if stat_value <= self.opt_tol:
             n_qps       = 0
             n_samples   = 1
@@ -493,7 +498,7 @@ class AlgBFGSSQP():
         #  nonsmooth optimality measure
         qPTC_obj = qpTC()
         [stat_vec,n_qps,ME] = qPTC_obj.qpTerminationCondition(   self.penaltyfn_at_x, grad_samples,
-                                                        self.apply_H_QP_fn, self.QPsolver, self.torch_device)
+                                                        self.apply_H_QP_fn, self.QPsolver, self.torch_device, self.double_precision)
         stat_value = torch.norm(stat_vec).item()
         self.penaltyfn_obj.addStationarityMeasure(stat_value)
         

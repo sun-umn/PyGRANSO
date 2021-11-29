@@ -1,3 +1,4 @@
+from numpy import double
 import torch
 from private.makePenaltyFunction import PanaltyFuctions
 from private import bfgsHessianInverse as bfgsHI, printMessageBox as pMB, bfgsHessianInverseLimitedMem as lbfgsHI
@@ -349,7 +350,7 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
     else:
         # call the functions getNvar to get the total number of (scalar) variables
         n = getNvar(var_dim_map)
-        obj_fn = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,user_data,torch_device)
+        obj_fn = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,user_data,torch_device, double_precision=opts.double_precision)
         if objEvalFunction != None:
             f_eval_fn = lambda x: obj_eval(objEvalFunction,x,var_dim_map, user_data)
         else:
@@ -357,7 +358,7 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
 
     try: 
         [problem_fns,opts] = processArguments(n,obj_fn,user_opts, torch_device)
-        [bfgs_hess_inv_obj,opts] = getBfgsManager(opts,torch_device)
+        [bfgs_hess_inv_obj,opts] = getBfgsManager(opts,torch_device,opts.double_precision)
         # construct the penalty function object and evaluate at x0
         # unconstrained problems will reset mu to one and mu will be fixed
         mPF = PanaltyFuctions() # make penalty functions 
@@ -404,7 +405,10 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
     soln.termination_code       = info.termination_code
 
     [qp_requests,qp_errs]       = getErr()
-    qp_fail_rate                = 100 * (qp_errs / qp_requests)
+    if qp_requests == 0:
+        qp_fail_rate = 0
+    else:
+        qp_fail_rate                = 100 * (qp_errs / qp_requests)
     soln.quadprog_failure_rate  = qp_fail_rate
     if hasattr(info,"error"):
         soln.error              = info.error
@@ -447,11 +451,11 @@ def processArguments(n,combined_fns,opts,torch_device):
     options = ncvxOptions(n,options,torch_device)
     return [problem_fns,options]
 
-def getBfgsManager(opts,torch_device):
+def getBfgsManager(opts,torch_device,double_precision):
     if opts.limited_mem_size == 0:
         get_bfgs_fn = lambda H,scaleH0 : bfgsHI.bfgsHessianInverse(H,scaleH0)
     else:
-        get_bfgs_fn = lambda H,scaleH0 : lbfgsHI.bfgsHessianInverseLimitedMem(H,scaleH0,opts.limited_mem_fixed_scaling,opts.limited_mem_size,opts.limited_mem_warm_start,torch_device)
+        get_bfgs_fn = lambda H,scaleH0 : lbfgsHI.bfgsHessianInverseLimitedMem(H,scaleH0,opts.limited_mem_fixed_scaling,opts.limited_mem_size,opts.limited_mem_warm_start,torch_device,double_precision)
     
     bfgs_obj = get_bfgs_fn(opts.H0,opts.scaleH0)
     

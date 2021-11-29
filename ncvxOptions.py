@@ -454,6 +454,7 @@ def ncvxOptions(n,options, torch_device):
         validator.setIntegerNonnegative("linesearch_maxit")
         validator.setRealNonnegative("init_step_size")
         validator.setLogical("is_backtrack_linesearch")
+        validator.setLogical("double_precision")
         validator.setLogical("searching_direction_rescaling")
         validator.setLogical("disable_terminationcode_6")        
 
@@ -485,12 +486,17 @@ def postProcess(n,opts, torch_device):
         opts.max_fallback_level = opts.max_fallback_level
     
     # If an initial starting point was not provided, use random vector
+    if opts.double_precision:
+        torch_dtype = torch.double
+    else:
+        torch_dtype = torch.float
+
     if opts.x0 == None:
-        opts.x0 = torch.randn(n,1).to(device=torch_device, dtype=torch.double)
+        opts.x0 = torch.randn(n,1).to(device=torch_device, dtype=torch_dtype)
     
     # If an initial inverse Hessian was not provided, use the identity
     if opts.H0 == None:
-        opts.H0 = torch.eye(n,device=torch_device, dtype=torch.double) 
+        opts.H0 = torch.eye(n,device=torch_device, dtype=torch_dtype) 
     
     if hasattr(opts,"QPsolver"):
         QPsolver = opts.QPsolver
@@ -548,6 +554,7 @@ def getDefaults(n):
     setattr(default_opts,'linesearch_maxit',np.inf)
     setattr(default_opts,'init_step_size',1)
     setattr(default_opts,'is_backtrack_linesearch',False)
+    setattr(default_opts,'double_precision',True)
     setattr(default_opts,'searching_direction_rescaling',False)
     setattr(default_opts,'disable_terminationcode_6',False)
 

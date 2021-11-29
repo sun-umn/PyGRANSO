@@ -2,29 +2,36 @@ import torch
 from torch import conj
 from ncvxStruct import GeneralStruct
 
-def bfgsHessianInverseLimitedMem(H0,scaleH0,fixed_scaling,nvec,restart_data,device):
+def bfgsHessianInverseLimitedMem(H0,scaleH0,fixed_scaling,nvec,restart_data,device, double_precision):
     """
     bfgsHessianInverseLimitedMem:
         An object that maintains and updates a L-BFGS approximation to the 
         inverse Hessian.
     """
-    H_obj = H_obj_struct(H0,scaleH0,fixed_scaling,nvec,restart_data,device)
+    H_obj = H_obj_struct(H0,scaleH0,fixed_scaling,nvec,restart_data,device,double_precision)
     return H_obj
 
 
 class H_obj_struct:
 
-    def __init__(self,H0,scaleH0,fixed_scaling,nvec,restart_data,device):
+    def __init__(self,H0,scaleH0,fixed_scaling,nvec,restart_data,device,double_precision):
 
         self.H0 = H0
         self.fixed_scaling = fixed_scaling
         self.nvec = nvec
         self.device = device
+        self.double_precision = double_precision
 
         n = H0.shape[0]
-        self.S = torch.zeros((n,nvec)).to(device=self.device, dtype=torch.double)
-        self.Y = torch.zeros((n,nvec)).to(device=self.device, dtype=torch.double)
-        self.rho = torch.zeros((1,nvec)).to(device=self.device, dtype=torch.double)
+        if double_precision:
+            self.torch_dtype = torch.double
+        else:
+            self.torch_dtype = torch.float
+
+        self.S = torch.zeros((n,nvec)).to(device=self.device, dtype=self.torch_dtype)
+        self.Y = torch.zeros((n,nvec)).to(device=self.device, dtype=self.torch_dtype)
+        self.rho = torch.zeros((1,nvec)).to(device=self.device, dtype=self.torch_dtype)
+
         self.gamma = 1
         self.count = 0
         self.update_gamma = scaleH0
@@ -110,8 +117,8 @@ class H_obj_struct:
         #  q might be a matrix, not just a vector, so we want to apply
         #  multiplication to all columns of q
         self.cols    = q.shape[1]
-        alpha   = torch.zeros((self.count,self.cols)).to(device=self.device, dtype=torch.double)
-      
+        alpha = torch.zeros((self.count,self.cols)).to(device=self.device, dtype=self.torch_dtype)
+
         #  Now apply first updates to the columns of q
         for j in reversed(range(self.count)):
             alpha[j,:]  = self.rho[0,j] * (self.S[:,j].T  @ q)

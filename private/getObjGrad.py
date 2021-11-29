@@ -2,13 +2,18 @@ import numpy as np
 import torch
 
 
-def getObjGrad(nvar,var_dim_map,f,X, torch_device):
+def getObjGrad(nvar,var_dim_map,f,X, torch_device,double_precision):
     """
     getObjGrad obtains gradient of objective function by using pytorch autodiff
     """
     try:
         f.backward(retain_graph=True)
-        f_grad_vec = torch.zeros((nvar,1),device=torch_device, dtype=torch.double)
+        if double_precision:
+            torch_dtype = torch.double
+        else:
+            torch_dtype = torch.float
+
+        f_grad_vec = torch.zeros((nvar,1),device=torch_device, dtype=torch_dtype)
 
         curIdx = 0
         # current variable, e.g., U
@@ -27,13 +32,18 @@ def getObjGrad(nvar,var_dim_map,f,X, torch_device):
             # preventing gradient accumulating
             getattr(X,var).grad.zero_()
     except Exception:
-        f_grad_vec = torch.zeros((nvar,1),device=torch_device, dtype=torch.double)
+        f_grad_vec = torch.zeros((nvar,1),device=torch_device, dtype=torch_dtype)
     return f_grad_vec
 
-def getObjGradDL(nvar,model,f, torch_device):
+def getObjGradDL(nvar,model,f, torch_device, double_precision):
     f.backward()
     # transform f_grad form matrix form to vector form
-    f_grad_vec = torch.zeros((nvar,1),device=torch_device, dtype=torch.double)
+    if double_precision:
+        torch_dtype = torch.double
+    else:
+        torch_dtype = torch.float 
+
+    f_grad_vec = torch.zeros((nvar,1),device=torch_device, dtype=torch_dtype)
 
     curIdx = 0
     parameter_lst = list(model.parameters())

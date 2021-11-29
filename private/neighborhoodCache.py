@@ -4,8 +4,12 @@ import numpy.linalg as LA
 
 
 class nC:
-    def __init__(self,torch_device):
+    def __init__(self,torch_device,double_precision):
         self.torch_device = torch_device
+        if double_precision:
+            self.torch_dtype = torch.double
+        else:
+            self.torch_dtype = torch.float
 
     def neighborhoodCache(self,max_size,radius):
         """
@@ -18,7 +22,7 @@ class nC:
         self.max_size = max_size
         self.radius = radius
         #  by default, inf distances indicate empty slots for samples
-        self.distances       = torch.ones((1,self.max_size),device=self.torch_device, dtype=torch.double)*float('inf')
+        self.distances       = torch.ones((1,self.max_size),device=self.torch_device, dtype=self.torch_dtype)*float('inf')
         self.samples         = None
         # self.data            = self.max_size * [None]
         self.data            = np.empty((1,self.max_size),dtype=object)
@@ -34,7 +38,9 @@ class nC:
             self.n               = 1
             self.last_added_ind  = 1
             self.distances[0,0]    = 0
-            self.samples         = torch.zeros((len(x),self.max_size),device=self.torch_device, dtype=torch.double) 
+
+            self.samples         = torch.zeros((len(x),self.max_size),device=self.torch_device, dtype=self.torch_dtype) 
+
             self.samples[:,0]    = x[:,0]
             self.data[0]         = x_data
             computed        = 0

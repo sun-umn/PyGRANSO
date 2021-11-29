@@ -6,7 +6,7 @@ import traceback,sys
 
 QP_REQUESTS = 0
 
-def solveQP(H,f,A,b,LB,UB,QPsolver,torch_device):
+def solveQP(H,f,A,b,LB,UB,QPsolver,torch_device, double_precision):
     """
     solveQP will call the QP solver to calculate the given QP
     """
@@ -58,7 +58,11 @@ def solveQP(H,f,A,b,LB,UB,QPsolver,torch_device):
             solution = res.x
             sol_len = solution.size
             solution = solution.reshape((sol_len,1))
-            solution = torch.from_numpy(solution).to(device=torch_device, dtype=torch.double) 
+            if double_precision:
+                torch_dtype = torch.double
+            else:
+                torch_dtype = torch.float
+            solution = torch.from_numpy(solution).to(device=torch_device, dtype=torch_dtype) 
             return solution
 
     except Exception as e:

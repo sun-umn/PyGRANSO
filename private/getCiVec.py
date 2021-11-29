@@ -1,6 +1,6 @@
 import torch
 
-def getCiVec(ci,torch_device):
+def getCiVec(ci,torch_device, double_precision):
     """
     getCiVec transforms the original tensor form constrained function into vector form
     """
@@ -12,8 +12,15 @@ def getCiVec(ci,torch_device):
         constrMatrix = getattr(ci,constr_i)
         nconstr = nconstr + torch.numel(constrMatrix)
 
+    if double_precision:
+        torch_dtype = torch.double
+    else:
+        torch_dtype = torch.float
+
     # inquality constraints
-    ci_vec_torch = torch.zeros((nconstr,1),device=torch_device, dtype=torch.double)
+    ci_vec_torch = torch.zeros((nconstr,1),device=torch_device, dtype=torch_dtype)
+   
+   
     curIdx = 0
     # nconstr_ci = genral_struct()
     nconstr_ci_total = 0

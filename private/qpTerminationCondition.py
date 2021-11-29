@@ -8,13 +8,18 @@ import traceback,sys
 class qpTC:
     def __init__(self):
         pass
-    def qpTerminationCondition(self,penaltyfn_at_x, gradient_samples, apply_Hinv, QPsolver, torch_device):
+    def qpTerminationCondition(self,penaltyfn_at_x, gradient_samples, apply_Hinv, QPsolver, torch_device, double_precision):
         """
         qpTerminationCondition:
         computes the smallest vector in the convex hull of gradient samples
         provided in cell array gradient samples, given the inverse Hessian
         (or approximation to it)
         """
+        if double_precision:
+            torch_dtype = torch.double
+        else:
+            torch_dtype = torch.float
+
         # obtain # of variables
         n = torch.numel(gradient_samples[0].F)
         mu          = penaltyfn_at_x.mu
@@ -23,7 +28,7 @@ class qpTC:
         q           = l * len(penaltyfn_at_x.ce)                                
     
 
-        F           = penaltyfn_at_x.f * torch.ones((l,1),device=torch_device, dtype=torch.double) 
+        F           = penaltyfn_at_x.f * torch.ones((l,1),device=torch_device, dtype=torch_dtype) 
         
         CI = penaltyfn_at_x.ci
         CE = penaltyfn_at_x.ce
@@ -54,18 +59,18 @@ class qpTC:
         #  Fix H since numerically, it is unlikely to be _perfectly_ symmetric 
         self.H           = (self.H + torch.conj(self.H.t())) / 2
         f           = -torch.vstack((CE, F, CI))
-        LB          = torch.vstack( (-torch.ones((q,1),device=torch_device, dtype=torch.double), torch.zeros((l+p,1),device=torch_device, dtype=torch.double)) ) 
-        UB          = torch.vstack((torch.ones((q,1),device=torch_device, dtype=torch.double), mu*torch.ones((l,1),device=torch_device, dtype=torch.double), torch.ones((p,1),device=torch_device, dtype=torch.double))  ) 
-        Aeq         = torch.hstack((torch.zeros((1,q),device=torch_device, dtype=torch.double), torch.ones((1,l),device=torch_device, dtype=torch.double), torch.zeros((1,p),device=torch_device, dtype=torch.double)) ) 
+        LB          = torch.vstack( (-torch.ones((q,1),device=torch_device, dtype=torch_dtype), torch.zeros((l+p,1),device=torch_device, dtype=torch_dtype)) ) 
+        UB          = torch.vstack((torch.ones((q,1),device=torch_device, dtype=torch_dtype), mu*torch.ones((l,1),device=torch_device, dtype=torch_dtype), torch.ones((p,1),device=torch_device, dtype=torch_dtype))  ) 
+        Aeq         = torch.hstack((torch.zeros((1,q),device=torch_device, dtype=torch_dtype), torch.ones((1,l),device=torch_device, dtype=torch_dtype), torch.zeros((1,p),device=torch_device, dtype=torch_dtype)) ) 
         beq         = mu
 
         # Choose solver
         if QPsolver == "gurobi":
             #  formulation of QP has no 1/2
-            self.solveQP_fn = lambda H: solveQP(H,f,Aeq,beq,LB,UB,QPsolver,torch_device)
+            self.solveQP_fn = lambda H: solveQP(H,f,Aeq,beq,LB,UB,QPsolver,torch_device, double_precision)
         elif QPsolver == "osqp":
             #  formulation of QP has no 1/2
-            self.solveQP_fn = lambda H: solveQP(H,f,Aeq,beq,LB,UB,QPsolver,torch_device)
+            self.solveQP_fn = lambda H: solveQP(H,f,Aeq,beq,LB,UB,QPsolver,torch_device, double_precision)
 
         [y,_,qps_solved,ME] = self.solveQPRobust()
       
