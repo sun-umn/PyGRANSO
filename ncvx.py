@@ -34,7 +34,7 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
        respectively remain 'less than or equal' or 'equal' to zero.
  
        The user must install a quadratic program solver,
-       such as Gurobi and QPALM.  
+       such as OSQP.  
 
        NOTE: 
 
@@ -63,8 +63,7 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
         - combined_fn evaluates objective and constraints simultaneously:
  
         "combined" format
-       soln = ncvx(nvar,combined_fn)
-       soln = ncvx(nvar,combined_fn,opts)
+       soln = ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, torch_device = torch.device('cpu'),user_data=None,user_opts=None)
   
  
        INPUT:
@@ -262,7 +261,7 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
                            the lowest value of mu tried in the line search
                            reattempts.  For more details, see the line
                            search user options by typing:
-                           >> help(gransoOptionsAdvanced)
+                           >> help(ncvxOptionsAdvanced)
  
         CONSOLE OUTPUT:
        When opts.print_level is at least 1, NCVX will print out
@@ -331,7 +330,7 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
                        deficient or broken quadprog installation (or that 
                        the license is invalid or can't be verified).
  
-       See also ncvxOptions, gransoOptionsAdvanced, makeHaltLogFunctions.
+       See also ncvxOptions, ncvxOptionsAdvanced, makeHaltLogFunctions.
     """
     
     # Initialization
@@ -443,7 +442,7 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
     
     return soln
 
-# only combined function allowed here. simpler form compare with GRANSO
+# only combined function allowed here. simpler form compare with ncvx
 # different cases needed if seperate obj eq and ineq are using
 def processArguments(n,combined_fns,opts,torch_device):
     problem_fns = combined_fns

@@ -19,8 +19,7 @@ def ncvxOptions(n,options, torch_device):
        to see documentation for the advanced user options.
    
        USAGE:
-       opts = ncvxOptions(n);
-       opts = ncvxOptions(n,user_opts);
+       opts = ncvxOptions(n,options, torch_device)
 
        INPUT:
        n           Number of variables being optimized.

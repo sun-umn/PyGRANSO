@@ -1,6 +1,6 @@
 def ncvxOptionsAdvanced(varargin):
     """
-    gransoOptionsAdvanced:
+    ncvxOptionsAdvanced:
        Process user options struct for ncvx.py.  If user_opts is None or
        not provided, returned opts will be NCVX's default parameters.
        Standard or advanced options may be set.
@@ -231,13 +231,13 @@ def ncvxOptionsAdvanced(varargin):
         
         END OF ADVANCED PARAMETERS
         
-        See also NCVX, gransoOptions, and makeHaltLogFunctions.
+        See also NCVX, ncvxOptions, and makeHaltLogFunctions.
 
     """
     #  This "advanced" version exists mostly just to break up the help
     #  documentation so the user isn't overwhelmed with details on the more
     #  advanced parameters which they may not immediately (or ever) need.
     
-    #  Just pass all the work to the standard gransoOptions function.
+    #  Just pass all the work to the standard ncvxOptions function.
 
     return None
