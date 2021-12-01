@@ -22,6 +22,16 @@ v1.0.0: Initial release of NCVX. Main features: auto-differentiation, GPU accele
 
 We would like to thank the GRANSO developers. This work was supported by UMII Seed Grant Program and NSF CMMI 2038403.
 
+## Citation
+
+@article{liang2021ncvx,
+    title={NCVX: A User-Friendly and Scalable Package for Nonconvex Optimization in Machine Learning}, 
+    author={Buyun Liang and Ju Sun},
+    year={2021},
+    eprint={2111.13984},
+    archivePrefix={arXiv},
+    primaryClass={cs.LG}
+}
 
 ## Contact
 Codes written by Buyun Liang (https://buyunliang.org). Questions or bug reports please send email to Buyun Liang, liang664@umn.edu.
