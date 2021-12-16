@@ -72,3 +72,4 @@ test/
 .vscode
 examples/cifar-10-batches-py/data_batch_*
 examples/cifar-10-batches-py/*
+*/.ipynb_checkpoints/*
