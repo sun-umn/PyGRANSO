@@ -330,7 +330,7 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
                         deficient or broken quadprog installation (or that 
                         the license is invalid or can't be verified).
 
-        See also ncvxOptions, ncvxOptionsAdvanced, makeHaltLogFunctions.
+        See also ncvxOptions, ncvxOptionsAdvanced.
 
         If you publish work that uses or refers to NCVX, please cite both
         NCVX and GRANSO paper:
