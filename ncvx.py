@@ -364,13 +364,13 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
                 Add torch_device and double precision argument to allow user
                 select cuda/cpu and double/float.  
 
+        For comments/bug reports, please visit the NCVX webpage:
+        https://github.com/sun-umn/NCVX
+
         GRANSO uses modifed versions of the BFGS inverse Hessian approximation
         update formulas and the inexact weak Wolfe line search from HANSO v2.1.
         See the documentation of HANSO for more information on the use of
         quasi-Newton methods for nonsmooth unconstrained optimization.
-
-        For comments/bug reports, please visit the GRANSO GitLab webpage:
-        https://gitlab.com/timmitchell/GRANSO
         
         GRANSO Version 1.6.4, 2016-2020, see AGPL license info below.
 
