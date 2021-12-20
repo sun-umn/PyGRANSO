@@ -89,6 +89,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
         fail = 2
     else: # point satisfying Wolfe conditions was bracketed
         fail = 1
+        print("step size = {}".format(t))
     
     #####################################################################
     if is_backtrack_linesearch:

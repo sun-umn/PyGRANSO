@@ -49,6 +49,11 @@ class qpTC:
             CI_grads_lst.append(grads_array.CI)     # n by p
             CE_grads_lst.append(grads_array.CE)     # n by q
         F_grads = torch.cat(F_grads_lst,1) 
+
+        print("F grad l2 norm = {}".format(torch.norm(F_grads) ) )
+        print("F grad inf norm = {}".format(torch.norm(F_grads, float('inf')) ) )
+        print("(dim)^1.5 = {}".format((7850)**1.5) )
+        
         CI_grads = torch.cat(CI_grads_lst,1) 
         CE_grads = torch.cat(CE_grads_lst,1) 
 
@@ -58,6 +63,12 @@ class qpTC:
         self.H           = torch.conj(self.all_grads.t()) @ Hinv_grads
         #  Fix H since numerically, it is unlikely to be _perfectly_ symmetric 
         self.H           = (self.H + torch.conj(self.H.t())) / 2
+
+        # Hess_inv = apply_Hinv(torch.eye(7850).to(device=torch_device, dtype=torch_dtype ))
+        # eigval,_= torch.linalg.eigh(Hess_inv)
+        # print("the largest singular value of H (inv Hessian) = {}".format(torch.max(eigval)))
+        # print("inf norm H (inv Hessian) = {}".format( torch.norm(Hess_inv, float('inf'))  ))
+
         f           = -torch.vstack((CE, F, CI))
         LB          = torch.vstack( (-torch.ones((q,1),device=torch_device, dtype=torch_dtype), torch.zeros((l+p,1),device=torch_device, dtype=torch_dtype)) ) 
         UB          = torch.vstack((torch.ones((q,1),device=torch_device, dtype=torch_dtype), mu*torch.ones((l,1),device=torch_device, dtype=torch_dtype), torch.ones((p,1),device=torch_device, dtype=torch_dtype))  ) 
@@ -81,6 +92,11 @@ class qpTC:
             d = np.inf * np.ones((Hinv_grads.shape[0],1)); 
         else:
             d = -Hinv_grads @ y
+
+        print("agmented QP sol sigma = {}".format(y))
+        # print('\033[96m'+ "modified d norm = {}".format( torch.norm(d) / (torch.norm(self.H, float('inf')) * torch.norm(F_grads, float('inf')) * (7850)**1.5) ) + '\033[0m')
+        
+        print('\033[96m'+ "d_diamond inf norm = {}".format(torch.norm(d, float('inf')) ) + '\033[0m' )
 
         return [d,qps_solved,ME]
 
