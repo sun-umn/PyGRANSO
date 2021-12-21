@@ -11,8 +11,141 @@ class qpSS:
     def qpSteeringStrategy( self,penaltyfn_at_x, apply_Hinv, l1_model, ineq_margin, maxit, c_viol, c_mu, QPsolver, torch_device, double_precision):
         """
         qpSteeringStrategy:
-        attempts to find a search direction which promotes progress towards
-        feasibility.  
+            attempts to find a search direction which promotes progress towards
+            feasibility.  
+
+            INPUT:
+               penaltyfn_at_x  struct containing fields for:
+               .mu             current penalty parameter
+               .f_grad         gradient of objective function at x
+               .ci             inequality constraints evaluated at x 
+               .ci_grad        corresponding gradients at x
+               .ce             equality constraints evaluated at x
+               .ce_grad        corresponding gradients at x
+               .tv_l1          total violation value at x (one norm)
+               .tv             total violation value at x (infinity norm)
+
+               l1_model        logical: determines whether or not the one norm 
+                               (the standard choice) or the infinity norm is used
+                               for the total violation measure, which affects the
+                               predicted violation reduction.
+
+               ineq_margin     real value in [0,inf] setting the margin of 
+                               feasibility for problems having only inequality 
+                               constraints.  In this case, steering is selectively 
+                               disabled when the inequality constraints are all at 
+                               least ineq_margin away from being active.  Setting 
+                               ineq_margin to zero means that steering will only 
+                               be applied when one or more inequality constraints 
+                               are active ( >= 0).  Setting ineq_margin to inf 
+                               means that steering will be applied on every 
+                               iteration.  NOTE: this parameter has no effect if 
+                               equality constraints are present.
+
+               apply_Hinv      function handle apply_Hinv(x)
+                               returns b = Hinv*x where Hinv is the inverse
+                               Hessian (or approximation to it).  Hinv must be
+                               positive definite.  x may be a single column or
+                               matrix.
+
+               maxit           max iteration count to try lowering penalty 
+                               parameter mu in order to find a good search 
+                               direction
+
+               c_viol          percentage of total violation needed to be acheived
+                               by the predicted reduction for a candidate 
+                               direction must be in (0,1)
+
+               c_mu            scalar factor to reduce penalty paremeter mu on 
+                               each iterative if resulting direction is not 
+                               acceptable must be in (0,1)
+
+               quadprog_opts   struct of options for quadprog interface.
+                               It must be provided but it may be set as []
+
+            OUTPUT:
+               d               candidate search direction
+                               d will be set to [] if all QP solves fail hard
+
+               mu              possibly lower value of the penalty parameter 
+
+               reduction       amount of total violation reduction d is predicted 
+                               to yield via the linearized constraint model
+
+            THROWS:
+               error           if any call to quadprog either throws an error
+                               (which will be set as .cause of the GRANSO error)
+                               or if quadprog returns without error but its answer 
+                               is numerically invalid (e.g. inf, nan, empty, zero) 
+
+            If you publish work that uses or refers to NCVX, please cite both
+            NCVX and GRANSO paper:
+
+            [1] Buyun Liang, and Ju Sun. 
+                NCVX: A User-Friendly and Scalable Package for Nonconvex 
+                Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
+                Available at https://arxiv.org/abs/2111.13984
+
+            [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
+                A BFGS-SQP method for nonsmooth, nonconvex, constrained 
+                optimization and its evaluation using relative minimization 
+                profiles, Optimization Methods and Software, 32(1):148-181, 2017.
+                Available at https://dx.doi.org/10.1080/10556788.2016.1208749
+                
+            Change Log:
+                qpSteeringStrategy.m introduced in GRANSO Version 1.0.
+
+                Buyun Dec 20, 2021 (NCVX Version 1.0.0):
+                    qpSteeringStrategy.py is translated from qpSteeringStrategy.m in GRANSO Version 1.6.4. 
+
+            For comments/bug reports, please visit the NCVX webpage:
+            https://github.com/sun-umn/NCVX
+                
+            NCVX Version 1.0.0, 2021, see AGPL license info below.
+
+            =========================================================================
+            |  GRANSO: GRadient-based Algorithm for Non-Smooth Optimization         |
+            |  Copyright (C) 2016 Tim Mitchell                                      |
+            |                                                                       |
+            |  This file is translated from GRANSO.                                 |
+            |                                                                       |
+            |  GRANSO is free software: you can redistribute it and/or modify       |
+            |  it under the terms of the GNU Affero General Public License as       |
+            |  published by the Free Software Foundation, either version 3 of       |
+            |  the License, or (at your option) any later version.                  |
+            |                                                                       |
+            |  GRANSO is distributed in the hope that it will be useful,            |
+            |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+            |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+            |  GNU Affero General Public License for more details.                  |
+            |                                                                       |
+            |  You should have received a copy of the GNU Affero General Public     |
+            |  License along with this program.  If not, see                        |
+            |  <http://www.gnu.org/licenses/agpl.html>.                             |
+            =========================================================================
+
+            =========================================================================
+            |  NCVX (NonConVeX): A User-Friendly and Scalable Package for           |
+            |  Nonconvex Optimization in Machine Learning.                          |
+            |                                                                       |
+            |  Copyright (C) 2021 Buyun Liang                                       |
+            |                                                                       |
+            |  This file is part of NCVX.                                           |
+            |                                                                       |
+            |  NCVX is free software: you can redistribute it and/or modify         |
+            |  it under the terms of the GNU Affero General Public License as       |
+            |  published by the Free Software Foundation, either version 3 of       |
+            |  the License, or (at your option) any later version.                  |
+            |                                                                       |
+            |  GRANSO is distributed in the hope that it will be useful,            |
+            |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+            |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+            |  GNU Affero General Public License for more details.                  |
+            |                                                                       |
+            |  You should have received a copy of the GNU Affero General Public     |
+            |  License along with this program.  If not, see                        |
+            |  <http://www.gnu.org/licenses/agpl.html>.                             |
+            =========================================================================
         """
         self.device = torch_device
         self.double_precision = double_precision
