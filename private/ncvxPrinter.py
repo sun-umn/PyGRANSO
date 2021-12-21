@@ -11,8 +11,162 @@ class pgP:
     def ncvxPrinter(self,opts,n,n_ineq,n_eq):
         """    
         ncvxPrinter:
-        Object for handling printing out info for each iteration and
-        messages.
+            Object for handling printing out info for each iteration and
+            messages.
+
+            INPUT:
+                opts                        
+                    Struct of necessary parameters from GRANSO that the printer
+                    needs to know about, for keeping the iteration printing nicely
+                    aligned and what print options are to be used. 
+                .print_ascii
+                .print_use_orange
+                .print_width  
+                .maxit       
+                .limited_mem_size
+                .linesearch_reattempts
+                .max_random_attempts
+                .max_fallback_level
+                .ngrad
+
+                For more information on the above parameters, see gransoOptions and
+                gransoOptionsAdvanced.
+
+                n 
+                    number of optimization variables.
+
+                ineq_constraints    
+                    nonnegative number indicating the number of inequality
+                    constraints that are present.
+
+                eq_constraints    
+                    nonnegative integer indicating the number of equality
+                    constraints that are present.
+
+            OUTPUT:
+                An "object", a struct containing the following functions for
+                printing tasks:
+                .msg                
+                    Prints a message inside the table; the full width is available
+                    and cell arrays can be used to print multiple lines.
+                .msgWidth          
+                    Returns the number of chars wide the message area.
+                .init               
+                    For printing the initial info at x0.  Requires input arguments: 
+                        penfn_at_x      state of the penalty function.  For more
+                                        info, see makePenaltyFunction.m
+                        stat_value      stationarity measure value
+                        n_qps           number of QPs solved
+                .iter           
+                    Print the info for the current iterate.  Requires arguments:
+                        iter
+                        penfn_at_x      state of the penalty function. For more
+                                        info, see makePenaltyFunction.m
+                        sd_code         integer code indicating which search
+                                        direction was used.
+                        random_attempts number of random attempts to produce search
+                                        direction (this is generally zero)
+                        ls_evals        number of functions evaluations incurred in
+                                        the line search to find an acceptable
+                                        next iterate
+                        alpha           step length taken to get this next iterate
+                        n_grads         number of gradients used in computing the 
+                                        approximate stationarity measure
+                        stat_value      value of the (approx) stationarity measure
+                        n_qps           number of QP solves incurred to compute 
+                                        the (approx) stationarity measure    
+                .summary
+                    Prints the objective and total violations (if present) from the
+                    supplied data.  Requires a string to be used in the iter column
+                    and a struct of the data (provided by provided by the
+                    makePenaltyFunction object.
+                .unscaledMsg
+                    Prints an informational message about prescaling, since GRANSO
+                    prints the prescaled problem values, except at the end for the
+                    results, where it prints both the prescaled and unscaled
+                    values.
+                .regularizeError
+                    Prints a single-line error message to indicate when an eig
+                    error causes the regularization procedure to abort.
+                .bfgsError
+                    Prints a single-line error message corresponding to the integer
+                    code given as the single input argument.  For more information 
+                    on these codes, see bfgsHessianInverse.
+                .qpError
+                    Prints a multi-line error message showing the details of a
+                    thrown error from attempting to solve a QP.  Requires two
+                    arguments: the first is the thrown error, the second is a
+                    string to be used as a label to indicate to the user which 
+                    piece of code threw this error.       
+
+            If you publish work that uses or refers to NCVX, please cite both
+            NCVX and GRANSO paper:
+
+            [1] Buyun Liang, and Ju Sun. 
+                NCVX: A User-Friendly and Scalable Package for Nonconvex 
+                Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
+                Available at https://arxiv.org/abs/2111.13984
+
+            [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
+                A BFGS-SQP method for nonsmooth, nonconvex, constrained 
+                optimization and its evaluation using relative minimization 
+                profiles, Optimization Methods and Software, 32(1):148-181, 2017.
+                Available at https://dx.doi.org/10.1080/10556788.2016.1208749
+                
+            Change Log:
+                gransoPrinter.m introduced in GRANSO Version 1.0.
+
+                Buyun Dec 20, 2021 (NCVX Version 1.0.0):
+                    ncvxPrinter.py is translated from gransoPrinter.m in GRANSO Version 1.6.4. 
+
+            For comments/bug reports, please visit the NCVX webpage:
+            https://github.com/sun-umn/NCVX
+                
+            NCVX Version 1.0.0, 2021, see AGPL license info below.
+
+            =========================================================================
+            |  GRANSO: GRadient-based Algorithm for Non-Smooth Optimization         |
+            |  Copyright (C) 2016 Tim Mitchell                                      |
+            |                                                                       |
+            |  This file is translated from GRANSO.                                 |
+            |                                                                       |
+            |  GRANSO is free software: you can redistribute it and/or modify       |
+            |  it under the terms of the GNU Affero General Public License as       |
+            |  published by the Free Software Foundation, either version 3 of       |
+            |  the License, or (at your option) any later version.                  |
+            |                                                                       |
+            |  GRANSO is distributed in the hope that it will be useful,            |
+            |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+            |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+            |  GNU Affero General Public License for more details.                  |
+            |                                                                       |
+            |  You should have received a copy of the GNU Affero General Public     |
+            |  License along with this program.  If not, see                        |
+            |  <http://www.gnu.org/licenses/agpl.html>.                             |
+            =========================================================================
+
+            =========================================================================
+            |  NCVX (NonConVeX): A User-Friendly and Scalable Package for           |
+            |  Nonconvex Optimization in Machine Learning.                          |
+            |                                                                       |
+            |  Copyright (C) 2021 Buyun Liang                                       |
+            |                                                                       |
+            |  This file is part of NCVX.                                           |
+            |                                                                       |
+            |  NCVX is free software: you can redistribute it and/or modify         |
+            |  it under the terms of the GNU Affero General Public License as       |
+            |  published by the Free Software Foundation, either version 3 of       |
+            |  the License, or (at your option) any later version.                  |
+            |                                                                       |
+            |  GRANSO is distributed in the hope that it will be useful,            |
+            |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+            |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+            |  GNU Affero General Public License for more details.                  |
+            |                                                                       |
+            |  You should have received a copy of the GNU Affero General Public     |
+            |  License along with this program.  If not, see                        |
+            |  <http://www.gnu.org/licenses/agpl.html>.                             |
+            =========================================================================
         """
         self.opts = opts
         self.n = n
