@@ -353,7 +353,7 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
         Change Log:
             granso.m introduced in GRANSO Version 1.0.
             
-            Buyun Dec 20, 2021:
+            Buyun Dec 20, 2021 (NCVX Version 1.0.0):
                 ncvx.py is translated from granso.m in GRANSO Version 1.6.4.
 
                 Add new options to handle pytorch neural network model.

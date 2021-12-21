@@ -250,7 +250,7 @@ def ncvxOptionsAdvanced(varargin):
         Change Log:
             granso.m introduced in GRANSO Version 1.0.
             
-            Buyun Dec 20, 2021:
+            Buyun Dec 20, 2021 (NCVX Version 1.0.0):
                 ncvxOptionsAdvanced.py is translated from gransoOptionsAdvanced.m in GRANSO Version 1.6.4.
 
                 Add new options:
