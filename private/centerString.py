@@ -2,7 +2,7 @@ import math
 
 def centerString(s,width):
     """
-   centerString:
+    centerString:
        Centers string s in the specified width via adding spaces to each 
        side.  If s is longer than width, s will be truncated. If an odd
        number of spaces is needed, the left side will have one more space
