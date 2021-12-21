@@ -1,6 +1,5 @@
 import time
 import torch
-
 from ncvx import ncvx
 from ncvxStruct import Options, GeneralStruct 
 import scipy.io
@@ -11,16 +10,72 @@ import sys
 ## Adding NCVX directories. Should be modified by user
 sys.path.append(currentdir)
 import numpy as np
-
-
 from scipy.stats import norm
 import numpy.linalg as la
 
-device = torch.device('cuda')
+"""
+    test_cuda.py:
+        Test whether the dependency installation for the CUDA version is correct.
 
+        If you publish work that uses or refers to NCVX, please cite both
+        NCVX and GRANSO paper:
+
+        [1] Buyun Liang, and Ju Sun. 
+            NCVX: A User-Friendly and Scalable Package for Nonconvex 
+            Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
+            Available at https://arxiv.org/abs/2111.13984
+
+        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
+            A BFGS-SQP method for nonsmooth, nonconvex, constrained 
+            optimization and its evaluation using relative minimization 
+            profiles, Optimization Methods and Software, 32(1):148-181, 2017.
+            Available at https://dx.doi.org/10.1080/10556788.2016.1208749
+            
+        NOTE: NCVX in all capitals refers to the software package and is the
+        form that should generally be used.  ncvx or ncvx.py in lowercase
+        letters refers specifically to the NCVX routine/command.
+
+        Change Log:
+            
+            Buyun Dec 20, 2021 (NCVX Version 1.0.0):
+                test_cuda.py is introduced in NCVX
+
+        For comments/bug reports, please visit the NCVX webpage:
+        https://github.com/sun-umn/NCVX
+
+        GRANSO uses modifed versions of the BFGS inverse Hessian approximation
+        update formulas and the inexact weak Wolfe line search from HANSO v2.1.
+        See the documentation of HANSO for more information on the use of
+        quasi-Newton methods for nonsmooth unconstrained optimization.
+        
+        GRANSO Version 1.6.4, 2016-2020, see AGPL license info below.
+
+        =========================================================================
+        |  GRANSO: GRadient-based Algorithm for Non-Smooth Optimization         |
+        |  Copyright (C) 2016 Tim Mitchell                                      |
+        |                                                                       |
+        |  This file is part of GRANSO.                                         |
+        |                                                                       |
+        |  GRANSO is free software: you can redistribute it and/or modify       |
+        |  it under the terms of the GNU Affero General Public License as       |
+        |  published by the Free Software Foundation, either version 3 of       |
+        |  the License, or (at your option) any later version.                  |
+        |                                                                       |
+        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+        |  GNU Affero General Public License for more details.                  |
+        |                                                                       |
+        |  You should have received a copy of the GNU Affero General Public     |
+        |  License along with this program.  If not, see                        |
+        |  <http://www.gnu.org/licenses/agpl.html>.                             |
+        =========================================================================
+"""
+
+
+device = torch.device('cuda')
 double_precision = True
 torch_dtype = torch.double
-
 print_level = 0
 
 
