@@ -21,9 +21,33 @@
             Buyun Dec 20, 2021 (NCVX Version 1.0.0):
                 ncvxStruct.py is introduced in NCVX
 
-
         For comments/bug reports, please visit the NCVX webpage:
         https://github.com/sun-umn/NCVX
+
+        NCVX Version 1.0.0, 2021, see AGPL license info below.
+
+        =========================================================================
+        |  NCVX (NonConVeX): A User-Friendly and Scalable Package for           |
+        |  Nonconvex Optimization in Machine Learning.                          |
+        |                                                                       |
+        |  Copyright (C) 2021 Buyun Liang                                       |
+        |                                                                       |
+        |  This file is part of NCVX.                                           |
+        |                                                                       |
+        |  NCVX is free software: you can redistribute it and/or modify         |
+        |  it under the terms of the GNU Affero General Public License as       |
+        |  published by the Free Software Foundation, either version 3 of       |
+        |  the License, or (at your option) any later version.                  |
+        |                                                                       |
+        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+        |  GNU Affero General Public License for more details.                  |
+        |                                                                       |
+        |  You should have received a copy of the GNU Affero General Public     |
+        |  License along with this program.  If not, see                        |
+        |  <http://www.gnu.org/licenses/agpl.html>.                             |
+        =========================================================================
 """
 
 

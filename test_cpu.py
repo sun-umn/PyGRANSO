@@ -43,15 +43,17 @@ import numpy.linalg as la
         For comments/bug reports, please visit the NCVX webpage:
         https://github.com/sun-umn/NCVX
         
-        GRANSO Version 1.6.4, 2016-2020, see AGPL license info below.
+        NCVX Version 1.0.0, 2021, see AGPL license info below.
 
         =========================================================================
-        |  GRANSO: GRadient-based Algorithm for Non-Smooth Optimization         |
-        |  Copyright (C) 2016 Tim Mitchell                                      |
+        |  NCVX (NonConVeX): A User-Friendly and Scalable Package for           |
+        |  Nonconvex Optimization in Machine Learning.                          |
         |                                                                       |
-        |  This file is part of GRANSO.                                         |
+        |  Copyright (C) 2021 Buyun Liang                                       |
         |                                                                       |
-        |  GRANSO is free software: you can redistribute it and/or modify       |
+        |  This file is part of NCVX.                                           |
+        |                                                                       |
+        |  NCVX is free software: you can redistribute it and/or modify         |
         |  it under the terms of the GNU Affero General Public License as       |
         |  published by the Free Software Foundation, either version 3 of       |
         |  the License, or (at your option) any later version.                  |
