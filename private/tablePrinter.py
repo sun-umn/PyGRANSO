@@ -13,8 +13,188 @@ class tP:
    def tablePrinter( self, use_ascii,  use_orange, labels, widths, spacing, span_labels = None ):
       """   
       tablePrinter:
-         An object that makes it much easier to print nice looking tables to
-         Python's console.  
+            An object that makes it much easier to print nice looking tables to
+            Python's console.  
+      
+         INPUT:
+            use_ascii       
+               Logical to indicate whether or not to use basic ascii
+               characters instead of the extended characters to print table
+               boundaries.
+
+            use_orange
+               Logical to indicate whether or not to enable the orange 
+               printing features; orange printing is an undocumented feature
+               in MATLAB hence the option to disable it if necessary.
+               As a shortcut, setting use_orange = [] is equivalent to false.
+
+            labels
+               Cell array of strings, to label each column in the table.  New
+               lines are supported in these labels.
+
+            widths
+               Array of positive integers, with each entry indicating the 
+               printable width (in number of characters) of each column in the 
+               table.  Labels will be truncated as necessary if their widths
+               exceed their corresponding column widths specified here. 
+
+            spacing
+               A nonnegative integer indicating the number of spaces to use as
+               left/right border margins for all entries.
+
+            span_labels (optional)
+               A cell array of cell arrays to specify labels that should span
+               multiple columns.  Each entry must have the form:
+                  {span_label_str,column_start,column_end}
+               Thus {'Group 1 data',2,4} would put span label 'Group 1 data' 
+               centered above the regular labels for columns 2 through 4. 
+               Overlapping span labels are NOT supported.
+
+         OUTPUT: 
+            printer 
+               A tablePrinter object with the following methods:
+
+               .header()
+                  Prints a table header of all the column labels.  This can
+                  be called multiple times, such as every twenty rows.
+
+               .row(col1_data,...,colk_data)
+                  Prints a row in the table.  The number of provided input 
+                  arguments must match the number of columns in the table. 
+                  Each argument should be a string that represents the data 
+                  to be printed for each column.  Each string must have a 
+                  printable length that matches the width specified for its
+                  given column (given by the input argument widths); if this 
+                  not done, or new lines appear in these strings, then the
+                  alignment of the table will be broken.  Each input string
+                  is processed as fprintf %s argument.
+
+               .msg(msg)
+                  Prints a message inside the table, using its full width.
+                  This function takes either a string or cell array, the
+                  latter where each entry specifies a line in a multi-line
+                  message.  Any line too long to be printed in the table will
+                  be truncated.
+
+               .msgOrange(msg)
+                  Same as .msg but will print the message using orange text.
+
+               .overlay(msg)
+                  Prints a message overlaid on the table.  Though this
+                  produces a different look of the message, this function 
+                  takes the same input arguments as .msg.
+
+               .overlayOrange(msg)
+                  Same as .overlay but prints the overlay message using
+                  orange text.
+
+               .msgWidth()
+                  Get the number of printable characters for a single line
+                  in a message printed using .msg.
+
+               .overlayWidth()
+                  Get the number of printable characters for a single line
+                  in a message printed using .overlay.  Note that overlay
+                  messages have less available width than regular messages.
+
+               .close()
+                  Close the current table, that is, print the bottom border.
+                  Note that there is no need to explictly open/begin a table;
+                  this is handled automatically.  Merely requesting something
+                  is a printed (a header, a row, or a message) will print
+                  also print the top border of a table as necessary, such as
+                  if no printing has already been done or if .close() was
+                  called to close a preceding table.     
+
+         If you publish work that uses or refers to NCVX, please cite both
+        NCVX and GRANSO paper:
+
+        [1] Buyun Liang, and Ju Sun. 
+            NCVX: A User-Friendly and Scalable Package for Nonconvex 
+            Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
+            Available at https://arxiv.org/abs/2111.13984
+
+        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
+            A BFGS-SQP method for nonsmooth, nonconvex, constrained 
+            optimization and its evaluation using relative minimization 
+            profiles, Optimization Methods and Software, 32(1):148-181, 2017.
+            Available at https://dx.doi.org/10.1080/10556788.2016.1208749
+            
+        Change Log:
+            tablePrinter.m introduced in GRANSO Version 1.0
+            
+            Buyun Dec 20, 2021 (NCVX Version 1.0.0):
+                tablePrinter.py is translated from tablePrinter.m in GRANSO Version 1.6.4. 
+
+        For comments/bug reports, please visit the NCVX webpage:
+        https://github.com/sun-umn/NCVX
+        
+        NCVX Version 1.0.0, 2021, see AGPL license info below.
+
+        =========================================================================
+        |  tablePrinter.m                                                       |
+        |  Copyright (C) 2016 Tim Mitchell                                      |
+        |                                                                       |
+        |  This file is originally from URTM.                                   |
+        |                                                                       |
+        |  URTM is free software: you can redistribute it and/or modify         |
+        |  it under the terms of the GNU Affero General Public License as       |
+        |  published by the Free Software Foundation, either version 3 of       |
+        |  the License, or (at your option) any later version.                  |
+        |                                                                       |
+        |  URTM is distributed in the hope that it will be useful,              |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+        |  GNU Affero General Public License for more details.                  |
+        |                                                                       |
+        |  You should have received a copy of the GNU Affero General Public     |
+        |  License along with this program.  If not, see                        |
+        |  <http://www.gnu.org/licenses/agpl.html>.                             |
+        =========================================================================
+
+        =========================================================================
+        |  GRANSO: GRadient-based Algorithm for Non-Smooth Optimization         |
+        |  Copyright (C) 2016 Tim Mitchell                                      |
+        |                                                                       |
+        |  This file is translated from GRANSO.                                 |
+        |                                                                       |
+        |  GRANSO is free software: you can redistribute it and/or modify       |
+        |  it under the terms of the GNU Affero General Public License as       |
+        |  published by the Free Software Foundation, either version 3 of       |
+        |  the License, or (at your option) any later version.                  |
+        |                                                                       |
+        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+        |  GNU Affero General Public License for more details.                  |
+        |                                                                       |
+        |  You should have received a copy of the GNU Affero General Public     |
+        |  License along with this program.  If not, see                        |
+        |  <http://www.gnu.org/licenses/agpl.html>.                             |
+        =========================================================================
+
+        =========================================================================
+        |  NCVX (NonConVeX): A User-Friendly and Scalable Package for           |
+        |  Nonconvex Optimization in Machine Learning.                          |
+        |                                                                       |
+        |  Copyright (C) 2021 Buyun Liang                                       |
+        |                                                                       |
+        |  This file is part of NCVX.                                           |
+        |                                                                       |
+        |  NCVX is free software: you can redistribute it and/or modify         |
+        |  it under the terms of the GNU Affero General Public License as       |
+        |  published by the Free Software Foundation, either version 3 of       |
+        |  the License, or (at your option) any later version.                  |
+        |                                                                       |
+        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+        |  GNU Affero General Public License for more details.                  |
+        |                                                                       |
+        |  You should have received a copy of the GNU Affero General Public     |
+        |  License along with this program.  If not, see                        |
+        |  <http://www.gnu.org/licenses/agpl.html>.                             |
+        =========================================================================      
       """
 
       self.use_orange = use_orange
