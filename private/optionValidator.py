@@ -25,6 +25,305 @@ class oV:
         optionValidator:
            Helper object for performing common sanity and validity checks on 
            parameters provided by the user for any given program.
+
+
+            USAGE (an example):
+                % Set up the validator with all the default parameter values:
+                proc = optionValidator('your_program_name',struct_of_default_opts)
+                
+                % Initialize the validator with whatever parameters the user gave:
+                proc.setUserOpts(struct_of_user_options);
+        
+                % Validate and set opts.code_mode to an integer in {0,1,...,10}
+                % (This throws an error if the user's option does not meet this
+                % criteria.)  
+                proc.setIntegerInRange('code_mode',0,10)
+                
+                % Get all the options (default values plus validated user options)
+                validated_opts = proc.getValidatedOpts();
+        
+            THROWS: 
+                optionValidator can throw two different types of errors:
+        
+                1)  optionValidator:invalidUsage
+                    This error is thrown when either the two necessary input
+                    arguments are not provided OR if the user tries to validate/set
+                    an option that doesn't exist in the default_opts struct.  Both
+                    of these are developer-facing errors since they indicate that
+                    the developer has improperly used optionValidator and needs to
+                    correct their code.
+            
+                2)  YourProgramName:invalidUserOption
+                    This error is thrown if a user-specified option is either empty
+                    or fails to meet the validation criteria.  This is considered a
+                    user-facing error. 
+        
+                The reason for two types of errors is so that the developer can
+                have their software respond appropriately to both cases by
+                potentially catching these errors and having specific code handle
+                each case individually.
+        
+            INPUT:
+                program_name       
+                    A string to be used as a prefix create the error message ID:
+                    YourProgramName:invalidOption
+            
+                default_opts
+                    A struct containing all the parameter names as fields, with
+                    each field set to the default value to be used for that
+                    parameter.
+        
+                sub_validators
+                    A struct of option fieldnames that appear in default_opts which
+                    are actually structs of options that need to be validated by
+                    their own optionValidator-derived routines.  Each field must be
+                    set to the function handle for its optionValidator-derived
+                    validation routine.  sub_validators may be set to [] if there 
+                    are no options requiring sub-validation.  For more information,
+                    see optionValidator's setStructWithValidation routine.
+        
+                sub_optname     [optional]
+                    A string to increase the specificity of all error messages.
+                    Without this option, error messages for invalid parameter
+                    values have the following format:
+                
+                    YourProgramName:invalidUserOption: .option_name must blah
+        
+                    By specifying sub_optname, the error messages become:
+        
+                    YourProgramName:invalidUserOption: .sub_optname.option_name ...
+                    
+            OUTPUT:
+                An optionValidator object containing methods:
+                .setUserOpts(user_opts)   
+                    Pass in the user's options (as a struct) to initialize the
+                    processor.  Note that this does NOT set any value
+                    Calling this resets all previously processed options.
+        
+                .getDefaultOpts()
+                    Returns a struct of the default parameters.  If any of the
+                    parameters are actually substructs of options with validation
+                    (see input argument sub_validators), these subfields will also
+                    be populated with their default values returns by their
+                    optionValidator-derived sub-validators.
+                
+                .getValidatedOpts()
+                    Return the set of all processed/validated options, along with
+                    the default values of the parameters that were not set/checked.
+                    This MUST be called to get the validated options! 
+        
+                .isSpecified(opt_name)
+                    Returns true if the user has included the field opt_name in
+                    their set of requested values.
+                
+                .validateValue(opt_name,validate_fn,error_msg)
+                    Assert that the value stored in user_opts.(opt_name) causes
+                    the validate_fn to return true; otherwise, the error message is
+                    displayed.   Note that this does NOT set a value!
+                
+                .getValue(opt_name)
+                    Get the latest value of the "opt_name" parameter; returns the
+                    default value if no user option has been set yet.
+                
+                .validateAndSet(opt_name,validate_fn,error_msg)
+                    Same as .validateValue but if the value is validated, then it
+                    also sets the user's value.  This is useful if one has a
+                    parameter that needs to be validated and set that has
+                    conditions not provided by one of the builtin routines and/or
+                    needs a custom error message.
+        
+                The optionValidator object also has following builtin set routines
+                for validating common parameter types and then setting them.  All
+                functions take an opt_name string as their first argument, which
+                indicates which value, that is, user_opts.(opt_name), to be
+                validated and set.  If the value does not meet the criteria, an
+                error is thrown.
+        
+                NOTES:
+                    1)  An invalid name of an option will cause an error to be 
+                        thrown.  The names specified in user_opts must match those
+                        in default_opts.
+        
+                    2)  User options set to the empty array [] are ignored
+                        (assuming that they correspond to a valid option name)
+                
+                    3)  Multiple conditions can be checked by calling all of the
+                        appropriate set functions in a succession.  For example:
+                            
+                        proc.setPositiveDefinite('hessian')
+                        
+                        only checks whether user_opts.hessian is numerically
+                        positive definite but 
+                
+                        proc.setRealAndFiniteValued('hessian')
+                        proc.setPositiveDefinite('hessian')
+                    
+                        ensures that user_opts.hessian will not only be positive
+                        definite but also only contain finite purely real values.
+        
+                BASIC TYPE VALIDATIONS: 
+        
+                Validate a basic type: logical, a struct, or a function handle
+                .setLogical(opt_name)
+                .setStruct(opt_name)
+                .setStructWithFields(opt_name,field1,field2,...)
+                    Required input: 
+                        opt_name and at least one field name (strings)
+                    Output: 
+                        a new optionValidator object for validating the fields of
+                        the substruct.  user_opts.opt_name must contain all these
+                        fields.
+                .setStructWithValidation(opt_name)
+                    Checks the struct of options specified in field opt_name, using 
+                    the optionValidator-derived sub-validator specified in
+                    sub_validators.opt_name.
+                .setFunctionHandle(opt_name)
+        
+                INTEGER VALIDATIONS:
+        
+                Validate an integer value (must be finite):
+                .setInteger(opt_name)
+                .setIntegerPositive(opt_name)
+                .setIntegerNegative(opt_name)
+                .setIntegerNonnegative(opt_name)
+                .setIntegerNonpositive(opt_name)
+        
+                Validate number is in the integer range {min_value,...,max_value}
+                (min_value and max_value are allowed to be +/- infinity):
+                .setIntegerInRange(opt_name,min_value,max_value)
+                
+        
+                EXTENDED REAL VALIDATIONS: (+/- inf is okay, nan is not)
+            
+                Validate a real value:
+                .setReal(opt_name)
+                .setRealPositive(opt_name)
+                .setRealNegative(opt_name)
+                .setRealNonnegative(opt_name)
+                .setRealNonpositive(opt_name)
+                
+                Validate a real value in is an interval:
+                .setRealInIntervalOO(opt_name,a,b)      OO: open, open (a,b)
+                .setRealInIntervalOC(opt_name,a,b)      OC: open, closed (a,b]
+                .setRealInIntervalCO(opt_name,a,b)      CO: closed, open [a,b)
+                .setRealInIntervalCC(opt_name,a,b)      CC: closed, closed [a,b]
+        
+                MATRIX/NUMERIC TYPE VALIDATIONS:
+        
+                Validate all individual entries:
+                .setFiniteValued(opt_name)
+                    All values must be finite (no nans/infs)
+                .setRealValued(opt_name)
+                    All entries must be real (no or zero imaginary parts)
+                .setRealFiniteValued(opt_name)
+                    All entries must be finite and real
+                .setNonZero(opt_name)
+                    All values must not be zero (nans and infs are acceptable)
+        
+                Validate dimensions of numeric type:
+                .setRow(opt_name)
+                .setRowDimensioned(opt_name,dim)
+                    Must be a row vector of length dim
+                .setColumn(opt_name)
+                .setColumnDimensioned(opt_name,dim)
+                    Must be a column vector of length dim
+                .setDimensioned(opt_name,M,N)
+                    Matrix must have size M by N
+        
+                Validate properties:     
+                .setSparse(opt_name)
+                .setPositiveDefinite(opt_name)
+                    Matrix be positive definite, tested via chol() 
+
+            If you publish work that uses or refers to NCVX, please cite both
+            NCVX and GRANSO paper:
+
+            [1] Buyun Liang, and Ju Sun. 
+                NCVX: A User-Friendly and Scalable Package for Nonconvex 
+                Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
+                Available at https://arxiv.org/abs/2111.13984
+
+            [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
+                A BFGS-SQP method for nonsmooth, nonconvex, constrained 
+                optimization and its evaluation using relative minimization 
+                profiles, Optimization Methods and Software, 32(1):148-181, 2017.
+                Available at https://dx.doi.org/10.1080/10556788.2016.1208749
+                
+            Change Log:
+                optionValidator.m introduced in GRANSO Version 1.0
+                
+                Buyun Dec 20, 2021 (NCVX Version 1.0.0):
+                    optionValidator.py is translated from optionValidator.m in GRANSO Version 1.6.4. 
+
+            For comments/bug reports, please visit the NCVX webpage:
+            https://github.com/sun-umn/NCVX
+            
+            NCVX Version 1.0.0, 2021, see AGPL license info below.
+
+            =========================================================================
+            |  optionValidator.m                                                    |
+            |  Copyright (C) 2016 Tim Mitchell                                      |
+            |                                                                       |
+            |  This file is originally from URTM.                                   |
+            |                                                                       |
+            |  URTM is free software: you can redistribute it and/or modify         |
+            |  it under the terms of the GNU Affero General Public License as       |
+            |  published by the Free Software Foundation, either version 3 of       |
+            |  the License, or (at your option) any later version.                  |
+            |                                                                       |
+            |  URTM is distributed in the hope that it will be useful,              |
+            |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+            |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+            |  GNU Affero General Public License for more details.                  |
+            |                                                                       |
+            |  You should have received a copy of the GNU Affero General Public     |
+            |  License along with this program.  If not, see                        |
+            |  <http://www.gnu.org/licenses/agpl.html>.                             |
+            =========================================================================
+
+            =========================================================================
+            |  GRANSO: GRadient-based Algorithm for Non-Smooth Optimization         |
+            |  Copyright (C) 2016 Tim Mitchell                                      |
+            |                                                                       |
+            |  This file is translated from GRANSO.                                 |
+            |                                                                       |
+            |  GRANSO is free software: you can redistribute it and/or modify       |
+            |  it under the terms of the GNU Affero General Public License as       |
+            |  published by the Free Software Foundation, either version 3 of       |
+            |  the License, or (at your option) any later version.                  |
+            |                                                                       |
+            |  GRANSO is distributed in the hope that it will be useful,            |
+            |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+            |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+            |  GNU Affero General Public License for more details.                  |
+            |                                                                       |
+            |  You should have received a copy of the GNU Affero General Public     |
+            |  License along with this program.  If not, see                        |
+            |  <http://www.gnu.org/licenses/agpl.html>.                             |
+            =========================================================================
+
+            =========================================================================
+            |  NCVX (NonConVeX): A User-Friendly and Scalable Package for           |
+            |  Nonconvex Optimization in Machine Learning.                          |
+            |                                                                       |
+            |  Copyright (C) 2021 Buyun Liang                                       |
+            |                                                                       |
+            |  This file is part of NCVX.                                           |
+            |                                                                       |
+            |  NCVX is free software: you can redistribute it and/or modify         |
+            |  it under the terms of the GNU Affero General Public License as       |
+            |  published by the Free Software Foundation, either version 3 of       |
+            |  the License, or (at your option) any later version.                  |
+            |                                                                       |
+            |  GRANSO is distributed in the hope that it will be useful,            |
+            |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+            |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+            |  GNU Affero General Public License for more details.                  |
+            |                                                                       |
+            |  You should have received a copy of the GNU Affero General Public     |
+            |  License along with this program.  If not, see                        |
+            |  <http://www.gnu.org/licenses/agpl.html>.                             |
+            =========================================================================
         """
         
         ##########################################################################################
