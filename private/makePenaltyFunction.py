@@ -20,6 +20,232 @@ class PanaltyFuctions:
             Roughly, this means:
                 mu*obj_fn   + sum of active inequality constraints 
                             + sum of absolute value of eq. constraints
+
+            USAGE:
+            - obj_fn evaluates objective and constraints simultaneously:
+            
+                makePenaltyFunction(opts,obj_fn);  
+            
+            - objective and inequality and equality constraints are all evaluated
+                separately by obj_fn, ineq_fn, and eq_fn respectively:
+            
+                makePenaltyFunction(opts,obj_fn,ineq_fn,eq_fn); 
+            
+            The first usage may be both more convenient and efficient if computed 
+            value appear across the objectives and various constraints 
+            
+            INPUT:
+                params                      a struct of required parameters
+            
+                .x0                         [ n x 1 real vector ]
+                    Initial point to evaluate the penalty function at.
+                                    
+                .mu0                        [ nonnegative real value ]
+                    Initial value of the penalty parameter.
+            
+                .prescaling_threshhold      [ positive real value ] 
+                    Determines the threshold at which prescaling is applied to the
+                    objective or constraint functions.  Prescaling is only applied
+                    to the particular functions when the norms of their gradients
+                    exceed the threshold; these functions are precaled so that the
+                    norms of their gradients are equal to the prescaling_threshold.
+            
+                .viol_ineq_tol              [ a nonnegative real value ]
+                    A point is considered infeasible if the total violation of the 
+                    inequality constraint function(s) exceeds this value.
+            
+                .viol_eq_tol                [ a nonnegative real value ]
+                    A point is considered infeasible if the total violation of the 
+                    equality constraint function(s) exceeds this value.
+                                    
+                obj_fn                      [ function handle ]
+                    This function takes a single argument, an n by 1 real vector, 
+                    and evaluates either: 
+                        Only the objective:  
+                            [f,grad] = obj_fn(x)
+                        In this case, ineq_fn and eq_fn must be provided as
+                        following input arguments.  If there are no (in)equality
+                        constraints, (in)eq_fn should be set as [].
+            
+                        Or the objective and constraint functions together:
+                            [f,grad,ci,ci_grad,ce,ce_grad] = obj_fn(x)
+                        In this case, ci and/or ce (and their corresponding
+                        gradients) should be returned as [] if no (in)equality
+                        constraints are given.
+            
+                ineq_fn                     [ function handle ]
+                    This function handle evaluate the inequality constraint 
+                    functions and their gradients:
+                        [ci,ci_grad] = ineq_fn(x)
+                    This argument is required when the given obj_fn only evaluates 
+                    the objective; this argument may be set to [] if there are no
+                    inequality constraints.
+            
+                ineq_fn                     [ function handle ]
+                    This function handle evaluate the equality constraint functions
+                    and their gradients:
+                        [ce,ce_grad] = eq_fn(x)
+                    This argument is required when the given obj_fn only evaluates 
+                    the objective; this argument may be set to [] if there are no
+                    inequality constraints.
+                                        
+                NOTE: Each function handle returns the value of the function(s) 
+                        evaluated at x, along with the corresponding gradient(s).  
+                        If there are n variables and p inequality constraints, then
+                        ci_grad should be an n by p matrix of p gradients for the p
+                        inequality constraints.
+            
+            OUTPUT:
+                p_obj       struct whose fields are function handles to manipulate 
+                            the penalty function object p_obj, with methods:
+            
+                    [p,p_grad,is_feasible] = p_obj.evaluatePenaltyFunction(x)
+                    Evaluates the penalty function at vector x, returning its value
+                    and gradient of the penalty function, along with a logical
+                    indicating whether x is considered feasible (with respect to
+                    the violation tolerances). 
+                    NOTE: this function evaluates the underlying objective and
+                    constraint functions at x.
+            
+                    [p,p_grad,mu_new] = p_obj.updatePenaltyParameter(mu_new)
+                    Returns the updated value and gradient of the penalty function
+                    at the current point, using new penalty parameter mu_new.  This
+                    relies on using the last computed values and gradients for the
+                    objective and constraints which are saved internally.
+            
+                    x = p_obj.getX();
+                    Returns the current point that the penalty function has been
+                    evaluated at.
+            
+                    [f,f_grad,tv_l1,tv_l1_grad] = p_obj.getComponentValues()
+                    Returns the components of the penalty function, namely the
+                    current objective value and its gradient and the current l1
+                    total violation and its gradient.
+            
+                    [p,p_grad] = p_obj.getPenaltyFunctionValue()
+                    Returns the current value and gradient of the penalty function.
+            
+                    mu = p_obj.getPenaltyParameter()
+                    Returns the current value of the penalty parameter
+            
+                    [f_grad_out, ci_grad_out, ce_grad_out] = p_obj.getGradients()
+                    Returns the gradients of the objective and constraints
+            
+                    n = p_obj.getNumberOfEvaluations()
+                    Returns the number of times evaluatePenaltyFunction has been
+                    called.
+            
+                    [soln, stat_value] = p_obj.getBestSolutions()
+                    Returns a struct of the best solution(s) encountered so far, 
+                    along with an approximate measure of stationarity at the
+                    current point.
+            
+                    tf = p_obj.isFeasibleToTolerances()
+                    Returns true if the current point is considered feasible with
+                    respect to the violation tolerances.
+            
+                    tf = p_obj.isPrescaled()
+                    Returns true if prescaling was applied to any of the objective 
+                    and/or constraint functions.
+                
+                    tf = p_obj.hasConstraints()
+                    Returns true if the specified optimization problem has
+                    constraints.
+            
+                    n = p_obj.numberOfInequalities()
+                    Returns the number of inequality functions.
+            
+                    n = p_obj.numberOfEqualities()
+                    Returns the number of equality functions.
+            
+                    s = p_obj.snapShot()
+                    Takes a snap shot of the all current values related to the 
+                    penalty function, stores it internally, and also returns it to 
+                    the caller.  Allows the current state to be subsequently 
+                    recalled if necessary.
+            
+                    p_obj.restoreSnapShot()
+                    Restores the state of the penalty function back to the last
+                    time snapShot() was invoked (so we don't need to recompute it),
+                    or, if passed snap shot data as an input argument, it will
+                    restore back to the user-provided state.
+            
+                    p_obj.addStationarityMeasure(value)
+                    Add the stationarity measure value to the current state.
+            
+                grad_norms_at_x0        
+                    A struct of the norms of the gradients of objective and
+                    constraint functions evaluated at x0.  The struct contains
+                    fields .f, .ci, and .ce.                
+
+            If you publish work that uses or refers to NCVX, please cite both
+            NCVX and GRANSO paper:
+
+            [1] Buyun Liang, and Ju Sun. 
+                NCVX: A User-Friendly and Scalable Package for Nonconvex 
+                Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
+                Available at https://arxiv.org/abs/2111.13984
+
+            [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
+                A BFGS-SQP method for nonsmooth, nonconvex, constrained 
+                optimization and its evaluation using relative minimization 
+                profiles, Optimization Methods and Software, 32(1):148-181, 2017.
+                Available at https://dx.doi.org/10.1080/10556788.2016.1208749
+                
+            Change Log:
+                makePenaltyFunction.m introduced in GRANSO Version 1.0.
+
+                Buyun Dec 20, 2021 (NCVX Version 1.0.0):
+                    makePenaltyFunction.py is translated from makePenaltyFunction.m in GRANSO Version 1.6.4. 
+
+            For comments/bug reports, please visit the NCVX webpage:
+            https://github.com/sun-umn/NCVX
+                
+            NCVX Version 1.0.0, 2021, see AGPL license info below.
+
+            =========================================================================
+            |  GRANSO: GRadient-based Algorithm for Non-Smooth Optimization         |
+            |  Copyright (C) 2016 Tim Mitchell                                      |
+            |                                                                       |
+            |  This file is translated from GRANSO.                                 |
+            |                                                                       |
+            |  GRANSO is free software: you can redistribute it and/or modify       |
+            |  it under the terms of the GNU Affero General Public License as       |
+            |  published by the Free Software Foundation, either version 3 of       |
+            |  the License, or (at your option) any later version.                  |
+            |                                                                       |
+            |  GRANSO is distributed in the hope that it will be useful,            |
+            |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+            |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+            |  GNU Affero General Public License for more details.                  |
+            |                                                                       |
+            |  You should have received a copy of the GNU Affero General Public     |
+            |  License along with this program.  If not, see                        |
+            |  <http://www.gnu.org/licenses/agpl.html>.                             |
+            =========================================================================
+
+            =========================================================================
+            |  NCVX (NonConVeX): A User-Friendly and Scalable Package for           |
+            |  Nonconvex Optimization in Machine Learning.                          |
+            |                                                                       |
+            |  Copyright (C) 2021 Buyun Liang                                       |
+            |                                                                       |
+            |  This file is part of NCVX.                                           |
+            |                                                                       |
+            |  NCVX is free software: you can redistribute it and/or modify         |
+            |  it under the terms of the GNU Affero General Public License as       |
+            |  published by the Free Software Foundation, either version 3 of       |
+            |  the License, or (at your option) any later version.                  |
+            |                                                                       |
+            |  GRANSO is distributed in the hope that it will be useful,            |
+            |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+            |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+            |  GNU Affero General Public License for more details.                  |
+            |                                                                       |
+            |  You should have received a copy of the GNU Affero General Public     |
+            |  License along with this program.  If not, see                        |
+            |  <http://www.gnu.org/licenses/agpl.html>.                             |
+            =========================================================================
         """
         self.f_eval_fn = f_eval_fn 
         self.obj_fn = obj_fn 

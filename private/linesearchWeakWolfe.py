@@ -132,6 +132,8 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
             Buyun Dec 20, 2021 (NCVX Version 1.0.0):
                 linesearchWeakWolfe.py is translated from linesearchWeakWolfe.m in GRANSO Version 1.6.4. 
 
+                backtracking line search and related option added.
+
         For comments/bug reports, please visit the NCVX webpage:
         https://github.com/sun-umn/NCVX
             
