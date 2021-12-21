@@ -42,11 +42,6 @@ import numpy.linalg as la
 
         For comments/bug reports, please visit the NCVX webpage:
         https://github.com/sun-umn/NCVX
-
-        GRANSO uses modifed versions of the BFGS inverse Hessian approximation
-        update formulas and the inexact weak Wolfe line search from HANSO v2.1.
-        See the documentation of HANSO for more information on the use of
-        quasi-Newton methods for nonsmooth unconstrained optimization.
         
         GRANSO Version 1.6.4, 2016-2020, see AGPL license info below.
 
