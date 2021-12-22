@@ -6,11 +6,11 @@ def getNvar(var_dim_map):
     getNvar:
         getNvar calculates the total number of scalar variables
 
-        If you publish work that uses or refers to NCVX, please cite both
-        NCVX and GRANSO paper:
+        If you publish work that uses or refers to PyGRANSO, please cite both
+        PyGRANSO and GRANSO paper:
 
         [1] Buyun Liang, and Ju Sun. 
-            NCVX: A User-Friendly and Scalable Package for Nonconvex 
+            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
             Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
             Available at https://arxiv.org/abs/2111.13984
 
@@ -22,23 +22,23 @@ def getNvar(var_dim_map):
 
         Change Log:
             
-            Buyun Dec 20, 2021 (NCVX Version 1.0.0):
-                getNvar.py is introduced in NCVX
+            Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
+                getNvar.py is introduced in PyGRANSO
 
-        For comments/bug reports, please visit the NCVX webpage:
-        https://github.com/sun-umn/NCVX
+        For comments/bug reports, please visit the PyGRANSO webpage:
+        https://github.com/sun-umn/PyGRANSO
         
-        NCVX Version 1.0.0, 2021, see AGPL license info below.
+        PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
 
         =========================================================================
-        |  NCVX (NonConVeX): A User-Friendly and Scalable Package for           |
+        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
         |  Nonconvex Optimization in Machine Learning.                          |
         |                                                                       |
         |  Copyright (C) 2021 Buyun Liang                                       |
         |                                                                       |
-        |  This file is part of NCVX.                                           |
+        |  This file is part of PyGRANSO.                                       |
         |                                                                       |
-        |  NCVX is free software: you can redistribute it and/or modify         |
+        |  PyGRANSO is free software: you can redistribute it and/or modify     |
         |  it under the terms of the GNU Affero General Public License as       |
         |  published by the Free Software Foundation, either version 3 of       |
         |  the License, or (at your option) any later version.                  |
@@ -65,11 +65,11 @@ def getNvarTorch(parameters):
         getNvarTorch calculates the total number of scalar variables from 
         the parameters of torch.nn module
 
-        If you publish work that uses or refers to NCVX, please cite both
-        NCVX and GRANSO paper:
+        If you publish work that uses or refers to PyGRANSO, please cite both
+        PyGRANSO and GRANSO paper:
 
         [1] Buyun Liang, and Ju Sun. 
-            NCVX: A User-Friendly and Scalable Package for Nonconvex 
+            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
             Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
             Available at https://arxiv.org/abs/2111.13984
 
@@ -81,23 +81,23 @@ def getNvarTorch(parameters):
 
         Change Log:
             
-            Buyun Dec 20, 2021 (NCVX Version 1.0.0):
-                getNvarTorch.py is introduced in NCVX
+            Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
+                getNvarTorch.py is introduced in PyGRANSO
 
-        For comments/bug reports, please visit the NCVX webpage:
-        https://github.com/sun-umn/NCVX
+        For comments/bug reports, please visit the PyGRANSO webpage:
+        https://github.com/sun-umn/PyGRANSO
         
-        NCVX Version 1.0.0, 2021, see AGPL license info below.
+        PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
 
         =========================================================================
-        |  NCVX (NonConVeX): A User-Friendly and Scalable Package for           |
+        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
         |  Nonconvex Optimization in Machine Learning.                          |
         |                                                                       |
         |  Copyright (C) 2021 Buyun Liang                                       |
         |                                                                       |
-        |  This file is part of NCVX.                                           |
+        |  This file is part of PyGRANSO.                                       |
         |                                                                       |
-        |  NCVX is free software: you can redistribute it and/or modify         |
+        |  PyGRANSO is free software: you can redistribute it and/or modify     |
         |  it under the terms of the GNU Affero General Public License as       |
         |  published by the Free Software Foundation, either version 3 of       |
         |  the License, or (at your option) any later version.                  |

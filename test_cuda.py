@@ -1,7 +1,7 @@
 import time
 import torch
-from ncvx import ncvx
-from ncvxStruct import Options, GeneralStruct 
+from pygranso import ncvx
+from pygransoStruct import Options, GeneralStruct 
 import scipy.io
 from torch import linalg as LA
 import os

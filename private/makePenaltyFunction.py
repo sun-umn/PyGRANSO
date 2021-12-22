@@ -1,7 +1,7 @@
 import types
 import numpy as np
 import torch
-from ncvxStruct import GeneralStruct
+from pygransoStruct import GeneralStruct
 import traceback,sys
 
 class PanaltyFuctions:
@@ -178,11 +178,11 @@ class PanaltyFuctions:
                     constraint functions evaluated at x0.  The struct contains
                     fields .f, .ci, and .ce.                
 
-            If you publish work that uses or refers to NCVX, please cite both
-            NCVX and GRANSO paper:
+            If you publish work that uses or refers to PyGRANSO, please cite both
+            PyGRANSO and GRANSO paper:
 
             [1] Buyun Liang, and Ju Sun. 
-                NCVX: A User-Friendly and Scalable Package for Nonconvex 
+                PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
                 Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
                 Available at https://arxiv.org/abs/2111.13984
 
@@ -195,13 +195,13 @@ class PanaltyFuctions:
             Change Log:
                 makePenaltyFunction.m introduced in GRANSO Version 1.0.
 
-                Buyun Dec 20, 2021 (NCVX Version 1.0.0):
+                Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
                     makePenaltyFunction.py is translated from makePenaltyFunction.m in GRANSO Version 1.6.4. 
 
-            For comments/bug reports, please visit the NCVX webpage:
-            https://github.com/sun-umn/NCVX
+            For comments/bug reports, please visit the PyGRANSO webpage:
+            https://github.com/sun-umn/PyGRANSO
                 
-            NCVX Version 1.0.0, 2021, see AGPL license info below.
+            PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
 
             =========================================================================
             |  GRANSO: GRadient-based Algorithm for Non-Smooth Optimization         |
@@ -224,28 +224,28 @@ class PanaltyFuctions:
             |  <http://www.gnu.org/licenses/agpl.html>.                             |
             =========================================================================
 
-            =========================================================================
-            |  NCVX (NonConVeX): A User-Friendly and Scalable Package for           |
-            |  Nonconvex Optimization in Machine Learning.                          |
-            |                                                                       |
-            |  Copyright (C) 2021 Buyun Liang                                       |
-            |                                                                       |
-            |  This file is part of NCVX.                                           |
-            |                                                                       |
-            |  NCVX is free software: you can redistribute it and/or modify         |
-            |  it under the terms of the GNU Affero General Public License as       |
-            |  published by the Free Software Foundation, either version 3 of       |
-            |  the License, or (at your option) any later version.                  |
-            |                                                                       |
-            |  GRANSO is distributed in the hope that it will be useful,            |
-            |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
-            |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
-            |  GNU Affero General Public License for more details.                  |
-            |                                                                       |
-            |  You should have received a copy of the GNU Affero General Public     |
-            |  License along with this program.  If not, see                        |
-            |  <http://www.gnu.org/licenses/agpl.html>.                             |
-            =========================================================================
+        =========================================================================
+        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
+        |  Nonconvex Optimization in Machine Learning.                          |
+        |                                                                       |
+        |  Copyright (C) 2021 Buyun Liang                                       |
+        |                                                                       |
+        |  This file is part of PyGRANSO.                                       |
+        |                                                                       |
+        |  PyGRANSO is free software: you can redistribute it and/or modify     |
+        |  it under the terms of the GNU Affero General Public License as       |
+        |  published by the Free Software Foundation, either version 3 of       |
+        |  the License, or (at your option) any later version.                  |
+        |                                                                       |
+        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+        |  GNU Affero General Public License for more details.                  |
+        |                                                                       |
+        |  You should have received a copy of the GNU Affero General Public     |
+        |  License along with this program.  If not, see                        |
+        |  <http://www.gnu.org/licenses/agpl.html>.                             |
+        =========================================================================
         """
         self.f_eval_fn = f_eval_fn 
         self.obj_fn = obj_fn 
@@ -377,7 +377,7 @@ class PanaltyFuctions:
             self.eval_ineq_fn(x_in) 
             self.eval_eq_fn(x_in)
         except Exception as e:
-            print("NCVX userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x for line search.")
+            print("PyGRANSO userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x for line search.")
             print(traceback.format_exc())
             sys.exit()
 
@@ -409,7 +409,7 @@ class PanaltyFuctions:
             self.eval_ineq_fn(x_in) 
             self.eval_eq_fn(x_in)
         except Exception as e:
-            print("NCVX userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x.")
+            print("PyGRANSO userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x.")
             print(traceback.format_exc())
             sys.exit()
 
@@ -720,9 +720,9 @@ def assertFnOutputs(n,f,g,fn_name):
 
 def assertFn(cond,arg_name,fn_name,msg):
     if torch.is_tensor(cond):
-        assert torch.all(cond),("NCVX userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(arg_name,fn_name,msg)  )   
+        assert torch.all(cond),("PyGRANSO userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(arg_name,fn_name,msg)  )   
     else:
-        assert np.all(cond),("NCVX userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(arg_name,fn_name,msg)  )                                 
+        assert np.all(cond),("PyGRANSO userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(arg_name,fn_name,msg)  )                                 
 
 class Class_splitEvalAtX:
     def __init__(self):
@@ -843,7 +843,7 @@ def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_thresh
         try: 
             [c,c_grad]      = c_fn(x0)
         except Exception as e:
-            print("NCVX userSuppliedFunctionsError : failed to evaluate [c,c_grad] = {}eq_fn(x0).".format(type_str))
+            print("PyGRANSO userSuppliedFunctionsError : failed to evaluate [c,c_grad] = {}eq_fn(x0).".format(type_str))
             print(traceback.format_exc())
             sys.exit()
 
@@ -867,7 +867,7 @@ def setupConstraint( x0, c_fn, eval_fn, inequality_constraint, prescaling_thresh
         eval_fn_ret             = lambda x: eval_fn(x,c_fn)
         constrained         = True
     else:       
-        print("NCVX userSuppliedFunctionsError: {}eq_fn must be a function handle of x or empty, that is, None.\n".format(type_str))
+        print("PyGRANSO userSuppliedFunctionsError: {}eq_fn must be a function handle of x or empty, that is, None.\n".format(type_str))
     
     return [eval_fn_ret, c, c_grad, tv, tv_l1, tv_l1_grad, c_grad_norms, scalings, constrained]
 

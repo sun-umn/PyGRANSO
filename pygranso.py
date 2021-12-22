@@ -3,8 +3,8 @@ import torch
 from private.makePenaltyFunction import PanaltyFuctions
 from private import bfgsHessianInverse as bfgsHI, printMessageBox as pMB, bfgsHessianInverseLimitedMem as lbfgsHI
 from private.bfgssqp import AlgBFGSSQP
-from private.ncvxPrinter import pgP
-from ncvxOptions import ncvxOptions
+from private.pygransoPrinter import pgP
+from pygransoOptions import pygransoOptions
 from private.solveQP import getErr
 from private.wrapToLines import wrapToLines
 from time import sleep
@@ -12,19 +12,19 @@ from private.tensor2vec import tensor2vec, obj_eval
 from private.getNvar import getNvar
 import traceback,sys
 
-def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, torch_device = torch.device('cpu'),user_data=None,user_opts=None):
+def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, torch_device = torch.device('cpu'),user_data=None,user_opts=None):
     """
-    NCVX:
+    PyGRANSO:
 
         Minimize a function, possibly subject to inequality and/or equality 
-        constraints.  NCVX is intended to be an efficient solver for 
+        constraints.  PyGRANSO is intended to be an efficient solver for 
         constrained nonsmooth optimization problems, without any special 
         structure or assumptions imposed on the objective or constraint 
         functions.  It can handle problems involving functions that are any
         or all of the following: smooth or nonsmooth, convex or nonconvex, 
         and locally Lipschitz or non-locally Lipschitz.  
 
-        NCVX only requires the objective and constraint functions. 
+        PyGRANSO only requires the objective and constraint functions. 
 
         The inequality constraints must be formulated as 'less than or
         equal to zero' constraints while the equality constraints must
@@ -38,21 +38,21 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
 
         NOTE: 
 
-        On initialization, NCVX will throw errors if it detects invalid
+        On initialization, PyGRANSO will throw errors if it detects invalid
         user options or if the user-provided functions to optimize either 
-        do not evaluate or not conform to NCVX's format.  However, once
-        optimization begins, NCVX will catch any error that is thrown and
+        do not evaluate or not conform to PyGRANSO's format.  However, once
+        optimization begins, PyGRANSO will catch any error that is thrown and
         terminate normally, so that the results of optimization so far
         computed can be returned to the user.  This way, the error may be
-        able to corrected by the user and NCVX can be restarted from the
+        able to corrected by the user and PyGRANSO can be restarted from the
         last accepted iterate before the error occurred.
 
-        After NCVX executes, the user is expected to check all of the
+        After PyGRANSO executes, the user is expected to check all of the
         following fields:
             - soln.termination_code
             - soln.quadprog_failure_rate
             - soln.error (if it exists)
-        to determine why NCVX halted and to ensure that NCVX ran
+        to determine why PyGRANSO halted and to ensure that PyGRANSO ran
         without any issues that may have negatively affected its
         performance, such as QP solver failing too frequently or a
         user-provided function throwing an error or returning an invalid
@@ -63,7 +63,7 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
         - combined_fn evaluates objective and constraints simultaneously:
 
         "combined" format
-        soln = ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, torch_device = torch.device('cpu'),user_data=None,user_opts=None)
+        soln = pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, torch_device = torch.device('cpu'),user_data=None,user_opts=None)
 
 
         INPUT:
@@ -83,8 +83,8 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
         options         Optional struct of settable parameters or None.
                         To see available parameters and their descriptions,
                         type:
-                        >> help(ncvxOptions)
-                        >> help(ncvxOptionsAdvanced)
+                        >> help(pygransoOptions)
+                        >> help(pygransoOptionsAdvanced)
 
         OUTPUT:
         soln            Structure containing the computed solution(s) and
@@ -158,7 +158,7 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
 
         NOTE: The above total violation measures are with respect to the
         infinity norm, since the infinity norm is used for determining
-        whether or not a point is feasible.  Note however that NCVX 
+        whether or not a point is feasible.  Note however that PyGRANSO 
         optimizes an L1 penalty function.
 
         The soln struct also has the following subfields:
@@ -168,14 +168,14 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
                             Limited-memory BFGS:
                             - A struct containing fields S,Y,rho,gamma, 
                                 representing the final LBFGS state (so that
-                                NCVX can be warm started using this data).
+                                PyGRANSO can be warm started using this data).
 
         .stat_value         an approximate measure of stationarity at the 
                             last accepted iterate.  See opts.opt_tol, 
                             opts.ngrad, opts.evaldist, and equation (13) 
                             and its surrounding discussion in the paper 
                             referenced below describing the underlying 
-                            BFGS-SQP method that NCVX implements.
+                            BFGS-SQP method that PyGRANSO implements.
 
         .iters              The number of iterations incurred.  Note that 
                             if the last iteration fails to produce a step,
@@ -193,7 +193,7 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
                             constraint functions at a single point counts
                             as one function evaluation.
 
-        .termination_code   Numeric code indicating why NCVX terminated:
+        .termination_code   Numeric code indicating why PyGRANSO terminated:
             0:  Approximate stationarity measurement <= opts.opt_tol and 
                 current iterate is sufficiently close to the feasible 
                 region (as determined by opts.viol_ineq_tol and 
@@ -227,25 +227,25 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
             8:  Line search failed to bracket a minimizer indicating the
                 objective function may be unbounded below.  For constrained
                 problems, where the objective may only be unbounded off the
-                feasible set, consider restarting NCVX with opts.mu0 set
+                feasible set, consider restarting PyGRANSO with opts.mu0 set
                 lower than soln.mu_lowest (see its description below for 
                 more details).
 
-            9:  NCVX failed to produce a descent direction.
+            9:  PyGRANSO failed to produce a descent direction.
 
             10: NO LONGER IN USE (Previously, it was used to indicate if
                 any of the user-supplied functions returned inf/NaN at x0.
-                Now, NCVX throws an error back to the user if this
+                Now, PyGRANSO throws an error back to the user if this
                 occurs).
 
-            11: User-supplied functions threw an error which halted NCVX.
+            11: User-supplied functions threw an error which halted PyGRANSO.
 
             12: A quadprog error forced the steering procedure to be 
-                aborted and NCVX was halted (either because there were no 
+                aborted and PyGRANSO was halted (either because there were no 
                 available fallbacks or opts.halt_on_quadprog_error was set 
                 to true).  Only relevant for constrained problems.
 
-            13: An unknown error occurred, forcing NCVX to stop.  Please 
+            13: An unknown error occurred, forcing PyGRANSO to stop.  Please 
                 report these errors to the developer.
 
         .quadprog_failure_rate  Percent of the time quadprog threw an error or
@@ -253,7 +253,7 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
 
         .error                  Only present for soln.termination equal to 11, 
                             12, or 13.  Contains the thrown error that
-                            caused NCVX to halt optimization.
+                            caused PyGRANSO to halt optimization.
 
         .mu_lowest              Only present for constrained problems where
                             the line search failed to bracket a minimizer 
@@ -261,10 +261,10 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
                             the lowest value of mu tried in the line search
                             reattempts.  For more details, see the line
                             search user options by typing:
-                            >> help(ncvxOptionsAdvanced)
+                            >> help(pygransoOptionsAdvanced)
 
         CONSOLE OUTPUT:
-        When opts.print_level is at least 1, NCVX will print out
+        When opts.print_level is at least 1, PyGRANSO will print out
         the following information for each iteration:
 
         Iter            The current iteration number
@@ -330,13 +330,13 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
                         deficient or broken quadprog installation (or that 
                         the license is invalid or can't be verified).
 
-        See also ncvxOptions, ncvxOptionsAdvanced.
+        See also pygransoOptions, pygransoOptionsAdvanced.
 
-        If you publish work that uses or refers to NCVX, please cite both
-        NCVX and GRANSO paper:
+        If you publish work that uses or refers to PyGRANSO, please cite both
+        PyGRANSO and GRANSO paper:
 
         [1] Buyun Liang, and Ju Sun. 
-            NCVX: A User-Friendly and Scalable Package for Nonconvex 
+            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
             Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
             Available at https://arxiv.org/abs/2111.13984
 
@@ -346,9 +346,9 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
             
-        NOTE: NCVX in all capitals refers to the software package and is the
-        form that should generally be used.  ncvx or ncvx.py in lowercase
-        letters refers specifically to the NCVX routine/command.
+        NOTE: PyGRANSO in all capitals refers to the software package and is the
+        form that should generally be used.  pygranso or pygranso.py in lowercase
+        letters refers specifically to the PyGRANSO routine/command.
 
         Change Log:
             granso.m introduced in GRANSO Version 1.0.
@@ -358,8 +358,8 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
             See the documentation of HANSO for more information on the use of
             quasi-Newton methods for nonsmooth unconstrained optimization.
             
-            Buyun Dec 20, 2021 (NCVX Version 1.0.0):
-                ncvx.py is translated from granso.m in GRANSO Version 1.6.4.
+            Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
+                pygranso.py is translated from granso.m in GRANSO Version 1.6.4.
 
                 Add new options to handle pytorch neural network model.
 
@@ -369,10 +369,10 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
                 Add torch_device and double precision argument to allow user
                 select cuda/cpu and double/float.  
 
-        For comments/bug reports, please visit the NCVX webpage:
-        https://github.com/sun-umn/NCVX
+        For comments/bug reports, please visit the PyGRANSO webpage:
+        https://github.com/sun-umn/PyGRANSO
 
-        NCVX Version 1.0.0, 2021, see AGPL license info below.
+        PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
 
         =========================================================================
         |  GRANSO: GRadient-based Algorithm for Non-Smooth Optimization         |
@@ -396,14 +396,14 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
         =========================================================================
 
         =========================================================================
-        |  NCVX (NonConVeX): A User-Friendly and Scalable Package for           |
+        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
         |  Nonconvex Optimization in Machine Learning.                          |
         |                                                                       |
         |  Copyright (C) 2021 Buyun Liang                                       |
         |                                                                       |
-        |  This file is part of NCVX.                                           |
+        |  This file is part of PyGRANSO.                                       |
         |                                                                       |
-        |  NCVX is free software: you can redistribute it and/or modify         |
+        |  PyGRANSO is free software: you can redistribute it and/or modify     |
         |  it under the terms of the GNU Affero General Public License as       |
         |  published by the Free Software Foundation, either version 3 of       |
         |  the License, or (at your option) any later version.                  |
@@ -469,8 +469,8 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
         n_ineq          = penaltyfn_obj.numberOfInequalities()
         n_eq            = penaltyfn_obj.numberOfEqualities()
         constrained     = n_ineq or n_eq
-        ncvxPrinter_object = pgP()
-        printer         = ncvxPrinter_object.ncvxPrinter(opts,n,n_ineq,n_eq)
+        pygransoPrinter_object = pgP()
+        printer         = pygransoPrinter_object.pygransoPrinter(opts,n,n_ineq,n_eq)
     
     try:
         bfgssqp_obj = AlgBFGSSQP()
@@ -529,12 +529,12 @@ def ncvx(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, t
     
     return soln
 
-# only combined function allowed here. simpler form compare with ncvx
+# only combined function allowed here. simpler form compare with pygranso
 # different cases needed if seperate obj eq and ineq are using
 def processArguments(n,combined_fns,opts,torch_device):
     problem_fns = combined_fns
     options = opts
-    options = ncvxOptions(n,options,torch_device)
+    options = pygransoOptions(n,options,torch_device)
     return [problem_fns,options]
 
 def getBfgsManager(opts,torch_device,double_precision):
@@ -561,7 +561,7 @@ def getTableRows(nums,num_width,cols,indent,brackets):
     pass
 
 def quadprogInfoMsg():
-    msg = ["NCVX requires a quadratic program (QP) solver that has a quadprog-compatible interface,",
+    msg = ["PyGRANSO requires a quadratic program (QP) solver that has a quadprog-compatible interface,",
             "the default is osqp. Users may provide their own wrapper for the QP solver.", ""
             "To disable this notice, set opts.quadprog_info_msg = False"]  
     return msg                   
@@ -575,9 +575,9 @@ def poorScalingDetectedMsgs():
 
     post = ["NOTE: One may wish to consider whether the problem can be alternatively formulated",
     "with better inherent scaling, which may yield improved optimization results.",
-    "Alternatively, NCVX can optionally apply automatic pre-scaling to poorly-scaled",
+    "Alternatively, PyGRANSO can optionally apply automatic pre-scaling to poorly-scaled",
     "objective and/or constraint functions if opts.prescaling_threshold is set to some",
-    "sufficiently small positive number (e.g. 100).  For more details, see ncvxOptions.",
+    "sufficiently small positive number (e.g. 100).  For more details, see pygransoOptions.",
     "",
     "To disable this notice, set opts.prescaling_info_msg = false."]
     return [title,pre,post]
@@ -585,8 +585,8 @@ def poorScalingDetectedMsgs():
 def prescalingEnabledMsgs():
     title = "PRE-SCALING ENABLED"      
 
-    pre = ["NCVX has applied pre-scaling to functions whose norms were considered large at x0.",
-        "NCVX will now try to solve this pre-scaled version instead of the original problem",
+    pre = ["PyGRANSO has applied pre-scaling to functions whose norms were considered large at x0.",
+        "PyGRANSO will now try to solve this pre-scaled version instead of the original problem",
         "given.  Specifically, the following functions have been automatically scaled",
         "downward so that the norms of their respective gradients evaluated at x0 no longer",
         "exceed opts.prescaling_threshold and instead are now equal to it:"] 
@@ -595,8 +595,8 @@ def prescalingEnabledMsgs():
         "objective/constraint functions are poorly scaled, a solution to the pre-scaled",
         "problem MAY OR MAY NOT BE A SOLUTION to the original unscaled problem.  One may wish",
         "to consider if the problem can be reformulated with better inherent scaling.  The",
-        "amount of pre-scaling applied by NCVX can be tuned, or disabled completely, via",
-        "adjusting opts.prescaling_threshold.  For more details, see ncvxOptions.",
+        "amount of pre-scaling applied by PyGRANSO can be tuned, or disabled completely, via",
+        "adjusting opts.prescaling_threshold.  For more details, see pygransoOptions.",
         "To disable this notice, set opts.prescaling_info_msg = false."]  
     return [title,pre,post]
 
@@ -629,7 +629,7 @@ def getTerminationMsgLines(soln,constrained,width):
     else:
         s = "unknown termination condition."
     
-    s = "NCVX termination code: %d --- %s" % (soln.termination_code,"".join(s))    
+    s = "PyGRANSO termination code: %d --- %s" % (soln.termination_code,"".join(s))    
     lines = [   "Iterations:              %d" % (soln.iters),
                 "Function evaluations:    %d" % (soln.fn_evals)]
     lines.extend( wrapToLines(s,width,0))
@@ -682,9 +682,9 @@ def bracketedMinimizerInfeasibleMsg():
 
 def failedToBracketedMinimizerMsg(soln):
     if hasattr(soln,"mu_lowest"):
-        s_mu = ["NCVX attempted mu values down to {} unsuccessively.  However, if ".format(soln.mu_lowest),
+        s_mu = ["PyGRANSO attempted mu values down to {} unsuccessively.  However, if ".format(soln.mu_lowest),
                 "the objective function is indeed bounded below on the feasible set, ",
-                "consider restarting NCVX with opts.mu0 set even lower than {}.".format(soln.mu_lowest)] 
+                "consider restarting PyGRANSO with opts.mu0 set even lower than {}.".format(soln.mu_lowest)] 
     else:
         s_mu = ""
 
@@ -700,14 +700,14 @@ def displayErrorRecursive(err,full_report):
     pass
 
 def partialComputationMsg():
-    s = ["NCVX: optimization halted on error.\n" ,
+    s = ["PyGRANSO: optimization halted on error.\n" ,
         "  - Output argument soln.final contains last accepted iterate prior to error\n",
         "  - See soln.error and console output below for more details on the cause of the error\n",
         "TODO..."]
     return s
 
 def noComputationMsg():
-    s = ["NCVX: error on initialization.\n",
+    s = ["PyGRANSO: error on initialization.\n",
         "  - See console output below for more details on the cause of error.\n"]
     return s
 
@@ -724,7 +724,7 @@ def quadprogErrorMsg():
 
 def unknownErrorMsg():
     s = ["An unknown error has incurred.  ",
-        "Please report it on NCVX''s GitHub page.\n",
+        "Please report it on PyGRANSO''s GitHub page.\n",
         " ",
         "    TODO"] 
     return s

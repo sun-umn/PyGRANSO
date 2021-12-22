@@ -112,11 +112,11 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
         Line search quits immediately if f drops below fvalquit and the iterate
         is considered to be feasible.
 
-        If you publish work that uses or refers to NCVX, please cite both
-        NCVX and GRANSO paper:
+        If you publish work that uses or refers to PyGRANSO, please cite both
+        PyGRANSO and GRANSO paper:
 
         [1] Buyun Liang, and Ju Sun. 
-            NCVX: A User-Friendly and Scalable Package for Nonconvex 
+            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
             Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
             Available at https://arxiv.org/abs/2111.13984
 
@@ -129,15 +129,15 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
         Change Log:
             linesearchWeakWolfe.m introduced in GRANSO Version 1.0.
             
-            Buyun Dec 20, 2021 (NCVX Version 1.0.0):
+            Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
                 linesearchWeakWolfe.py is translated from linesearchWeakWolfe.m in GRANSO Version 1.6.4. 
 
                 backtracking line search and related option added.
 
-        For comments/bug reports, please visit the NCVX webpage:
-        https://github.com/sun-umn/NCVX
+        For comments/bug reports, please visit the PyGRANSO webpage:
+        https://github.com/sun-umn/PyGRANSO
             
-        NCVX Version 1.0.0, 2021, see AGPL license info below.
+        PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
 
         =========================================================================
         |  linesearchWeakWolfe.m                                                |
@@ -187,14 +187,14 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
         =========================================================================
 
         =========================================================================
-        |  NCVX (NonConVeX): A User-Friendly and Scalable Package for           |
+        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
         |  Nonconvex Optimization in Machine Learning.                          |
         |                                                                       |
         |  Copyright (C) 2021 Buyun Liang                                       |
         |                                                                       |
-        |  This file is part of NCVX.                                           |
+        |  This file is part of PyGRANSO.                                       |
         |                                                                       |
-        |  NCVX is free software: you can redistribute it and/or modify         |
+        |  PyGRANSO is free software: you can redistribute it and/or modify     |
         |  it under the terms of the GNU Affero General Public License as       |
         |  published by the Free Software Foundation, either version 3 of       |
         |  the License, or (at your option) any later version.                  |

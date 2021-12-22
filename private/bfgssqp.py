@@ -1,10 +1,10 @@
 import torch
-from private import ncvxConstants as pC, bfgsDamping as bD, regularizePosDefMatrix as rPDM, linesearchWeakWolfe as lWW
+from private import pygransoConstants as pC, bfgsDamping as bD, regularizePosDefMatrix as rPDM, linesearchWeakWolfe as lWW
 from private.neighborhoodCache import nC
 from private.qpSteeringStrategy import qpSS
 from private.qpTerminationCondition import qpTC
 import time
-from ncvxStruct import GeneralStruct
+from pygransoStruct import GeneralStruct
 import math
 import numpy as np
 from numpy.random import default_rng
@@ -72,17 +72,17 @@ class AlgBFGSSQP():
                     8:  Line search failed to bracket a minimizer indicating the
                         objective function may be unbounded below.  For constrained
                         problems, where the objective may only be unbounded off the
-                        feasible set, consider restarting NCVX with opts.mu0 set
+                        feasible set, consider restarting PyGRANSO with opts.mu0 set
                         lower than soln.mu_lowest (see its description below for 
                         more details).
 
-                    9:  NCVX failed to produce a descent direction.
+                    9:  PyGRANSO failed to produce a descent direction.
 
-            If you publish work that uses or refers to NCVX, please cite both
-            NCVX and GRANSO paper:
+            If you publish work that uses or refers to PyGRANSO, please cite both
+            PyGRANSO and GRANSO paper:
 
             [1] Buyun Liang, and Ju Sun. 
-                NCVX: A User-Friendly and Scalable Package for Nonconvex 
+                PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
                 Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
                 Available at https://arxiv.org/abs/2111.13984
 
@@ -95,13 +95,13 @@ class AlgBFGSSQP():
             Change Log:
                 bfgssqp.m introduced in GRANSO Version 1.0
                 
-                Buyun Dec 20, 2021 (NCVX Version 1.0.0):
+                Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
                     bfgssqp.py is translated from bfgssqp.m in GRANSO Version 1.6.4. 
 
-            For comments/bug reports, please visit the NCVX webpage:
-            https://github.com/sun-umn/NCVX
+            For comments/bug reports, please visit the PyGRANSO webpage:
+            https://github.com/sun-umn/PyGRANSO
             
-            NCVX Version 1.0.0, 2021, see AGPL license info below.
+            PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
 
             =========================================================================
             |  GRANSO: GRadient-based Algorithm for Non-Smooth Optimization         |
@@ -124,28 +124,28 @@ class AlgBFGSSQP():
             |  <http://www.gnu.org/licenses/agpl.html>.                             |
             =========================================================================
 
-            =========================================================================
-            |  NCVX (NonConVeX): A User-Friendly and Scalable Package for           |
-            |  Nonconvex Optimization in Machine Learning.                          |
-            |                                                                       |
-            |  Copyright (C) 2021 Buyun Liang                                       |
-            |                                                                       |
-            |  This file is part of NCVX.                                           |
-            |                                                                       |
-            |  NCVX is free software: you can redistribute it and/or modify         |
-            |  it under the terms of the GNU Affero General Public License as       |
-            |  published by the Free Software Foundation, either version 3 of       |
-            |  the License, or (at your option) any later version.                  |
-            |                                                                       |
-            |  GRANSO is distributed in the hope that it will be useful,            |
-            |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
-            |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
-            |  GNU Affero General Public License for more details.                  |
-            |                                                                       |
-            |  You should have received a copy of the GNU Affero General Public     |
-            |  License along with this program.  If not, see                        |
-            |  <http://www.gnu.org/licenses/agpl.html>.                             |
-            =========================================================================
+        =========================================================================
+        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
+        |  Nonconvex Optimization in Machine Learning.                          |
+        |                                                                       |
+        |  Copyright (C) 2021 Buyun Liang                                       |
+        |                                                                       |
+        |  This file is part of PyGRANSO.                                       |
+        |                                                                       |
+        |  PyGRANSO is free software: you can redistribute it and/or modify     |
+        |  it under the terms of the GNU Affero General Public License as       |
+        |  published by the Free Software Foundation, either version 3 of       |
+        |  the License, or (at your option) any later version.                  |
+        |                                                                       |
+        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+        |  GNU Affero General Public License for more details.                  |
+        |                                                                       |
+        |  You should have received a copy of the GNU Affero General Public     |
+        |  License along with this program.  If not, see                        |
+        |  <http://www.gnu.org/licenses/agpl.html>.                             |
+        =========================================================================
 
         """
         self.f_eval_fn = f_eval_fn
@@ -155,7 +155,7 @@ class AlgBFGSSQP():
 
         #  "Constants" for controlling fallback levels
         #  currently these are 2 and 4 respectively
-        [POSTQP_FALLBACK_LEVEL, self.LAST_FALLBACK_LEVEL] = pC.ncvxConstants()
+        [POSTQP_FALLBACK_LEVEL, self.LAST_FALLBACK_LEVEL] = pC.pygransoConstants()
                     
         #  initialization parameters
         x                           = opts.x0
@@ -353,7 +353,7 @@ class AlgBFGSSQP():
                 try:
                     [p,mu_new,*_] = steering_fn(self.penaltyfn_at_x,apply_H_steer)
                 except Exception as e:
-                    print("NCVX:steeringQuadprogFailure")
+                    print("PyGRANSO:steeringQuadprogFailure")
                     print(traceback.format_exc())
                     sys.exit()
                 
