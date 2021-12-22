@@ -24,9 +24,19 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
 
         Input
             x0:             intial point
+
             f0:             function value at x0
+
             grad0:          gradient at x0
+
             d:              search direction  
+
+            f_eval_fn:      Function handle of single input X, a data structuture storing all input variables,
+                            for evaluating:
+
+                                - The values of the objective:
+                                    f = f_eval_fn(X)
+
             obj_fn:         a function handle for evaluating the objective function
                             (the penalty function for constrained problems) and its
                             gradient at some vector x, along with a logical
@@ -34,9 +44,11 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
                             close to the feasible region.
                             NOTE:   for unconstrained problems, this logical (set 
                                     as true) must still be returned 
-                            e.g. [f,g,is_feasible] = obj_fn(x)         
+                            e.g. [f,g,is_feasible] = obj_fn(x)    
+
             c1: Wolfe parameter for the sufficient decrease condition 
                     f(x0 + t d) ** < ** f0 + c1*t*grad0'*d     (DEFAULT 0)
+
             c2: Wolfe parameter for the WEAK condition on directional derivative
                     (grad f)(x0 + t d)'*d ** > ** c2*grad0'*d  (DEFAULT 0.5)
                 where 0 <= c1 <= c2 <= 1.
@@ -46,29 +58,44 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
                 algorithms such as Shor or bundle, but not BFGS.
                 Setting c2=0 may interfere with superlinear convergence of
                 BFGS in smooth case.
+
             fvalquit: quit immediately if f drops below this value, regardless
                 of the Wolfe conditions (default -inf)
+
             eval_limit: line search quits after eval_limit calls to obj_fn
+
             step_tol: determines how small the step is allowed to get
+
+            init_step_size: intial step size t  (DEFAULT 1)
+
+            linesearch_maxit: maximum allowed iterations in line search (DEFAULT np.inf)
+                            
+            is_backtrack_linesearch: whether backtracking line search or not (DEFAULT FALSE).
+                                    The second wolfe condition that increase the step size 
+                                    will be disabled if this option is TRUE
+
+            torch_device:           Choose torch.device used for matrix operation in PyGRANSO. 
+                                    (DEFAULT torch.device('cpu')) 
+                                    torch_device = torch.device('cuda') if one wants to use cuda device 
+                        
+
+                        
         
         Output:
             alpha:   steplength satisfying weak Wolfe conditions if one was found,
                         otherwise left end point of interval bracketing such a point
                         (possibly 0)
+
             xalpha:  x0 + alpha*d
-            is_feasible: if xalpha is considered feasible or not
+
             falpha:  f(x0 + alpha d)
+
             gradalpha:(grad f)(x0 + alpha d)  
+
             fail:    0 if both Wolfe conditions satisfied, or falpha < fvalquit
                     1 if one or both Wolfe conditions not satisfied but an
                         interval was found bracketing a point where both satisfied
                     2 if no such interval was found, function may be unbounded below
-            beta:    same as alpha if it satisfies weak Wolfe conditions,
-                        otherwise right end point of interval bracketing such a point
-                        (inf if no such finite interval found)
-            gradbeta: (grad f)(x0 + beta d) (this is important for bundle methods)
-                        (vector of nans if beta is inf)        
-            n_evals:  number of incurred function evaluations
         
         The weak Wolfe line search is far less complicated that the standard 
         strong Wolfe line search that is discussed in many texts. It appears
@@ -133,6 +160,8 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
                 linesearchWeakWolfe.py is translated from linesearchWeakWolfe.m in GRANSO Version 1.6.4. 
 
                 backtracking line search and related option added.
+
+                Modified the interface to remove several unused outputs.
 
         For comments/bug reports, please visit the PyGRANSO webpage:
         https://github.com/sun-umn/PyGRANSO
