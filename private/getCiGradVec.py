@@ -6,6 +6,47 @@ def getCiGradVec(nvar,nconstr_ci_total,var_dim_map,X,ci_vec_torch, torch_device,
     getCiGradVec:
         getCiGradVec obtains gradient of constraints function (in the vector form) by using pytorch autodiff
 
+        USAGE:
+            ci_grad_vec = getCiGradVec(nvar,nconstr_ci_total,var_dim_map,X,ci_vec_torch, torch_device, double_precision)
+        
+        INPUT:
+            nvar        
+                    number of (scalar form) optimization variables in total
+
+            nconstr_ci_total 
+
+                    number of inequality OR equality constraints
+            
+            var_dim_map
+
+                    A dictionary for optmization variable information,
+                    where the key is the variable name and val is a list for correpsonding dimension:
+                    e.g., var_in = {"x": [1,1]}; var_in = {"U": [5,10], "V": [10,20]}
+
+                    It should not be used when nn_model is specfied, as optimization variable information can be 
+                    obtained from neural network model
+
+            X 
+                    A data structuture storing all input variables
+
+            ci_vec_torch
+
+                    Vector, i.e., n by 1 torch tensor form inequality OR equality constraints
+
+            torch_device
+
+                    Choose torch.device used for matrix operation in PyGRANSO. 
+                    torch_device = torch.device('cuda') if one wants to use cuda device 
+
+            double_precision
+
+                    float precision used in PyGRANSO, torch.float or torch.double
+        
+        OUTPUT:         
+            ci_grad_vec   
+
+                    Vector, i.e., n by 1 torch tensor form gradients of inequality OR equality constraints
+
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
