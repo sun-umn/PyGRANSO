@@ -1,7 +1,5 @@
 # PyGRANSO
 
-![Example screenshot](./NCVX_logo_banner.png)
-
 PyGRANSO: A User-Friendly and Scalable Package for Nonconvex Optimization in Machine Learning.
 
 Please check https://ncvx.org for detailed instructions (introduction, installation, settings, examples...).
