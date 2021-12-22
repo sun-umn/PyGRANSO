@@ -6,6 +6,22 @@ def getNvar(var_dim_map):
     getNvar:
         getNvar calculates the total number of scalar variables
 
+        USAGE:
+            var_total = getNvar(var_dim_map)
+        
+        INPUT:
+            var_dim_map
+
+                    A dictionary for optmization variable information,
+                    where the key is the variable name and val is a list for correpsonding dimension:
+                    e.g., var_in = {"x": [1,1]}; var_in = {"U": [5,10], "V": [10,20]}
+    
+        OUTPUT:         
+
+            var_total
+
+                    Total number of variables used in the problem
+
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
@@ -64,6 +80,21 @@ def getNvarTorch(parameters):
     getNvarTorch:
         getNvarTorch calculates the total number of scalar variables from 
         the parameters of torch.nn module
+
+        USAGE:
+            var_total = getNvarTorch(parameters)
+        
+        INPUT:
+            parameters
+
+                    parameters of torch.nn model, which contains 
+                    information of optimization variables
+    
+        OUTPUT:         
+
+            var_total
+
+                    Total number of variables used in the problem
 
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
