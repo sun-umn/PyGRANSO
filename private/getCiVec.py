@@ -24,12 +24,12 @@ def getCiVec(ci,torch_device, double_precision):
         OUTPUT:         
 
             ci_vec
-                    Vector, i.e., n by 1 torch tensor form inequality OR equality constraints.
+                    Vector, i.e., p by 1 torch tensor form inequality OR equality constraints.
                     This vector is detached from the computational graph of ci_vec_torch
 
             ci_vec_torch
 
-                    Vector, i.e., n by 1 torch tensor form inequality OR equality constraints
+                    Vector, i.e., p by 1 torch tensor form inequality OR equality constraints
 
             nconstr_ci_total
 

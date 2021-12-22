@@ -31,7 +31,7 @@ def getCiGradVec(nvar,nconstr_ci_total,var_dim_map,X,ci_vec_torch, torch_device,
 
             ci_vec_torch
 
-                    Vector, i.e., n by 1 torch tensor form inequality OR equality constraints
+                    Vector, i.e., p by 1 torch tensor form inequality OR equality constraints
 
             torch_device
 
@@ -45,7 +45,7 @@ def getCiGradVec(nvar,nconstr_ci_total,var_dim_map,X,ci_vec_torch, torch_device,
         OUTPUT:         
             ci_grad_vec   
 
-                    Vector, i.e., n by 1 torch tensor form gradients of inequality OR equality constraints
+                    Vector, i.e., p by 1 torch tensor form gradients of inequality OR equality constraints
 
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
