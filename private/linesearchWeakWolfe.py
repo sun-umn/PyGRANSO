@@ -167,6 +167,30 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
         https://github.com/sun-umn/PyGRANSO
 
         =========================================================================
+        |  linesearchWeakWolfe.py                                               |
+        |                                                                       |
+        |  Parts of this routine (this single file) are taken from the HANSO    |
+        |  software package, which is licensed under the GPL v3.  As such, this |
+        |  single routine is also licensed under the GPL v3.  However, note     |
+        |  that this is an exceptional case; PyGRANSO and most of its           |
+        |  subroutines are licensed under the AGPL v3.                          |
+        |                                                                       |
+        |  This routine (this single file) is free software: you can            |
+        |  redistribute it and/or modify it under the terms of the GNU General  |
+        |  Public License as published by the Free Software Foundation, either  |
+        |  version 3 of the License, or (at your option) any later version.     |
+        |                                                                       |
+        |  This routine is distributed in the hope that it will be useful,      |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU    |
+        |  General Public License for more details.                             |
+        |                                                                       |
+        |  You should have received a copy of the GNU General Public License    |
+        |  along with this program.  If not, see                                |
+        |  <http://www.gnu.org/licenses/gpl.html>.                              |
+        =========================================================================
+
+        =========================================================================
         |  PyGRANSO: A User-Friendly and Scalable Package for                   |
         |  Nonconvex Optimization in Machine Learning.                          |
         |                                                                       |
