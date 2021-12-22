@@ -120,7 +120,7 @@ def solveQP(H,f,A,b,LB,UB,QPsolver,torch_device, double_precision):
             nvar = len(f)
             # H and A has to be sparse
             H = H.cpu().numpy()
-            # avoid numerical issue in ncvx
+            # avoid numerical issue in pygranso
             # epsilon = 1e-6
             # H = H + epsilon * np.eye(nvar)
             f = f.cpu().numpy()

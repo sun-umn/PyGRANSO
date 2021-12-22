@@ -1,13 +1,13 @@
 import time
 import torch
-from pygranso import ncvx
+from pygranso import pygranso
 from pygransoStruct import Options, GeneralStruct 
 import scipy.io
 from torch import linalg as LA
 import os
 currentdir = os.path.dirname(os.path.realpath(__file__))
 import sys
-## Adding NCVX directories. Should be modified by user
+## Adding PyGRANSO directories. Should be modified by user
 sys.path.append(currentdir)
 import numpy as np
 from scipy.stats import norm
@@ -17,11 +17,11 @@ import numpy.linalg as la
     test_cpu.py:
         Test whether the dependency installation for the CPU version is correct.
 
-        If you publish work that uses or refers to NCVX, please cite both
-        NCVX and GRANSO paper:
+        If you publish work that uses or refers to PyGRANSO, please cite both
+        PyGRANSO and GRANSO paper:
 
         [1] Buyun Liang, and Ju Sun. 
-            NCVX: A User-Friendly and Scalable Package for Nonconvex 
+            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
             Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
             Available at https://arxiv.org/abs/2111.13984
 
@@ -33,23 +33,23 @@ import numpy.linalg as la
 
         Change Log:
             
-            Buyun Dec 20, 2021 (NCVX Version 1.0.0):
-                test_cpu.py is introduced in NCVX
+            Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
+                test_cpu.py is introduced in PyGRANSO
 
-        For comments/bug reports, please visit the NCVX webpage:
-        https://github.com/sun-umn/NCVX
+        For comments/bug reports, please visit the PyGRANSO webpage:
+        https://github.com/sun-umn/PyGRANSO
         
-        NCVX Version 1.0.0, 2021, see AGPL license info below.
+        PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
 
         =========================================================================
-        |  NCVX (NonConVeX): A User-Friendly and Scalable Package for           |
+        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
         |  Nonconvex Optimization in Machine Learning.                          |
         |                                                                       |
         |  Copyright (C) 2021 Buyun Liang                                       |
         |                                                                       |
-        |  This file is part of NCVX.                                           |
+        |  This file is part of PyGRANSO.                                       |
         |                                                                       |
-        |  NCVX is free software: you can redistribute it and/or modify         |
+        |  PyGRANSO is free software: you can redistribute it and/or modify     |
         |  it under the terms of the GNU Affero General Public License as       |
         |  published by the Free Software Foundation, either version 3 of       |
         |  the License, or (at your option) any later version.                  |
@@ -106,7 +106,7 @@ def rosenbrock():
     opts.double_precision = double_precision
 
 
-    soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
     print("test 1/7 passed (Rosenbrock)")
 
 def spectral_radius():
@@ -153,7 +153,7 @@ def spectral_radius():
     opts.print_level = print_level
     opts.double_precision = double_precision
 
-    soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
     print("test 2/7 passed (Spectral Radius Optimization)")
 
 def dictionary_learning():
@@ -201,7 +201,7 @@ def dictionary_learning():
 
     opts.print_frequency = 10
 
-    soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
     print("test 3/7 passed (Dictionary Learning)")
 
 def robust_PCA():
@@ -241,7 +241,7 @@ def robust_PCA():
 
         return [f,ci,ce]
 
-    soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
     print("test 4/7 passed (Robust PCA)")
 
 def lasso():
@@ -283,7 +283,7 @@ def lasso():
     opts.print_level = print_level
     opts.double_precision = double_precision
     opts.maxit = 30
-    soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
 
     print("test 5/7 passed (LASSO)")
 
@@ -318,7 +318,7 @@ def feasibility():
     opts.print_level = print_level
     opts.double_precision = double_precision
 
-    soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
     print("test 6/7 passed (Feasibility Problem)")
 
 
@@ -358,7 +358,7 @@ def sphere_manifold():
     opts.print_level = print_level
     opts.double_precision = double_precision
 
-    soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
     print("test 7/7 passed (Sphere Manifold)")
 
 

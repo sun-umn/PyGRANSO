@@ -7,19 +7,19 @@ from pygransoStruct import Options
 from private.isAnInteger import isAnInteger
 import traceback,sys
 
-def ncvxOptions(n,options, torch_device):
+def pygransoOptions(n,options, torch_device):
     """
-    ncvxOptions:
-        Validate user options struct for ncvx.py.  If user_opts is None or
+    pygransoOptions:
+        Validate user options struct for pygranso.py.  If user_opts is None or
         not provided, returned opts will be PyGRANSO's default parameters.
         Standard or advanced options may be set.  
 
        Type:
-       help(ncvxOptionsAdvanced) 
+       help(pygransoOptionsAdvanced) 
        to see documentation for the advanced user options.
    
        USAGE:
-       opts = ncvxOptions(n,options, torch_device)
+       opts = pygransoOptions(n,options, torch_device)
 
        INPUT:
        n           Number of variables being optimized.
@@ -321,7 +321,7 @@ def ncvxOptions(n,options, torch_device):
         
         END OF STANDARD PARAMETERS
 
-        See also ncvxOptions, ncvxOptionsAdvanced.
+        See also pygransoOptions, pygransoOptionsAdvanced.
 
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
@@ -341,7 +341,7 @@ def ncvxOptions(n,options, torch_device):
             granso.m introduced in GRANSO Version 1.0.
             
             Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
-                ncvxOptions.py is translated from gransoOptions.m in GRANSO Version 1.6.4.
+                pygransoOptions.py is translated from gransoOptions.m in GRANSO Version 1.6.4.
 
                 Add new options:
                     QPsolver, init_step_size, linesearch_maxit, is_backtrack_linesearch,
@@ -580,7 +580,7 @@ def postProcess(n,opts, torch_device):
     return opts
 
 def getDefaults(n):
-    [*_, LAST_FALLBACK_LEVEL] = pgC.ncvxConstants()
+    [*_, LAST_FALLBACK_LEVEL] = pgC.pygransoConstants()
 
     # default options for PyGRANSO
     default_opts = Options()

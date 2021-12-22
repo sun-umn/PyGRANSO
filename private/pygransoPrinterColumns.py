@@ -1,11 +1,11 @@
 from pygransoStruct import GeneralStruct
 from private import nDigitsInWholePart as nDIWP, truncate, centerString as cS, double2FixedWidthStr as d2FWS, formatOrange as fO
 
-def ncvxPrinterColumns(opts,ineq_constraints,eq_constraints):
+def pygransoPrinterColumns(opts,ineq_constraints,eq_constraints):
     """       
-    ncvxPrinterColumns:
+    pygransoPrinterColumns:
         Sets up formatters for each column needed for PyGRANSO's printer,
-        ncvxPrinter.
+        pygransoPrinter.
 
         INPUT:
             opts    
@@ -60,7 +60,7 @@ def ncvxPrinterColumns(opts,ineq_constraints,eq_constraints):
             gransoPrinter.m introduced in GRANSO Version 1.0.
 
             Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
-                ncvxPrinter.py is translated from gransoPrinter.m in GRANSO Version 1.6.4. 
+                pygransoPrinter.py is translated from gransoPrinter.m in GRANSO Version 1.6.4. 
 
         For comments/bug reports, please visit the PyGRANSO webpage:
         https://github.com/sun-umn/PyGRANSO

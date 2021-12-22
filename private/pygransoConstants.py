@@ -1,10 +1,10 @@
-def ncvxConstants():
+def pygransoConstants():
     """
-    ncvxConstants:
+    pygransoConstants:
         Simple routine for defining constants for use in:
-            1) ncvx 
-            2) ncvxOptions 
-            3) ncvxOptionsAdvanced
+            1) pygranso 
+            2) pygransoOptions 
+            3) pygransoOptionsAdvanced
 
             If you publish work that uses or refers to PyGRANSO, please cite both
             PyGRANSO and GRANSO paper:
@@ -24,7 +24,7 @@ def ncvxConstants():
                 gransoConstants.m introduced in GRANSO Version 1.0.
 
                 Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
-                    ncvxConstants.py is translated from gransoConstants.m in GRANSO Version 1.6.4. 
+                    pygransoConstants.py is translated from gransoConstants.m in GRANSO Version 1.6.4. 
 
             For comments/bug reports, please visit the PyGRANSO webpage:
             https://github.com/sun-umn/PyGRANSO

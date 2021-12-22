@@ -1,12 +1,12 @@
-def ncvxOptionsAdvanced(varargin):
+def pygransoOptionsAdvanced(varargin):
     """
-    ncvxOptionsAdvanced:
-       Process user options struct for ncvx.py.  If user_opts is None or
+    pygransoOptionsAdvanced:
+       Process user options struct for pygranso.py.  If user_opts is None or
        not provided, returned opts will be PyGRANSO's default parameters.
        Standard or advanced options may be set.
 
        Type:
-       >> help(ncvxOptions)
+       >> help(pygransoOptions)
        to see documentation for the standard user options.
    
 
@@ -231,7 +231,7 @@ def ncvxOptionsAdvanced(varargin):
         
         END OF ADVANCED PARAMETERS
         
-        See also PyGRANSO, ncvxOptions.
+        See also PyGRANSO, pygransoOptions.
 
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
@@ -251,7 +251,7 @@ def ncvxOptionsAdvanced(varargin):
             granso.m introduced in GRANSO Version 1.0.
             
             Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
-                ncvxOptionsAdvanced.py is translated from gransoOptionsAdvanced.m in GRANSO Version 1.6.4.
+                pygransoOptionsAdvanced.py is translated from gransoOptionsAdvanced.m in GRANSO Version 1.6.4.
 
                 Add new options:
                     QPsolver, init_step_size, linesearch_maxit, is_backtrack_linesearch,
@@ -313,6 +313,6 @@ def ncvxOptionsAdvanced(varargin):
     #  documentation so the user isn't overwhelmed with details on the more
     #  advanced parameters which they may not immediately (or ever) need.
     
-    #  Just pass all the work to the standard ncvxOptions function.
+    #  Just pass all the work to the standard pygransoOptions function.
 
     return None

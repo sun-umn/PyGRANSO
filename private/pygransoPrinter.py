@@ -8,9 +8,9 @@ class pgP:
     def __init__(self):
         pass
 
-    def ncvxPrinter(self,opts,n,n_ineq,n_eq):
+    def pygransoPrinter(self,opts,n,n_ineq,n_eq):
         """    
-        ncvxPrinter:
+        pygransoPrinter:
             Object for handling printing out info for each iteration and
             messages.
 
@@ -117,7 +117,7 @@ class pgP:
                 gransoPrinter.m introduced in GRANSO Version 1.0.
 
                 Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
-                    ncvxPrinter.py is translated from gransoPrinter.m in GRANSO Version 1.6.4. 
+                    pygransoPrinter.py is translated from gransoPrinter.m in GRANSO Version 1.6.4. 
 
             For comments/bug reports, please visit the PyGRANSO webpage:
             https://github.com/sun-umn/PyGRANSO
@@ -183,14 +183,14 @@ class pgP:
         setattr(print_opts,"maxit",self.opts.maxit)
         setattr(print_opts,"ls_max_estimate",50*(self.opts.linesearch_reattempts + 1))
 
-        [*_,LAST_FALLBACK_LEVEL]         = pC.ncvxConstants()
+        [*_,LAST_FALLBACK_LEVEL]         = pC.pygransoConstants()
         if self.opts.max_fallback_level < LAST_FALLBACK_LEVEL:
             setattr(print_opts,"random_attempts",0)
         else:
             setattr(print_opts,"random_attempts",self.opts.max_random_attempts)
         print_opts.ngrad                = self.opts.ngrad + 1
 
-        cols        = pPC.ncvxPrinterColumns(print_opts,self.n_ineq, self.n_eq)
+        cols        = pPC.pygransoPrinterColumns(print_opts,self.n_ineq, self.n_eq)
         constrained = self.n_ineq or self.n_eq
         if constrained:
             pen_label           = "Penalty Function"
