@@ -10,6 +10,36 @@ def obj_eval(eval_obj, x, var_dim_map, data_in = None):
     obj_eval:
         obj_eval makes an objective evaluation function used for backtrack line search
         
+        USAGE:
+            f = obj_eval(eval_obj, x, var_dim_map, data_in = None)
+        
+        INPUT:
+            eval_obj        
+                    Function handle of single input X, a data structuture storing all input variables,
+                    for evaluating:
+
+                        - The values of the objective:
+                            f = eval_obj(X)
+
+            x 
+                    Vector, i.e., n by 1 torch tensor form optimization variables.
+                    This vector is detached from the computational graph of ci_vec_torch
+
+            var_dim_map
+
+                    A dictionary for optmization variable information,
+                    where the key is the variable name and val is a list for correpsonding dimension:
+                    e.g., var_in = {"x": [1,1]}; var_in = {"U": [5,10], "V": [10,20]}
+
+            data_in
+
+                    Currently not used. To be removed in the next release
+        
+        OUTPUT:         
+
+            f
+                    objective function value at current point
+
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
@@ -68,6 +98,80 @@ def tensor2vec(combinedFunction,x,var_dim_map,nvar,data_in = None,  torch_device
     """
     tensor2vec
         Return vector form objective and constraints information required by PyGRANSO
+
+        USAGE:
+            [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = 
+            tensor2vec(combinedFunction,x,var_dim_map,nvar,data_in = None,  
+                        torch_device = torch.device('cpu'), model = None, double_precision=True)
+        
+        INPUT:
+            combinedFunction:
+                    Function handle of single input X, a data structuture storing all input variables,
+                    for evaluating:
+
+                    - The values of the objective and
+                        constraints simultaneously:
+                        [f,ci,ce] = combinedFunction(X)
+                        In this case, ci and/or ce should be returned as
+                        None if no (in)equality constraints are given.
+
+            var_dim_map:
+
+                        A dictionary for optmization variable information,
+                        where the key is the variable name and val is a list for correpsonding dimension:
+                        e.g., var_in = {"x": [1,1]}; var_in = {"U": [5,10], "V": [10,20]}
+
+                        It should not be used when nn_model is specfied, as optimization variable information can be 
+                        obtained from neural network model
+
+            
+            x:
+                    Vector, i.e., n by 1 torch tensor form optimization variables.
+                    This vector is detached from the computational graph of ci_vec_torch
+
+            nvar:
+                    Total number of optimization variables
+
+            data_in:
+
+                    Currently not used. To be removed in the next release
+
+            torch_device:
+
+                    Default: torch.device('cpu')
+
+                    Choose torch.device used for matrix operation in PyGRANSO. 
+                    torch_device = torch.device('cuda') if one wants to use cuda device 
+
+            model:
+                    Default: None
+
+                    Neural network model defined by torch.nn. It only used when torch.nn was used to 
+                    define the combinedFunction and/or objEvalFunction
+
+            double_precision
+
+                    Float precision used in PyGRANSO: torch.float or torch.double
+        
+        OUTPUT:         
+
+            f_vec
+                    Scalar form objective function value
+
+            f_grad_vec
+                    Vector, i.e., n by 1 torch tensor form gradients of objective.
+            
+            ci_vec
+                    Vector, i.e., p1 by 1 torch tensor form inequality constraints.
+
+            ci_grad_vec
+                    Matrix, i.e., p1 by n torch tensor form gradient of inequality constraints.
+
+            ce_vec
+                    Vector, i.e., p2 by 1 torch tensor form equality constraints.
+
+            ce_grad_vec
+                    Matrix, i.e., p2 by n torch tensor form gradient of equality constraints.
 
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
