@@ -7,6 +7,42 @@ def getObjGrad(nvar,var_dim_map,f,X, torch_device,double_precision):
     getObjGrad:
         getObjGrad obtains gradient of objective function by using pytorch autodiff
 
+        USAGE:
+            f_grad_vec = getObjGrad(nvar,var_dim_map,f,X, torch_device,double_precision)
+        
+        INPUT:
+            nvar        
+                    Number of optimization variables in total
+
+            var_dim_map
+
+                A dictionary for optmization variable information,
+                where the key is the variable name and val is a list for correpsonding dimension:
+                e.g., var_in = {"x": [1,1]}; var_in = {"U": [5,10], "V": [10,20]} 
+
+            f 
+                
+                Function handle of objective function
+
+            X 
+                
+                A data structuture storing all input variables
+
+            torch_device
+
+                    Choose torch.device used for matrix operation in PyGRANSO. 
+                    torch_device = torch.device('cuda') if one wants to use cuda device 
+
+            double_precision
+
+                    float precision used in PyGRANSO, torch.float or torch.double
+        
+        OUTPUT:         
+
+            f_grad_vec
+                    Vector, i.e., n by 1 torch tensor form gradients of objective function.
+
+
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
@@ -89,6 +125,39 @@ def getObjGradDL(nvar,model,f, torch_device, double_precision):
         getObjGrad obtains gradient of objective function defined by torch.nn module
         by using pytorch autodiff
         
+        USAGE:
+
+            f_grad_vec = getObjGradDL(nvar,model,f, torch_device, double_precision)
+        
+        INPUT:
+
+            nvar        
+                    Number of optimization variables in total
+
+            model
+
+                torch.nn model used to define the neural network in the problem
+
+            f 
+                
+                Function handle of objective function
+
+            torch_device
+
+                    Choose torch.device used for matrix operation in PyGRANSO. 
+                    torch_device = torch.device('cuda') if one wants to use cuda device 
+
+            double_precision
+
+                    float precision used in PyGRANSO, torch.float or torch.double
+        
+        OUTPUT:         
+
+            f_grad_vec
+            
+                    Vector, i.e., n by 1 torch tensor form gradients of objective function.
+
+
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
