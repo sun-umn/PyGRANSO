@@ -5,6 +5,36 @@ def getCiVec(ci,torch_device, double_precision):
     getCiVec:
         getCiVec transforms the original tensor form constrained function into vector form
 
+        USAGE:
+            [ci_vec,ci_vec_torch,nconstr_ci_total] = ci_grad_vec = getCiVec(ci,torch_device, double_precision)
+        
+        INPUT:
+            ci        
+                    A struct contains all equality OR inquality constraints 
+
+            torch_device
+
+                    Choose torch.device used for matrix operation in PyGRANSO. 
+                    torch_device = torch.device('cuda') if one wants to use cuda device 
+
+            double_precision
+
+                    float precision used in PyGRANSO, torch.float or torch.double
+        
+        OUTPUT:         
+
+            ci_vec
+                    Vector, i.e., n by 1 torch tensor form inequality OR equality constraints.
+                    This vector is detached from the computational graph of ci_vec_torch
+
+            ci_vec_torch
+
+                    Vector, i.e., n by 1 torch tensor form inequality OR equality constraints
+
+            nconstr_ci_total
+
+                    Number of inequality OR equality constraints in total
+
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
