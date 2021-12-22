@@ -67,20 +67,51 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
 
 
         INPUT:
-        nvar               Number of variables to optimize.
 
         combinedFunction:
                         Function handle of single input X, a data structuture storing all input variables,
                         for evaluating:
 
-                        - The values and gradients of the objective and
+                        - The values of the objective and
                             constraints simultaneously:
                             [f,ci,ce] = combinedFunction(X)
                             In this case, ci and/or ce should be returned as
                             None if no (in)equality constraints are given.
 
+        objEvalFunction:
+                        Function handle of single input X, a data structuture storing all input variables,
+                        for evaluating:
 
-        options         Optional struct of settable parameters or None.
+                        - The values of the objective:
+                            f = objEvalFunction(X)
+
+        var_dim_map:
+                        Default: None
+
+                        A dictionary for optmization variable information,
+                        where the key is the variable name and val is a list for correpsonding dimension:
+                        e.g., var_in = {"x": [1,1]}; var_in = {"U": [5,10], "V": [10,20]}
+
+                        It should not be used when nn_model is specfied, as optimization variable information can be 
+                        obtained from neural network model
+
+        nn_model:
+                        Default: None
+
+                        Neural network model defined by torch.nn. It only used when torch.nn was used to 
+                        define the combinedFunction and/or objEvalFunction
+
+        torch_device:
+                        Default: torch.device('cpu')
+
+                        Choose torch.device used for matrix operation in PyGRANSO. 
+                        torch_device = torch.device('cuda') if one wants to use cuda device 
+
+        user_data:
+                        Currently not used. To be removed in the next release
+
+        user_opts:         
+                        Optional struct of settable parameters or None.
                         To see available parameters and their descriptions,
                         type:
                         >> help(pygransoOptions)
