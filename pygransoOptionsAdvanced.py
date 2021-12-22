@@ -1,12 +1,12 @@
-def ncvxOptionsAdvanced(varargin):
+def pygransoOptionsAdvanced(varargin):
     """
-    ncvxOptionsAdvanced:
-       Process user options struct for ncvx.py.  If user_opts is None or
-       not provided, returned opts will be NCVX's default parameters.
+    pygransoOptionsAdvanced:
+       Process user options struct for pygranso.py.  If user_opts is None or
+       not provided, returned opts will be PyGRANSO's default parameters.
        Standard or advanced options may be set.
 
        Type:
-       >> help(ncvxOptions)
+       >> help(pygransoOptions)
        to see documentation for the standard user options.
    
 
@@ -16,7 +16,7 @@ def ncvxOptionsAdvanced(varargin):
 
         If a step cannot be taken with the current search direction (e.g.
         computed an invalid search direction or the line search failed on a
-        valid search direction), NCVX may attempt up to four optional 
+        valid search direction), PyGRANSO may attempt up to four optional 
         fallback strategies to try to continue making progress from the current
         iterate.  The strategies are as follows and are attempted in order:
                     
@@ -95,7 +95,7 @@ def ncvxOptionsAdvanced(varargin):
         recompute a hopefully better search direction which does adequately
         promote progress towards feasibility.  Setting this to higher
         values may more aggressively lower the penalty parameter per 
-        NCVX iteration.
+        PyGRANSO iteration.
             
         steering_c_viol
         --------------------------------
@@ -107,7 +107,7 @@ def ncvxOptionsAdvanced(varargin):
         reduction does not meet this target, the penalty parameter will be 
         lowered and a new search direction will be computed.  Setting this 
         to higher values may more aggressively lower the penalty parameter 
-        per NCVX iteration.
+        per PyGRANSO iteration.
 
         steering_c_mu
         --------------------------------
@@ -116,10 +116,10 @@ def ncvxOptionsAdvanced(varargin):
         When steering lowers the penalty parameter in order to compute a 
         a search direction which promotes progress towards feasibility, it 
         does by progessively lowering the penalty parameter by factors of 
-        steering_c_mu.  For any given NCVX iteration, the penalty
+        steering_c_mu.  For any given PyGRANSO iteration, the penalty
         parameter can be shrunk up to a factor of steering_c_mu to the 
         power of steering_maxit.  Setting this to lower values may more 
-        aggressively lower the penalty parameter per NCVX iteration.
+        aggressively lower the penalty parameter per PyGRANSO iteration.
 
         QP PARAMETERS
 
@@ -142,7 +142,7 @@ def ncvxOptionsAdvanced(varargin):
         --------------------------------          
         Boolean value. Default value: False
 
-        If opts.regularize_threshold < inf, then NCVX's default strategy
+        If opts.regularize_threshold < inf, then PyGRANSO's default strategy
         to regularize the BFGS inverse Hessian approximation H is done by 
         raising the smallest magnitude eigenvalues such that the condition 
         number of the regularized version of H never exceeds 
@@ -151,11 +151,11 @@ def ncvxOptionsAdvanced(varargin):
         definite, since H may have tiny eigenvalues and in practice, these 
         may have the wrong sign numerically (negative), particularly on 
         nonsmooth problems.  Alternatively, by setting this option to true, 
-        NCVX will instead apply regularization by lowering the largest 
+        PyGRANSO will instead apply regularization by lowering the largest 
         eigenvalues of H but note that this mode does not attempt to 
         maintain numerical positive definiteness.  Also, if an eigenvalue 
         of H is exactly zero, this mode will instead resort to raising the 
-        smallest eigenvalues of H on that particular iteration of NCVX.
+        smallest eigenvalues of H on that particular iteration of PyGRANSO.
 
         LINE SEARCH PARAMETERS
         
@@ -191,9 +191,9 @@ def ncvxOptionsAdvanced(varargin):
         indication that the objective function is unbounded below.  For
         constrained problems, it may be that the objective is only unbouded 
         below off the feasible set, in which case lower values of
-        the penalty parameter mu may be necessary for NCVX to find the
+        the penalty parameter mu may be necessary for PyGRANSO to find the
         feasible region.  For constrained problems, if the line search 
-        fails to bracket a minimizer, NCVX will reattempt the line search 
+        fails to bracket a minimizer, PyGRANSO will reattempt the line search 
         with progressively lower values of mu, up to linesearch_reattempts 
         times.  See opts.linesearch_c_mu, opts.linesearch_reattempts_x0, 
         and opts.linesearch_c_mu_x0.
@@ -231,13 +231,88 @@ def ncvxOptionsAdvanced(varargin):
         
         END OF ADVANCED PARAMETERS
         
-        See also NCVX, ncvxOptions, and makeHaltLogFunctions.
+        See also PyGRANSO, pygransoOptions.
+
+        If you publish work that uses or refers to PyGRANSO, please cite both
+        PyGRANSO and GRANSO paper:
+
+        [1] Buyun Liang, and Ju Sun. 
+            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
+            Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
+            Available at https://arxiv.org/abs/2111.13984
+
+        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
+            A BFGS-SQP method for nonsmooth, nonconvex, constrained 
+            optimization and its evaluation using relative minimization 
+            profiles, Optimization Methods and Software, 32(1):148-181, 2017.
+            Available at https://dx.doi.org/10.1080/10556788.2016.1208749
+
+        Change Log:
+            granso.m introduced in GRANSO Version 1.0.
+            
+            Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
+                pygransoOptionsAdvanced.py is translated from gransoOptionsAdvanced.m in GRANSO Version 1.6.4.
+
+                Add new options:
+                    QPsolver, init_step_size, linesearch_maxit, is_backtrack_linesearch,
+                    searching_direction_rescaling, disable_terminationcode_6
+                    See https://ncvx.org/settings/new_para.html for more details 
+
+
+        For comments/bug reports, please visit the PyGRANSO webpage:
+        https://github.com/sun-umn/PyGRANSO
+        
+        PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
+
+        =========================================================================
+        |  GRANSO: GRadient-based Algorithm for Non-Smooth Optimization         |
+        |  Copyright (C) 2016 Tim Mitchell                                      |
+        |                                                                       |
+        |  This file is translated from GRANSO.                                 |
+        |                                                                       |
+        |  GRANSO is free software: you can redistribute it and/or modify       |
+        |  it under the terms of the GNU Affero General Public License as       |
+        |  published by the Free Software Foundation, either version 3 of       |
+        |  the License, or (at your option) any later version.                  |
+        |                                                                       |
+        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+        |  GNU Affero General Public License for more details.                  |
+        |                                                                       |
+        |  You should have received a copy of the GNU Affero General Public     |
+        |  License along with this program.  If not, see                        |
+        |  <http://www.gnu.org/licenses/agpl.html>.                             |
+        =========================================================================
+
+        =========================================================================
+        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
+        |  Nonconvex Optimization in Machine Learning.                          |
+        |                                                                       |
+        |  Copyright (C) 2021 Buyun Liang                                       |
+        |                                                                       |
+        |  This file is part of PyGRANSO.                                       |
+        |                                                                       |
+        |  PyGRANSO is free software: you can redistribute it and/or modify     |
+        |  it under the terms of the GNU Affero General Public License as       |
+        |  published by the Free Software Foundation, either version 3 of       |
+        |  the License, or (at your option) any later version.                  |
+        |                                                                       |
+        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+        |  GNU Affero General Public License for more details.                  |
+        |                                                                       |
+        |  You should have received a copy of the GNU Affero General Public     |
+        |  License along with this program.  If not, see                        |
+        |  <http://www.gnu.org/licenses/agpl.html>.                             |
+        =========================================================================
 
     """
     #  This "advanced" version exists mostly just to break up the help
     #  documentation so the user isn't overwhelmed with details on the more
     #  advanced parameters which they may not immediately (or ever) need.
     
-    #  Just pass all the work to the standard ncvxOptions function.
+    #  Just pass all the work to the standard pygransoOptions function.
 
     return None

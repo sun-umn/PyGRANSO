@@ -1,26 +1,74 @@
 import time
 import torch
-
-from ncvx import ncvx
-from ncvxStruct import Options, GeneralStruct 
+from pygranso import pygranso
+from pygransoStruct import Options, GeneralStruct 
 import scipy.io
 from torch import linalg as LA
 import os
 currentdir = os.path.dirname(os.path.realpath(__file__))
 import sys
-## Adding NCVX directories. Should be modified by user
+## Adding PyGRANSO directories. Should be modified by user
 sys.path.append(currentdir)
 import numpy as np
-
-
 from scipy.stats import norm
 import numpy.linalg as la
 
-device = torch.device('cpu')
+"""
+    test_cpu.py:
+        Test whether the dependency installation for the CPU version is correct.
 
+        If you publish work that uses or refers to PyGRANSO, please cite both
+        PyGRANSO and GRANSO paper:
+
+        [1] Buyun Liang, and Ju Sun. 
+            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
+            Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
+            Available at https://arxiv.org/abs/2111.13984
+
+        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
+            A BFGS-SQP method for nonsmooth, nonconvex, constrained 
+            optimization and its evaluation using relative minimization 
+            profiles, Optimization Methods and Software, 32(1):148-181, 2017.
+            Available at https://dx.doi.org/10.1080/10556788.2016.1208749
+
+        Change Log:
+            
+            Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
+                test_cpu.py is introduced in PyGRANSO
+
+        For comments/bug reports, please visit the PyGRANSO webpage:
+        https://github.com/sun-umn/PyGRANSO
+        
+        PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
+
+        =========================================================================
+        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
+        |  Nonconvex Optimization in Machine Learning.                          |
+        |                                                                       |
+        |  Copyright (C) 2021 Buyun Liang                                       |
+        |                                                                       |
+        |  This file is part of PyGRANSO.                                       |
+        |                                                                       |
+        |  PyGRANSO is free software: you can redistribute it and/or modify     |
+        |  it under the terms of the GNU Affero General Public License as       |
+        |  published by the Free Software Foundation, either version 3 of       |
+        |  the License, or (at your option) any later version.                  |
+        |                                                                       |
+        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+        |  GNU Affero General Public License for more details.                  |
+        |                                                                       |
+        |  You should have received a copy of the GNU Affero General Public     |
+        |  License along with this program.  If not, see                        |
+        |  <http://www.gnu.org/licenses/agpl.html>.                             |
+        =========================================================================
+"""
+
+
+device = torch.device('cpu')
 double_precision = True
 torch_dtype = torch.double
-
 print_level = 0
 
 
@@ -58,7 +106,7 @@ def rosenbrock():
     opts.double_precision = double_precision
 
 
-    soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
     print("test 1/7 passed (Rosenbrock)")
 
 def spectral_radius():
@@ -105,7 +153,7 @@ def spectral_radius():
     opts.print_level = print_level
     opts.double_precision = double_precision
 
-    soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
     print("test 2/7 passed (Spectral Radius Optimization)")
 
 def dictionary_learning():
@@ -153,7 +201,7 @@ def dictionary_learning():
 
     opts.print_frequency = 10
 
-    soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
     print("test 3/7 passed (Dictionary Learning)")
 
 def robust_PCA():
@@ -193,7 +241,7 @@ def robust_PCA():
 
         return [f,ci,ce]
 
-    soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
     print("test 4/7 passed (Robust PCA)")
 
 def lasso():
@@ -235,7 +283,7 @@ def lasso():
     opts.print_level = print_level
     opts.double_precision = double_precision
     opts.maxit = 30
-    soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
 
     print("test 5/7 passed (LASSO)")
 
@@ -270,7 +318,7 @@ def feasibility():
     opts.print_level = print_level
     opts.double_precision = double_precision
 
-    soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
     print("test 6/7 passed (Feasibility Problem)")
 
 
@@ -310,7 +358,7 @@ def sphere_manifold():
     opts.print_level = print_level
     opts.double_precision = double_precision
 
-    soln = ncvx(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
     print("test 7/7 passed (Sphere Manifold)")
 
 

@@ -1,9 +1,6 @@
-import torch
-
-def getCiVec(ci,torch_device, double_precision):
-    """
-    getCiVec:
-        getCiVec transforms the original tensor form constrained function into vector form
+"""
+    pygransoStruct: 
+        Use dummy class to replace MATLAB struct
 
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
@@ -22,11 +19,11 @@ def getCiVec(ci,torch_device, double_precision):
         Change Log:
             
             Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
-                getCiVec.py is introduced in PyGRANSO
+                pygransoStruct.py is introduced in PyGRANSO
 
         For comments/bug reports, please visit the PyGRANSO webpage:
         https://github.com/sun-umn/PyGRANSO
-        
+
         PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
 
         =========================================================================
@@ -51,35 +48,21 @@ def getCiVec(ci,torch_device, double_precision):
         |  License along with this program.  If not, see                        |
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
-    """
-    #  number of constraints
-    nconstr = 0
-    # get # of constraints
-    # current constraint, e.g., c1, c2
-    for constr_i in ci.__dict__.keys():
-        constrMatrix = getattr(ci,constr_i)
-        nconstr = nconstr + torch.numel(constrMatrix)
+"""
 
-    if double_precision:
-        torch_dtype = torch.double
-    else:
-        torch_dtype = torch.float
 
-    # inquality constraints
-    ci_vec_torch = torch.zeros((nconstr,1),device=torch_device, dtype=torch_dtype)
-   
-   
-    curIdx = 0
-    # nconstr_ci = genral_struct()
-    nconstr_ci_total = 0
-    # current constraint, e.g., c1, c2
-    for constr_i in ci.__dict__.keys():
-        constrMatrix = getattr(ci,constr_i)
-        ci_vec_torch[curIdx:curIdx + torch.numel(constrMatrix)] = torch.reshape(constrMatrix,(torch.numel(constrMatrix),1))
-        curIdx = curIdx + torch.numel(constrMatrix)
-        # setattr(nconstr_ci,constr_i,torch.numel(constrMatrix))
-        nconstr_ci_total += torch.numel(constrMatrix)
+# strcu for options in PyGRANSO
+class Options:
+    pass
 
-    ci_vec = ci_vec_torch.detach() # detach from current computational graph
+# struct for Data
+class Data:
+    pass
 
-    return [ci_vec,ci_vec_torch,nconstr_ci_total]
+# struct for sub validators 
+class sub_validators_struct:
+    pass
+
+# struct for general settings
+class GeneralStruct:
+    pass

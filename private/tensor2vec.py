@@ -7,7 +7,55 @@ from private.getCiGradVec import getCiGradVec
 
 def obj_eval(eval_obj, x, var_dim_map, data_in = None):
     """
-    obj_eval makes an objective evaluation function used for backtrack line search
+    obj_eval:
+        obj_eval makes an objective evaluation function used for backtrack line search
+        
+        If you publish work that uses or refers to PyGRANSO, please cite both
+        PyGRANSO and GRANSO paper:
+
+        [1] Buyun Liang, and Ju Sun. 
+            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
+            Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
+            Available at https://arxiv.org/abs/2111.13984
+
+        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
+            A BFGS-SQP method for nonsmooth, nonconvex, constrained 
+            optimization and its evaluation using relative minimization 
+            profiles, Optimization Methods and Software, 32(1):148-181, 2017.
+            Available at https://dx.doi.org/10.1080/10556788.2016.1208749
+
+        Change Log:
+            
+            Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
+                obj_eval.py is introduced in PyGRANSO
+
+        For comments/bug reports, please visit the PyGRANSO webpage:
+        https://github.com/sun-umn/PyGRANSO
+        
+        PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
+
+        =========================================================================
+        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
+        |  Nonconvex Optimization in Machine Learning.                          |
+        |                                                                       |
+        |  Copyright (C) 2021 Buyun Liang                                       |
+        |                                                                       |
+        |  This file is part of PyGRANSO.                                       |
+        |                                                                       |
+        |  PyGRANSO is free software: you can redistribute it and/or modify     |
+        |  it under the terms of the GNU Affero General Public License as       |
+        |  published by the Free Software Foundation, either version 3 of       |
+        |  the License, or (at your option) any later version.                  |
+        |                                                                       |
+        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+        |  GNU Affero General Public License for more details.                  |
+        |                                                                       |
+        |  You should have received a copy of the GNU Affero General Public     |
+        |  License along with this program.  If not, see                        |
+        |  <http://www.gnu.org/licenses/agpl.html>.                             |
+        =========================================================================
     """
     X_struct = vec2tensor(x,var_dim_map)
     if data_in == None:
@@ -18,8 +66,55 @@ def obj_eval(eval_obj, x, var_dim_map, data_in = None):
 
 def tensor2vec(combinedFunction,x,var_dim_map,nvar,data_in = None,  torch_device = torch.device('cpu'), model = None, double_precision=True):
     """
-    mat2vec_autodiff
+    tensor2vec
         Return vector form objective and constraints information required by PyGRANSO
+
+        If you publish work that uses or refers to PyGRANSO, please cite both
+        PyGRANSO and GRANSO paper:
+
+        [1] Buyun Liang, and Ju Sun. 
+            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
+            Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
+            Available at https://arxiv.org/abs/2111.13984
+
+        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
+            A BFGS-SQP method for nonsmooth, nonconvex, constrained 
+            optimization and its evaluation using relative minimization 
+            profiles, Optimization Methods and Software, 32(1):148-181, 2017.
+            Available at https://dx.doi.org/10.1080/10556788.2016.1208749
+
+        Change Log:
+            
+            Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
+                tensor2vec.py is introduced in PyGRANSO
+
+        For comments/bug reports, please visit the PyGRANSO webpage:
+        https://github.com/sun-umn/PyGRANSO
+        
+        PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
+
+        =========================================================================
+        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
+        |  Nonconvex Optimization in Machine Learning.                          |
+        |                                                                       |
+        |  Copyright (C) 2021 Buyun Liang                                       |
+        |                                                                       |
+        |  This file is part of PyGRANSO.                                       |
+        |                                                                       |
+        |  PyGRANSO is free software: you can redistribute it and/or modify     |
+        |  it under the terms of the GNU Affero General Public License as       |
+        |  published by the Free Software Foundation, either version 3 of       |
+        |  the License, or (at your option) any later version.                  |
+        |                                                                       |
+        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+        |  GNU Affero General Public License for more details.                  |
+        |                                                                       |
+        |  You should have received a copy of the GNU Affero General Public     |
+        |  License along with this program.  If not, see                        |
+        |  <http://www.gnu.org/licenses/agpl.html>.                             |
+        =========================================================================
     """
     X = vec2tensor(x,var_dim_map)
     # obtain objective and constraint function and their corresponding gradient

@@ -1,11 +1,116 @@
-from ncvxStruct import GeneralStruct
+from pygransoStruct import GeneralStruct
 from private import nDigitsInWholePart as nDIWP, truncate, centerString as cS, double2FixedWidthStr as d2FWS, formatOrange as fO
 
-def ncvxPrinterColumns(opts,ineq_constraints,eq_constraints):
+def pygransoPrinterColumns(opts,ineq_constraints,eq_constraints):
     """       
-    gransoPrinterColumns:
-        Sets up formatters for each column needed for GRANSO's printer,
-        gransoPrinter.
+    pygransoPrinterColumns:
+        Sets up formatters for each column needed for PyGRANSO's printer,
+        pygransoPrinter.
+
+        INPUT:
+            opts    
+                A struct of the necessary parameters:
+            .use_orange         logical indicating whether or not to enable 
+                                orange printing  
+            .print_width        integer between 9 and 23 to indicate printing
+                                widths of adjustable fields (values of the
+                                penalty andd the objective functions)
+            .maxit              max number of iterations
+            .ls_max_estimate    estimate of the max number of line search 
+                                evaluations that can ever be incurred
+            .random_attempts    the max number of random search directions that
+                                may ever be attempted in a single iteration
+            .ngrad              the max number of gradients that are cached for
+        
+            ineq_constraints    logical or positive number indicating the 
+                                presence of inequality constraints
+        
+            eq_constraints      logical or positive number indicating the 
+                                presence of equality constraints 
+        
+        OUTPUT:
+            A struct containing formatters for the following columns/fields:
+            .iter               
+            .mu
+            .pen
+            .obj
+            .ineq
+            .eq
+            .sd
+            .ls_evals
+            .ls_size
+            .ngrad
+            .stat_value
+
+        If you publish work that uses or refers to PyGRANSO, please cite both
+        PyGRANSO and GRANSO paper:
+
+        [1] Buyun Liang, and Ju Sun. 
+            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
+            Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
+            Available at https://arxiv.org/abs/2111.13984
+
+        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
+            A BFGS-SQP method for nonsmooth, nonconvex, constrained 
+            optimization and its evaluation using relative minimization 
+            profiles, Optimization Methods and Software, 32(1):148-181, 2017.
+            Available at https://dx.doi.org/10.1080/10556788.2016.1208749
+            
+        Change Log:
+            gransoPrinter.m introduced in GRANSO Version 1.0.
+
+            Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
+                pygransoPrinter.py is translated from gransoPrinter.m in GRANSO Version 1.6.4. 
+
+        For comments/bug reports, please visit the PyGRANSO webpage:
+        https://github.com/sun-umn/PyGRANSO
+            
+        PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
+
+        =========================================================================
+        |  GRANSO: GRadient-based Algorithm for Non-Smooth Optimization         |
+        |  Copyright (C) 2016 Tim Mitchell                                      |
+        |                                                                       |
+        |  This file is translated from GRANSO.                                 |
+        |                                                                       |
+        |  GRANSO is free software: you can redistribute it and/or modify       |
+        |  it under the terms of the GNU Affero General Public License as       |
+        |  published by the Free Software Foundation, either version 3 of       |
+        |  the License, or (at your option) any later version.                  |
+        |                                                                       |
+        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+        |  GNU Affero General Public License for more details.                  |
+        |                                                                       |
+        |  You should have received a copy of the GNU Affero General Public     |
+        |  License along with this program.  If not, see                        |
+        |  <http://www.gnu.org/licenses/agpl.html>.                             |
+        =========================================================================
+
+        =========================================================================
+        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
+        |  Nonconvex Optimization in Machine Learning.                          |
+        |                                                                       |
+        |  Copyright (C) 2021 Buyun Liang                                       |
+        |                                                                       |
+        |  This file is part of PyGRANSO.                                       |
+        |                                                                       |
+        |  PyGRANSO is free software: you can redistribute it and/or modify     |
+        |  it under the terms of the GNU Affero General Public License as       |
+        |  published by the Free Software Foundation, either version 3 of       |
+        |  the License, or (at your option) any later version.                  |
+        |                                                                       |
+        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+        |  GNU Affero General Public License for more details.                  |
+        |                                                                       |
+        |  You should have received a copy of the GNU Affero General Public     |
+        |  License along with this program.  If not, see                        |
+        |  <http://www.gnu.org/licenses/agpl.html>.                             |
+        =========================================================================
+
     """
 
     field_width     = min(max(9,opts.print_width),23)

@@ -2,11 +2,136 @@ from private import printOrange as pO
 
 def printMessageBox(use_ascii,use_orange,margin_spaces,title_top,title_bottom,msg_lines,sides=True,user_width=0):
     """
-        printMessageBox:
-       Prints a message to the console surrounded by a border.
-       If user_width is not provided, the border is automatically sized to
-       fit the maximum width line (including given whitespace formatting)
-       specified in the message.
+    printMessageBox:
+        Prints a message to the console surrounded by a border.
+        If user_width is not provided, the border is automatically sized to
+        fit the maximum width line (including given whitespace formatting)
+        specified in the message.
+
+        INPUT:
+            use_ascii       logical: use standard ascii instead of extended
+                            characters to make the border
+    
+            use_orange      logical: use orange text to print the border and 
+                            message
+    
+            margin_spaces   nonnegative integer: number of spaces for left and
+                            right margins of the text
+    
+            title_top       string or []: specify a title for the top border. 
+                            Empty or a blank string means no title.
+    
+            title_bottom    string or []: specify a title for the top border. 
+                            Empty or a blank string means no title.
+    
+            msg_lines       cell array of each line to print in the message
+                            box.  White space formatting is observed.
+    
+            sides           optional argument, logical: whether or not side 
+                            borders should be printed.  
+            
+            user_width      optional argument, positive integer such that:
+                                user_width must be >= 6 * 2*margin_spaces
+                            to specify the width of the box.  Note that the box
+                            width may increase beyond this value to accommodate
+                            top and bottom titles, if they would otherwise not
+                            completely fit.  The box's content however is
+                            treated differently.  If sides == true, lines in
+                            msg_lines that are too long will be truncated as
+                            necessary.  If sides == false, user_width is only
+                            used to determine the widths of the top/bottom
+                            borders and lines will be not truncated, even if
+                            they extend beyond the widths of the headers.
+
+        If you publish work that uses or refers to PyGRANSO, please cite both
+        PyGRANSO and GRANSO paper:
+
+        [1] Buyun Liang, and Ju Sun. 
+            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
+            Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
+            Available at https://arxiv.org/abs/2111.13984
+
+        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
+            A BFGS-SQP method for nonsmooth, nonconvex, constrained 
+            optimization and its evaluation using relative minimization 
+            profiles, Optimization Methods and Software, 32(1):148-181, 2017.
+            Available at https://dx.doi.org/10.1080/10556788.2016.1208749
+            
+        Change Log:
+            printMessageBox.m introduced in GRANSO Version 1.0
+            
+            Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
+                printMessageBox.py is translated from printMessageBox.m in GRANSO Version 1.6.4. 
+
+        For comments/bug reports, please visit the PyGRANSO webpage:
+        https://github.com/sun-umn/PyGRANSO
+        
+        PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
+
+        =========================================================================
+        |  printMessageBox.m                                                    |
+        |  Copyright (C) 2016 Tim Mitchell                                      |
+        |                                                                       |
+        |  This file is originally from URTM.                                   |
+        |                                                                       |
+        |  URTM is free software: you can redistribute it and/or modify         |
+        |  it under the terms of the GNU Affero General Public License as       |
+        |  published by the Free Software Foundation, either version 3 of       |
+        |  the License, or (at your option) any later version.                  |
+        |                                                                       |
+        |  URTM is distributed in the hope that it will be useful,              |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+        |  GNU Affero General Public License for more details.                  |
+        |                                                                       |
+        |  You should have received a copy of the GNU Affero General Public     |
+        |  License along with this program.  If not, see                        |
+        |  <http://www.gnu.org/licenses/agpl.html>.                             |
+        =========================================================================
+
+        =========================================================================
+        |  GRANSO: GRadient-based Algorithm for Non-Smooth Optimization         |
+        |  Copyright (C) 2016 Tim Mitchell                                      |
+        |                                                                       |
+        |  This file is translated from GRANSO.                                 |
+        |                                                                       |
+        |  GRANSO is free software: you can redistribute it and/or modify       |
+        |  it under the terms of the GNU Affero General Public License as       |
+        |  published by the Free Software Foundation, either version 3 of       |
+        |  the License, or (at your option) any later version.                  |
+        |                                                                       |
+        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+        |  GNU Affero General Public License for more details.                  |
+        |                                                                       |
+        |  You should have received a copy of the GNU Affero General Public     |
+        |  License along with this program.  If not, see                        |
+        |  <http://www.gnu.org/licenses/agpl.html>.                             |
+        =========================================================================
+
+        =========================================================================
+        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
+        |  Nonconvex Optimization in Machine Learning.                          |
+        |                                                                       |
+        |  Copyright (C) 2021 Buyun Liang                                       |
+        |                                                                       |
+        |  This file is part of PyGRANSO.                                       |
+        |                                                                       |
+        |  PyGRANSO is free software: you can redistribute it and/or modify     |
+        |  it under the terms of the GNU Affero General Public License as       |
+        |  published by the Free Software Foundation, either version 3 of       |
+        |  the License, or (at your option) any later version.                  |
+        |                                                                       |
+        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+        |  GNU Affero General Public License for more details.                  |
+        |                                                                       |
+        |  You should have received a copy of the GNU Affero General Public     |
+        |  License along with this program.  If not, see                        |
+        |  <http://www.gnu.org/licenses/agpl.html>.                             |
+        =========================================================================
     """
 
     TITLE_INDENT        = 5

@@ -1,10 +1,10 @@
 import torch
-from private import ncvxConstants as pC, bfgsDamping as bD, regularizePosDefMatrix as rPDM, linesearchWeakWolfe as lWW
+from private import pygransoConstants as pC, bfgsDamping as bD, regularizePosDefMatrix as rPDM, linesearchWeakWolfe as lWW
 from private.neighborhoodCache import nC
 from private.qpSteeringStrategy import qpSS
 from private.qpTerminationCondition import qpTC
 import time
-from ncvxStruct import GeneralStruct
+from pygransoStruct import GeneralStruct
 import math
 import numpy as np
 from numpy.random import default_rng
@@ -17,10 +17,136 @@ class AlgBFGSSQP():
     def bfgssqp(self,f_eval_fn, penaltyfn_obj, bfgs_obj, opts, printer, torch_device):
         """
         bfgssqp:
-        Minimizes a penalty function.  Note that bfgssqp operates on the
-        objects it takes as input arguments and bfgssqp will modify their
-        states.  The result of bfgssqp's optimization process is obtained
-        by querying these objects after bfgssqp has been run.
+            Minimizes a penalty function.  Note that bfgssqp operates on the
+            objects it takes as input arguments and bfgssqp will modify their
+            states.  The result of bfgssqp's optimization process is obtained
+            by querying these objects after bfgssqp has been run.
+
+            INPUT:
+                penaltyfn_obj       
+                    Penalty function object from makePenaltyFunction.m
+
+                bfgs_obj
+                    (L)BFGS object from bfgsHessianInverse.m or
+                    bfgsHessianInvereLimitedMem.m
+
+                opts
+                    A struct of parameters for the software.  See gransoOptions.m
+
+                printer
+                    A printer object from gransoPrinter.m
+
+            OUTPUT:
+                info    numeric code indicating termination circumstance:
+
+                    0:  Approximate stationarity measurement <= opts.opt_tol and 
+                        current iterate is sufficiently close to the feasible 
+                        region (as determined by opts.viol_ineq_tol and 
+                        opts.viol_eq_tol).
+
+                    1:  Relative decrease in penalty function <= opts.rel_tol and
+                        current iterate is sufficiently close to the feasible 
+                        region (as determined by opts.viol_ineq_tol and 
+                        opts.viol_eq_tol).
+
+                    2:  Objective target value reached at an iterate
+                        sufficiently close to feasible region (determined by
+                        opts.fvalquit, opts.viol_ineq_tol and opts.viol_eq_tol).
+
+                    3:  User requested termination via opts.halt_log_fn 
+                        returning true at this iterate.
+
+                    4:  Max number of iterations reached (opts.maxit).
+
+                    5:  Clock/wall time limit exceeded (opts.maxclocktime).
+
+                    6:  Line search bracketed a minimizer but failed to satisfy
+                        Wolfe conditions at a feasible point (with respect to
+                        opts.viol_ineq_tol and opts.viol_eq_tol).  For 
+                        unconstrained problems, this is often an indication that a
+                        stationary point has been reached.
+
+                    7:  Line search bracketed a minimizer but failed to satisfy
+                        Wolfe conditions at an infeasible point.
+
+                    8:  Line search failed to bracket a minimizer indicating the
+                        objective function may be unbounded below.  For constrained
+                        problems, where the objective may only be unbounded off the
+                        feasible set, consider restarting PyGRANSO with opts.mu0 set
+                        lower than soln.mu_lowest (see its description below for 
+                        more details).
+
+                    9:  PyGRANSO failed to produce a descent direction.
+
+            If you publish work that uses or refers to PyGRANSO, please cite both
+            PyGRANSO and GRANSO paper:
+
+            [1] Buyun Liang, and Ju Sun. 
+                PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
+                Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
+                Available at https://arxiv.org/abs/2111.13984
+
+            [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
+                A BFGS-SQP method for nonsmooth, nonconvex, constrained 
+                optimization and its evaluation using relative minimization 
+                profiles, Optimization Methods and Software, 32(1):148-181, 2017.
+                Available at https://dx.doi.org/10.1080/10556788.2016.1208749
+                
+            Change Log:
+                bfgssqp.m introduced in GRANSO Version 1.0
+                
+                Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
+                    bfgssqp.py is translated from bfgssqp.m in GRANSO Version 1.6.4. 
+
+            For comments/bug reports, please visit the PyGRANSO webpage:
+            https://github.com/sun-umn/PyGRANSO
+            
+            PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
+
+            =========================================================================
+            |  GRANSO: GRadient-based Algorithm for Non-Smooth Optimization         |
+            |  Copyright (C) 2016 Tim Mitchell                                      |
+            |                                                                       |
+            |  This file is translated from GRANSO.                                 |
+            |                                                                       |
+            |  GRANSO is free software: you can redistribute it and/or modify       |
+            |  it under the terms of the GNU Affero General Public License as       |
+            |  published by the Free Software Foundation, either version 3 of       |
+            |  the License, or (at your option) any later version.                  |
+            |                                                                       |
+            |  GRANSO is distributed in the hope that it will be useful,            |
+            |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+            |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+            |  GNU Affero General Public License for more details.                  |
+            |                                                                       |
+            |  You should have received a copy of the GNU Affero General Public     |
+            |  License along with this program.  If not, see                        |
+            |  <http://www.gnu.org/licenses/agpl.html>.                             |
+            =========================================================================
+
+        =========================================================================
+        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
+        |  Nonconvex Optimization in Machine Learning.                          |
+        |                                                                       |
+        |  Copyright (C) 2021 Buyun Liang                                       |
+        |                                                                       |
+        |  This file is part of PyGRANSO.                                       |
+        |                                                                       |
+        |  PyGRANSO is free software: you can redistribute it and/or modify     |
+        |  it under the terms of the GNU Affero General Public License as       |
+        |  published by the Free Software Foundation, either version 3 of       |
+        |  the License, or (at your option) any later version.                  |
+        |                                                                       |
+        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+        |  GNU Affero General Public License for more details.                  |
+        |                                                                       |
+        |  You should have received a copy of the GNU Affero General Public     |
+        |  License along with this program.  If not, see                        |
+        |  <http://www.gnu.org/licenses/agpl.html>.                             |
+        =========================================================================
+
         """
         self.f_eval_fn = f_eval_fn
         self.penaltyfn_obj = penaltyfn_obj
@@ -29,7 +155,7 @@ class AlgBFGSSQP():
 
         #  "Constants" for controlling fallback levels
         #  currently these are 2 and 4 respectively
-        [POSTQP_FALLBACK_LEVEL, self.LAST_FALLBACK_LEVEL] = pC.ncvxConstants()
+        [POSTQP_FALLBACK_LEVEL, self.LAST_FALLBACK_LEVEL] = pC.pygransoConstants()
                     
         #  initialization parameters
         x                           = opts.x0
@@ -227,7 +353,7 @@ class AlgBFGSSQP():
                 try:
                     [p,mu_new,*_] = steering_fn(self.penaltyfn_at_x,apply_H_steer)
                 except Exception as e:
-                    print("NCVX:steeringQuadprogFailure")
+                    print("PyGRANSO:steeringQuadprogFailure")
                     print(traceback.format_exc())
                     sys.exit()
                 
