@@ -260,6 +260,8 @@ def pygransoOptionsAdvanced(varargin):
         For comments/bug reports, please visit the PyGRANSO webpage:
         https://github.com/sun-umn/PyGRANSO
 
+        PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
+
         =========================================================================
         |  PyGRANSO: A User-Friendly and Scalable Package for                   |
         |  Nonconvex Optimization in Machine Learning.                          |

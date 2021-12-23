@@ -1,18 +1,18 @@
 """
-    pygransoStruct: 
+    pygransoStruct:
         Use dummy class to replace MATLAB struct
 
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
-        [1] Buyun Liang, and Ju Sun. 
-            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
+        [1] Buyun Liang, and Ju Sun.
+            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex
             Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
             Available at https://arxiv.org/abs/2111.13984
 
-        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
-            A BFGS-SQP method for nonsmooth, nonconvex, constrained 
-            optimization and its evaluation using relative minimization 
+        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton
+            A BFGS-SQP method for nonsmooth, nonconvex, constrained
+            optimization and its evaluation using relative minimization
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
 
@@ -23,6 +23,8 @@
 
         For comments/bug reports, please visit the PyGRANSO webpage:
         https://github.com/sun-umn/PyGRANSO
+
+        PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
 
         =========================================================================
         |  PyGRANSO: A User-Friendly and Scalable Package for                   |
@@ -56,7 +58,7 @@ class Options:
 class Data:
     pass
 
-# struct for sub validators 
+# struct for sub validators
 class sub_validators_struct:
     pass
 
