@@ -57,21 +57,18 @@ def getObjGrad(nvar,var_dim_map,f,X, torch_device,double_precision):
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
 
-        Change Log:
-            
-            Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
-                getNvar.py is introduced in PyGRANSO
+        getObjGrad.py (introduced in PyGRANSO v1.0.0)
+        Copyright (C) 2021 Buyun Liang
+
+        New code and functionality for PyGRANSO v1.0.0.
 
         For comments/bug reports, please visit the PyGRANSO webpage:
         https://github.com/sun-umn/PyGRANSO
-        
-        PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
 
         =========================================================================
         |  PyGRANSO: A User-Friendly and Scalable Package for                   |
         |  Nonconvex Optimization in Machine Learning.                          |
-        |                                                                       |
-        |  Copyright (C) 2021 Buyun Liang                                       |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
@@ -80,7 +77,7 @@ def getObjGrad(nvar,var_dim_map,f,X, torch_device,double_precision):
         |  published by the Free Software Foundation, either version 3 of       |
         |  the License, or (at your option) any later version.                  |
         |                                                                       |
-        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  PyGRANSO is distributed in the hope that it will be useful,          |
         |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
         |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
         |  GNU Affero General Public License for more details.                  |
@@ -172,21 +169,18 @@ def getObjGradDL(nvar,model,f, torch_device, double_precision):
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
 
-        Change Log:
-            
-            Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
-                getObjGradDL.py is introduced in PyGRANSO
+        getObjGrad.py (introduced in PyGRANSO v1.0.0)
+        Copyright (C) 2021 Buyun Liang
+
+        New code and functionality for PyGRANSO v1.0.0.
 
         For comments/bug reports, please visit the PyGRANSO webpage:
         https://github.com/sun-umn/PyGRANSO
-        
-        PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
 
         =========================================================================
         |  PyGRANSO: A User-Friendly and Scalable Package for                   |
         |  Nonconvex Optimization in Machine Learning.                          |
-        |                                                                       |
-        |  Copyright (C) 2021 Buyun Liang                                       |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
@@ -195,7 +189,7 @@ def getObjGradDL(nvar,model,f, torch_device, double_precision):
         |  published by the Free Software Foundation, either version 3 of       |
         |  the License, or (at your option) any later version.                  |
         |                                                                       |
-        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  PyGRANSO is distributed in the hope that it will be useful,          |
         |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
         |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
         |  GNU Affero General Public License for more details.                  |
