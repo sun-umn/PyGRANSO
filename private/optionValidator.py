@@ -23,28 +23,27 @@ class oV:
     def optionValidator( self, program_name, default_opts,sub_validators=None, sub_optname=None):
         """
         optionValidator:
-           Helper object for performing common sanity and validity checks on 
-           parameters provided by the user for any given program.
-
+            Helper object for performing common sanity and validity checks on
+            parameters provided by the user for any given program.
 
             USAGE (an example):
                 % Set up the validator with all the default parameter values:
                 proc = optionValidator('your_program_name',struct_of_default_opts)
-                
+
                 % Initialize the validator with whatever parameters the user gave:
                 proc.setUserOpts(struct_of_user_options);
-        
+
                 % Validate and set opts.code_mode to an integer in {0,1,...,10}
                 % (This throws an error if the user's option does not meet this
-                % criteria.)  
+                % criteria.)
                 proc.setIntegerInRange('code_mode',0,10)
-                
+
                 % Get all the options (default values plus validated user options)
                 validated_opts = proc.getValidatedOpts();
-        
-            THROWS: 
+
+            THROWS:
                 optionValidator can throw two different types of errors:
-        
+
                 1)  optionValidator:invalidUsage
                     This error is thrown when either the two necessary input
                     arguments are not provided OR if the user tries to validate/set
@@ -52,164 +51,163 @@ class oV:
                     of these are developer-facing errors since they indicate that
                     the developer has improperly used optionValidator and needs to
                     correct their code.
-            
+
                 2)  YourProgramName:invalidUserOption
                     This error is thrown if a user-specified option is either empty
                     or fails to meet the validation criteria.  This is considered a
-                    user-facing error. 
-        
+                    user-facing error.
+
                 The reason for two types of errors is so that the developer can
                 have their software respond appropriately to both cases by
                 potentially catching these errors and having specific code handle
                 each case individually.
-        
+
             INPUT:
-                program_name       
+                program_name
                     A string to be used as a prefix create the error message ID:
                     YourProgramName:invalidOption
-            
+
                 default_opts
                     A struct containing all the parameter names as fields, with
                     each field set to the default value to be used for that
                     parameter.
-        
+
                 sub_validators
                     A struct of option fieldnames that appear in default_opts which
                     are actually structs of options that need to be validated by
                     their own optionValidator-derived routines.  Each field must be
                     set to the function handle for its optionValidator-derived
-                    validation routine.  sub_validators may be set to [] if there 
+                    validation routine.  sub_validators may be set to [] if there
                     are no options requiring sub-validation.  For more information,
                     see optionValidator's setStructWithValidation routine.
-        
+
                 sub_optname     [optional]
                     A string to increase the specificity of all error messages.
                     Without this option, error messages for invalid parameter
                     values have the following format:
-                
+
                     YourProgramName:invalidUserOption: .option_name must blah
-        
+
                     By specifying sub_optname, the error messages become:
-        
+
                     YourProgramName:invalidUserOption: .sub_optname.option_name ...
-                    
+
             OUTPUT:
                 An optionValidator object containing methods:
-                .setUserOpts(user_opts)   
+                .setUserOpts(user_opts)
                     Pass in the user's options (as a struct) to initialize the
                     processor.  Note that this does NOT set any value
                     Calling this resets all previously processed options.
-        
+
                 .getDefaultOpts()
                     Returns a struct of the default parameters.  If any of the
                     parameters are actually substructs of options with validation
                     (see input argument sub_validators), these subfields will also
                     be populated with their default values returns by their
                     optionValidator-derived sub-validators.
-                
+
                 .getValidatedOpts()
                     Return the set of all processed/validated options, along with
                     the default values of the parameters that were not set/checked.
-                    This MUST be called to get the validated options! 
-        
+                    This MUST be called to get the validated options!
+
                 .isSpecified(opt_name)
                     Returns true if the user has included the field opt_name in
                     their set of requested values.
-                
+
                 .validateValue(opt_name,validate_fn,error_msg)
                     Assert that the value stored in user_opts.(opt_name) causes
                     the validate_fn to return true; otherwise, the error message is
                     displayed.   Note that this does NOT set a value!
-                
+
                 .getValue(opt_name)
                     Get the latest value of the "opt_name" parameter; returns the
                     default value if no user option has been set yet.
-                
+
                 .validateAndSet(opt_name,validate_fn,error_msg)
                     Same as .validateValue but if the value is validated, then it
                     also sets the user's value.  This is useful if one has a
                     parameter that needs to be validated and set that has
                     conditions not provided by one of the builtin routines and/or
                     needs a custom error message.
-        
+
                 The optionValidator object also has following builtin set routines
                 for validating common parameter types and then setting them.  All
                 functions take an opt_name string as their first argument, which
                 indicates which value, that is, user_opts.(opt_name), to be
                 validated and set.  If the value does not meet the criteria, an
                 error is thrown.
-        
+
                 NOTES:
-                    1)  An invalid name of an option will cause an error to be 
+                    1)  An invalid name of an option will cause an error to be
                         thrown.  The names specified in user_opts must match those
                         in default_opts.
-        
+
                     2)  User options set to the empty array [] are ignored
                         (assuming that they correspond to a valid option name)
-                
+
                     3)  Multiple conditions can be checked by calling all of the
                         appropriate set functions in a succession.  For example:
-                            
+
                         proc.setPositiveDefinite('hessian')
-                        
+
                         only checks whether user_opts.hessian is numerically
-                        positive definite but 
-                
+                        positive definite but
+
                         proc.setRealAndFiniteValued('hessian')
                         proc.setPositiveDefinite('hessian')
-                    
+
                         ensures that user_opts.hessian will not only be positive
                         definite but also only contain finite purely real values.
-        
-                BASIC TYPE VALIDATIONS: 
-        
+
+                BASIC TYPE VALIDATIONS:
+
                 Validate a basic type: logical, a struct, or a function handle
                 .setLogical(opt_name)
                 .setStruct(opt_name)
                 .setStructWithFields(opt_name,field1,field2,...)
-                    Required input: 
+                    Required input:
                         opt_name and at least one field name (strings)
-                    Output: 
+                    Output:
                         a new optionValidator object for validating the fields of
                         the substruct.  user_opts.opt_name must contain all these
                         fields.
                 .setStructWithValidation(opt_name)
-                    Checks the struct of options specified in field opt_name, using 
+                    Checks the struct of options specified in field opt_name, using
                     the optionValidator-derived sub-validator specified in
                     sub_validators.opt_name.
                 .setFunctionHandle(opt_name)
-        
+
                 INTEGER VALIDATIONS:
-        
+
                 Validate an integer value (must be finite):
                 .setInteger(opt_name)
                 .setIntegerPositive(opt_name)
                 .setIntegerNegative(opt_name)
                 .setIntegerNonnegative(opt_name)
                 .setIntegerNonpositive(opt_name)
-        
+
                 Validate number is in the integer range {min_value,...,max_value}
                 (min_value and max_value are allowed to be +/- infinity):
                 .setIntegerInRange(opt_name,min_value,max_value)
-                
-        
+
                 EXTENDED REAL VALIDATIONS: (+/- inf is okay, nan is not)
-            
+
                 Validate a real value:
                 .setReal(opt_name)
                 .setRealPositive(opt_name)
                 .setRealNegative(opt_name)
                 .setRealNonnegative(opt_name)
                 .setRealNonpositive(opt_name)
-                
+
                 Validate a real value in is an interval:
                 .setRealInIntervalOO(opt_name,a,b)      OO: open, open (a,b)
                 .setRealInIntervalOC(opt_name,a,b)      OC: open, closed (a,b]
                 .setRealInIntervalCO(opt_name,a,b)      CO: closed, open [a,b)
                 .setRealInIntervalCC(opt_name,a,b)      CC: closed, closed [a,b]
-        
+
                 MATRIX/NUMERIC TYPE VALIDATIONS:
-        
+
                 Validate all individual entries:
                 .setFiniteValued(opt_name)
                     All values must be finite (no nans/infs)
@@ -219,7 +217,7 @@ class oV:
                     All entries must be finite and real
                 .setNonZero(opt_name)
                     All values must not be zero (nans and infs are acceptable)
-        
+
                 Validate dimensions of numeric type:
                 .setRow(opt_name)
                 .setRowDimensioned(opt_name,dim)
@@ -229,26 +227,26 @@ class oV:
                     Must be a column vector of length dim
                 .setDimensioned(opt_name,M,N)
                     Matrix must have size M by N
-        
-                Validate properties:     
+
+                Validate properties:
                 .setSparse(opt_name)
                 .setPositiveDefinite(opt_name)
-                    Matrix be positive definite, tested via chol() 
+                    Matrix be positive definite, tested via chol()
 
             If you publish work that uses or refers to PyGRANSO, please cite both
             PyGRANSO and GRANSO paper:
 
-            [1] Buyun Liang, and Ju Sun. 
-                PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
+            [1] Buyun Liang, and Ju Sun.
+                PyGRANSO: A User-Friendly and Scalable Package for Nonconvex
                 Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
                 Available at https://arxiv.org/abs/2111.13984
 
-            [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
-                A BFGS-SQP method for nonsmooth, nonconvex, constrained 
-                optimization and its evaluation using relative minimization 
+            [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton
+                A BFGS-SQP method for nonsmooth, nonconvex, constrained
+                optimization and its evaluation using relative minimization
                 profiles, Optimization Methods and Software, 32(1):148-181, 2017.
                 Available at https://dx.doi.org/10.1080/10556788.2016.1208749
-                
+
             optionValidator.py (introduced in PyGRANSO v1.0.0)
             Copyright (C) 2016-2021 Tim Mitchell
 
@@ -281,7 +279,7 @@ class oV:
             |  <http://www.gnu.org/licenses/agpl.html>.                             |
             =========================================================================
         """
-        
+
         ##########################################################################################
         ############################  Beginning of Main function #################################
         ##########################################################################################
@@ -300,7 +298,7 @@ class oV:
 
         #  need error handler here
         #  Mandatory Options
-        assert isinstance(self.program_name,str),  self.id_str + "Input ''program_name'' must be a string!" 
+        assert isinstance(self.program_name,str),  self.id_str + "Input ''program_name'' must be a string!"
         assert isinstance(self.default_opts, Options), self.id_str + "Input argument ''default_opts'' must be an Options class!"
 
         self.user_opts       = None
@@ -310,18 +308,18 @@ class oV:
         if self.sub_validators != None:
             assert isinstance(self.sub_validators, sub_validators_struct), self.id_str + "Input argument ''sub_validators'' must be an Options class!"
             self.checkAndSetSubValidators()
-        
+
         err_id = self.program_name + ":invalidUserOption"
 
         # Optional suboptname 4th argument
         if sub_optname != None:
             assert isinstance(sub_optname,str), self.id_str + "Input ''sub_optname'' must be a string!"
-            self.invalid_str = err_id + ": ." + sub_optname + ".%s must be %s." 
+            self.invalid_str = err_id + ": ." + sub_optname + ".%s must be %s."
             self.custom_str  = err_id + ": ." + sub_optname + ": %s"
         else:
             self.invalid_str = err_id + ": .%s must be %s."
             self.custom_str  = err_id + ": %s"
-        
+
         validator = GeneralStruct()
         setattr(validator, "setUserOpts", lambda some_user_opts : self.setUserOpts(some_user_opts))
         setattr(validator, "assert", lambda tf, error_msg : self.customAssert(tf, error_msg))
@@ -371,16 +369,16 @@ class oV:
 
     # PRIVATE NESTED HELPER FUNCTIONS
 
-    #  initialize optionProcessor with options from the user 
+    #  initialize optionProcessor with options from the user
     def setUserOpts(self,some_user_opts):
-        self.opts        = copy.deepcopy(self.default_opts) 
-        assert isinstance(some_user_opts, Options), self.id_str + "%s.setUserOpts(s) requires that s is a struct." % self.ov_str 
+        self.opts        = copy.deepcopy(self.default_opts)
+        assert isinstance(some_user_opts, Options), self.id_str + "%s.setUserOpts(s) requires that s is a struct." % self.ov_str
         self.user_opts   = copy.deepcopy(some_user_opts)
         return
 
     #  get the default options
     def getDefaultOpts(self):
-        opts_out    = copy.deepcopy(self.default_opts) 
+        opts_out    = copy.deepcopy(self.default_opts)
         return opts_out
 
     #  get the processed/validated options
@@ -391,32 +389,32 @@ class oV:
     #  get the latest version of a given value
     def getValue(self,opt_name):
         if hasattr(self.opts,opt_name):
-            value   =  getattr(self.opts,opt_name)  
+            value   =  getattr(self.opts,opt_name)
         else:
             value   = None
-        
+
         return value
-    
+
     #  set the user's value if it meets the necessary conditions
     def validateAndSet(self,opt_name,validate_fn,error_msg):
         value = self.validateValue(opt_name,validate_fn,error_msg)
         if np.any(value != None):
-            setattr(self.opts,opt_name, value)  
+            setattr(self.opts,opt_name, value)
 
-    #  checks the user's option for opt_name 
+    #  checks the user's option for opt_name
     #  validate function is a function handle to check it is valid
     #  error_msg is appended as the reason if the user's value is invalid
     def validateValue(self,opt_name,validate_fn,error_msg):
         value = None
-        #  first make sure the name of the user option exists 
+        #  first make sure the name of the user option exists
         assert hasattr(self.default_opts,opt_name),self.id_str + self.unknown_str + opt_name
         if hasattr(self.user_opts,opt_name):
             value = getattr(self.user_opts, opt_name)
-            #  make sure the user's value is not empty 
+            #  make sure the user's value is not empty
             assert np.any(value != None), self.invalid_str + opt_name + " nonempty"
             #  finally check the specific validation criteria
             assert validate_fn(value) ,self.invalid_str %(opt_name,error_msg)
-        
+
         return value
 
     #  checks whether the user specified a nonempty value for this parameter
@@ -429,7 +427,7 @@ class oV:
         return
 
     #  shortcut functions for common checks on parameters
-    
+
     def setLogical(self,name):
         self.validateAndSet(name, lambda x: isinstance(x,int), "a logical" )
         return
@@ -443,8 +441,8 @@ class oV:
         return
 
     def setStructWithFields(self,name,varargin):
-        self.validateAndSet( name, lambda x: isinstance(x,GeneralStruct) or isinstance(x,Options) and [hasattr(x,field) for field in varargin], "a struct with fields: %s" % ", ".join(varargin) )  
-        
+        self.validateAndSet( name, lambda x: isinstance(x,GeneralStruct) or isinstance(x,Options) and [hasattr(x,field) for field in varargin], "a struct with fields: %s" % ", ".join(varargin) )
+
         sub_struct      = makeStructWithFields(varargin)
         # user_sub_struct = copy.deepcopy(getattr(self.user_opts, name))
         user_sub_struct = getattr(self.user_opts, name)
@@ -457,19 +455,19 @@ class oV:
             self.setStruct(name)
             validated_sub_opts = getattr(self.sub_validators,name)(getattr(self.user_opts,name))
             setattr(self.opts,name,validated_sub_opts)
-        return 
-    
+        return
+
     def setInteger(self,name):
         self.validateAndSet( name, lambda x: isAnInteger(x), "an integer" )
-        
+
 
     def setIntegerPositive(self,name):
         self.validateAndSet( name, lambda x: isAnInteger(x) and x > 0, "a positive integer" )
         return
 
-    def setIntegerNegative(self,name):   
+    def setIntegerNegative(self,name):
         self.validateAndSet( name, lambda x: isAnInteger(x) and x < 0, "a negative integer" )
-        return     
+        return
 
     def setIntegerNonnegative(self,name):
         self.validateAndSet( name, lambda x: isAnInteger(x) and x >= 0, "a nonnegative integer" )
@@ -481,7 +479,7 @@ class oV:
 
     def setIntegerInRange(self,name,l,r):
         self.validateAndSet( name, lambda x: isAnInteger(x) and l <= x and x <= r, "an integer in {%g,...,%g}"%(l,r) )
-        return 
+        return
 
     def setReal(self,name):
         self.validateAndSet( name, lambda x: isARealNumber(x), 'a real number')
@@ -542,7 +540,7 @@ class oV:
     def setRowDimensioned(self,name,dim):
         self.validateAndSet( name, lambda x: isRow(x) and x.size == dim, "a row vector of length %d"%dim )
         return
-      
+
     def setColumn(self,name):
         self.validateAndSet( name,lambda x: isColumn(x), "a column vector")
         return
@@ -551,11 +549,11 @@ class oV:
         self.validateAndSet( name, lambda x: isColumn(x) and torch.numel(x) == dim, "a column vector of length %d"%dim)
         return
 
-    def setDimensioned(self,name,m,n):                                          
+    def setDimensioned(self,name,m,n):
         self.validateAndSet( name, lambda x: isMbyN(x,m,n), "%d by %d"%(m,n) )
         return
 
-    def setRestartData(self,name):                                          
+    def setRestartData(self,name):
         self.validateAndSet( name, lambda x: isRestartData(x), "lbfgs_warm_start required form {'S':matrix, 'Y':matrix, 'rho':row vector, 'gamma':scalar}" )
         return
 
@@ -563,7 +561,7 @@ class oV:
         # optionValidator.setSparse NOT used
         # self.validateAndSet(name, lambda x: issparse(x), "a sparse matrix")
         return
-      
+
     def setPositiveDefinite(self,name):
         self.validateAndSet( name, lambda x: isFiniteValued(x) and isPositiveDefinite(x), "a positive definite matrix")
         return
@@ -581,8 +579,8 @@ class oV:
     def checkAndSetSubValidator(self,name):
         assert hasattr(self.default_opts,name), self.id_str + "Sub-validator %s is missing from default_opts!"%name
         assert isinstance(  getattr(self.sub_validators,name), types.FunctionType), self.id_str + "Sub-validator %s must be a function handle!"%+ name
-        try: 
-            setattr(self.default_opts,name,getattr(self.sub_validators,name) )   
+        try:
+            setattr(self.default_opts,name,getattr(self.sub_validators,name) )
         except Exception as e:
             print(traceback.format_exc())
             s = "Sub-validator %s failed when requesting default values!"

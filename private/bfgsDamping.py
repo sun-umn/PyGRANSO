@@ -4,8 +4,8 @@ import torch
 def bfgsDamping(damping,applyH,s,y,sty):
     """
     bfgsDamping:
-       This function implements Procedure 18.2 from Nocedal and Wright,
-       which ensures that the BFGS update is always well defined.
+        This function implements Procedure 18.2 from Nocedal and Wright,
+        which ensures that the BFGS update is always well defined.
 
         INPUT:
             damping         [ real number in [0,1] ]

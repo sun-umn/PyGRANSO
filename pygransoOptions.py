@@ -12,31 +12,31 @@ def pygransoOptions(n,options, torch_device):
     pygransoOptions:
         Validate user options struct for pygranso.py.  If user_opts is None or
         not provided, returned opts will be PyGRANSO's default parameters.
-        Standard or advanced options may be set.  
+        Standard or advanced options may be set.
 
        Type:
-       help(pygransoOptionsAdvanced) 
+       help(pygransoOptionsAdvanced)
        to see documentation for the advanced user options.
-   
+
        USAGE:
        opts = pygransoOptions(n,options, torch_device)
 
        INPUT:
        n           Number of variables being optimized.
 
-       user_opts   Struct of settable algorithm parameters.  No fields are 
-                   required, irrelevant fields are ignored, and user_opts 
+       user_opts   Struct of settable algorithm parameters.  No fields are
+                   required, irrelevant fields are ignored, and user_opts
                    may be given as None.
 
        OUTPUT:
        opts        Struct of all tunable user parameters for PyGRANSO.
-                   If a field is provided in user_opts, then the user's 
-                   value is checked to whether or not it is a valid value, 
-                   and if so, it is set in opts.  Otherwise, an error is 
+                   If a field is provided in user_opts, then the user's
+                   value is checked to whether or not it is a valid value,
+                   and if so, it is set in opts.  Otherwise, an error is
                    thrown.  If a field is not provided in user_opts, opts
-                   will contain the field with PyGRANSO's default value.  
+                   will contain the field with PyGRANSO's default value.
 
-       STANDARD PARAMETERS 
+       STANDARD PARAMETERS
 
         x0
         ----------------
@@ -51,17 +51,17 @@ def pygransoOptions(n,options, torch_device):
         ----------------
         Positive real value. Default value: 1
 
-        Initial value of the penalty parameter. 
+        Initial value of the penalty parameter.
         NOTE: irrelevant for unconstrained optimization problems.
 
         H0
         ----------------
-        n by n double precision torch tensor. Default value: torch.eye(n,device=torch_device, dtype=torch.double) 
+        n by n double precision torch tensor. Default value: torch.eye(n,device=torch_device, dtype=torch.double)
 
-        Initial inverse Hessian approximation.  In full-memory mode, and 
+        Initial inverse Hessian approximation.  In full-memory mode, and
         if opts.checkH0 is true, PyGRANSO will numerically assert that this
         matrix is positive definite. In limited-memory mode, that is, if
-        opts.limited_mem_size > 0, no numerical checks are done but this 
+        opts.limited_mem_size > 0, no numerical checks are done but this
         matrix must be a sparse matrix.
 
         checkH0
@@ -88,8 +88,8 @@ def pygransoOptions(n,options, torch_device):
 
         bfgs_damping
         ----------------
-        Real value in [0,1]. Default value: 1e-4 
-            
+        Real value in [0,1]. Default value: 1e-4
+
         This feature will adaptively damp potentially problematic BFGS
         updates in order to help ensure that the (L)BFGS inverse Hessian
         approximation always remains positive definite numerically.  The
@@ -122,7 +122,7 @@ def pygransoOptions(n,options, torch_device):
         limited_mem_warm_start
         --------------------------------
         Python dictionary with key to be 'S', 'Y', 'rho' and 'gamma'. Default value: None
-            
+
         If one is restarting PyGRANSO, the previous L-BFGS information can be
         recycled by setting opts.limited_mem_warm_start = soln.H_final,
         where soln is PyGRANSO's output struct from a previous run.  Note
@@ -132,14 +132,14 @@ def pygransoOptions(n,options, torch_device):
         --------------------------------
         Positive real value. Default value: Inf
 
-        Pre-scales objective/constraint functions such that the norms of 
-        their gradients evaluated at x0 do not exceed prescaling_threshold.  
+        Pre-scales objective/constraint functions such that the norms of
+        their gradients evaluated at x0 do not exceed prescaling_threshold.
         Inf (default) disables all pre-scaling.  Problems that are poorly
-        scaled, that is, the gradients have norms that are large, may cause 
-        difficulties for optimization.  Pre-scaling can help mitigate these 
-        issues in an automatic way but, ideally, the user should consider 
-        whether an alterative formulation of the optimization problem with 
-        better inherent scaling is possible.  
+        scaled, that is, the gradients have norms that are large, may cause
+        difficulties for optimization.  Pre-scaling can help mitigate these
+        issues in an automatic way but, ideally, the user should consider
+        whether an alterative formulation of the optimization problem with
+        better inherent scaling is possible.
         NOTE: solutions obtained for a pre-scaled problem MAY NOT BE a
         solutions for the originally specified problem.
 
@@ -150,14 +150,14 @@ def pygransoOptions(n,options, torch_device):
         Prints a notice that PyGRANSO has either automatically pre-scaled at
         least one of the objective or constraint functions or it has
         deteced that the optimization problem may be poorly scaled.  For
-        more details, see opts.prescaling_threshold.  
+        more details, see opts.prescaling_threshold.
 
-        opt_tol     
-        ----------------        
+        opt_tol
+        ----------------
         Positive real value. Default value: 1e-8
 
         Tolerance for reaching (approximate) optimality/stationarity.
-        See opts.ngrad, opts.evaldist, and the description of PyGRANSO's 
+        See opts.ngrad, opts.evaldist, and the description of PyGRANSO's
         output argument soln, specifically the subsubfield .dnorm for more
         information.
 
@@ -166,7 +166,7 @@ def pygransoOptions(n,options, torch_device):
         Non-negative real value. Default value: 0
 
         Tolerance for determining when the relative decrease in the penalty
-        function is sufficiently small.  PyGRANSO will terminate if when 
+        function is sufficiently small.  PyGRANSO will terminate if when
         the relative decrease in the penalty function is at or below this
         tolerance and the current iterate is feasible to tolerances.
         Generally, we don't recommend using this feature since small steps
@@ -181,40 +181,40 @@ def pygransoOptions(n,options, torch_device):
         before terminating.
 
         viol_ineq_tol
-        ----------------                  
+        ----------------
         Non-negative real value. Default value: 0
 
-        Acceptable total violation tolerance of the inequality constraints.   
+        Acceptable total violation tolerance of the inequality constraints.
 
         viol_eq_tol
-        ----------------                   
+        ----------------
         Non-negative real value. Default value: 1e-6
 
-        Acceptable total violation tolerance of the equality constraints. 
+        Acceptable total violation tolerance of the equality constraints.
 
         ngrad
         ----------------
         Positive integer. Default value: min([100, 2*n, n+10])
-                                
-        Max number of previous gradients to be cached.  The QP defining 
-        PyGRANSO's measure of stationarity requires a history of previous 
+
+        Max number of previous gradients to be cached.  The QP defining
+        PyGRANSO's measure of stationarity requires a history of previous
         gradients.  Note that large values of ngrad can make the related QP
         expensive to solve, if a significant fraction of the currently
-        cached gradients were evaluated at points within evaldist of the 
-        current iterate.  Using 1 is recommended if and only if the problem 
-        is unconstrained and the objective is known to be smooth.  See 
+        cached gradients were evaluated at points within evaldist of the
+        current iterate.  Using 1 is recommended if and only if the problem
+        is unconstrained and the objective is known to be smooth.  See
         opts.opt_tol, opts.evaldist, and the description of PyGRANSO's output
         argument soln, specifically the subsubfield .dnorm for more
         information.
 
         evaldist
-        ----------------                       
+        ----------------
         Positive real value. Default value: 1e-4
 
-        Previously evaluated gradients are only used in the stationarity 
-        test if they were evaluated at points that are within distance 
-        evaldist of the current iterate x.  See opts.opt_tol, opts.ngrad, 
-        and the description of PyGRANSO's output argument soln, specifically 
+        Previously evaluated gradients are only used in the stationarity
+        test if they were evaluated at points that are within distance
+        evaldist of the current iterate x.  See opts.opt_tol, opts.ngrad,
+        and the description of PyGRANSO's output argument soln, specifically
         the subsubfield .dnorm for more information.
 
         maxit
@@ -234,26 +234,26 @@ def pygransoOptions(n,options, torch_device):
         ----------------
         Positive real value. Default value: -Inf
 
-        Quit if objective function drops below this value at a feasible 
-        iterate (that is, satisfying feasibility tolerances 
+        Quit if objective function drops below this value at a feasible
+        iterate (that is, satisfying feasibility tolerances
         opts.viol_ineq_tol and opts.viol_eq_tol).
 
 
-        halt_on_linesearch_bracket     
-        --------------------------------          
+        halt_on_linesearch_bracket
+        --------------------------------
         Boolean value. Default value: True
 
-        If the line search brackets a minimizer but fails to satisfy the 
-        weak Wolfe conditions (necessary for a step to be accepted), PyGRANSO 
-        will terminate at this iterate when this option is set to true 
-        (default).  For unconstrained nonsmooth problems, it has been 
-        observed that this type of line search failure is often an 
-        indication that a stationarity has in fact been reached.  By 
-        setting this parameter to False, PyGRANSO will instead first attempt 
+        If the line search brackets a minimizer but fails to satisfy the
+        weak Wolfe conditions (necessary for a step to be accepted), PyGRANSO
+        will terminate at this iterate when this option is set to true
+        (default).  For unconstrained nonsmooth problems, it has been
+        observed that this type of line search failure is often an
+        indication that a stationarity has in fact been reached.  By
+        setting this parameter to False, PyGRANSO will instead first attempt
         alternative optimization strategies (if available) to see if
         further progress can be made before terminating.   See
-        gransoOptionsAdvanced for more details on PyGRANSO's available 
-        fallback optimization strategies and how they can be configured. 
+        gransoOptionsAdvanced for more details on PyGRANSO's available
+        fallback optimization strategies and how they can be configured.
 
         quadprog_info_msg
         --------------------------------
@@ -261,10 +261,10 @@ def pygransoOptions(n,options, torch_device):
 
         Prints a notice that PyGRANSO's requires a quadprog-compatible QP
         solver and that the choice of QP solver may affect PyGRANSO's quality
-        of performance, in terms of efficiency and level of optimization. 
+        of performance, in terms of efficiency and level of optimization.
 
 
-        print_level     
+        print_level
         ----------------
         Integer in {0,1}. Default value: 1
 
@@ -272,10 +272,10 @@ def pygransoOptions(n,options, torch_device):
 
         0 - no printing whatsoever
 
-        1 - prints info for each iteration  
+        1 - prints info for each iteration
 
-        print_frequency      
-        ----------------          
+        print_frequency
+        ----------------
         Positive integer. Default value: 1
 
         Sets how often the iterations are printed.  When set to 1, every
@@ -285,24 +285,24 @@ def pygransoOptions(n,options, torch_device):
         all messages from higher values of .print_level will still be
         printed no matter what iteration they occurred on.
 
-        print_width  
+        print_width
         ----------------
         Integer in [9,23]. Default value: 14
 
         Number of characters wide to print values for the penalty function,
-        the objective function, and the total violations of the inequality 
-        and equality constraints. 
+        the objective function, and the total violations of the inequality
+        and equality constraints.
 
-        print_print_ascii     
-        --------------------------------          
+        print_print_ascii
+        --------------------------------
         Boolean value. Default value: False
 
-        By default, PyGRANSO's printed output uses the extended character map, 
-        so nice looking tables can be made.  But if you need to record the output, 
+        By default, PyGRANSO's printed output uses the extended character map,
+        so nice looking tables can be made.  But if you need to record the output,
         you can restrict the printed output to only use the basic ASCII character map
 
 
-        print_use_orange   
+        print_use_orange
         --------------------------------
         Boolean value. Default value: True
 
@@ -315,10 +315,10 @@ def pygransoOptions(n,options, torch_device):
         Lambda Function. Default value: None
 
         A user-provided function handle that is called on every iteration
-        to allow the user to signal to PyGRANSO for it to halt at that 
+        to allow the user to signal to PyGRANSO for it to halt at that
         iteration and/or create historical logs of the progress of the
-        algorithm. 
-        
+        algorithm.
+
         END OF STANDARD PARAMETERS
 
         See also pygransoOptions, pygransoOptionsAdvanced.
@@ -326,14 +326,14 @@ def pygransoOptions(n,options, torch_device):
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
-        [1] Buyun Liang, and Ju Sun. 
-            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
+        [1] Buyun Liang, and Ju Sun.
+            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex
             Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
             Available at https://arxiv.org/abs/2111.13984
 
-        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
-            A BFGS-SQP method for nonsmooth, nonconvex, constrained 
-            optimization and its evaluation using relative minimization 
+        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton
+            A BFGS-SQP method for nonsmooth, nonconvex, constrained
+            optimization and its evaluation using relative minimization
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
 
@@ -342,9 +342,10 @@ def pygransoOptions(n,options, torch_device):
 
         This file is a MATLAB-to-Python port of pygransoOptions.m from
         GRANSO v1.6.4 with the following new functionality and/or changes:
-            1.Adding new options: QPsolver, init_step_size, linesearch_maxit, 
-            is_backtrack_linesearch, searching_direction_rescaling, disable_terminationcode_6.
-            See https://ncvx.org/settings/new_para.html for more details 
+            1. Adding new options: QPsolver, init_step_size, linesearch_maxit,
+               is_backtrack_linesearch, searching_direction_rescaling,
+               disable_terminationcode_6.
+               See https://ncvx.org/settings/new_para.html for more details.
         Ported from MATLAB to Python and modified by Buyun Liang, 2021
 
         For comments/bug reports, please visit the PyGRANSO webpage:
@@ -372,7 +373,7 @@ def pygransoOptions(n,options, torch_device):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    
+
 
     #  Storing information in mememory
     default_opts = None
@@ -381,10 +382,10 @@ def pygransoOptions(n,options, torch_device):
     # This will be disabled by the default options or if the user does not
     # activate debug mode
     debug_mode = True
-    
+
     #  need error handler here
     assert isinstance(n,int) and n > 0,'PyGRANSO invalidUserOption: Number of variables n must be a positive integer!'
-    
+
 
     if default_opts == None:
         [default_opts, LAST_FALLBACK_LEVEL] = getDefaults(n)
@@ -394,7 +395,7 @@ def pygransoOptions(n,options, torch_device):
         return opts
     else:
         user_opts = options
-    
+
     #  need error handler here
     assert isinstance(user_opts, Options) ,'PyGRANSO invalidUserOption: PyGRANSO options must provided as an object of class Options!'
 
@@ -404,18 +405,18 @@ def pygransoOptions(n,options, torch_device):
     validator.setUserOpts(user_opts)
 
     # surround the validation so we can rethrow the error from PyGRANSO
-    try: 
+    try:
         #  Set debug mode first as we need its value in the catch block
         debug_mode = validator.getValue("debug_mode")
         validator.setLogical("debug_mode")
-        
+
         #  SET INITIAL POINT AND PENALTY PARAMETER VALUE
         if hasattr(user_opts,"x0") and np.any(user_opts.x0 != None):
             validator.setColumnDimensioned("x0",n)
             validator.setRealFiniteValued("x0")
-        
+
         validator.setRealNonnegative("mu0")
-        
+
         #  SET INITIAL (L)BFGS DATA
         validator.setLogical("checkH0")
         validator.setLogical("scaleH0")
@@ -425,17 +426,17 @@ def pygransoOptions(n,options, torch_device):
         lim_mem_size    = validator.getValue("limited_mem_size")
         lim_mem_mode    = lim_mem_size > 0
         if lim_mem_mode and hasattr(user_opts,"limited_mem_warm_start")  and user_opts.limited_mem_warm_start != None:
-            
-            #  Ensure all the necessary subfields for L-BFGS data exist and 
+
+            #  Ensure all the necessary subfields for L-BFGS data exist and
             #  if so, it returns a validator for this sub-struct of data.
-            validator.setRestartData("limited_mem_warm_start")            
-            ws              = user_opts.limited_mem_warm_start  
+            validator.setRestartData("limited_mem_warm_start")
+            ws              = user_opts.limited_mem_warm_start
             [n_S,cols_S]    = ws['S'].shape
             [n_Y,cols_Y]    = ws['Y'].shape
             [_,cols_rho]    = ws['rho'].shape
             assert n == n_S and n == n_Y,'PyGRANSO invalidUserOption: the number of rows in both subfields S and Y must match the number of optimization variables'
-            assert cols_S > 0 and cols_S == cols_Y and cols_S == cols_rho,'PyGRANSO invalidUserOption: subfields S, Y, and rho must all have the same (positive) number of columns'          
-        
+            assert cols_S > 0 and cols_S == cols_Y and cols_S == cols_rho,'PyGRANSO invalidUserOption: subfields S, Y, and rho must all have the same (positive) number of columns'
+
         if hasattr(user_opts,"H0") and torch.any(user_opts.H0) != None:
             validator.setDimensioned("H0",n,n)
             validator.setRealFiniteValued("H0")
@@ -443,13 +444,13 @@ def pygransoOptions(n,options, torch_device):
                 validator.setSparse("H0")
             elif validator.getValue("checkH0"):
                 validator.setPositiveDefinite("H0")
-        
+
         #  SET PRESCALING PARAMETERS
         validator.setRealPositive("prescaling_threshold")
         validator.setLogical("prescaling_info_msg")
 
         #  CONVERGE CRITERIA / PARAMETERS
-        #  allow users to set zero optimality and violation tolerances, even 
+        #  allow users to set zero optimality and violation tolerances, even
         #  though it's a bit demanding ;-)
         validator.setRealNonnegative("opt_tol")
         validator.setRealNonnegative("rel_tol")
@@ -469,8 +470,8 @@ def pygransoOptions(n,options, torch_device):
         #  FALLBACK PARAMETERS (allowable last resort "heuristics")
         validator.setIntegerInRange("min_fallback_level", 0,LAST_FALLBACK_LEVEL)
         #  Use the custom validator so we can set a custom message
-        validator.validateAndSet( "max_fallback_level", 
-                                lambda x: isAnInteger(x) and x >= validator.getValue("min_fallback_level") and x <= LAST_FALLBACK_LEVEL,                          
+        validator.validateAndSet( "max_fallback_level",
+                                lambda x: isAnInteger(x) and x >= validator.getValue("min_fallback_level") and x <= LAST_FALLBACK_LEVEL,
                                 "an integer in {opts.min_fallback_level,...,%d}" % LAST_FALLBACK_LEVEL)
 
         validator.setIntegerPositive("max_random_attempts")
@@ -480,7 +481,7 @@ def pygransoOptions(n,options, torch_device):
         validator.setRealNonnegative("steering_ineq_margin")
         validator.setIntegerPositive("steering_maxit")
         validator.setRealInIntervalOO("steering_c_viol",0,1)
-        validator.setRealInIntervalOO("steering_c_mu",0,1) 
+        validator.setRealInIntervalOO("steering_c_mu",0,1)
         validator.setLogical("quadprog_info_msg")
         validator.setString("QPsolver")
         validator.setRealInIntervalCC("regularize_threshold",1,np.inf)
@@ -492,20 +493,20 @@ def pygransoOptions(n,options, torch_device):
         #  exceptions).  1 is not acceptable.
         #  wolfe2: conventionally wolfe2 should be > wolfe1 but it is
         #  sometimes okay for both to be zero (e.g. Shor)
-        validator.setRealInIntervalCC("wolfe1",0,0.5); 
-        validator.setRealInIntervalCO("wolfe2",validator.getValue('wolfe1'),1)                             
+        validator.setRealInIntervalCC("wolfe1",0,0.5);
+        validator.setRealInIntervalCO("wolfe2",validator.getValue('wolfe1'),1)
         validator.setIntegerNonnegative("linesearch_nondescent_maxit")
         validator.setIntegerNonnegative("linesearch_reattempts")
         validator.setIntegerNonnegative("linesearch_reattempts_x0")
-        validator.setRealInIntervalOO("linesearch_c_mu",0,1)   
-        validator.setRealInIntervalOO("linesearch_c_mu_x0",0,1)    
+        validator.setRealInIntervalOO("linesearch_c_mu",0,1)
+        validator.setRealInIntervalOO("linesearch_c_mu_x0",0,1)
 
         validator.setIntegerNonnegative("linesearch_maxit")
         validator.setRealNonnegative("init_step_size")
         validator.setLogical("is_backtrack_linesearch")
         validator.setLogical("double_precision")
         validator.setLogical("searching_direction_rescaling")
-        validator.setLogical("disable_terminationcode_6")        
+        validator.setLogical("disable_terminationcode_6")
 
         #  LOGGING PARAMETERS
         validator.setIntegerInRange("print_level",0,3)
@@ -513,10 +514,10 @@ def pygransoOptions(n,options, torch_device):
         validator.setIntegerInRange("print_width",9,23)
         validator.setLogical("print_ascii")
         validator.setLogical("print_use_orange")
-                
+
         if hasattr(user_opts,"halt_log_fn") and user_opts.halt_log_fn != None:
             validator.setFunctionHandle("halt_log_fn")
-        
+
         opts = validator.getValidatedOpts()
 
     except Exception as e:
@@ -529,11 +530,11 @@ def pygransoOptions(n,options, torch_device):
     return opts
 
 def postProcess(n,opts, torch_device):
-    
+
     # bump up the max fallback level if necessary
     if opts.max_fallback_level < opts.min_fallback_level:
         opts.max_fallback_level = opts.max_fallback_level
-    
+
     # If an initial starting point was not provided, use random vector
     if opts.double_precision:
         torch_dtype = torch.double
@@ -542,14 +543,14 @@ def postProcess(n,opts, torch_device):
 
     if opts.x0 == None:
         opts.x0 = torch.randn(n,1).to(device=torch_device, dtype=torch_dtype)
-    
+
     # If an initial inverse Hessian was not provided, use the identity
     if opts.H0 == None:
-        opts.H0 = torch.eye(n,device=torch_device, dtype=torch_dtype) 
-    
+        opts.H0 = torch.eye(n,device=torch_device, dtype=torch_dtype)
+
     if hasattr(opts,"QPsolver"):
         QPsolver = opts.QPsolver
-    
+
     return opts
 
 def getDefaults(n):
@@ -616,4 +617,3 @@ def getDefaults(n):
     setattr(default_opts,'debug_mode',False)
 
     return [default_opts, LAST_FALLBACK_LEVEL]
-    

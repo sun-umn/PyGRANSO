@@ -9,51 +9,50 @@ def getObjGrad(nvar,var_dim_map,f,X, torch_device,double_precision):
 
         USAGE:
             f_grad_vec = getObjGrad(nvar,var_dim_map,f,X, torch_device,double_precision)
-        
+
         INPUT:
-            nvar        
+            nvar
                     Number of optimization variables in total
 
             var_dim_map
 
                 A dictionary for optmization variable information,
                 where the key is the variable name and val is a list for correpsonding dimension:
-                e.g., var_in = {"x": [1,1]}; var_in = {"U": [5,10], "V": [10,20]} 
+                e.g., var_in = {"x": [1,1]}; var_in = {"U": [5,10], "V": [10,20]}
 
-            f 
-                
+            f
+
                 Function handle of objective function
 
-            X 
-                
+            X
+
                 A data structuture storing all input variables
 
             torch_device
 
-                    Choose torch.device used for matrix operation in PyGRANSO. 
-                    torch_device = torch.device('cuda') if one wants to use cuda device 
+                    Choose torch.device used for matrix operation in PyGRANSO.
+                    torch_device = torch.device('cuda') if one wants to use cuda device
 
             double_precision
 
                     float precision used in PyGRANSO, torch.float or torch.double
-        
-        OUTPUT:         
+
+        OUTPUT:
 
             f_grad_vec
                     Vector, i.e., n by 1 torch tensor form gradients of objective function.
 
-
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
-        [1] Buyun Liang, and Ju Sun. 
-            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
+        [1] Buyun Liang, and Ju Sun.
+            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex
             Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
             Available at https://arxiv.org/abs/2111.13984
 
-        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
-            A BFGS-SQP method for nonsmooth, nonconvex, constrained 
-            optimization and its evaluation using relative minimization 
+        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton
+            A BFGS-SQP method for nonsmooth, nonconvex, constrained
+            optimization and its evaluation using relative minimization
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
 
@@ -121,51 +120,51 @@ def getObjGradDL(nvar,model,f, torch_device, double_precision):
     getObjGradDL:
         getObjGrad obtains gradient of objective function defined by torch.nn module
         by using pytorch autodiff
-        
+
         USAGE:
 
             f_grad_vec = getObjGradDL(nvar,model,f, torch_device, double_precision)
-        
+
         INPUT:
 
-            nvar        
+            nvar
                     Number of optimization variables in total
 
             model
 
                 torch.nn model used to define the neural network in the problem
 
-            f 
-                
+            f
+
                 Function handle of objective function
 
             torch_device
 
-                    Choose torch.device used for matrix operation in PyGRANSO. 
-                    torch_device = torch.device('cuda') if one wants to use cuda device 
+                    Choose torch.device used for matrix operation in PyGRANSO.
+                    torch_device = torch.device('cuda') if one wants to use cuda device
 
             double_precision
 
                     float precision used in PyGRANSO, torch.float or torch.double
-        
-        OUTPUT:         
+
+        OUTPUT:
 
             f_grad_vec
-            
+
                     Vector, i.e., n by 1 torch tensor form gradients of objective function.
 
 
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
-        [1] Buyun Liang, and Ju Sun. 
-            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
+        [1] Buyun Liang, and Ju Sun.
+            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex
             Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
             Available at https://arxiv.org/abs/2111.13984
 
-        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
-            A BFGS-SQP method for nonsmooth, nonconvex, constrained 
-            optimization and its evaluation using relative minimization 
+        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton
+            A BFGS-SQP method for nonsmooth, nonconvex, constrained
+            optimization and its evaluation using relative minimization
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
 
@@ -204,7 +203,7 @@ def getObjGradDL(nvar,model,f, torch_device, double_precision):
     if double_precision:
         torch_dtype = torch.double
     else:
-        torch_dtype = torch.float 
+        torch_dtype = torch.float
 
     f_grad_vec = torch.zeros((nvar,1),device=torch_device, dtype=torch_dtype)
 

@@ -78,9 +78,6 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
                                     (DEFAULT torch.device('cpu'))
                                     torch_device = torch.device('cuda') if one wants to use cuda device
 
-
-
-
         Output:
             alpha:   steplength satisfying weak Wolfe conditions if one was found,
                         otherwise left end point of interval bracketing such a point
