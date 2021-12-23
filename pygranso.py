@@ -36,6 +36,11 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
         The user must install a quadratic program solver,
         such as OSQP.
 
+        PyGRANSO uses modifed versions of the BFGS inverse Hessian approximation
+        update formulas and the inexact weak Wolfe line search from HANSO v2.1.
+        See the documentation of HANSO for more information on the use of
+        quasi-Newton methods for nonsmooth unconstrained optimization.    
+
         NOTE:
 
         On initialization, PyGRANSO will throw errors if it detects invalid
@@ -383,11 +388,6 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
 
         pygranso.py (introduced in PyGRANSO v1.0.0)
         Copyright (C) 2016-2021 Tim Mitchell and Buyun Liang
-
-        PyGRANSO uses modifed versions of the BFGS inverse Hessian approximation
-        update formulas and the inexact weak Wolfe line search from HANSO v2.1.
-        See the documentation of HANSO for more information on the use of
-        quasi-Newton methods for nonsmooth unconstrained optimization.
 
         This file is a MATLAB-to-Python port of granso.m from
         GRANSO v1.6.4 with the following new functionality and/or changes:
