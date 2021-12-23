@@ -6,7 +6,7 @@ def pygransoOptionsAdvanced(varargin):
         Standard or advanced options may be set.
 
         Type:
-        >> help(pygransoOptions)
+        >> help(pygransoOptionsAdvanced)
         to see documentation for the standard user options.
 
         ADVANCED PARAMETERS
@@ -230,7 +230,7 @@ def pygransoOptionsAdvanced(varargin):
 
         END OF ADVANCED PARAMETERS
 
-        See also PyGRANSO, pygransoOptions.
+        See also pygranso, pygransoOptions.
 
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
@@ -249,7 +249,7 @@ def pygransoOptionsAdvanced(varargin):
         pygransoOptionsAdvanced.py (introduced in PyGRANSO v1.0.0)
         Copyright (C) 2016-2021 Tim Mitchell and Buyun Liang
 
-        This file is a MATLAB-to-Python port of pygransoOptionsAdvanced.m from
+        This file is a MATLAB-to-Python port of gransoOptionsAdvanced.m from
         GRANSO v1.6.4 with the following new functionality and/or changes:
             1. Adding new options: QPsolver, init_step_size, linesearch_maxit,
                is_backtrack_linesearch, searching_direction_rescaling,

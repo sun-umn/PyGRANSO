@@ -15,7 +15,7 @@ def pygransoOptions(n,options, torch_device):
         Standard or advanced options may be set.
 
        Type:
-       help(pygransoOptionsAdvanced)
+       help(pygransoOptions)
        to see documentation for the advanced user options.
 
        USAGE:
@@ -301,7 +301,6 @@ def pygransoOptions(n,options, torch_device):
         so nice looking tables can be made.  But if you need to record the output,
         you can restrict the printed output to only use the basic ASCII character map
 
-
         print_use_orange
         --------------------------------
         Boolean value. Default value: True
@@ -340,7 +339,7 @@ def pygransoOptions(n,options, torch_device):
         pygransoOptions.py (introduced in PyGRANSO v1.0.0)
         Copyright (C) 2016-2021 Tim Mitchell and Buyun Liang
 
-        This file is a MATLAB-to-Python port of pygransoOptions.m from
+        This file is a MATLAB-to-Python port of gransoOptions.m from
         GRANSO v1.6.4 with the following new functionality and/or changes:
             1. Adding new options: QPsolver, init_step_size, linesearch_maxit,
                is_backtrack_linesearch, searching_direction_rescaling,

@@ -16,30 +16,30 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
     """
     PyGRANSO:
 
-        Minimize a function, possibly subject to inequality and/or equality 
-        constraints.  PyGRANSO is intended to be an efficient solver for 
-        constrained nonsmooth optimization problems, without any special 
-        structure or assumptions imposed on the objective or constraint 
+        Minimize a function, possibly subject to inequality and/or equality
+        constraints.  PyGRANSO is intended to be an efficient solver for
+        constrained nonsmooth optimization problems, without any special
+        structure or assumptions imposed on the objective or constraint
         functions.  It can handle problems involving functions that are any
-        or all of the following: smooth or nonsmooth, convex or nonconvex, 
-        and locally Lipschitz or non-locally Lipschitz.  
+        or all of the following: smooth or nonsmooth, convex or nonconvex,
+        and locally Lipschitz or non-locally Lipschitz.
 
-        PyGRANSO only requires the objective and constraint functions. 
+        PyGRANSO only requires the objective and constraint functions.
 
         The inequality constraints must be formulated as 'less than or
         equal to zero' constraints while the equality constraints must
-        be formulated as 'equal to zero' constraints.  The user is 
-        free to shift/scale these internally in order to specify how 
+        be formulated as 'equal to zero' constraints.  The user is
+        free to shift/scale these internally in order to specify how
         hard/soft each individual constraints are, provided that they
         respectively remain 'less than or equal' or 'equal' to zero.
 
         The user must install a quadratic program solver,
-        such as OSQP.  
+        such as OSQP.
 
-        NOTE: 
+        NOTE:
 
         On initialization, PyGRANSO will throw errors if it detects invalid
-        user options or if the user-provided functions to optimize either 
+        user options or if the user-provided functions to optimize either
         do not evaluate or not conform to PyGRANSO's format.  However, once
         optimization begins, PyGRANSO will catch any error that is thrown and
         terminate normally, so that the results of optimization so far
@@ -92,25 +92,25 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
                         where the key is the variable name and val is a list for correpsonding dimension:
                         e.g., var_in = {"x": [1,1]}; var_in = {"U": [5,10], "V": [10,20]}
 
-                        It should not be used when nn_model is specfied, as optimization variable information can be 
+                        It should not be used when nn_model is specfied, as optimization variable information can be
                         obtained from neural network model
 
         nn_model:
                         Default: None
 
-                        Neural network model defined by torch.nn. It only used when torch.nn was used to 
+                        Neural network model defined by torch.nn. It only used when torch.nn was used to
                         define the combinedFunction and/or objEvalFunction
 
         torch_device:
                         Default: torch.device('cpu')
 
-                        Choose torch.device used for matrix operation in PyGRANSO. 
-                        torch_device = torch.device('cuda') if one wants to use cuda device 
+                        Choose torch.device used for matrix operation in PyGRANSO.
+                        torch_device = torch.device('cuda') if one wants to use cuda device
 
         user_data:
                         Currently not used. To be removed in the next release
 
-        user_opts:         
+        user_opts:
                         Optional struct of settable parameters or None.
                         To see available parameters and their descriptions,
                         type:
@@ -127,12 +127,12 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
                             the objective          - soln.scalings.f
                             inequality constraints - soln.scalings.ci
                             equality constraints   - soln.scalings.ce
-                        These subsubfields contain real-valued vectors of 
-                        scalars in (0,1] that rescale the corresponding 
+                        These subsubfields contain real-valued vectors of
+                        scalars in (0,1] that rescale the corresponding
                         function(s) and their gradients.  A multiplier that
                         is one indicates that its corresponding function
-                        has not been pre-scaled.  The absence of a 
-                        subsubfield {f,ci,ce} indicates that none of the 
+                        has not been pre-scaled.  The absence of a
+                        subsubfield {f,ci,ce} indicates that none of the
                         functions belonging to that group were pre-scaled.
 
         The soln struct returns the optimization results in the following
@@ -140,14 +140,14 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
 
         .final          Function values at the last accepted iterate
 
-        .best           Info for the point that most optimizes the 
+        .best           Info for the point that most optimizes the
                         objective over the set of iterates encountered
                         during optimization.  Note that this point may not
                         be an accepted iterate.  For constrained problems,
                         this is the point that most optimizes the objective
-                        over the set of points encountered that were deemed 
-                        feasible with respect to the violation tolerances 
-                        (opts.viol_ineq_tol and opts.viol_eq_tol).  If no 
+                        over the set of points encountered that were deemed
+                        feasible with respect to the violation tolerances
+                        (opts.viol_ineq_tol and opts.viol_eq_tol).  If no
                         points were deemed feasible to tolerances, then
                         this field WILL NOT BE present.
 
@@ -155,10 +155,10 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
                         iterates are encountered which have zero total
                         violation, then this holds the best iterate amongst
                         those, i.e., the one which minimized the objective
-                        function the most.  Otherwise, this contains the 
-                        iterate which is closest to the feasible region, 
-                        that is with the smallest total violation, 
-                        regardless of the objective value.  NOTE: this 
+                        function the most.  Otherwise, this contains the
+                        iterate which is closest to the feasible region,
+                        that is with the smallest total violation,
+                        regardless of the objective value.  NOTE: this
                         field is only present in constrained problems.
 
         Note that if the problem was pre-scaled, the above fields will only
@@ -170,7 +170,7 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
         .best_unscaled
         .most_feasible_unscaled
 
-        For .final, .best, and .most_feasible (un)scaled variants, the 
+        For .final, .best, and .most_feasible (un)scaled variants, the
         following subsubfields are always present:
         .x                  the computed iterate
         .f                  value of the objective at this x
@@ -189,7 +189,7 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
 
         NOTE: The above total violation measures are with respect to the
         infinity norm, since the infinity norm is used for determining
-        whether or not a point is feasible.  Note however that PyGRANSO 
+        whether or not a point is feasible.  Note however that PyGRANSO
         optimizes an L1 penalty function.
 
         The soln struct also has the following subfields:
@@ -197,24 +197,24 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
                             - The BFGS inverse Hessian approximation at
                                 the final iterate
                             Limited-memory BFGS:
-                            - A struct containing fields S,Y,rho,gamma, 
+                            - A struct containing fields S,Y,rho,gamma,
                                 representing the final LBFGS state (so that
                                 PyGRANSO can be warm started using this data).
 
-        .stat_value         an approximate measure of stationarity at the 
-                            last accepted iterate.  See opts.opt_tol, 
-                            opts.ngrad, opts.evaldist, and equation (13) 
-                            and its surrounding discussion in the paper 
-                            referenced below describing the underlying 
+        .stat_value         an approximate measure of stationarity at the
+                            last accepted iterate.  See opts.opt_tol,
+                            opts.ngrad, opts.evaldist, and equation (13)
+                            and its surrounding discussion in the paper
+                            referenced below describing the underlying
                             BFGS-SQP method that PyGRANSO implements.
 
-        .iters              The number of iterations incurred.  Note that 
+        .iters              The number of iterations incurred.  Note that
                             if the last iteration fails to produce a step,
-                            it will not be printed.  Thus, this value may 
-                            sometimes appear to be greater by 1 compared to 
+                            it will not be printed.  Thus, this value may
+                            sometimes appear to be greater by 1 compared to
                             the last iterate printed.
 
-        .BFGS_updates       A struct of data about the number of BFGS 
+        .BFGS_updates       A struct of data about the number of BFGS
                             updates that were requested and accepted.
                             Numerical issues may force updates to be
                             (rarely) skipped.
@@ -225,21 +225,21 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
                             as one function evaluation.
 
         .termination_code   Numeric code indicating why PyGRANSO terminated:
-            0:  Approximate stationarity measurement <= opts.opt_tol and 
-                current iterate is sufficiently close to the feasible 
-                region (as determined by opts.viol_ineq_tol and 
+            0:  Approximate stationarity measurement <= opts.opt_tol and
+                current iterate is sufficiently close to the feasible
+                region (as determined by opts.viol_ineq_tol and
                 opts.viol_eq_tol).
 
             1:  Relative decrease in penalty function <= opts.rel_tol and
-                current iterate is sufficiently close to the feasible 
-                region (as determined by opts.viol_ineq_tol and 
+                current iterate is sufficiently close to the feasible
+                region (as determined by opts.viol_ineq_tol and
                 opts.viol_eq_tol).
 
             2:  Objective target value reached at an iterate
                 sufficiently close to feasible region (determined by
                 opts.fvalquit, opts.viol_ineq_tol and opts.viol_eq_tol).
 
-            3:  User requested termination via opts.halt_log_fn 
+            3:  User requested termination via opts.halt_log_fn
                 returning true at this iterate.
 
             4:  Max number of iterations reached (opts.maxit).
@@ -248,7 +248,7 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
 
             6:  Line search bracketed a minimizer but failed to satisfy
                 Wolfe conditions at a feasible point (with respect to
-                opts.viol_ineq_tol and opts.viol_eq_tol).  For 
+                opts.viol_ineq_tol and opts.viol_eq_tol).  For
                 unconstrained problems, this is often an indication that a
                 stationary point has been reached.
 
@@ -259,7 +259,7 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
                 objective function may be unbounded below.  For constrained
                 problems, where the objective may only be unbounded off the
                 feasible set, consider restarting PyGRANSO with opts.mu0 set
-                lower than soln.mu_lowest (see its description below for 
+                lower than soln.mu_lowest (see its description below for
                 more details).
 
             9:  PyGRANSO failed to produce a descent direction.
@@ -271,23 +271,23 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
 
             11: User-supplied functions threw an error which halted PyGRANSO.
 
-            12: A quadprog error forced the steering procedure to be 
-                aborted and PyGRANSO was halted (either because there were no 
-                available fallbacks or opts.halt_on_quadprog_error was set 
+            12: A quadprog error forced the steering procedure to be
+                aborted and PyGRANSO was halted (either because there were no
+                available fallbacks or opts.halt_on_quadprog_error was set
                 to true).  Only relevant for constrained problems.
 
-            13: An unknown error occurred, forcing PyGRANSO to stop.  Please 
+            13: An unknown error occurred, forcing PyGRANSO to stop.  Please
                 report these errors to the developer.
 
         .quadprog_failure_rate  Percent of the time quadprog threw an error or
                             returned an invalid result.  From 0 to 100.
 
-        .error                  Only present for soln.termination equal to 11, 
+        .error                  Only present for soln.termination equal to 11,
                             12, or 13.  Contains the thrown error that
                             caused PyGRANSO to halt optimization.
 
         .mu_lowest              Only present for constrained problems where
-                            the line search failed to bracket a minimizer 
+                            the line search failed to bracket a minimizer
                             (soln.termination_code == 7).  This contains
                             the lowest value of mu tried in the line search
                             reattempts.  For more details, see the line
@@ -301,9 +301,9 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
         Iter            The current iteration number
 
         Penalty Function (only applicable if the problem is constrained)
-            Mu          The current value of the penalty parameter 
+            Mu          The current value of the penalty parameter
             Value       Current value of the penalty function
-            
+
             where the penalty function is defined as
                 Mu*objective + total_violation
 
@@ -319,12 +319,12 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
         Line Search
                             SD          Search direction type:
                             S   Steering with BFGS inverse Hessian
-                            SI  Steering with identity 
-                            QN  Standard BFGS direction 
+                            SI  Steering with identity
+                            QN  Standard BFGS direction
                             GD  Gradient descent
-                            RX  Random where X is the number of random 
-                                search directions attempted 
-            
+                            RX  Random where X is the number of random
+                                search directions attempted
+
                         Note that S and SI are only applicable for
                         constrained problems.
 
@@ -334,31 +334,31 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
                         orange.  The standard search direction types for
                         constrained and unconstrained problems respectively
                         is S and QN.  The standard search direction can be
-                        modified via opts.min_fallback_level.  
+                        modified via opts.min_fallback_level.
 
                         The frequent use of fallbacks may indicate a
-                        deficient or broken QP installation (or that 
+                        deficient or broken QP installation (or that
                         the license is invalid or can't be verified).
-            
+
             Evals       Number of points evaluated in line search
 
-            t           Accepted length of line search step 
+            t           Accepted length of line search step
 
         Stationarity    Approximate stationarity measure
             Grads       Number of gradients used to compute measure
 
-            Value       Value of the approximate stationarity measure.  
-                
+            Value       Value of the approximate stationarity measure.
+
                         If fallbacks were employed to compute the
-                        stationarity value, that is quadprog errors were 
-                        encountered, its value will be printed in 
-                        orange, with ':X' appearing after it.  The X 
+                        stationarity value, that is quadprog errors were
+                        encountered, its value will be printed in
+                        orange, with ':X' appearing after it.  The X
                         indicates the number of requests to quadprog.  If
                         the value could not be computed at all, it will be
                         reported as Inf.
 
                         The frequent use of fallbacks may indicate a
-                        deficient or broken quadprog installation (or that 
+                        deficient or broken quadprog installation (or that
                         the license is invalid or can't be verified).
 
         See also pygransoOptions, pygransoOptionsAdvanced.
@@ -366,17 +366,17 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
-        [1] Buyun Liang, and Ju Sun. 
-            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
+        [1] Buyun Liang, and Ju Sun.
+            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex
             Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
             Available at https://arxiv.org/abs/2111.13984
 
-        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
-            A BFGS-SQP method for nonsmooth, nonconvex, constrained 
-            optimization and its evaluation using relative minimization 
+        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton
+            A BFGS-SQP method for nonsmooth, nonconvex, constrained
+            optimization and its evaluation using relative minimization
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
-            
+
         NOTE: PyGRANSO in all capitals refers to the software package and is the
         form that should generally be used.  pygranso or pygranso.py in lowercase
         letters refers specifically to the PyGRANSO routine/command.
@@ -392,10 +392,10 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
         This file is a MATLAB-to-Python port of granso.m from
         GRANSO v1.6.4 with the following new functionality and/or changes:
             1.Adding new options to handle pytorch neural network model.
-            2.Adding f_eval_fn to allow cheaper backtracking line search, as 
-            eval gradient is not needed in backtracking line search. 
+            2.Adding f_eval_fn to allow cheaper backtracking line search, as
+            eval gradient is not needed in backtracking line search.
             3. Add torch_device and double precision argument to allow user
-            select cuda/cpu and double/float. 
+            select cuda/cpu and double/float.
         Ported from MATLAB to Python and modified by Buyun Liang, 2021
 
         For comments/bug reports, please visit the PyGRANSO webpage:
@@ -423,7 +423,7 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    
+
     # Initialization
     #  - process arguments
     #  - set initial Hessian inverse approximation
@@ -446,12 +446,12 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
         else:
             f_eval_fn = None
 
-    try: 
+    try:
         [problem_fns,opts] = processArguments(n,obj_fn,user_opts, torch_device)
         [bfgs_hess_inv_obj,opts] = getBfgsManager(opts,torch_device,opts.double_precision)
         # construct the penalty function object and evaluate at x0
         # unconstrained problems will reset mu to one and mu will be fixed
-        mPF = PanaltyFuctions() # make penalty functions 
+        mPF = PanaltyFuctions() # make penalty functions
         [penaltyfn_obj,grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, f_eval_fn, problem_fns, torch_device = torch_device)
     except Exception as e:
         print(traceback.format_exc())
@@ -459,23 +459,23 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
 
     msg_box_fn = lambda margin_spaces,title_top,title_bottom,msg_lines,sides=True,user_width=0: pMB.printMessageBox(opts.print_ascii,opts.print_use_orange, margin_spaces,title_top,title_bottom,msg_lines,sides,user_width)
 
-    print_notice_fn = lambda title,msg: msg_box_fn(2,title,"",msg,True) 
+    print_notice_fn = lambda title,msg: msg_box_fn(2,title,"",msg,True)
     if opts.print_level:
         print("\n")
         if opts.quadprog_info_msg:
             print_notice_fn('QP SOLVER NOTICE',quadprogInfoMsg())
-        
+
         if opts.prescaling_info_msg:
             printPrescalingMsg( opts.prescaling_threshold,grad_norms_at_x0,print_notice_fn)
-       
+
     printer = None
-    if opts.print_level: 
+    if opts.print_level:
         n_ineq          = penaltyfn_obj.numberOfInequalities()
         n_eq            = penaltyfn_obj.numberOfEqualities()
         constrained     = n_ineq or n_eq
         pygransoPrinter_object = pgP()
         printer         = pygransoPrinter_object.pygransoPrinter(opts,n,n_ineq,n_eq)
-    
+
     try:
         bfgssqp_obj = AlgBFGSSQP()
         info = bfgssqp_obj.bfgssqp(f_eval_fn, penaltyfn_obj,bfgs_hess_inv_obj,opts,printer, torch_device)
@@ -483,7 +483,7 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
         print(traceback.format_exc())
         # recover optimization computed so far
         penaltyfn_obj.restoreSnapShot()
-    
+
     # package up solution in output argument
     [ soln, stat_value ]        = penaltyfn_obj.getBestSolutions()
     soln.H_final                = bfgs_hess_inv_obj.getState()
@@ -508,7 +508,7 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
     # python version: new function for printSummary
     printSummary = lambda name,fieldname: printSummaryAux(name,fieldname,soln,printer)
 
-    if opts.print_level:          
+    if opts.print_level:
         printer.msg({ 'Optimization results:', getResultsLegend() })
         sleep(0.0001) # Prevent race condition
         printSummary("F","final")
@@ -524,13 +524,13 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
         if qp_fail_rate > 1:
             printer.quadprogFailureRate(qp_fail_rate)
         printer.close()
-    
-         
+
+
     if hasattr(soln,"error"):
-        err = soln.error;      
+        err = soln.error;
         print("ERROR: In the end of main loop.")
         print(err)
-    
+
     return soln
 
 # only combined function allowed here. simpler form compare with pygranso
@@ -546,9 +546,9 @@ def getBfgsManager(opts,torch_device,double_precision):
         get_bfgs_fn = lambda H,scaleH0 : bfgsHI.bfgsHessianInverse(H,scaleH0)
     else:
         get_bfgs_fn = lambda H,scaleH0 : lbfgsHI.bfgsHessianInverseLimitedMem(H,scaleH0,opts.limited_mem_fixed_scaling,opts.limited_mem_size,opts.limited_mem_warm_start,torch_device,double_precision)
-    
+
     bfgs_obj = get_bfgs_fn(opts.H0,opts.scaleH0)
-    
+
     # remove potentially large and unnecessary data from the opts structure
     delattr(opts,'H0')
     delattr(opts,'limited_mem_warm_start')
@@ -567,15 +567,15 @@ def getTableRows(nums,num_width,cols,indent,brackets):
 def quadprogInfoMsg():
     msg = ["PyGRANSO requires a quadratic program (QP) solver that has a quadprog-compatible interface,",
             "the default is osqp. Users may provide their own wrapper for the QP solver.", ""
-            "To disable this notice, set opts.quadprog_info_msg = False"]  
-    return msg                   
+            "To disable this notice, set opts.quadprog_info_msg = False"]
+    return msg
 
 def poorScalingDetectedMsgs():
     title = "POOR SCALING DETECTED"
 
     pre = ["The supplied problem appears to be poorly scaled at x0, which may adversely affect",
     "optimization quality.  In particular, the following functions have gradients whose",
-    "norms evaluted at x0 are greater than 100:"] 
+    "norms evaluted at x0 are greater than 100:"]
 
     post = ["NOTE: One may wish to consider whether the problem can be alternatively formulated",
     "with better inherent scaling, which may yield improved optimization results.",
@@ -587,13 +587,13 @@ def poorScalingDetectedMsgs():
     return [title,pre,post]
 
 def prescalingEnabledMsgs():
-    title = "PRE-SCALING ENABLED"      
+    title = "PRE-SCALING ENABLED"
 
     pre = ["PyGRANSO has applied pre-scaling to functions whose norms were considered large at x0.",
         "PyGRANSO will now try to solve this pre-scaled version instead of the original problem",
         "given.  Specifically, the following functions have been automatically scaled",
         "downward so that the norms of their respective gradients evaluated at x0 no longer",
-        "exceed opts.prescaling_threshold and instead are now equal to it:"] 
+        "exceed opts.prescaling_threshold and instead are now equal to it:"]
 
     post = ["NOTE: While automatic pre-scaling may help ameliorate issues stemming from when the",
         "objective/constraint functions are poorly scaled, a solution to the pre-scaled",
@@ -601,7 +601,7 @@ def prescalingEnabledMsgs():
         "to consider if the problem can be reformulated with better inherent scaling.  The",
         "amount of pre-scaling applied by PyGRANSO can be tuned, or disabled completely, via",
         "adjusting opts.prescaling_threshold.  For more details, see pygransoOptions.",
-        "To disable this notice, set opts.prescaling_info_msg = false."]  
+        "To disable this notice, set opts.prescaling_info_msg = false."]
     return [title,pre,post]
 
 def getTerminationMsgLines(soln,constrained,width):
@@ -618,7 +618,7 @@ def getTerminationMsgLines(soln,constrained,width):
     elif soln.termination_code ==  5:
         s = "clock/wall time limit reached."
     elif soln.termination_code ==  6:
-        s = bracketedMinimizerFeasibleMsg(soln,constrained);          
+        s = bracketedMinimizerFeasibleMsg(soln,constrained);
     elif soln.termination_code ==  7:
         s = bracketedMinimizerInfeasibleMsg()
     elif soln.termination_code ==  8:
@@ -632,8 +632,8 @@ def getTerminationMsgLines(soln,constrained,width):
         s = "steering aborted due to quadprog() error; see opts.halt_on_quadprog_error."
     else:
         s = "unknown termination condition."
-    
-    s = "PyGRANSO termination code: %d --- %s" % (soln.termination_code,"".join(s))    
+
+    s = "PyGRANSO termination code: %d --- %s" % (soln.termination_code,"".join(s))
     lines = [   "Iterations:              %d" % (soln.iters),
                 "Function evaluations:    %d" % (soln.fn_evals)]
     lines.extend( wrapToLines(s,width,0))
@@ -668,12 +668,12 @@ def targetValueAttainedMsg(constrained):
 def bracketedMinimizerFeasibleMsg(soln,constrained):
     if constrained:
         if soln.final.tv == 0:
-            s2 = " at a (strictly) feasible point. "   
+            s2 = " at a (strictly) feasible point. "
         else:
             s2 = " at a feasible point (to tolerances). "
     else:
         s2 = ". "
-    
+
     s = [   "line search bracketed a minimizer but failed to satisfy Wolfe conditions",
             s2, "This may be an indication that approximate stationarity has been attained." ]
     return s
@@ -688,13 +688,13 @@ def failedToBracketedMinimizerMsg(soln):
     if hasattr(soln,"mu_lowest"):
         s_mu = ["PyGRANSO attempted mu values down to {} unsuccessively.  However, if ".format(soln.mu_lowest),
                 "the objective function is indeed bounded below on the feasible set, ",
-                "consider restarting PyGRANSO with opts.mu0 set even lower than {}.".format(soln.mu_lowest)] 
+                "consider restarting PyGRANSO with opts.mu0 set even lower than {}.".format(soln.mu_lowest)]
     else:
         s_mu = ""
 
     s = ["line search failed to bracket a minimizer, indicating that the objective ",
         "function may be unbounded below. "] + s_mu
-    
+
     return s
 
 def displayError(partial_computation,error_msg,err):
@@ -730,10 +730,9 @@ def unknownErrorMsg():
     s = ["An unknown error has incurred.  ",
         "Please report it on PyGRANSO''s GitHub page.\n",
         " ",
-        "    TODO"] 
+        "    TODO"]
     return s
 
 def printSummaryAux(name,fieldname,soln,printer):
         if hasattr(soln,fieldname):
             printer.summary(name,getattr(soln,fieldname))
-
