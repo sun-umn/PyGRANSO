@@ -1,7 +1,7 @@
 import time
 import torch
 from pygranso import pygranso
-from pygransoStruct import Options, GeneralStruct 
+from pygransoStruct import Options, GeneralStruct
 import scipy.io
 from torch import linalg as LA
 import os
@@ -20,14 +20,14 @@ import numpy.linalg as la
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
-        [1] Buyun Liang, and Ju Sun. 
-            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex 
+        [1] Buyun Liang, and Ju Sun.
+            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex
             Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
             Available at https://arxiv.org/abs/2111.13984
 
-        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton 
-            A BFGS-SQP method for nonsmooth, nonconvex, constrained 
-            optimization and its evaluation using relative minimization 
+        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton
+            A BFGS-SQP method for nonsmooth, nonconvex, constrained
+            optimization and its evaluation using relative minimization
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
 
@@ -79,16 +79,16 @@ def rosenbrock():
         # enable autodifferentiation
         x1.requires_grad_(True)
         x2.requires_grad_(True)
-        
+
         # objective function
         f = (8 * abs(x1**2 - x2) + (1 - x1)**2)
 
         # inequality constraint, matrix form
         ci = GeneralStruct()
-        ci.c1 = (2**0.5)*x1-1  
-        ci.c2 = 2*x2-1 
+        ci.c1 = (2**0.5)*x1-1
+        ci.c2 = 2*x2-1
 
-        # equality constraint 
+        # equality constraint
         ce = None
 
         return [f,ci,ce]
@@ -108,7 +108,7 @@ def rosenbrock():
 
 def spectral_radius():
 
-    
+
     file = "{}/examples/data/spec_radius_opt_data.mat".format(currentdir)
     mat = scipy.io.loadmat(file)
     mat_struct = mat['sys']
@@ -124,7 +124,7 @@ def spectral_radius():
     var_in = {"X": [p,m] }
 
     def comb_fn(X_struct):
-        # user defined variable, matirx form. torch tensor
+        # user defined variable, matrix form. torch tensor
         X = X_struct.X
         X.requires_grad_(True)
 
@@ -137,9 +137,9 @@ def spectral_radius():
         ci = GeneralStruct()
         ci.c1 = torch.max(D.real) + stability_margin
 
-        # equality constraint 
+        # equality constraint
         ce = None
-        
+
         return [f,ci,ce]
 
     opts = Options()
@@ -225,14 +225,14 @@ def robust_PCA():
         S = X_struct.S
         M.requires_grad_(True)
         S.requires_grad_(True)
-        
+
         # objective function
         f = torch.norm(M, p = 'nuc') + eta * torch.norm(S, p = 1)
 
         # inequality constraint, matrix form
         ci = None
-        
-        # equality constraint 
+
+        # equality constraint
         ce = GeneralStruct()
         ce.c1 = M + S - Y
 
@@ -249,9 +249,9 @@ def lasso():
     pos_one = torch.ones(n-1)
     neg_one = -torch.ones(n-1)
     F = torch.zeros(n-1,n)
-    F[:,0:n-1] += torch.diag(neg_one,0) 
+    F[:,0:n-1] += torch.diag(neg_one,0)
     F[:,1:n] += torch.diag(pos_one,0)
-    F = F.to(device=device, dtype=torch_dtype)  # double precision requireed in torch operations 
+    F = F.to(device=device, dtype=torch_dtype)  # double precision requireed in torch operations
     b = b.to(device=device, dtype=torch_dtype)
 
     # variables and corresponding dimensions.
@@ -261,19 +261,19 @@ def lasso():
     def comb_fn(X_struct):
         x = X_struct.x
         x.requires_grad_(True)
-        
+
         # objective function
         f = (x-b).t() @ (x-b)  + eta * torch.norm( F@x, p = 1)
-        
+
         # inequality constraint, matrix form
         ci = None
-        # equality constraint 
+        # equality constraint
         ce = None
 
         return [f,ci,ce]
 
     opts = Options()
-    opts.QPsolver = 'osqp' 
+    opts.QPsolver = 'osqp'
     opts.x0 = torch.ones((n,1)).to(device=device, dtype=torch_dtype)
     opts.print_level = 1
     opts.print_frequency = 10
@@ -297,19 +297,19 @@ def feasibility():
         # constant objective function
         f = 0*x+0*y
 
-        # inequality constraint 
+        # inequality constraint
         ci = GeneralStruct()
         ci.c1 = (y+x**2)**2+0.1*y**2-1
         ci.c2 = y - torch.exp(-x) - 3
         ci.c3 = y-x+4
-        
-        # equality constraint 
+
+        # equality constraint
         ce = None
 
         return [f,ci,ce]
 
     opts = Options()
-    opts.QPsolver = 'osqp' 
+    opts.QPsolver = 'osqp'
     opts.print_frequency = 1
     opts.x0 = 0 * torch.ones((2,1)).to(device=device, dtype=torch_dtype)
     opts.print_level = print_level
@@ -380,4 +380,3 @@ if __name__ == "__main__" :
         print("Successfully passed all tests!")
     except Exception:
         print("Test {} fail, please carefully read the instructions on https://ncvx.org/ for installation".format(count))
-    
