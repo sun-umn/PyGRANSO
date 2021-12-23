@@ -381,56 +381,29 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
         form that should generally be used.  pygranso or pygranso.py in lowercase
         letters refers specifically to the PyGRANSO routine/command.
 
-        Change Log:
-            granso.m introduced in GRANSO Version 1.0.
+        pygranso.py (introduced in PyGRANSO v1.0.0)
+        Copyright (C) 2016-2021 Tim Mitchell and Buyun Liang
 
-            GRANSO uses modifed versions of the BFGS inverse Hessian approximation
-            update formulas and the inexact weak Wolfe line search from HANSO v2.1.
-            See the documentation of HANSO for more information on the use of
-            quasi-Newton methods for nonsmooth unconstrained optimization.
-            
-            Buyun Dec 20, 2021 (PyGRANSO Version 1.0.0):
-                pygranso.py is translated from granso.m in GRANSO Version 1.6.4.
+        PyGRANSO uses modifed versions of the BFGS inverse Hessian approximation
+        update formulas and the inexact weak Wolfe line search from HANSO v2.1.
+        See the documentation of HANSO for more information on the use of
+        quasi-Newton methods for nonsmooth unconstrained optimization.
 
-                Add new options to handle pytorch neural network model.
-
-                Add f_eval_fn to allow cheaper backtracking line search, as 
-                eval gradient is not needed in backtracking line search. 
-
-                Add torch_device and double precision argument to allow user
-                select cuda/cpu and double/float.  
+        This file is a MATLAB-to-Python port of granso.m from
+        GRANSO v1.6.4 with the following new functionality and/or changes:
+            1.Adding new options to handle pytorch neural network model.
+            2.Adding f_eval_fn to allow cheaper backtracking line search, as 
+            eval gradient is not needed in backtracking line search. 
+            3. Add torch_device and double precision argument to allow user
+            select cuda/cpu and double/float. 
+        Ported from MATLAB to Python and modified by Buyun Liang, 2021
 
         For comments/bug reports, please visit the PyGRANSO webpage:
         https://github.com/sun-umn/PyGRANSO
 
-        PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
-
-        =========================================================================
-        |  GRANSO: GRadient-based Algorithm for Non-Smooth Optimization         |
-        |  Copyright (C) 2016 Tim Mitchell                                      |
-        |                                                                       |
-        |  This file is translated from GRANSO.                                 |
-        |                                                                       |
-        |  GRANSO is free software: you can redistribute it and/or modify       |
-        |  it under the terms of the GNU Affero General Public License as       |
-        |  published by the Free Software Foundation, either version 3 of       |
-        |  the License, or (at your option) any later version.                  |
-        |                                                                       |
-        |  GRANSO is distributed in the hope that it will be useful,            |
-        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
-        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
-        |  GNU Affero General Public License for more details.                  |
-        |                                                                       |
-        |  You should have received a copy of the GNU Affero General Public     |
-        |  License along with this program.  If not, see                        |
-        |  <http://www.gnu.org/licenses/agpl.html>.                             |
-        =========================================================================
-
         =========================================================================
         |  PyGRANSO: A User-Friendly and Scalable Package for                   |
         |  Nonconvex Optimization in Machine Learning.                          |
-        |                                                                       |
-        |  Copyright (C) 2021 Buyun Liang                                       |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
@@ -439,7 +412,7 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
         |  published by the Free Software Foundation, either version 3 of       |
         |  the License, or (at your option) any later version.                  |
         |                                                                       |
-        |  GRANSO is distributed in the hope that it will be useful,            |
+        |  PyGRANSO is distributed in the hope that it will be useful,          |
         |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
         |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
         |  GNU Affero General Public License for more details.                  |
@@ -448,7 +421,6 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
         |  License along with this program.  If not, see                        |
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
-
     """
     
     # Initialization
