@@ -20,10 +20,10 @@ def makeStructWithFields(varargin):
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
             
-        centerString.py (introduced in PyGRANSO v1.0.0)
+        makeStructWithFields.py (introduced in PyGRANSO v1.0.0)
         Copyright (C) 2016-2021 Tim Mitchell
 
-        This file is a direct port of centerString.m, which is included as part
+        This file is a direct port of makeStructWithFields.m, which is included as part
         of GRANSO v1.6.4 and from URTM (http://www.timmitchell/software/URTM).
         Ported from MATLAB to Python by Buyun Liang 2021
 

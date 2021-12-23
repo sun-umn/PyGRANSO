@@ -116,9 +116,8 @@ class pgP:
             pygransoPrinter.py (introduced in PyGRANSO v1.0.0)
             Copyright (C) 2016-2021 Tim Mitchell
 
-            This file is a direct port of pygransoPrinter.m, which is included as part
-            of GRANSO v1.6.4 and from URTM (http://www.timmitchell/software/URTM).
-            Ported from MATLAB to Python by Buyun Liang 2021
+            This is a direct port of pygransoPrinter.m from GRANSO v1.6.4.
+            Ported from MATLAB to Python by Buyun Liang 2021.
 
             For comments/bug reports, please visit the PyGRANSO webpage:
             https://github.com/sun-umn/PyGRANSO
