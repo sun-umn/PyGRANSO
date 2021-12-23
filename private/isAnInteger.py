@@ -20,7 +20,7 @@ def isAnInteger(x):
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
 
-        isAnInteger.py
+        isAnInteger.py (introduced in PyGRANSO v1.0.0)
         Copyright (C) 2016-2021 Tim Mitchell
 
         This file is a direct port of isAnInteger.m, which is included as part
@@ -33,6 +33,7 @@ def isAnInteger(x):
         =========================================================================
         |  PyGRANSO: A User-Friendly and Scalable Package for                   |
         |  Nonconvex Optimization in Machine Learning.                          |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |

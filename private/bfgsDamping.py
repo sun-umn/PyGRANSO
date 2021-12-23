@@ -61,6 +61,7 @@ def bfgsDamping(damping,applyH,s,y,sty):
         =========================================================================
         |  PyGRANSO: A User-Friendly and Scalable Package for                   |
         |  Nonconvex Optimization in Machine Learning.                          |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
