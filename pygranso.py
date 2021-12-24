@@ -69,35 +69,19 @@ def pygranso(var_spec,combinedFunction,objEvalFunction=None,user_opts=None):
         - combined_fn evaluates objective and constraints simultaneously:
 
         "combined" format
-        soln = pygranso(combinedFunction,var_spec,objEvalFunction=None,user_opts=None)
+        soln = pygranso(var_spec,combinedFunction,objEvalFunction=None,user_opts=None)
 
 
         INPUT:
 
-        combinedFunction:
-                        Function handle of single input X, a data structuture storing all input variables,
-                        for evaluating:
-
-                        - The values of the objective and
-                            constraints simultaneously:
-                            [f,ci,ce] = combinedFunction(X)
-                            In this case, ci and/or ce should be returned as
-                            None if no (in)equality constraints are given.
-
-        objEvalFunction:
-                        Function handle of single input X, a data structuture storing all input variables,
-                        for evaluating:
-
-                        - The values of the objective:
-                            f = objEvalFunction(X)
         var_spec
-            var_spec can be the following two values:
+            var_spec can be one of the following two values:
             1. var_dim_map: used in general cases
 
             OR 
 
             2.[var_dim_map,nn_model] : if torch neural network model used in both objective and constraints,
-            we need additional nn_model arg to allow autodifferentiation. This option will be merged with 1 
+            we need additional nn_model arg to allow autodifferentiation. This option will be merged into 1 
             in the next release.
 
             var_dim_map:
@@ -115,6 +99,23 @@ def pygranso(var_spec,combinedFunction,objEvalFunction=None,user_opts=None):
 
                             Neural network model defined by torch.nn. It only used when torch.nn was used to
                             define the combinedFunction and/or objEvalFunction
+
+        combinedFunction:
+                        Function handle of single input X, a data structuture storing all input variables,
+                        for evaluating:
+
+                        - The values of the objective and
+                            constraints simultaneously:
+                            [f,ci,ce] = combinedFunction(X)
+                            In this case, ci and/or ce should be returned as
+                            None if no (in)equality constraints are given.
+
+        objEvalFunction:
+                        Function handle of single input X, a data structuture storing all input variables,
+                        for evaluating:
+
+                        - The values of the objective:
+                            f = objEvalFunction(X)
 
         user_opts:
                         Optional struct of settable parameters or None.
