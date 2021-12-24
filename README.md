@@ -1,6 +1,6 @@
 # PyGRANSO
 
-PyGRANSO: A User-Friendly and Scalable Package for Nonconvex Optimization in Machine Learning.
+PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation
 
 Please check https://ncvx.org for detailed instructions (introduction, installation, settings, examples...).
 
