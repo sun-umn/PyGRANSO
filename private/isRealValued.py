@@ -54,8 +54,8 @@ def isRealValued(X):
     """
 
     if torch.is_tensor(X):
-      tf = torch.all(torch.isreal(X) == True).item()  
+        tf = torch.all(torch.isreal(X) == True).item()  
     else:
-      tf = np.isreal(X)
+        tf = np.isreal(X)
 
     return tf
