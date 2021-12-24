@@ -58,8 +58,7 @@ def getCiVec(ci,torch_device, double_precision):
         https://github.com/sun-umn/PyGRANSO
 
         =========================================================================
-        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
-        |  Nonconvex Optimization in Machine Learning.                          |
+        |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
         |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |

@@ -62,8 +62,7 @@ def obj_eval(eval_obj, x, var_dim_map, data_in = None):
         https://github.com/sun-umn/PyGRANSO
 
         =========================================================================
-        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
-        |  Nonconvex Optimization in Machine Learning.                          |
+        |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
         |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
@@ -192,8 +191,7 @@ def tensor2vec(combinedFunction,x,var_dim_map,nvar,data_in = None,  torch_device
         https://github.com/sun-umn/PyGRANSO
 
         =========================================================================
-        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
-        |  Nonconvex Optimization in Machine Learning.                          |
+        |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
         |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |

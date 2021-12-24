@@ -188,8 +188,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
         =========================================================================
 
         =========================================================================
-        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
-        |  Nonconvex Optimization in Machine Learning.                          |
+        |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
         |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |

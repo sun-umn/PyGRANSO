@@ -30,8 +30,7 @@ def copyrightNotice():
         https://github.com/sun-umn/PyGRANSO
 
         =========================================================================
-        |  PyGRANSO: A User-Friendly and Scalable Package for                   |
-        |  Nonconvex Optimization in Machine Learning.                          |
+        |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
         |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
@@ -51,6 +50,6 @@ def copyrightNotice():
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    msg = ["PyGRANSO: A User-Friendly and Scalable Package for Nonconvex Optimization in Machine Learning", 
+    msg = ["PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation", 
             "Version 1.0.0", "Licensed under the AGPLv3, Copyright (C) 2021 Tim Mitchell and Buyun Liang"]
     return msg
