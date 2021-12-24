@@ -10,9 +10,10 @@ from private.wrapToLines import wrapToLines
 from time import sleep
 from private.tensor2vec import tensor2vec, obj_eval
 from private.getNvar import getNvar
+from private.processVarSpec import processVarSpec
 import traceback,sys
 
-def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None,user_opts=None):
+def pygranso(combinedFunction,var_spec,objEvalFunction=None,user_opts=None):
     """
     PyGRANSO:
 
@@ -68,7 +69,7 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
         - combined_fn evaluates objective and constraints simultaneously:
 
         "combined" format
-        soln = pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None,user_opts=None)
+        soln = pygranso(combinedFunction,var_spec,objEvalFunction=None,user_opts=None)
 
 
         INPUT:
@@ -89,22 +90,31 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
 
                         - The values of the objective:
                             f = objEvalFunction(X)
+        var_spec
+            var_spec can be the following two values:
+            1. var_dim_map: used in general cases
 
-        var_dim_map:
-                        Default: None
+            OR 
 
-                        A dictionary for optmization variable information,
-                        where the key is the variable name and val is a list for correpsonding dimension:
-                        e.g., var_in = {"x": [1,1]}; var_in = {"U": [5,10], "V": [10,20]}
+            2.[var_dim_map,nn_model] : if torch neural network model used in both objective and constraints,
+            we need additional nn_model arg to allow autodifferentiation. This option will be merged with 1 
+            in the next release.
 
-                        It should not be used when nn_model is specfied, as optimization variable information can be
-                        obtained from neural network model
+            var_dim_map:
+                            Required
 
-        nn_model:
-                        Default: None
+                            A dictionary for optmization variable information,
+                            where the key is the variable name and val is a list for correpsonding dimension:
+                            e.g., var_in = {"x": [3]}; var_in = {"U": [5,10], "V": [10,20]; var_in = {"W":[3,28,28]}}
 
-                        Neural network model defined by torch.nn. It only used when torch.nn was used to
-                        define the combinedFunction and/or objEvalFunction
+                            It should not be used when nn_model is specfied, as optimization variable information can be
+                            obtained from neural network model
+
+            nn_model:
+                            Default: None
+
+                            Neural network model defined by torch.nn. It only used when torch.nn was used to
+                            define the combinedFunction and/or objEvalFunction
 
         user_opts:
                         Optional struct of settable parameters or None.
@@ -420,6 +430,8 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
     #  - process arguments
     #  - set initial Hessian inverse approximation
     #  - evaluate functions at x0
+
+    [var_dim_map,nn_model] = processVarSpec(var_spec)
 
     try:
         if nn_model != None:
