@@ -139,8 +139,8 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
-        [1] Buyun Liang, and Ju Sun.
-            PyGRANSO: A User-Friendly and Scalable Package for Nonconvex
+        [1] Buyun Liang, Tim Mitchell and Ju Sun.
+            NCVX: A User-Friendly and Scalable Package for Nonconvex
             Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
             Available at https://arxiv.org/abs/2111.13984
 
