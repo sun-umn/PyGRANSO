@@ -1,4 +1,6 @@
-def pygransoOptionsAdvanced(varargin):
+import pygransoOptions
+
+def pygransoOptionsAdvanced(n,options):
     """
     pygransoOptionsAdvanced:
         Process user options struct for pygranso.py.  If user_opts is None or
@@ -8,6 +10,24 @@ def pygransoOptionsAdvanced(varargin):
         Type:
         >> help(pygransoOptionsAdvanced)
         to see documentation for the standard user options.
+
+        USAGE:
+        opts = pygransoOptionsAdvanced(n,options)
+
+        INPUT:
+        n           Number of variables being optimized.
+
+        user_opts   Struct of settable algorithm parameters.  No fields are
+                    required, irrelevant fields are ignored, and user_opts
+                    may be given as None.
+
+        OUTPUT:
+        opts        Struct of all tunable user parameters for PyGRANSO.
+                    If a field is provided in user_opts, then the user's
+                    value is checked to whether or not it is a valid value,
+                    and if so, it is set in opts.  Otherwise, an error is
+                    thrown.  If a field is not provided in user_opts, opts
+                    will contain the field with PyGRANSO's default value.
 
         ADVANCED PARAMETERS
 
@@ -290,9 +310,9 @@ def pygransoOptionsAdvanced(varargin):
         This file is a MATLAB-to-Python port of gransoOptionsAdvanced.m from
         GRANSO v1.6.4 with the following new functionality and/or changes:
             1. Adding new options: QPsolver, init_step_size, linesearch_maxit,
-               is_backtrack_linesearch, searching_direction_rescaling,
-               disable_terminationcode_6.
-               See https://ncvx.org/settings/new_para.html for more details.
+            is_backtrack_linesearch, searching_direction_rescaling,
+            disable_terminationcode_6.
+            See https://ncvx.org/settings/new_para.html for more details.
         Ported from MATLAB to Python and modified by Buyun Liang, 2021
 
         For comments/bug reports, please visit the PyGRANSO webpage:
@@ -328,4 +348,6 @@ def pygransoOptionsAdvanced(varargin):
 
     #  Just pass all the work to the standard pygransoOptions function.
 
-    return None
+    opts = pygransoOptions(n,options)
+
+    return opts
