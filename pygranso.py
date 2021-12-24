@@ -13,7 +13,7 @@ from private.getNvar import getNvar
 from private.processVarSpec import processVarSpec
 import traceback,sys
 
-def pygranso(combinedFunction,var_spec,objEvalFunction=None,user_opts=None):
+def pygranso(var_spec,combinedFunction,objEvalFunction=None,user_opts=None):
     """
     PyGRANSO:
 
