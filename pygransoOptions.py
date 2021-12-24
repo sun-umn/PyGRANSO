@@ -7,7 +7,7 @@ from pygransoStruct import Options
 from private.isAnInteger import isAnInteger
 import traceback,sys
 
-def pygransoOptions(n,options, torch_device):
+def pygransoOptions(n,options):
     """
     pygransoOptions:
         Validate user options struct for pygranso.py.  If user_opts is None or
@@ -391,7 +391,7 @@ def pygransoOptions(n,options, torch_device):
         [default_opts, LAST_FALLBACK_LEVEL] = getDefaults(n)
 
     if options == None:
-        opts = postProcess(n,default_opts, torch_device)
+        opts = postProcess(n,default_opts)
         return opts
     else:
         user_opts = options
@@ -493,7 +493,7 @@ def pygransoOptions(n,options, torch_device):
         #  exceptions).  1 is not acceptable.
         #  wolfe2: conventionally wolfe2 should be > wolfe1 but it is
         #  sometimes okay for both to be zero (e.g. Shor)
-        validator.setRealInIntervalCC("wolfe1",0,0.5);
+        validator.setRealInIntervalCC("wolfe1",0,0.5)
         validator.setRealInIntervalCO("wolfe2",validator.getValue('wolfe1'),1)
         validator.setIntegerNonnegative("linesearch_nondescent_maxit")
         validator.setIntegerNonnegative("linesearch_reattempts")
@@ -515,6 +515,9 @@ def pygransoOptions(n,options, torch_device):
         validator.setLogical("print_ascii")
         validator.setLogical("print_use_orange")
 
+        # Torch Device
+        validator.setTorchDevice("torch_device")
+
         if hasattr(user_opts,"halt_log_fn") and user_opts.halt_log_fn != None:
             validator.setFunctionHandle("halt_log_fn")
 
@@ -525,7 +528,7 @@ def pygransoOptions(n,options, torch_device):
         sys.exit()
 
     #  GET THE VALIDATED OPTIONS AND POST PROCESS THEM
-    opts = postProcess(n,validator.getValidatedOpts(), torch_device)
+    opts = postProcess(n,validator.getValidatedOpts(), opts.torch_device)
 
     return opts
 
@@ -615,5 +618,7 @@ def getDefaults(n):
     setattr(default_opts,'print_use_orange',True)
     setattr(default_opts,'halt_log_fn',None)
     setattr(default_opts,'debug_mode',False)
+
+    setattr(default_opts,'torch_device',torch.device('cpu'))
 
     return [default_opts, LAST_FALLBACK_LEVEL]

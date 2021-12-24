@@ -12,7 +12,7 @@ from private.tensor2vec import tensor2vec, obj_eval
 from private.getNvar import getNvar
 import traceback,sys
 
-def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, torch_device = torch.device('cpu'),user_data=None,user_opts=None):
+def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None,user_data=None,user_opts=None):
     """
     PyGRANSO:
 
@@ -105,12 +105,6 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
 
                         Neural network model defined by torch.nn. It only used when torch.nn was used to
                         define the combinedFunction and/or objEvalFunction
-
-        torch_device:
-                        Default: torch.device('cpu')
-
-                        Choose torch.device used for matrix operation in PyGRANSO.
-                        torch_device = torch.device('cuda') if one wants to use cuda device
 
         user_data:
                         Currently not used. To be removed in the next release
@@ -430,25 +424,31 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
     #  - set initial Hessian inverse approximation
     #  - evaluate functions at x0
 
-    if nn_model != None:
-        n = getNvar(var_dim_map)
-        obj_fn = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,user_data,torch_device, model = nn_model,double_precision=opts.double_precision)
-        if objEvalFunction != None:
-            f_eval_fn = lambda x: obj_eval(objEvalFunction,x,var_dim_map, user_data)
-        else:
-            f_eval_fn = None
-
-    else:
-        # call the functions getNvar to get the total number of (scalar) variables
-        n = getNvar(var_dim_map)
-        obj_fn = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,user_data,torch_device, double_precision=opts.double_precision)
-        if objEvalFunction != None:
-            f_eval_fn = lambda x: obj_eval(objEvalFunction,x,var_dim_map, user_data)
-        else:
-            f_eval_fn = None
-
     try:
-        [problem_fns,opts] = processArguments(n,obj_fn,user_opts, torch_device)
+        if nn_model != None:
+            n = getNvar(var_dim_map)
+        else:
+            # call the functions getNvar to get the total number of (scalar) variables
+            n = getNvar(var_dim_map)
+
+        opts = pygransoOptions(n,user_opts)
+        torch_device = opts.torch_device
+
+        if nn_model != None:
+            problem_fns = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,user_data,torch_device, model = nn_model,double_precision=opts.double_precision)
+            if objEvalFunction != None:
+                f_eval_fn = lambda x: obj_eval(objEvalFunction,x,var_dim_map, user_data)
+            else:
+                f_eval_fn = None
+
+        else:
+            n = getNvar(var_dim_map)
+            problem_fns = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,user_data,torch_device, double_precision=opts.double_precision)
+            if objEvalFunction != None:
+                f_eval_fn = lambda x: obj_eval(objEvalFunction,x,var_dim_map, user_data)
+            else:
+                f_eval_fn = None
+
         [bfgs_hess_inv_obj,opts] = getBfgsManager(opts,torch_device,opts.double_precision)
         # construct the penalty function object and evaluate at x0
         # unconstrained problems will reset mu to one and mu will be fixed
@@ -534,13 +534,13 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
 
     return soln
 
-# only combined function allowed here. simpler form compare with pygranso
-# different cases needed if seperate obj eq and ineq are using
-def processArguments(n,combined_fns,opts,torch_device):
-    problem_fns = combined_fns
-    options = opts
-    options = pygransoOptions(n,options,torch_device)
-    return [problem_fns,options]
+# # only combined function allowed here. simpler form compare with pygranso
+# # different cases needed if seperate obj eq and ineq are using
+# def processArguments(n,combined_fns,opts,torch_device):
+#     problem_fns = combined_fns
+#     options = opts
+#     options = pygransoOptions(n,options,torch_device)
+#     return [problem_fns,options]
 
 def getBfgsManager(opts,torch_device,double_precision):
     if opts.limited_mem_size == 0:

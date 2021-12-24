@@ -100,9 +100,10 @@ def rosenbrock():
     opts.x0 = torch.ones((2,1), device=device, dtype=torch_dtype)
     opts.print_level = print_level
     opts.double_precision = double_precision
+    opts.torch_device = device
 
 
-    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, user_opts = opts)
     print("test 1/7 passed (Rosenbrock)")
 
 def spectral_radius():
@@ -148,8 +149,9 @@ def spectral_radius():
     opts.print_frequency = 10
     opts.print_level = print_level
     opts.double_precision = double_precision
+    opts.torch_device = device
 
-    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, user_opts = opts)
     print("test 2/7 passed (Spectral Radius Optimization)")
 
 def dictionary_learning():
@@ -193,11 +195,12 @@ def dictionary_learning():
     opts.x0 = torch.from_numpy(x0).to(device=device, dtype=torch_dtype)
     opts.print_level = print_level
     opts.double_precision = double_precision
+    opts.torch_device = device
 
 
     opts.print_frequency = 10
 
-    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, user_opts = opts)
     print("test 3/7 passed (Dictionary Learning)")
 
 def robust_PCA():
@@ -218,6 +221,7 @@ def robust_PCA():
     opts.maxit = 50
     opts.print_level = print_level
     opts.double_precision = double_precision
+    opts.torch_device = device
 
     def comb_fn(X_struct):
         M = X_struct.M
@@ -237,7 +241,7 @@ def robust_PCA():
 
         return [f,ci,ce]
 
-    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, user_opts = opts)
     print("test 4/7 passed (Robust PCA)")
 
 def lasso():
@@ -279,7 +283,9 @@ def lasso():
     opts.print_level = print_level
     opts.double_precision = double_precision
     opts.maxit = 30
-    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    opts.torch_device = device
+
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, user_opts = opts)
 
     print("test 5/7 passed (LASSO)")
 
@@ -313,8 +319,9 @@ def feasibility():
     opts.x0 = 0 * torch.ones((2,1)).to(device=device, dtype=torch_dtype)
     opts.print_level = print_level
     opts.double_precision = double_precision
+    opts.torch_device = device
 
-    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, user_opts = opts)
     print("test 6/7 passed (Feasibility Problem)")
 
 
@@ -353,8 +360,9 @@ def sphere_manifold():
     opts.maxit = 20
     opts.print_level = print_level
     opts.double_precision = double_precision
+    opts.torch_device = device
 
-    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, torch_device = device, user_opts = opts)
+    soln = pygranso(combinedFunction = comb_fn,var_dim_map = var_in, user_opts = opts)
     print("test 7/7 passed (Sphere Manifold)")
 
 

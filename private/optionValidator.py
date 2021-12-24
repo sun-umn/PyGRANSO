@@ -10,6 +10,7 @@ from private.isColumn import isColumn
 from private.isMbyN import isMbyN
 from private.isPositiveDefinite import isPositiveDefinite
 from private.isString import isString
+from private.isTorchDevice import isTorchDevice
 from private.isRestartData import isRestartData
 import numpy as np
 import copy
@@ -362,6 +363,7 @@ class oV:
 
         setattr(validator, "setString", lambda name : self.setString(name))
         setattr(validator,"setRestartData",lambda name: self.setRestartData(name))
+        setattr(validator, "setTorchDevice", lambda name : self.setTorchDevice(name))
 
         return validator
 
@@ -567,6 +569,11 @@ class oV:
 
     def setString(self,name):
         self.validateAndSet( name,lambda x: isString(x), "a string")
+        return
+
+
+    def setTorchDevice(self,name):
+        self.validateAndSet( name,lambda x: isTorchDevice(x), "a torch device")
         return
 
     def checkAndSetSubValidators(self):
