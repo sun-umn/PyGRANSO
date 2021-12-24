@@ -1,5 +1,8 @@
 # PyGRANSO
 
+![PyGRANSO](./PyGRANSO_logo_banner.png)
+
+
 PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation
 
 Please check https://ncvx.org for detailed instructions (introduction, installation, settings, examples...).
