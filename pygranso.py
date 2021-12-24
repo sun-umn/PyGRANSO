@@ -12,7 +12,7 @@ from private.tensor2vec import tensor2vec, obj_eval
 from private.getNvar import getNvar
 import traceback,sys
 
-def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None,user_data=None,user_opts=None):
+def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None,user_opts=None):
     """
     PyGRANSO:
 
@@ -68,7 +68,7 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
         - combined_fn evaluates objective and constraints simultaneously:
 
         "combined" format
-        soln = pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None, torch_device = torch.device('cpu'),user_data=None,user_opts=None)
+        soln = pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=None,user_opts=None)
 
 
         INPUT:
@@ -105,9 +105,6 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
 
                         Neural network model defined by torch.nn. It only used when torch.nn was used to
                         define the combinedFunction and/or objEvalFunction
-
-        user_data:
-                        Currently not used. To be removed in the next release
 
         user_opts:
                         Optional struct of settable parameters or None.
@@ -435,17 +432,17 @@ def pygranso(combinedFunction,objEvalFunction=None,var_dim_map=None,nn_model=Non
         torch_device = opts.torch_device
 
         if nn_model != None:
-            problem_fns = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,user_data,torch_device, model = nn_model,double_precision=opts.double_precision)
+            problem_fns = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,torch_device, model = nn_model,double_precision=opts.double_precision)
             if objEvalFunction != None:
-                f_eval_fn = lambda x: obj_eval(objEvalFunction,x,var_dim_map, user_data)
+                f_eval_fn = lambda x: obj_eval(objEvalFunction,x,var_dim_map)
             else:
                 f_eval_fn = None
 
         else:
             n = getNvar(var_dim_map)
-            problem_fns = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,user_data,torch_device, double_precision=opts.double_precision)
+            problem_fns = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,torch_device, double_precision=opts.double_precision)
             if objEvalFunction != None:
-                f_eval_fn = lambda x: obj_eval(objEvalFunction,x,var_dim_map, user_data)
+                f_eval_fn = lambda x: obj_eval(objEvalFunction,x,var_dim_map)
             else:
                 f_eval_fn = None
 

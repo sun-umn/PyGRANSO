@@ -5,13 +5,13 @@ from private.vec2tensor import vec2tensor
 from private.getCiVec import getCiVec
 from private.getCiGradVec import getCiGradVec
 
-def obj_eval(eval_obj, x, var_dim_map, data_in = None):
+def obj_eval(eval_obj, x, var_dim_map):
     """
     obj_eval:
         obj_eval makes an objective evaluation function used for backtrack line search
 
         USAGE:
-            f = obj_eval(eval_obj, x, var_dim_map, data_in = None)
+            f = obj_eval(eval_obj, x, var_dim_map)
 
         INPUT:
             eval_obj
@@ -30,10 +30,6 @@ def obj_eval(eval_obj, x, var_dim_map, data_in = None):
                     A dictionary for optmization variable information,
                     where the key is the variable name and val is a list for correpsonding dimension:
                     e.g., var_in = {"x": [1,1]}; var_in = {"U": [5,10], "V": [10,20]}
-
-            data_in
-
-                    Currently not used. To be removed in the next release
 
         OUTPUT:         
             f
@@ -83,20 +79,18 @@ def obj_eval(eval_obj, x, var_dim_map, data_in = None):
         =========================================================================
     """
     X_struct = vec2tensor(x,var_dim_map)
-    if data_in == None:
-        f = eval_obj(X_struct)
-    else:
-        f = eval_obj(X_struct,data_in)
+    f = eval_obj(X_struct)
+
     return f
 
-def tensor2vec(combinedFunction,x,var_dim_map,nvar,data_in = None,  torch_device = torch.device('cpu'), model = None, double_precision=True):
+def tensor2vec(combinedFunction,x,var_dim_map,nvar,  torch_device = torch.device('cpu'), model = None, double_precision=True):
     """
     tensor2vec
         Return vector form objective and constraints information required by PyGRANSO
 
         USAGE:
             [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] =
-            tensor2vec(combinedFunction,x,var_dim_map,nvar,data_in = None,
+            tensor2vec(combinedFunction,x,var_dim_map,nvar,
                         torch_device = torch.device('cpu'), model = None, double_precision=True)
 
         INPUT:
@@ -126,10 +120,6 @@ def tensor2vec(combinedFunction,x,var_dim_map,nvar,data_in = None,  torch_device
 
             nvar:
                     Total number of optimization variables
-
-            data_in:
-
-                    Currently not used. To be removed in the next release
 
             torch_device:
 
@@ -214,12 +204,8 @@ def tensor2vec(combinedFunction,x,var_dim_map,nvar,data_in = None,  torch_device
     X = vec2tensor(x,var_dim_map)
     # obtain objective and constraint function and their corresponding gradient
     # matrix form functions
-
-    if data_in == None:
-        [f,ci,ce] = combinedFunction(X)
-    else:
-        [f,ci,ce] = combinedFunction(X,data_in)
-
+    [f,ci,ce] = combinedFunction(X)
+    
     # obj function is a scalar form
     try:
         f_vec = f.item()
