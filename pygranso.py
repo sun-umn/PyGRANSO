@@ -395,7 +395,7 @@ def pygranso(combinedFunction,var_spec,objEvalFunction=None,user_opts=None):
             1.Adding new options to handle pytorch neural network model.
             2.Adding f_eval_fn to allow cheaper backtracking line search, as
             eval gradient is not needed in backtracking line search.
-            3. Add torch_device and double precision argument to allow user
+            3. Add torch_device and double precision options to allow user
             select cuda/cpu and double/float.
         Ported from MATLAB to Python and modified by Buyun Liang, 2021
 

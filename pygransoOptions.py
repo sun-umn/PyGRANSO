@@ -318,6 +318,13 @@ def pygransoOptions(n,options):
         iteration and/or create historical logs of the progress of the
         algorithm.
 
+        torch_device
+        --------------------------------
+        torch.device('cpu') OR torch.device('cuda'). Default value: torch.device('cpu')
+
+        Choose torch.device used for matrix operation in PyGRANSO.
+        opts.torch_device = torch.device('cuda') if one wants to use cuda device
+
         END OF STANDARD PARAMETERS
 
         See also pygransoOptions, pygransoOptionsAdvanced.
