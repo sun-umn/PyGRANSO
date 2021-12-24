@@ -103,8 +103,8 @@ BibTex:
 
 
 ## Contact
-For questions or bug reports, please raise issues in the PyGRANSO repository, or send email to Buyun Liang (liang664 an_at_symbol umn a_dot_symbol edu). 
+For questions or bug reports, please raise issues in the PyGRANSO repository, or send email to Buyun Liang (*liang664 an_at_symbol umn a_dot_symbol edu*). 
 
-Alternative contact: Tim Mitchell (tim an_at_symbol timmitchell a_dot_symbol com); Ju Sun (jusun an_at_symbol umn a_dot_symbol edu)
+Alternative contact: Tim Mitchell (*tim an_at_symbol timmitchell a_dot_symbol com*); Ju Sun (*jusun an_at_symbol umn a_dot_symbol edu*)
 
 Thanks to bug reporters: 
