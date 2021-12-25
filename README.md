@@ -70,7 +70,7 @@ PyGRANSO and GRANSO paper:
     Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).*
     Available at https://arxiv.org/abs/2111.13984
     
-*[2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton
+*[2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton.
     A BFGS-SQP method for nonsmooth, nonconvex, constrained
     optimization and its evaluation using relative minimization
     profiles, Optimization Methods and Software, 32(1):148-181, 2017.*
