@@ -1,12 +1,10 @@
 import traceback,sys
 
-def processVarSpec(var_spec):
-    """  
-    processVarSpec:
-        Checks whether var_spec is a python dictionary or not.
+def processUserFn(user_fn):
+    """
+    processUserFn:
+        Checks whether user_fn is function handle or not. 
 
-        We replaced the struct in the original GRANSO code with a python dictionary. 
-        
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
@@ -21,7 +19,7 @@ def processVarSpec(var_spec):
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
 
-        processVarSpec.py (introduced in PyGRANSO v1.0.0)
+        processUserFn.py (introduced in PyGRANSO v1.0.0)
         Copyright (C) 2021 Buyun Liang
 
         New code and functionality for PyGRANSO v1.0.0.
@@ -50,21 +48,15 @@ def processVarSpec(var_spec):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-
     try:
-    
-        if isinstance(var_spec,dict):
-            return [var_spec,None]
-        
-        elif isinstance(var_spec[0],dict) and var_spec[1] != None:
-            return [var_spec[0],var_spec[1]]
+        if callable(user_fn):
+            return [user_fn,None]
+        elif callable(user_fn[0]) and callable(user_fn[1]):
+            return [user_fn[0],user_fn[1]]
         else: 
-            print("Illegal variable definition")
+            print("Illegal input function")
             sys.exit()
-
-    except Exception as e:
-        print("Illegal variable definition")
+    except:
+        print("Illegal input function")
         print(traceback.format_exc())
         sys.exit()
-
-    

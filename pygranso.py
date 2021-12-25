@@ -11,9 +11,10 @@ from time import sleep
 from private.tensor2vec import tensor2vec, obj_eval
 from private.getNvar import getNvar
 from private.processVarSpec import processVarSpec
+from private.processUserFn import processUserFn
 import traceback,sys
 
-def pygranso(var_spec,combinedFunction,objEvalFunction=None,user_opts=None):
+def pygranso(var_spec,user_fn,user_opts=None):
     """
     PyGRANSO:
 
@@ -76,11 +77,12 @@ def pygranso(var_spec,combinedFunction,objEvalFunction=None,user_opts=None):
 
         var_spec
             var_spec can be one of the following two values:
+
             1. var_dim_map: used in general cases
 
             OR 
 
-            2.[var_dim_map,nn_model] : if torch neural network model used in both objective and constraints,
+            2.[var_dim_map,nn_model]: if torch neural network model used in both objective and constraints,
             we need additional nn_model arg to allow autodifferentiation. This option will be merged into 1 
             in the next release.
 
@@ -100,46 +102,57 @@ def pygranso(var_spec,combinedFunction,objEvalFunction=None,user_opts=None):
                             Neural network model defined by torch.nn. It only used when torch.nn was used to
                             define the combinedFunction and/or objEvalFunction
 
-        combinedFunction:
-                        Function handle of single input X, a data structuture storing all input variables,
-                        for evaluating:
+        user_fn:
+                        user_fn can be one of the following two values:
 
-                        - The values of the objective and
-                            constraints simultaneously:
-                            [f,ci,ce] = combinedFunction(X)
-                            
-                            ci and/or ce should be returned as
-                            None if no (in)equality constraints are given.
+                        1.combinedFunction
 
-                            In this case, f, ci and ce shoule be computational graph of optimization variables.
-                            And auto-differentiation will be used to obtain gradient information of them
-                        
                         OR
 
-                        - The values of the objective,
-                            constraints, and their gradients simultaneously:
-                            [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = combinedFunction(X)
+                        2.[combinedFunction,objEvalFunction]: if backtracking line search has been enabled, objEvalFunction 
+                        should be provided to improve line search efficiency, as gradients evaluation is not needed in 
+                        most iterations of backtracking line search. This option will be merged into 1 in the next release.
+
+                        combinedFunction:
+                                        Function handle of single input X, a data structuture storing all input variables,
+                                        for evaluating:
+
+                                        - The values of the objective and
+                                            constraints simultaneously:
+                                            [f,ci,ce] = combinedFunction(X)
+                                            
+                                            ci and/or ce should be returned as
+                                            None if no (in)equality constraints are given.
+
+                                            In this case, f, ci and ce shoule be computational graph of optimization variables.
+                                            And auto-differentiation will be used to obtain gradient information of them
+                                        
+                                        OR
+
+                                        - The values of the objective,
+                                            constraints, and their gradients simultaneously:
+                                            [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X)
+                                            
+                                            ci and/or ce should be returned as
+                                            None if no (in)equality constraints are given.
+
+                                            In this case, the requirements on [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec]
+                                            is the same as GRANSO:
+
+                                            Each function handle returns the value of the function(s) 
+                                            evaluated at single input X, a data structuture storing all input variables,
+                                            along with its corresponding gradient(s) as a matrix of column vectors.  
+                                            For example, if there are n variables and p inequality 
+                                            constraints, then ci must be supplied as a column vector in 
+                                            R^p while ci_grad must be given as an n by p matrix of p 
+                                            gradients for the p inequality constraints.
                             
-                            ci and/or ce should be returned as
-                            None if no (in)equality constraints are given.
+                        objEvalFunction:
+                                        Function handle of single input X, a data structuture storing all input variables,
+                                        for evaluating:
 
-                            In this case, the requirements on [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec]
-                            is the same as GRANSO:
-
-                            Each function handle returns the value of the function(s) 
-                            evaluated at single input X, a data structuture storing all input variables,
-                            along with its corresponding gradient(s) as a matrix of column vectors.  
-                            For example, if there are n variables and p inequality 
-                            constraints, then ci must be supplied as a column vector in 
-                            R^p while ci_grad must be given as an n by p matrix of p 
-                            gradients for the p inequality constraints.
-            
-        objEvalFunction:
-                        Function handle of single input X, a data structuture storing all input variables,
-                        for evaluating:
-
-                        - The values of the objective:
-                            f = objEvalFunction(X)
+                                        - The values of the objective:
+                                            f = objEvalFunction(X)
 
         user_opts:
                         Optional struct of settable parameters or None.
@@ -457,6 +470,7 @@ def pygranso(var_spec,combinedFunction,objEvalFunction=None,user_opts=None):
     #  - evaluate functions at x0
 
     [var_dim_map,nn_model] = processVarSpec(var_spec)
+    [combinedFunction,objEvalFunction] = processUserFn(user_fn)
 
     try:
         if nn_model != None:

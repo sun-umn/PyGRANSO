@@ -103,7 +103,7 @@ def rosenbrock():
     opts.torch_device = device
 
 
-    soln = pygranso(var_spec= var_in,combinedFunction = comb_fn, user_opts = opts)
+    soln = pygranso(var_spec= var_in, user_fn = comb_fn, user_opts = opts)
     print("test 1/7 passed (Rosenbrock)")
 
 def spectral_radius():
@@ -151,7 +151,7 @@ def spectral_radius():
     opts.double_precision = double_precision
     opts.torch_device = device
 
-    soln = pygranso(var_spec= var_in,combinedFunction = comb_fn, user_opts = opts)
+    soln = pygranso(var_spec= var_in, user_fn = comb_fn, user_opts = opts)
     print("test 2/7 passed (Spectral Radius Optimization)")
 
 def dictionary_learning():
@@ -219,7 +219,7 @@ def dictionary_learning():
 
     opts.print_frequency = 10
 
-    soln = pygranso(var_spec= var_in,combinedFunction = comb_fn, user_opts = opts)
+    soln = pygranso(var_spec= var_in, user_fn = comb_fn, user_opts = opts)
     print("test 3/7 passed (Dictionary Learning)")
 
 def robust_PCA():
@@ -260,7 +260,7 @@ def robust_PCA():
 
         return [f,ci,ce]
 
-    soln = pygranso(var_spec= var_in,combinedFunction = comb_fn, user_opts = opts)
+    soln = pygranso(var_spec= var_in, user_fn = comb_fn, user_opts = opts)
     print("test 4/7 passed (Robust PCA)")
 
 def lasso():
@@ -304,7 +304,7 @@ def lasso():
     opts.maxit = 30
     opts.torch_device = device
 
-    soln = pygranso(var_spec= var_in,combinedFunction = comb_fn, user_opts = opts)
+    soln = pygranso(var_spec= var_in, user_fn = comb_fn, user_opts = opts)
 
     print("test 5/7 passed (LASSO)")
 
@@ -340,7 +340,7 @@ def feasibility():
     opts.double_precision = double_precision
     opts.torch_device = device
 
-    soln = pygranso(var_spec= var_in,combinedFunction = comb_fn, user_opts = opts)
+    soln = pygranso(var_spec= var_in, user_fn = comb_fn, user_opts = opts)
     print("test 6/7 passed (Feasibility Problem)")
 
 
@@ -381,7 +381,7 @@ def sphere_manifold():
     opts.double_precision = double_precision
     opts.torch_device = device
 
-    soln = pygranso(var_spec= var_in,combinedFunction = comb_fn, user_opts = opts)
+    soln = pygranso(var_spec= var_in, user_fn = comb_fn, user_opts = opts)
     print("test 7/7 passed (Sphere Manifold)")
 
 
