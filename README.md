@@ -62,8 +62,8 @@ We would like to thank the GRANSO developers. This work was supported by UMII Se
 
 ## Citation
 
-If you publish work that uses or refers to PyGRANSO, please cite both
-PyGRANSO and GRANSO paper:
+If you publish work that uses or refers to PyGRANSO, please cite the following two papers,
+which respectively introduced PyGRANSO and GRANSO:
 
 *[1] Buyun Liang, Tim Mitchell, and Ju Sun.
     NCVX: A User-Friendly and Scalable Package for Nonconvex
