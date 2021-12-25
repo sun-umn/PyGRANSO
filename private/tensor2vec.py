@@ -204,9 +204,22 @@ def tensor2vec(combinedFunction,x,var_dim_map,nvar,  torch_device = torch.device
     X = vec2tensor(x,var_dim_map)
     # obtain objective and constraint function and their corresponding gradient
     # matrix form functions
-    [f,ci,ce] = combinedFunction(X)
-    
-    # obj function is a scalar form
+
+    try:
+        [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = combinedFunction(X)
+    except Exception as e:
+        [f,ci,ce] = combinedFunction(X)
+        [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = getValwithAD(X,f,ci,ce,var_dim_map,nvar, torch_device, model, double_precision)
+
+    return [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec]
+
+def getValwithAD(X,f,ci,ce,var_dim_map,nvar, torch_device, model, double_precision):
+    """
+    getValwithAD:
+        getValwithAD obtains vector form information [f,f_grad,ci,ci_grad,ce,ce_grad] 
+        with autodifferentiation
+    """
+        # obj function is a scalar form
     try:
         f_vec = f.item()
     except Exception:

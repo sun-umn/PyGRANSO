@@ -169,22 +169,41 @@ def dictionary_learning():
     var_in = {"q": [n,1]}
 
 
+    # def comb_fn(X_struct):
+    #     q = X_struct.q
+    #     q.requires_grad_(True)
+
+    #     # objective function
+    #     qtY = q.T @ Y
+    #     f = 1/m * torch.norm(qtY, p = 1)
+
+    #     # inequality constraint, matrix form
+    #     ci = None
+
+    #     # equality constraint
+    #     ce = GeneralStruct()
+    #     ce.c1 = q.T @ q - 1
+
+    #     return [f,ci,ce]
+
+    # Without AD
     def comb_fn(X_struct):
         q = X_struct.q
-        q.requires_grad_(True)
-
+        
         # objective function
         qtY = q.T @ Y
-        f = 1/m * torch.norm(qtY, p = 1)
+        f = 1/m * torch.norm(qtY, p = 1).item()
+        f_grad = 1/m*Y@torch.sign(Y.T@q)
 
         # inequality constraint, matrix form
         ci = None
+        ci_grad = None
 
-        # equality constraint
-        ce = GeneralStruct()
-        ce.c1 = q.T @ q - 1
+        # equality constraint 
+        ce = q.T @ q - 1
+        ce_grad = 2*q
 
-        return [f,ci,ce]
+        return [f,f_grad,ci,ci_grad,ce,ce_grad]
 
     opts = Options()
     opts.QPsolver = 'osqp'

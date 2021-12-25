@@ -107,9 +107,33 @@ def pygranso(var_spec,combinedFunction,objEvalFunction=None,user_opts=None):
                         - The values of the objective and
                             constraints simultaneously:
                             [f,ci,ce] = combinedFunction(X)
-                            In this case, ci and/or ce should be returned as
+                            
+                            ci and/or ce should be returned as
                             None if no (in)equality constraints are given.
 
+                            In this case, f, ci and ce shoule be computational graph of optimization variables.
+                            And auto-differentiation will be used to obtain gradient information of them
+                        
+                        OR
+
+                        - The values of the objective,
+                            constraints, and their gradients simultaneously:
+                            [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = combinedFunction(X)
+                            
+                            ci and/or ce should be returned as
+                            None if no (in)equality constraints are given.
+
+                            In this case, the requirements on [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec]
+                            is the same as GRANSO:
+
+                            Each function handle returns the value of the function(s) 
+                            evaluated at single input X, a data structuture storing all input variables,
+                            along with its corresponding gradient(s) as a matrix of column vectors.  
+                            For example, if there are n variables and p inequality 
+                            constraints, then ci must be supplied as a column vector in 
+                            R^p while ci_grad must be given as an n by p matrix of p 
+                            gradients for the p inequality constraints.
+            
         objEvalFunction:
                         Function handle of single input X, a data structuture storing all input variables,
                         for evaluating:
