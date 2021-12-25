@@ -70,7 +70,7 @@ def pygranso(var_spec,user_fn,user_opts=None):
         - combined_fn evaluates objective and constraints simultaneously:
 
         "combined" format
-        soln = pygranso(var_spec,combinedFunction,objEvalFunction=None,user_opts=None)
+        soln = pygranso(var_spec,user_fn,user_opts=None)
 
 
         INPUT:
