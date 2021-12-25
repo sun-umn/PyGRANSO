@@ -65,7 +65,7 @@ We would like to thank the GRANSO developers. This work was supported by UMII Se
 If you publish work that uses or refers to PyGRANSO, please cite both
 PyGRANSO and GRANSO paper:
 
-*[1] Buyun Liang, Tim Mitchell and Ju Sun.
+*[1] Buyun Liang, Tim Mitchell, and Ju Sun.
     NCVX: A User-Friendly and Scalable Package for Nonconvex
     Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).*
     Available at https://arxiv.org/abs/2111.13984
@@ -81,7 +81,7 @@ BibTex:
     @article{liang2021ncvx,
         title={NCVX: A User-Friendly and Scalable Package for Nonconvex 
         Optimization in Machine Learning}, 
-        author={Buyun Liang, Tim Mitchell and Ju Sun},
+        author={Buyun Liang, Tim Mitchell, and Ju Sun},
         year={2021},
         eprint={2111.13984},
         archivePrefix={arXiv},
