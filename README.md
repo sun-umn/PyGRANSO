@@ -69,6 +69,12 @@ PyGRANSO and GRANSO paper:
     NCVX: A User-Friendly and Scalable Package for Nonconvex
     Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).*
     Available at https://arxiv.org/abs/2111.13984
+    
+*[2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton
+    A BFGS-SQP method for nonsmooth, nonconvex, constrained
+    optimization and its evaluation using relative minimization
+    profiles, Optimization Methods and Software, 32(1):148-181, 2017.*
+    Available at https://dx.doi.org/10.1080/10556788.2016.1208749    
 
 BibTex:
 
@@ -81,15 +87,7 @@ BibTex:
         archivePrefix={arXiv},
         primaryClass={cs.LG}
     }
-
-*[2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton
-    A BFGS-SQP method for nonsmooth, nonconvex, constrained
-    optimization and its evaluation using relative minimization
-    profiles, Optimization Methods and Software, 32(1):148-181, 2017.*
-    Available at https://dx.doi.org/10.1080/10556788.2016.1208749
-
-BibTex:
-
+    
     @article{curtis2017bfgs,
         title={A BFGS-SQP method for nonsmooth, nonconvex, constrained optimization and its evaluation using relative minimization profiles},
         author={Frank E. Curtis, Tim Mitchell, and Michael L. Overton},
@@ -101,10 +99,12 @@ BibTex:
         publisher={Taylor \& Francis}
     }
 
-
 ## Contact
-For questions or bug reports, please raise issues in the PyGRANSO repository, or send email to Buyun Liang (*liang664 an_at_symbol umn a_dot_symbol edu*). 
-
-Alternative contact: Tim Mitchell (*tim an_at_symbol timmitchell a_dot_symbol com*); Ju Sun (*jusun an_at_symbol umn a_dot_symbol edu*)
+For questions or bug reports, please either:
+- raise issues in the PyGRANSO repository (https://github.com/sun-umn/PyGRANSO/) or
+- send an email to:
+  - Buyun Liang (*liang664 an_at_symbol umn a_dot_symbol edu*)
+  - Tim Mitchell (*tim an_at_symbol timmitchell a_dot_symbol com*)
+  - Ju Sun (*jusun an_at_symbol umn a_dot_symbol edu*)
 
 Thanks to bug reporters: 
