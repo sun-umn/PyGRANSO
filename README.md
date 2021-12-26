@@ -56,9 +56,9 @@ Installing NCVX is simple. Here is a step-by-step instruction:
 
     Jupyter Notebook-6.4.5
 
-## Update Logs
+## Change Logs
 
-v1.0.0: Initial release of PyGRANSO. Main features: auto-differentiation, GPU acceleration, tensor input, scalable QP solver, and zero dependency on proprietary packages. Multiple examples added: unconstrained DL, feasibility problem, sphere manifold.
+Please check (CHANGELOG.md)[./CHANGELOG.md] in the main folder.
 
 ## Acknowledgements
 
