@@ -13,7 +13,11 @@ Optimizing nonconvex (NCVX) problems, especially those nonsmooth and constrained
 
 ## Installation
 
+**NOTE: The installation process is tested on Ubuntu 20.04**
+
 Installing NCVX is simple. Here is a step-by-step instruction:
+
+0. Prerequisite: install Anaconda on your system (recommend: Ubuntu 20.04). Detailed guidance: https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html
 
 1. Download the latest version of NCVX on GitHub (https://github.com/sun-umn/NCVX)
 
