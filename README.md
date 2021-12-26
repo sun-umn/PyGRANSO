@@ -58,7 +58,7 @@ Installing NCVX is simple. Here is a step-by-step instruction:
 
 ## Change Logs
 
-Please check (CHANGELOG.md)[./CHANGELOG.md] in the main folder.
+Please check [CHANGELOG.md](./CHANGELOG.md) in the main folder.
 
 ## Acknowledgements
 
