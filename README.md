@@ -62,7 +62,8 @@ Please check [CHANGELOG.md](./CHANGELOG.md) in the main folder.
 
 ## Acknowledgements
 
-We would like to thank [Frank E. Curtis](https://coral.ise.lehigh.edu/frankecurtis/) and [Michael L. Overton](https://cs.nyu.edu/~overton/) for developing the [GRANSO](http://www.timmitchell.com/software/GRANSO) package. This work was supported by UMII Seed Grant Program and NSF CMMI 2038403.
+We would like to thank [Frank E. Curtis](https://coral.ise.lehigh.edu/frankecurtis/) and [Michael L. Overton](https://cs.nyu.edu/~overton/) for their involvement in creating the BFGS-SQP algorithm that is 
+implemented in the software package [GRANSO](http://www.timmitchell.com/software/GRANSO). This work was supported by UMII Seed Grant Program and NSF CMMI 2038403.
 
 ## Citation
 
