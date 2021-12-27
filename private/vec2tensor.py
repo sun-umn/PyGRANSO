@@ -1,4 +1,4 @@
-from pygransoStruct import GeneralStruct
+from private.pygransoStruct import pygransoStruct
 import numpy as np
 import torch
 
@@ -51,7 +51,7 @@ def vec2tensor(x,var_dim_map):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    X = GeneralStruct()
+    X = pygransoStruct()
     # reshape vector input x to matrix form X, e.g., X.U and X.V
     curIdx = 0
     # current variable, e.g., U

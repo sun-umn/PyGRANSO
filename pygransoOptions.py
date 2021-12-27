@@ -3,7 +3,7 @@ import torch
 from private import pygransoConstants as pgC
 from private.optionValidator import oV
 import numpy as np
-from pygransoStruct import Options
+from private.pygransoStruct import pygransoStruct
 from private.isAnInteger import isAnInteger
 import traceback,sys
 
@@ -404,7 +404,7 @@ def pygransoOptions(n,options):
         user_opts = options
 
     #  need error handler here
-    assert isinstance(user_opts, Options) ,'PyGRANSO invalidUserOption: PyGRANSO options must provided as an object of class Options!'
+    assert isinstance(user_opts, pygransoStruct) ,'PyGRANSO invalidUserOption: PyGRANSO options must provided as an object of class Options!'
 
     # USER PROVIDED THEIR OWN OPTIONS SO WE MUST VALIDATE THEM
     validator_obj = oV()
@@ -567,7 +567,7 @@ def getDefaults(n):
     [*_, LAST_FALLBACK_LEVEL] = pgC.pygransoConstants()
 
     # default options for PyGRANSO
-    default_opts = Options()
+    default_opts = pygransoStruct()
     setattr(default_opts,'x0',None)
     setattr(default_opts,'mu0',1)
     setattr(default_opts,'H0',None)

@@ -1,4 +1,4 @@
-from pygransoStruct import GeneralStruct
+from private.pygransoStruct import pygransoStruct
 from private import copyrightNotice, printMessageBox as pMB, pygransoConstants as pC, pygransoPrinterColumns as pPC
 from private.tablePrinter import tP
 from private.nDigitsInWholePart import nDigitsInWholePart
@@ -151,7 +151,7 @@ class pgP:
         # Setup printer options from GRANSO options
         ascii                           = self.opts.print_ascii
         use_orange                      = self.opts.print_use_orange
-        print_opts = GeneralStruct()
+        print_opts = pygransoStruct()
         setattr(print_opts,"use_orange",use_orange)
         setattr(print_opts,"use_ascii",ascii)
         setattr(print_opts,"print_width",self.opts.print_width)
@@ -221,7 +221,7 @@ class pgP:
                 
         msg_box_fn = lambda varargin:  pMB.printMessageBox(ascii,use_orange,varargin)
         
-        printer = GeneralStruct
+        printer = pygransoStruct()
         setattr(printer, "msg", lambda s: self.table_printer.msg(s) )
         setattr(printer, "close", lambda : self.table_printer.close() )
         setattr(printer, "msgWidth", lambda : self.table_printer.msgWidth() )

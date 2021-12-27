@@ -1,5 +1,5 @@
 from numpy.core.defchararray import isspace
-from pygransoStruct import GeneralStruct
+from private.pygransoStruct import pygransoStruct
 from private import formatOrange as fO, truncate as TR
 from private.centerString import centerString
 from itertools import compress
@@ -166,7 +166,7 @@ class tP:
 
         self.last_printed = "n"
 
-        printer = GeneralStruct()
+        printer = pygransoStruct()
         setattr(printer,"header", lambda : self.printHeader())
         setattr(printer,"row", lambda varargin: self.printRow(varargin))
         setattr(printer,"msg", lambda s : self.printMessage(False,s))
@@ -721,16 +721,16 @@ def makeRules(use_ascii,h2):
         mid_rf_list[idx]     = tdsu
     mid_rf = "".join(mid_rf_list)
 
-    t = GeneralStruct()
+    t = pygransoStruct()
     setattr(t, "f", top_f)
     setattr(t, "h", top_h)
     setattr(t, "r", top_r)
 
-    b = GeneralStruct()
+    b = pygransoStruct()
     setattr(b, "f", bottom_f)
     setattr(b, "r", bottom_r)
 
-    m = GeneralStruct()
+    m = pygransoStruct()
     setattr(m, "f", mid_f)
     setattr(m, "fh", mid_fh)
     setattr(m, "fr", mid_fr)
@@ -739,7 +739,7 @@ def makeRules(use_ascii,h2):
     setattr(m, "rf", mid_rf)
     setattr(m, "rs", mid_rs)
 
-    rules = GeneralStruct()
+    rules = pygransoStruct()
     setattr(rules, "t", t)
     setattr(rules, "b", b)
     setattr(rules, "m", m)

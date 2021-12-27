@@ -1,4 +1,4 @@
-from pygransoStruct import Options
+from private.pygransoStruct import pygransoStruct
 
 def makeStructWithFields(varargin):
     """
@@ -51,7 +51,7 @@ def makeStructWithFields(varargin):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    s = Options()
+    s = pygransoStruct()
     for arg in varargin:
       setattr(s,arg,None)
     

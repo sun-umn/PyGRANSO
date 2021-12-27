@@ -1,6 +1,6 @@
 import torch
 from torch import conj
-from pygransoStruct import GeneralStruct
+from private.pygransoStruct import pygransoStruct
 
 def bfgsHessianInverseLimitedMem(H0,scaleH0,fixed_scaling,nvec,restart_data,device, double_precision):
     """
@@ -255,7 +255,7 @@ class H_obj_struct:
         return data
 
     def getCounts(self):
-        counts = GeneralStruct()
+        counts = pygransoStruct()
         setattr(counts,"requests",self.requests)
         setattr(counts,"updates",self.updates)
         setattr(counts,"damped_requests",self.damped_requests)

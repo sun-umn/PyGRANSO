@@ -1,7 +1,7 @@
 import time
 import torch
 from pygranso import pygranso
-from pygransoStruct import Options, GeneralStruct
+from private.pygransoStruct import pygransoStruct
 import scipy.io
 from torch import linalg as LA
 import os
@@ -83,7 +83,7 @@ def rosenbrock():
         f = (8 * abs(x1**2 - x2) + (1 - x1)**2)
 
         # inequality constraint, matrix form
-        ci = GeneralStruct()
+        ci = pygransoStruct()
         ci.c1 = (2**0.5)*x1-1
         ci.c2 = 2*x2-1
 
@@ -92,7 +92,7 @@ def rosenbrock():
 
         return [f,ci,ce]
 
-    opts = Options()
+    opts = pygransoStruct()
     # option for switching QP solver. We only have osqp as the only qp solver in current version. Default is osqp
     # opts.QPsolver = 'osqp'
 
@@ -133,7 +133,7 @@ def spectral_radius():
         f = torch.max(D.imag)
 
         # inequality constraint, matrix form
-        ci = GeneralStruct()
+        ci = pygransoStruct()
         ci.c1 = torch.max(D.real) + stability_margin
 
         # equality constraint
@@ -141,7 +141,7 @@ def spectral_radius():
 
         return [f,ci,ce]
 
-    opts = Options()
+    opts = pygransoStruct()
     opts.maxit = 10
     opts.x0 = torch.zeros(p*m,1).to(device=device, dtype=torch_dtype)
     # print for every 10 iterations. default: 1
@@ -181,7 +181,7 @@ def dictionary_learning():
     #     ci = None
 
     #     # equality constraint
-    #     ce = GeneralStruct()
+    #     ce = pygransoStruct()
     #     ce.c1 = q.T @ q - 1
 
     #     return [f,ci,ce]
@@ -205,7 +205,7 @@ def dictionary_learning():
 
         return [f,f_grad,ci,ci_grad,ce,ce_grad]
 
-    opts = Options()
+    opts = pygransoStruct()
     opts.QPsolver = 'osqp'
     opts.maxit = 20
     np.random.seed(1)
@@ -233,7 +233,7 @@ def robust_PCA():
     var_in = {"M": [d1,d2],"S": [d1,d2]}
 
 
-    opts = Options()
+    opts = pygransoStruct()
     opts.print_frequency = 10
     opts.x0 = .2 * torch.ones((2*d1*d2,1)).to(device=device, dtype=torch_dtype)
     opts.opt_tol = 1e-6
@@ -255,7 +255,7 @@ def robust_PCA():
         ci = None
 
         # equality constraint
-        ce = GeneralStruct()
+        ce = pygransoStruct()
         ce.c1 = M + S - Y
 
         return [f,ci,ce]
@@ -294,7 +294,7 @@ def lasso():
 
         return [f,ci,ce]
 
-    opts = Options()
+    opts = pygransoStruct()
     opts.QPsolver = 'osqp'
     opts.x0 = torch.ones((n,1)).to(device=device, dtype=torch_dtype)
     opts.print_level = 1
@@ -322,7 +322,7 @@ def feasibility():
         f = 0*x+0*y
 
         # inequality constraint
-        ci = GeneralStruct()
+        ci = pygransoStruct()
         ci.c1 = (y+x**2)**2+0.1*y**2-1
         ci.c2 = y - torch.exp(-x) - 3
         ci.c3 = y-x+4
@@ -332,7 +332,7 @@ def feasibility():
 
         return [f,ci,ce]
 
-    opts = Options()
+    opts = pygransoStruct()
     opts.QPsolver = 'osqp'
     opts.print_frequency = 1
     opts.x0 = 0 * torch.ones((2,1)).to(device=device, dtype=torch_dtype)
@@ -366,12 +366,12 @@ def sphere_manifold():
         ci = None
 
         # equality constraint
-        ce = GeneralStruct()
+        ce = pygransoStruct()
         ce.c1 = x.T@x-1
 
         return [f,ci,ce]
 
-    opts = Options()
+    opts = pygransoStruct()
     opts.print_frequency = 10
     opts.x0 = torch.randn((n,1)).to(device=device, dtype=torch_dtype)
     opts.mu0 = 0.1 # increase penalty contribution

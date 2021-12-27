@@ -4,7 +4,7 @@ from private.neighborhoodCache import nC
 from private.qpSteeringStrategy import qpSS
 from private.qpTerminationCondition import qpTC
 import time
-from pygransoStruct import GeneralStruct
+from private.pygransoStruct import pygransoStruct
 import math
 import numpy as np
 from numpy.random import default_rng
@@ -628,7 +628,7 @@ class AlgBFGSSQP():
         return tf
 
     def prepareTermination(self,code):
-        self.info = GeneralStruct()
+        self.info = pygransoStruct()
         setattr(self.info, "termination_code", code)
         if code == 8 and self.constrained:
             self.info.mu_lowest      = self.mu_lowest
@@ -679,7 +679,7 @@ class AlgBFGSSQP():
 
 def getNearbyGradients(penaltyfn_obj,grad_nbd_fn):
     [f_grad, ci_grad, ce_grad] = penaltyfn_obj.getGradients()
-    grads = GeneralStruct()
+    grads = pygransoStruct()
     setattr(grads,"F",f_grad)
     setattr(grads,"CI",ci_grad)
     setattr(grads,"CE",ce_grad)

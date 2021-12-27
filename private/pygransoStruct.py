@@ -49,18 +49,8 @@
 """
 
 
-# strcu for options in PyGRANSO
-class Options:
+# Use dummy class in PyGRANSO to replace MATLAB struct in GRANSO
+class pygransoStruct:
     pass
 
-# struct for Data
-class Data:
-    pass
 
-# struct for sub validators
-class sub_validators_struct:
-    pass
-
-# struct for general settings
-class GeneralStruct:
-    pass

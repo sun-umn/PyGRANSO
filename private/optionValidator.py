@@ -1,4 +1,4 @@
-from pygransoStruct import Options, GeneralStruct, sub_validators_struct
+from private.pygransoStruct import pygransoStruct
 import types
 from private.makeStructWithFields import makeStructWithFields
 from private.isAnInteger import isAnInteger
@@ -299,14 +299,14 @@ class oV:
         #  need error handler here
         #  Mandatory Options
         assert isinstance(self.program_name,str),  self.id_str + "Input ''program_name'' must be a string!"
-        assert isinstance(self.default_opts, Options), self.id_str + "Input argument ''default_opts'' must be an Options class!"
+        assert isinstance(self.default_opts, pygransoStruct), self.id_str + "Input argument ''default_opts'' must be an pygransoStruct class!"
 
         self.user_opts       = None
         self.opts            = self.default_opts
 
         # Optional subvalidator 3rd argument
         if self.sub_validators != None:
-            assert isinstance(self.sub_validators, sub_validators_struct), self.id_str + "Input argument ''sub_validators'' must be an Options class!"
+            assert isinstance(self.sub_validators, pygransoStruct), self.id_str + "Input argument ''sub_validators'' must be an pygransoStruct class!"
             self.checkAndSetSubValidators()
 
         err_id = self.program_name + ":invalidUserOption"
@@ -320,7 +320,7 @@ class oV:
             self.invalid_str = err_id + ": .%s must be %s."
             self.custom_str  = err_id + ": %s"
 
-        validator = GeneralStruct()
+        validator = pygransoStruct()
         setattr(validator, "setUserOpts", lambda some_user_opts : self.setUserOpts(some_user_opts))
         setattr(validator, "assert", lambda tf, error_msg : self.customAssert(tf, error_msg))
         setattr(validator, "isSpecified", lambda name : self.isSpecified(name))
@@ -373,7 +373,7 @@ class oV:
     #  initialize optionProcessor with options from the user
     def setUserOpts(self,some_user_opts):
         self.opts        = copy.deepcopy(self.default_opts)
-        assert isinstance(some_user_opts, Options), self.id_str + "%s.setUserOpts(s) requires that s is a struct." % self.ov_str
+        assert isinstance(some_user_opts, pygransoStruct), self.id_str + "%s.setUserOpts(s) requires that s is a struct." % self.ov_str
         self.user_opts   = copy.deepcopy(some_user_opts)
         return
 
@@ -438,11 +438,11 @@ class oV:
         return
 
     def setStruct(self,name):
-        self.validateAndSet( name, lambda x: isinstance(x,GeneralStruct) , "a struct" )
+        self.validateAndSet( name, lambda x: isinstance(x,pygransoStruct) , "a struct" )
         return
 
     def setStructWithFields(self,name,varargin):
-        self.validateAndSet( name, lambda x: isinstance(x,GeneralStruct) or isinstance(x,Options) and [hasattr(x,field) for field in varargin], "a struct with fields: %s" % ", ".join(varargin) )
+        self.validateAndSet( name, lambda x: isinstance(x,pygransoStruct) or isinstance(x,pygransoStruct) and [hasattr(x,field) for field in varargin], "a struct with fields: %s" % ", ".join(varargin) )
 
         sub_struct      = makeStructWithFields(varargin)
         # user_sub_struct = copy.deepcopy(getattr(self.user_opts, name))
@@ -578,7 +578,7 @@ class oV:
 
     def checkAndSetSubValidators(self):
         if self.sub_validators != None:
-            for name in sub_validators_struct.__dict__:
+            for name in pygransoStruct.__dict__:
                 self.checkAndSetSubValidator(name)
 
 
