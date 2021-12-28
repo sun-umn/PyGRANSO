@@ -329,9 +329,9 @@ def pygransoOptions(n,options):
         --------------------------------
         Boolean value. Default value: True
 
-        Decide whether to use the auto-differentiation feature or not.
-        In the default setting, user should provide [f,ci,ce] = combinedFunction(X).
-        When globalAD = False, user should provide [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X) 
+        Compute all gradients of objective and constraint functions via auto-differentiation.
+        In the default setting, user should provide [f,ci,ce] = combined_fn(X).
+        When globalAD = False, user should provide [f,f_grad,ci,ci_grad,ce,ce_grad] = combined_fn(X) 
 
         Please check the docstring of pygranso.py for more details of setting combinedFunction
 
