@@ -112,6 +112,7 @@ def getObjGrad(nvar,var_dim_map,f,X, torch_device,double_precision):
             getattr(X,var).grad.zero_()
     except Exception:
         f_grad_vec = torch.zeros((nvar,1),device=torch_device, dtype=torch_dtype)
+    f_grad_vec = f_grad_vec.detach()
     return f_grad_vec
 
 def getObjGradDL(nvar,model,f, torch_device, double_precision):
@@ -211,5 +212,6 @@ def getObjGradDL(nvar,model,f, torch_device, double_precision):
         f_grad_reshape = torch.reshape(parameter_lst[i].grad,(-1,1))
         f_grad_vec[curIdx:curIdx+f_grad_reshape.shape[0]] = f_grad_reshape
         curIdx += f_grad_reshape.shape[0]
-
+        
+    f_grad_vec = f_grad_vec.detach()
     return f_grad_vec
