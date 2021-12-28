@@ -50,12 +50,12 @@ def getCiGradVec(nvar,nconstr_ci_total,var_dim_map,X,ci_vec_torch, torch_device,
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
-        [1] Buyun Liang, Tim Mitchell and Ju Sun.
+        [1] Buyun Liang, Tim Mitchell, and Ju Sun,
             NCVX: A User-Friendly and Scalable Package for Nonconvex
-            Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
+            Optimization in Machine Learning, arXiv preprint arXiv:2111.13984 (2021).
             Available at https://arxiv.org/abs/2111.13984
 
-        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton
+        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton,
             A BFGS-SQP method for nonsmooth, nonconvex, constrained
             optimization and its evaluation using relative minimization
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
