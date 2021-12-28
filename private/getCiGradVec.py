@@ -113,5 +113,5 @@ def getCiGradVec(nvar,nconstr_ci_total,var_dim_map,X,ci_vec_torch, torch_device,
                 ci_grad_vec[curIdx:curIdx+varLen,i] = ci_grad_reshape
                 curIdx += varLen
                 getattr(X,var).grad.zero_()
-
+    ci_grad_vec = ci_grad_vec.detach()
     return ci_grad_vec

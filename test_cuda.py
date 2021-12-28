@@ -222,7 +222,6 @@ def dictionary_learning():
 
         # return value must be detached from the computational graph
         ce = ce.detach()
-        ce_grad = ce_grad.detach()
 
         return [f,f_grad,ci,ci_grad,ce,ce_grad]
 
