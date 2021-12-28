@@ -12,6 +12,7 @@ sys.path.append(currentdir)
 import numpy as np
 from scipy.stats import norm
 import numpy.linalg as la
+from private.tensor2vec import getCiGradVec
 
 """
     test_cuda.py:
@@ -180,9 +181,29 @@ def dictionary_learning():
 
     #     return [f,ci,ce]
 
-    # Without AD
+    # # Without AD
+    # def comb_fn(X_struct):
+    #     q = X_struct.q
+        
+    #     # objective function
+    #     qtY = q.T @ Y
+    #     f = 1/m * torch.norm(qtY, p = 1).item()
+    #     f_grad = 1/m*Y@torch.sign(Y.T@q)
+
+    #     # inequality constraint, matrix form
+    #     ci = None
+    #     ci_grad = None
+
+    #     # equality constraint 
+    #     ce = q.T @ q - 1
+    #     ce_grad = 2*q
+
+    #     return [f,f_grad,ci,ci_grad,ce,ce_grad]
+
+    # partial AD
     def comb_fn(X_struct):
         q = X_struct.q
+        q.requires_grad_(True)
         
         # objective function
         qtY = q.T @ Y
@@ -195,7 +216,13 @@ def dictionary_learning():
 
         # equality constraint 
         ce = q.T @ q - 1
-        ce_grad = 2*q
+        # ce_grad = 2*q
+        ce_grad = getCiGradVec(nvar=n,nconstr_ci_total=1,var_dim_map=var_in,X=X_struct,ci_vec_torch=ce,torch_device=device,double_precision=torch.double)
+
+        # return value must be detached from the computational graph
+        f_grad = f_grad.detach()
+        ce = ce.detach()
+        ce_grad = ce_grad.detach()
 
         return [f,f_grad,ci,ci_grad,ce,ce_grad]
 
