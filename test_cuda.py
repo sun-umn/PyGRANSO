@@ -206,9 +206,10 @@ def dictionary_learning():
         q.requires_grad_(True)
         
         # objective function
-        qtY = q.T @ Y
+        q_tmp = q.detach().clone()
+        qtY = q_tmp.T @ Y
         f = 1/m * torch.norm(qtY, p = 1).item()
-        f_grad = 1/m*Y@torch.sign(Y.T@q)
+        f_grad = 1/m*Y@torch.sign(Y.T@q_tmp)
 
         # inequality constraint, matrix form
         ci = None
@@ -220,7 +221,6 @@ def dictionary_learning():
         ce_grad = getCiGradVec(nvar=n,nconstr_ci_total=1,var_dim_map=var_in,X=X_struct,ci_vec_torch=ce,torch_device=device,double_precision=torch.double)
 
         # return value must be detached from the computational graph
-        f_grad = f_grad.detach()
         ce = ce.detach()
         ce_grad = ce_grad.detach()
 
@@ -236,6 +236,7 @@ def dictionary_learning():
     opts.print_level = print_level
     opts.double_precision = double_precision
     opts.torch_device = device
+    opts.globalAD = False
 
 
     opts.print_frequency = 10

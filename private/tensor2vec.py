@@ -5,8 +5,9 @@ from pygransoStruct import pygransoStruct
 from private.vec2tensor import vec2tensor
 from private.getCiVec import getCiVec
 from private.getCiGradVec import getCiGradVec
+import traceback,sys
 
-def tensor2vec(combinedFunction,x,var_dim_map,nvar,  torch_device = torch.device('cpu'), model = None, double_precision=True, get_grad = True):
+def tensor2vec(combinedFunction,x,var_dim_map,nvar,  torch_device = torch.device('cpu'), model = None, double_precision=True, get_grad = True, globalAD = True):
     """
     tensor2vec
         Return vector form objective and constraints information required by PyGRANSO
@@ -127,28 +128,32 @@ def tensor2vec(combinedFunction,x,var_dim_map,nvar,  torch_device = torch.device
     X = vec2tensor(x,var_dim_map)
     # obtain objective and constraint function and their corresponding gradient
     # matrix form functions
+    try:
+        if get_grad:
+            if globalAD == False:
+                # No auto-differentiation used here
+                [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = combinedFunction(X)
+            else:
+                for var_name in X.__dict__:
+                    var = getattr(X,var_name)
+                    var.requires_grad_(True)
+                [f,ci,ce] = combinedFunction(X)
+                [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = getValwithAD(X,f,ci,ce,var_dim_map,nvar, torch_device, model, double_precision)
 
-    if get_grad:
-        try:
-            # No auto-differentiation used here
-            [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = combinedFunction(X)
-        except Exception as e:
-            for var_name in X.__dict__:
-                var = getattr(X,var_name)
-                var.requires_grad_(True)
-            [f,ci,ce] = combinedFunction(X)
-            [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = getValwithAD(X,f,ci,ce,var_dim_map,nvar, torch_device, model, double_precision)
+            return [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec]
+        else:
+            # Not return grad information. Used in back tracking line-search
+            if globalAD == False:
+                [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = combinedFunction(X)
+            else:
+                [f,ci,ce] = combinedFunction(X)
+                [f_vec,ci_vec,ce_vec] = getVal4LineSearch(f,ci,ce,torch_device, double_precision)
 
-        return [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec]
-    else:
-        # Not return grad information. Used in back tracking line-search
-        try:
-            [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = combinedFunction(X)
-        except Exception as e:
-            [f,ci,ce] = combinedFunction(X)
-            [f_vec,ci_vec,ce_vec] = getVal4LineSearch(f,ci,ce,torch_device, double_precision)
-
-        return [f_vec,ci_vec,ce_vec]
+            return [f_vec,ci_vec,ce_vec]
+    except Exception as e:
+        print(traceback.format_exc())
+        print("Please check the setting of opts.globalAD")
+        sys.exit()
 
 def getValwithAD(X,f,ci,ce,var_dim_map,nvar, torch_device, model, double_precision):
     """

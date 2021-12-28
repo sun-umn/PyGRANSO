@@ -482,17 +482,17 @@ def pygranso(var_spec,user_fn,user_opts=None):
         torch_device = opts.torch_device
 
         if nn_model != None:
-            problem_fns = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,torch_device, model = nn_model,double_precision=opts.double_precision)
+            problem_fns = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,torch_device, model = nn_model,double_precision=opts.double_precision,globalAD=opts.globalAD)
             if opts.is_backtrack_linesearch == True:
-                f_eval_fn = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,torch_device, model = nn_model,double_precision=opts.double_precision,get_grad=False)
+                f_eval_fn = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,torch_device, model = nn_model,double_precision=opts.double_precision,get_grad=False,globalAD=opts.globalAD)
             else:
                 f_eval_fn = None
 
         else:
             n = getNvar(var_dim_map)
-            problem_fns = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,torch_device, double_precision=opts.double_precision)
+            problem_fns = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,torch_device, double_precision=opts.double_precision,globalAD=opts.globalAD)
             if opts.is_backtrack_linesearch == True:
-                f_eval_fn = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,torch_device, model = nn_model,double_precision=opts.double_precision,get_grad=False)
+                f_eval_fn = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,torch_device, model = nn_model,double_precision=opts.double_precision,get_grad=False,globalAD=opts.globalAD)
             else:
                 f_eval_fn = None
 

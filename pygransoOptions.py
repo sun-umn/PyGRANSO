@@ -325,6 +325,16 @@ def pygransoOptions(n,options):
         Choose torch.device used for matrix operation in PyGRANSO.
         opts.torch_device = torch.device('cuda') if one wants to use cuda device
 
+        globalAD
+        --------------------------------
+        Boolean value. Default value: True
+
+        Decide whether to use the auto-differentiation feature or not.
+        In the default setting, user should provide [f,ci,ce] = combinedFunction(X).
+        When globalAD = False, user should provide [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X) 
+
+        Please check the docstring of pygranso.py for more details of setting combinedFunction
+
         END OF STANDARD PARAMETERS
 
         See also pygransoOptions, pygransoOptionsAdvanced.
@@ -514,6 +524,7 @@ def pygransoOptions(n,options):
         validator.setLogical("double_precision")
         validator.setLogical("searching_direction_rescaling")
         validator.setLogical("disable_terminationcode_6")
+        validator.setLogical("globalAD")
 
         #  LOGGING PARAMETERS
         validator.setIntegerInRange("print_level",0,3)
@@ -617,6 +628,7 @@ def getDefaults(n):
     setattr(default_opts,'double_precision',True)
     setattr(default_opts,'searching_direction_rescaling',False)
     setattr(default_opts,'disable_terminationcode_6',False)
+    setattr(default_opts,'globalAD',True)
 
     setattr(default_opts,'print_level',1)
     setattr(default_opts,'print_frequency',1)
