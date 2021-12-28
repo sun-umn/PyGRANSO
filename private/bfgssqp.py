@@ -282,9 +282,8 @@ class AlgBFGSSQP():
                                 steering_c_mu,      self.QPsolver, torch_device, self.double_precision           )
 
         self.linesearch_fn   = lambda x,f,g,p,ls_maxit: lWW.linesearchWeakWolfe( 
-                                x, f, g, p,
-                                lambda x_in: self.penaltyfn_obj.evaluatePenaltyFunction4linesearch(x_in),                                  
-                                lambda x_in: self.penaltyfn_obj.evaluatePenaltyFunction(x_in),      
+                                x, f, g, p,                                 
+                                lambda x_in, get_grad: self.penaltyfn_obj.evaluatePenaltyFunction(x_in,get_grad),      
                                 wolfe1, wolfe2, self.fvalquit, ls_maxit, step_tol, self.init_step_size, self.linesearch_maxit, self.is_backtrack_linesearch, self.torch_device)
                                                         
         #  we'll use a while loop so we can explicitly update the counter only

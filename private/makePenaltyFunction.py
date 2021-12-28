@@ -99,7 +99,7 @@ class PanaltyFuctions:
                 p_obj       struct whose fields are function handles to manipulate 
                             the penalty function object p_obj, with methods:
             
-                    [p,p_grad,is_feasible] = p_obj.evaluatePenaltyFunction(x)
+                    [p,p_grad,is_feasible] = p_obj.evaluatePenaltyFunction(x,get_grad=True)
                     Evaluates the penalty function at vector x, returning its value
                     and gradient of the penalty function, along with a logical
                     indicating whether x is considered feasible (with respect to
@@ -319,8 +319,7 @@ class PanaltyFuctions:
 
         # output object with methods
         penalty_fn_object = pygransoStruct()
-        setattr(penalty_fn_object,"evaluatePenaltyFunction4linesearch",lambda x_in: self.evaluateAtX4linesearch(x_in))
-        setattr(penalty_fn_object,"evaluatePenaltyFunction",lambda x_in: self.evaluateAtX(x_in))
+        setattr(penalty_fn_object,"evaluatePenaltyFunction",lambda x_in, get_grad: self.evaluateAtX(x_in, get_grad))
         setattr(penalty_fn_object,"updatePenaltyParameter",update_penalty_parameter_fn)
         setattr(penalty_fn_object,"getX",lambda : self.getX())
         setattr(penalty_fn_object,"getComponentValues",lambda : self.getComponentValues())
@@ -340,6 +339,52 @@ class PanaltyFuctions:
 
         return [penalty_fn_object, grad_norms_at_x0]
 
+
+
+    # evaluate objective, constraints, violation, and penalty function at x
+    def evaluateAtX(self,x_in, get_grad = True):
+
+        if get_grad:
+            try: 
+                self.at_snap_shot    = False
+                self.stat_value      = float("nan")
+                self.fn_evals        += 1
+                # evaluate objective and its gradient
+                [self.f,self.f_grad]      = self.obj_fn(x_in)
+                # evaluate constraints and their violations (nested update)
+                self.eval_ineq_fn(x_in) 
+                self.eval_eq_fn(x_in)
+            except Exception as e:
+                print("PyGRANSO userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x.")
+                print(traceback.format_exc())
+                sys.exit()
+
+            self.x                   = x_in
+            self.feasible_to_tol     = self.is_feasible_to_tol_fn(self.tvi,self.tve);  
+            self.tv                  = np.maximum(self.tvi,self.tve)
+            self.tv_l1               = self.tvi_l1 + self.tve_l1
+            self.tv_l1_grad          = self.tvi_l1_grad + self.tve_l1_grad
+            self.p                   = self.mu*self.f + self.tv_l1
+            if isinstance(self.tv_l1_grad,int):
+                self.p_grad              = self.mu*self.f_grad + self.tv_l1_grad
+            else:
+                self.p_grad              = self.mu*self.f_grad + self.tv_l1_grad.reshape(self.f_grad.shape)
+            
+            # update best points encountered so far
+            self.update_best_fn()
+            
+            # copy nested variables values to output arguments
+            p_out               = self.p
+            p_grad_out          = self.p_grad
+            feasible_to_tol_out = self.feasible_to_tol
+
+            return [p_out,p_grad_out,feasible_to_tol_out]
+
+        else:
+            [p,feasible_to_tol] = self.evaluateAtX4linesearch(x_in)
+            return [p,feasible_to_tol]
+
+    
     # evaluate objective, constraints, violation, and penalty function at x
     def evaluateAtX4linesearch(self,x_in):
         # Not updated class information in this function because gradient is not used;
@@ -387,44 +432,7 @@ class PanaltyFuctions:
             print("PyGRANSO userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x for line search.")
             print(traceback.format_exc())
             sys.exit()
-
-    # evaluate objective, constraints, violation, and penalty function at x
-    def evaluateAtX(self,x_in):
-        try: 
-            self.at_snap_shot    = False
-            self.stat_value      = float("nan")
-            self.fn_evals        += 1
-            # evaluate objective and its gradient
-            [self.f,self.f_grad]      = self.obj_fn(x_in)
-            # evaluate constraints and their violations (nested update)
-            self.eval_ineq_fn(x_in) 
-            self.eval_eq_fn(x_in)
-        except Exception as e:
-            print("PyGRANSO userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x.")
-            print(traceback.format_exc())
-            sys.exit()
-
-        self.x                   = x_in
-        self.feasible_to_tol     = self.is_feasible_to_tol_fn(self.tvi,self.tve);  
-        self.tv                  = np.maximum(self.tvi,self.tve)
-        self.tv_l1               = self.tvi_l1 + self.tve_l1
-        self.tv_l1_grad          = self.tvi_l1_grad + self.tve_l1_grad
-        self.p                   = self.mu*self.f + self.tv_l1
-        if isinstance(self.tv_l1_grad,int):
-            self.p_grad              = self.mu*self.f_grad + self.tv_l1_grad
-        else:
-            self.p_grad              = self.mu*self.f_grad + self.tv_l1_grad.reshape(self.f_grad.shape)
-        
-        # update best points encountered so far
-        self.update_best_fn()
-        
-        # copy nested variables values to output arguments
-        p_out               = self.p
-        p_grad_out          = self.p_grad
-        feasible_to_tol_out = self.feasible_to_tol
-
-        return [p_out,p_grad_out,feasible_to_tol_out]
-
+    
     def getComponentValues(self):
         f_o             = self.f
         f_grad_o        = self.f_grad

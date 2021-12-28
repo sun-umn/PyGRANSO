@@ -2,7 +2,7 @@ import numpy as np
 import math
 import torch
 
-def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, fvalquit = -np.inf, eval_limit = np.inf, step_tol = 1e-12, init_step_size = 1, linesearch_maxit = np.inf, is_backtrack_linesearch = False, torch_device = torch.device('cpu')):
+def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = -np.inf, eval_limit = np.inf, step_tol = 1e-12, init_step_size = 1, linesearch_maxit = np.inf, is_backtrack_linesearch = False, torch_device = torch.device('cpu')):
     """
     linesearchWeakWolfe:
         Line search enforcing weak Wolfe conditions, suitable for minimizing
@@ -17,7 +17,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
 
         call:
         [alpha, xalpha, falpha, gradalpha, fail, beta, gradbeta, n_evals] = ...
-        linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0,
+        linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0,
                             c2 = 0.5, fvalquit = -np.inf, eval_limit = np.inf,
                             step_tol = 1e-12, init_step_size = 1, linesearch_maxit = np.inf,
                             is_backtrack_linesearch = False, torch_device = torch.device('cpu'))
@@ -31,12 +31,6 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
 
             d:              search direction
 
-            f_eval_fn:      Function handle of single input X, a data structuture storing all input variables,
-                            for evaluating:
-
-                                - The values of the objective:
-                                    f = f_eval_fn(X)
-
             obj_fn:         a function handle for evaluating the objective function
                             (the penalty function for constrained problems) and its
                             gradient at some vector x, along with a logical
@@ -44,7 +38,10 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
                             close to the feasible region.
                             NOTE:   for unconstrained problems, this logical (set
                                     as true) must still be returned
-                            e.g. [f,g,is_feasible] = obj_fn(x)
+                            e.g. [f,g,is_feasible] = obj_fn(x,get_grad = True)
+
+                            if set get_grad = False, the gradient won't be returned:
+                                [f,is_feasible] = obj_fn(x,get_grad = False)
 
             c1: Wolfe parameter for the sufficient decrease condition
                     f(x0 + t d) ** < ** f0 + c1*t*grad0'*d     (DEFAULT 0)
@@ -232,11 +229,11 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
         x = x0 + t*d
 
         if is_backtrack_linesearch:
-            [f,is_feasible] = f_eval_fn(x)
+            [f,is_feasible] = obj_fn(x,get_grad = False)
             # random setting, avoid error in 2nd wolfe condition
             gtd = 2*(torch.conj(grad0.t()) @ d)
         else:
-            [f,grad,is_feasible] = obj_fn(x)
+            [f,grad,is_feasible] = obj_fn(x,get_grad = True)
             gtd = torch.conj(grad.t()) @ d
 
         if torch.is_tensor(f):
@@ -246,7 +243,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
             fail = 0
             alpha = t  # normally beta is inf
             xalpha = x.detach().clone()
-            [f,grad,is_feasible] = obj_fn(x)
+            [f,grad,is_feasible] = obj_fn(x,get_grad = True)
             falpha = f
             gradalpha = grad.detach().clone()
             return [alpha, xalpha, falpha, gradalpha, fail]
@@ -266,7 +263,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
             alpha = t
             xalpha = x.detach().clone()
             if is_backtrack_linesearch:
-                [f,grad,is_feasible] = obj_fn(x)
+                [f,grad,is_feasible] = obj_fn(x,get_grad = True)
             falpha = f
             gradalpha = grad.detach().clone()
             beta = t
@@ -292,7 +289,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, f_eval_fn, obj_fn, c1 = 0, c2 = 0.5, 
     if is_backtrack_linesearch:
         alpha = t
         xalpha = x.detach().clone()
-        [f,grad,is_feasible] = obj_fn(x)
+        [f,grad,is_feasible] = obj_fn(x,get_grad = True)
         falpha = f
         gradalpha = grad.detach().clone()
         beta = t
