@@ -8,10 +8,9 @@ from pygransoOptions import pygransoOptions
 from private.solveQP import getErr
 from private.wrapToLines import wrapToLines
 from time import sleep
-from private.tensor2vec import tensor2vec, obj_eval
-from private.getNvar import getNvar
+from private.tensor2vec import tensor2vec
+from private.getNvar import getNvar 
 from private.processVarSpec import processVarSpec
-from private.processUserFn import processUserFn
 import traceback,sys
 
 def pygranso(var_spec,user_fn,user_opts=None):
@@ -470,7 +469,7 @@ def pygranso(var_spec,user_fn,user_opts=None):
     #  - evaluate functions at x0
 
     [var_dim_map,nn_model] = processVarSpec(var_spec)
-    [combinedFunction,objEvalFunction] = processUserFn(user_fn)
+    combinedFunction = user_fn
 
     try:
         if nn_model != None:
@@ -484,16 +483,16 @@ def pygranso(var_spec,user_fn,user_opts=None):
 
         if nn_model != None:
             problem_fns = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,torch_device, model = nn_model,double_precision=opts.double_precision)
-            if objEvalFunction != None:
-                f_eval_fn = lambda x: obj_eval(objEvalFunction,x,var_dim_map)
+            if opts.is_backtrack_linesearch == True:
+                f_eval_fn = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,torch_device, model = nn_model,double_precision=opts.double_precision,get_grad=False)
             else:
                 f_eval_fn = None
 
         else:
             n = getNvar(var_dim_map)
             problem_fns = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,torch_device, double_precision=opts.double_precision)
-            if objEvalFunction != None:
-                f_eval_fn = lambda x: obj_eval(objEvalFunction,x,var_dim_map)
+            if opts.is_backtrack_linesearch == True:
+                f_eval_fn = lambda x: tensor2vec(combinedFunction ,x,var_dim_map,n,torch_device, model = nn_model,double_precision=opts.double_precision,get_grad=False)
             else:
                 f_eval_fn = None
 
@@ -527,9 +526,9 @@ def pygranso(var_spec,user_fn,user_opts=None):
 
     try:
         bfgssqp_obj = AlgBFGSSQP()
-        info = bfgssqp_obj.bfgssqp(f_eval_fn, penaltyfn_obj,bfgs_hess_inv_obj,opts,printer, torch_device)
+        info = bfgssqp_obj.bfgssqp(penaltyfn_obj,bfgs_hess_inv_obj,opts,printer, torch_device)
     except Exception as e:
-        print(traceback.format_exc())
+        print(traceback.format_exc())  
         # recover optimization computed so far
         penaltyfn_obj.restoreSnapShot()
 

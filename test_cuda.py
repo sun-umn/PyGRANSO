@@ -99,7 +99,6 @@ def rosenbrock():
     opts.double_precision = double_precision
     opts.torch_device = device
 
-
     soln = pygranso(var_spec= var_in, user_fn = comb_fn, user_opts = opts)
     print("test 1/7 passed (Rosenbrock)")
 

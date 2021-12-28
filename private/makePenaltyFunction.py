@@ -342,35 +342,53 @@ class PanaltyFuctions:
 
     # evaluate objective, constraints, violation, and penalty function at x
     def evaluateAtX4linesearch(self,x_in):
+        # Not updated class information in this function because gradient is not used;
+        # in the end of backtracking line search, evaluateAtX will be called to update 
+        # all information at current iteration
         try: 
             self.at_snap_shot    = False
             self.stat_value      = float("nan")
             self.fn_evals        += 1
             # evaluate objective and its gradient
-            self.f      = self.f_eval_fn(x_in)
+            [f,ci,ce]      = self.f_eval_fn(x_in)
             # evaluate constraints and their violations (nested update)
-            self.eval_ineq_fn(x_in) 
-            self.eval_eq_fn(x_in)
+            # self.eval_ineq_fn(x_in) 
+            # self.eval_eq_fn(x_in)
         except Exception as e:
             print("PyGRANSO userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x for line search.")
             print(traceback.format_exc())
             sys.exit()
 
-        self.x                   = x_in
-        self.feasible_to_tol     = self.is_feasible_to_tol_fn(self.tvi,self.tve);  
-        self.tv                  = np.maximum(self.tvi,self.tve)
-        self.tv_l1               = self.tvi_l1 + self.tve_l1
-        # self.tv_l1_grad          = self.tvi_l1_grad + self.tve_l1_grad
-        self.p                   = self.mu*self.f + self.tv_l1
-        
-        # # update best points encountered so far
-        # self.update_best_fn()
-        
-        # copy nested variables values to output arguments
-        p_out               = self.p
-        feasible_to_tol_out = self.feasible_to_tol
+        if ci == None:
+            # ci                   = torch.zeros((0,1),device=torch_device, dtype=torch_dtype)
+            # [vi,_] = violationsInequality(ci)
+            tvi                  = 0
+            tvi_l1               = 0
+        else:
+            [vi,_] = violationsInequality(ci)
+            #  l_inf penalty term for feasibility measure
+            tvi = totalViolationMax(vi)
+            #  l_1 penalty term for penalty function
+            tvi_l1 = torch.sum(vi)
 
-        return [p_out,feasible_to_tol_out]
+        if ce == None:
+            # ce                   = torch.zeros((0,1),device=torch_device, dtype=torch_dtype)
+            # [ve,_] = violationsEquality(ce)
+            tve                  = 0
+            tve_l1               = 0
+        else:
+            [ve,_] = violationsEquality(ce)
+            # l_inf penalty term for feasibility measure
+            tve = totalViolationMax(ve)
+            # l_1 penalty term for penalty function
+            tve_l1 = torch.sum(ve)
+
+        feasible_to_tol = self.is_feasible_to_tol_fn(tvi,tve)
+        # tv                  = np.maximum(tvi,tve)
+        tv_l1               = tvi_l1 + tve_l1
+        p                   = self.mu*f + tv_l1
+
+        return [p,feasible_to_tol]
 
     # evaluate objective, constraints, violation, and penalty function at x
     def evaluateAtX(self,x_in):

@@ -14,7 +14,7 @@ class AlgBFGSSQP():
     def __init__(self):
         pass
 
-    def bfgssqp(self,f_eval_fn, penaltyfn_obj, bfgs_obj, opts, printer, torch_device):
+    def bfgssqp(self, penaltyfn_obj, bfgs_obj, opts, printer, torch_device):
         """
         bfgssqp:
             Minimizes a penalty function.  Note that bfgssqp operates on the
@@ -126,7 +126,6 @@ class AlgBFGSSQP():
             =========================================================================
 
         """
-        self.f_eval_fn = f_eval_fn
         self.penaltyfn_obj = penaltyfn_obj
         self.bfgs_obj = bfgs_obj
         self.printer = printer

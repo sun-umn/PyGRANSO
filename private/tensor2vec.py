@@ -6,85 +6,7 @@ from private.vec2tensor import vec2tensor
 from private.getCiVec import getCiVec
 from private.getCiGradVec import getCiGradVec
 
-def obj_eval(eval_obj, x, var_dim_map):
-    """
-    obj_eval:
-        obj_eval makes an objective evaluation function used for backtrack line search
-
-        USAGE:
-            f = obj_eval(eval_obj, x, var_dim_map)
-
-        INPUT:
-            eval_obj
-                    Function handle of single input X, a data structuture storing all input variables,
-                    for evaluating:
-
-                        - The values of the objective:
-                            f = eval_obj(X)
-
-            x
-                    Vector, i.e., n by 1 torch tensor form optimization variables.
-                    This vector is detached from the computational graph of ci_vec_torch
-
-            var_dim_map
-
-                    A dictionary for optmization variable information,
-                    where the key is the variable name and val is a list for correpsonding dimension:
-                    e.g., var_in = {"x": [1,1]}; var_in = {"U": [5,10], "V": [10,20]}
-
-        OUTPUT:         
-            f
-                    objective function value at current point
-
-        If you publish work that uses or refers to PyGRANSO, please cite both
-        PyGRANSO and GRANSO paper:
-
-        [1] Buyun Liang, Tim Mitchell and Ju Sun.
-            NCVX: A User-Friendly and Scalable Package for Nonconvex
-            Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
-            Available at https://arxiv.org/abs/2111.13984
-
-        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton
-            A BFGS-SQP method for nonsmooth, nonconvex, constrained
-            optimization and its evaluation using relative minimization
-            profiles, Optimization Methods and Software, 32(1):148-181, 2017.
-            Available at https://dx.doi.org/10.1080/10556788.2016.1208749
-
-        tensor2vec.py (introduced in PyGRANSO v1.0.0)
-        Copyright (C) 2021 Buyun Liang
-
-        New code and functionality for PyGRANSO v1.0.0.
-
-        For comments/bug reports, please visit the PyGRANSO webpage:
-        https://github.com/sun-umn/PyGRANSO
-
-        =========================================================================
-        |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
-        |                                                                       |
-        |  This file is part of PyGRANSO.                                       |
-        |                                                                       |
-        |  PyGRANSO is free software: you can redistribute it and/or modify     |
-        |  it under the terms of the GNU Affero General Public License as       |
-        |  published by the Free Software Foundation, either version 3 of       |
-        |  the License, or (at your option) any later version.                  |
-        |                                                                       |
-        |  PyGRANSO is distributed in the hope that it will be useful,          |
-        |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
-        |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
-        |  GNU Affero General Public License for more details.                  |
-        |                                                                       |
-        |  You should have received a copy of the GNU Affero General Public     |
-        |  License along with this program.  If not, see                        |
-        |  <http://www.gnu.org/licenses/agpl.html>.                             |
-        =========================================================================
-    """
-    X_struct = vec2tensor(x,var_dim_map)
-    f = eval_obj(X_struct)
-
-    return f
-
-def tensor2vec(combinedFunction,x,var_dim_map,nvar,  torch_device = torch.device('cpu'), model = None, double_precision=True):
+def tensor2vec(combinedFunction,x,var_dim_map,nvar,  torch_device = torch.device('cpu'), model = None, double_precision=True, get_grad = True):
     """
     tensor2vec
         Return vector form objective and constraints information required by PyGRANSO
@@ -206,17 +128,27 @@ def tensor2vec(combinedFunction,x,var_dim_map,nvar,  torch_device = torch.device
     # obtain objective and constraint function and their corresponding gradient
     # matrix form functions
 
-    try:
-        # No auto-differentiation used here
-        [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = combinedFunction(X)
-    except Exception as e:
-        for var_name in X.__dict__:
-            var = getattr(X,var_name)
-            var.requires_grad_(True)
-        [f,ci,ce] = combinedFunction(X)
-        [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = getValwithAD(X,f,ci,ce,var_dim_map,nvar, torch_device, model, double_precision)
+    if get_grad:
+        try:
+            # No auto-differentiation used here
+            [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = combinedFunction(X)
+        except Exception as e:
+            for var_name in X.__dict__:
+                var = getattr(X,var_name)
+                var.requires_grad_(True)
+            [f,ci,ce] = combinedFunction(X)
+            [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = getValwithAD(X,f,ci,ce,var_dim_map,nvar, torch_device, model, double_precision)
 
-    return [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec]
+        return [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec]
+    else:
+        # Not return grad information. Used in back tracking line-search
+        try:
+            [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = combinedFunction(X)
+        except Exception as e:
+            [f,ci,ce] = combinedFunction(X)
+            [f_vec,ci_vec,ce_vec] = getVal4LineSearch(f,ci,ce,torch_device, double_precision)
+
+        return [f_vec,ci_vec,ce_vec]
 
 def getValwithAD(X,f,ci,ce,var_dim_map,nvar, torch_device, model, double_precision):
     """
@@ -255,3 +187,29 @@ def getValwithAD(X,f,ci,ce,var_dim_map,nvar, torch_device, model, double_precisi
         ce_grad_vec = None
 
     return [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec]
+
+
+def getVal4LineSearch(f,ci,ce,torch_device, double_precision):
+    """
+    getVal4LineSearch:
+        getValwithAD obtains vector form information [f,ci,ce] 
+    """
+        # obj function is a scalar form
+    try:
+        f_vec = f.item()
+    except Exception:
+        f_vec = f
+
+    ##  ci and ci_grad
+    if ci != None:
+        [ci_vec,_,_] = getCiVec(ci,torch_device,double_precision)
+    else:
+        ci_vec = None
+
+    ##  ce and ce_grad
+    if ce != None:
+        [ce_vec,_,_] = getCiVec(ce,torch_device,double_precision)
+    else:
+        ce_vec = None
+
+    return [f_vec,ci_vec,ce_vec]
