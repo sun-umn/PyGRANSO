@@ -60,6 +60,14 @@ Installing NCVX is simple. Here is a step-by-step instruction:
 
 Please check [CHANGELOG.md](./CHANGELOG.md) in the main folder.
 
+## Notes on Documentation
+
+PyGRANSO is a PyTorch-enabled port of GRANSO with auto-differentiation, and some of its documentations are in the MATLAB format. Please check the notes for the data structures used in PyGRANSO.
+
+* `struct` refers to `pygransoStruct`, which is a dummy class.
+* Vector and matrix refer to PyTorch tensor with *(n,1)* and *(m,n)* dimension 
+
+
 ## Acknowledgements
 
 We would like to thank [Frank E. Curtis](https://coral.ise.lehigh.edu/frankecurtis/) and [Michael L. Overton](https://cs.nyu.edu/~overton/) for their involvement in creating the BFGS-SQP algorithm that is 
