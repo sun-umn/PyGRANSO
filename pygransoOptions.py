@@ -3,7 +3,7 @@ import torch
 from private import pygransoConstants as pgC
 from private.optionValidator import oV
 import numpy as np
-from private.pygransoStruct import pygransoStruct
+from pygransoStruct import pygransoStruct
 from private.isAnInteger import isAnInteger
 import traceback,sys
 

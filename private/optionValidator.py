@@ -1,4 +1,4 @@
-from private.pygransoStruct import pygransoStruct
+from pygransoStruct import pygransoStruct
 import types
 from private.makeStructWithFields import makeStructWithFields
 from private.isAnInteger import isAnInteger

@@ -1,5 +1,5 @@
 from numpy.core.defchararray import isspace
-from private.pygransoStruct import pygransoStruct
+from pygransoStruct import pygransoStruct
 from private import formatOrange as fO, truncate as TR
 from private.centerString import centerString
 from itertools import compress

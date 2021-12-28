@@ -1,4 +1,4 @@
-from private.pygransoStruct import pygransoStruct
+from pygransoStruct import pygransoStruct
 from private import copyrightNotice, printMessageBox as pMB, pygransoConstants as pC, pygransoPrinterColumns as pPC
 from private.tablePrinter import tP
 from private.nDigitsInWholePart import nDigitsInWholePart

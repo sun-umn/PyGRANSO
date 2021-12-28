@@ -4,7 +4,7 @@ from private.neighborhoodCache import nC
 from private.qpSteeringStrategy import qpSS
 from private.qpTerminationCondition import qpTC
 import time
-from private.pygransoStruct import pygransoStruct
+from pygransoStruct import pygransoStruct
 import math
 import numpy as np
 from numpy.random import default_rng

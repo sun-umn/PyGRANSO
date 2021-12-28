@@ -1,6 +1,6 @@
 import torch
 from torch import conj
-from private.pygransoStruct import pygransoStruct
+from pygransoStruct import pygransoStruct
 
 def bfgsHessianInverseLimitedMem(H0,scaleH0,fixed_scaling,nvec,restart_data,device, double_precision):
     """

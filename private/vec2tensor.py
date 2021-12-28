@@ -1,4 +1,4 @@
-from private.pygransoStruct import pygransoStruct
+from pygransoStruct import pygransoStruct
 import numpy as np
 import torch
 

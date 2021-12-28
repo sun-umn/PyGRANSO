@@ -1,5 +1,5 @@
 import numpy as np
-from private.pygransoStruct import pygransoStruct
+from pygransoStruct import pygransoStruct
 import torch
 
 def bfgsHessianInverse(H,scaleH0):

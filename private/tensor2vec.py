@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from private.getObjGrad import getObjGradDL,getObjGrad
-from private.pygransoStruct import pygransoStruct
+from pygransoStruct import pygransoStruct
 from private.vec2tensor import vec2tensor
 from private.getCiVec import getCiVec
 from private.getCiGradVec import getCiGradVec
