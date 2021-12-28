@@ -96,7 +96,7 @@ def tensor2vec(combinedFunction,x,var_dim_map,nvar,  torch_device = torch.device
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
 
         tensor2vec.py (introduced in PyGRANSO v1.0.0)
-        Copyright (C) 2021 Buyun Liang
+        Copyright (C) 2021 Buyun Liang and Tim Mitchell
 
         New code and functionality for PyGRANSO v1.0.0.
 
