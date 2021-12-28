@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from private.getObjGrad import getObjGradDL,getObjGrad
+from private.pygransoStruct import pygransoStruct
 from private.vec2tensor import vec2tensor
 from private.getCiVec import getCiVec
 from private.getCiGradVec import getCiGradVec
@@ -206,8 +207,12 @@ def tensor2vec(combinedFunction,x,var_dim_map,nvar,  torch_device = torch.device
     # matrix form functions
 
     try:
+        # No auto-differentiation used here
         [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = combinedFunction(X)
     except Exception as e:
+        for var_name in X.__dict__:
+            var = getattr(X,var_name)
+            var.requires_grad_(True)
         [f,ci,ce] = combinedFunction(X)
         [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = getValwithAD(X,f,ci,ce,var_dim_map,nvar, torch_device, model, double_precision)
 

@@ -75,9 +75,6 @@ def rosenbrock():
     def comb_fn(X_struct):
         x1 = X_struct.x1
         x2 = X_struct.x2
-        # enable autodifferentiation
-        x1.requires_grad_(True)
-        x2.requires_grad_(True)
 
         # objective function
         f = (8 * abs(x1**2 - x2) + (1 - x1)**2)
@@ -126,7 +123,6 @@ def spectral_radius():
     def comb_fn(X_struct):
         # user defined variable, matrix form. torch tensor
         X = X_struct.X
-        X.requires_grad_(True)
 
         # objective function
         M           = A + B@X@C
@@ -171,7 +167,6 @@ def dictionary_learning():
 
     # def comb_fn(X_struct):
     #     q = X_struct.q
-    #     q.requires_grad_(True)
 
     #     # objective function
     #     qtY = q.T @ Y
@@ -245,8 +240,6 @@ def robust_PCA():
     def comb_fn(X_struct):
         M = X_struct.M
         S = X_struct.S
-        M.requires_grad_(True)
-        S.requires_grad_(True)
 
         # objective function
         f = torch.norm(M, p = 'nuc') + eta * torch.norm(S, p = 1)
@@ -282,7 +275,6 @@ def lasso():
 
     def comb_fn(X_struct):
         x = X_struct.x
-        x.requires_grad_(True)
 
         # objective function
         f = (x-b).t() @ (x-b)  + eta * torch.norm( F@x, p = 1)
@@ -316,8 +308,6 @@ def feasibility():
     def comb_fn(X_struct):
         x = X_struct.x
         y = X_struct.y
-        x.requires_grad_(True)
-        y.requires_grad_(True)
         # constant objective function
         f = 0*x+0*y
 
@@ -357,7 +347,6 @@ def sphere_manifold():
 
     def comb_fn(X_struct):
         x = X_struct.x
-        x.requires_grad_(True)
 
         # objective function
         f = x.T@A@x
