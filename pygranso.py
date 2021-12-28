@@ -9,13 +9,13 @@ from private.solveQP import getErr
 from private.wrapToLines import wrapToLines
 from time import sleep
 from private.tensor2vec import tensor2vec
-from private.getNvar import getNvar 
+from private.getNvar import getNvar
 from private.processVarSpec import processVarSpec
 import traceback,sys
 
 def pygranso(var_spec,combinedFunction,user_opts=None):
     """
-    PyGRANSO:
+    PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation
 
         Minimize a function, possibly subject to inequality and/or equality
         constraints.  PyGRANSO is intended to be an efficient solver for
@@ -34,13 +34,12 @@ def pygranso(var_spec,combinedFunction,user_opts=None):
         hard/soft each individual constraints are, provided that they
         respectively remain 'less than or equal' or 'equal' to zero.
 
-        The user must install a quadratic program solver,
-        such as OSQP.
+        The user must install a quadratic program solver such as OSQP.
 
         PyGRANSO uses modifed versions of the BFGS inverse Hessian approximation
         update formulas and the inexact weak Wolfe line search from HANSO v2.1.
         See the documentation of HANSO for more information on the use of
-        quasi-Newton methods for nonsmooth unconstrained optimization.    
+        quasi-Newton methods for nonsmooth unconstrained optimization.
 
         NOTE:
 
@@ -65,12 +64,12 @@ def pygranso(var_spec,combinedFunction,user_opts=None):
         result.
 
         USAGE:
+            soln = pygranso(var_spec,combined_fn,user_opts=None)
 
-        - combined_fn evaluates objective and constraints simultaneously:
-
-        "combined" format
-        soln = pygranso(var_spec,combinedFunction,user_opts=None)
-
+            NOTE: PyGRANSO differs from GRANSO in that pygranso only supports
+                  combined_fn for specifying the objective and constraints
+                  functions, as opposed to the alternative obj_fn, ineq_fn,
+                  eq_fn function handles that GRANSO can also use.
 
         INPUT:
 
@@ -79,16 +78,15 @@ def pygranso(var_spec,combinedFunction,user_opts=None):
 
             1. var_dim_map: used in general cases
 
-            OR 
+            OR
 
             2.[var_dim_map,nn_model]: if torch neural network model used in both objective and constraints,
-            we need additional nn_model arg to allow autodifferentiation. This option will be merged into 1 
-            in the next release.
+            we need additional nn_model arg to allow autodifferentiation.
 
             var_dim_map:
                             Required
 
-                            A dictionary for optmization variable information,
+                            A dictionary for optimization variable information,
                             where the key is the variable name and val is a list for correpsonding dimension:
                             e.g., var_in = {"x": [3]}; var_in = {"U": [5,10], "V": [10,20]; var_in = {"W":[3,28,28]}}
 
@@ -101,40 +99,41 @@ def pygranso(var_spec,combinedFunction,user_opts=None):
                             Neural network model defined by torch.nn. It only used when torch.nn was used to
                             define the combinedFunction and/or objEvalFunction
 
-        combinedFunction:
+        combined_fn:
                 Function handle of single input X, a data structuture storing all input variables,
                 for evaluating:
 
-                - The values of the objective and
-                    constraints simultaneously:
-                    [f,ci,ce] = combinedFunction(X)
-                    
+                - The values of the objective and constraints simultaneously:
+                    [f,ci,ce] = combined_fn(X)
+
                     ci and/or ce should be returned as
                     None if no (in)equality constraints are given.
 
-                    In this case, f, ci and ce shoule be computational graph of optimization variables.
-                    And auto-differentiation will be used to obtain gradient information of them
-                
-                OR
+                    Auto-differentiation is used to obtain gradients automatically.
 
-                - The values of the objective,
-                    constraints, and their gradients simultaneously:
-                    [f,f_grad,ci,ci_grad,ce,ce_grad] = combinedFunction(X)
-                    
-                    ci and/or ce should be returned as
+                OR (for advanced user who want to provide explicit gradients or
+                    use AD for some gradients but not all)
+
+                - The values of the objective, constraints, and their gradients simultaneously:
+                    [f,f_grad,ci,ci_grad,ce,ce_grad] = combined_fn(X)
+
+                    ci and/or ce (and their corresponding gradients) should be returned as
                     None if no (in)equality constraints are given.
 
-                    In this case, the requirements on [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec]
-                    is the same as GRANSO:
+                    In this case, the requirements on [f,f_grad,ci,ci_grad,ce,ce_grad]
+                    are the same as GRANSO:
 
-                    Each function handle returns the value of the function(s) 
+                    Each function handle returns the value of the function(s)
                     evaluated at single input X, a data structuture storing all input variables,
-                    along with its corresponding gradient(s) as a matrix of column vectors.  
-                    For example, if there are n variables and p inequality 
-                    constraints, then ci must be supplied as a column vector in 
-                    R^p while ci_grad must be given as an n by p matrix of p 
+                    along with its corresponding gradient(s) as a matrix of column vectors.
+                    For example, if there are n variables and p inequality
+                    constraints, then ci must be supplied as a column vector in
+                    R^p while ci_grad must be given as an n by p matrix of p
                     gradients for the p inequality constraints.
-                            
+
+                    NOTE: This explicit gradient interface may change in a future release of PyGRANSO
+                          to be more consistent with the AD interface.
+
         user_opts:
                         Optional struct of settable parameters or None.
                         To see available parameters and their descriptions,
@@ -391,12 +390,12 @@ def pygranso(var_spec,combinedFunction,user_opts=None):
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
-        [1] Buyun Liang, Tim Mitchell and Ju Sun.
+        [1] Buyun Liang, Tim Mitchell, and Ju Sun,
             NCVX: A User-Friendly and Scalable Package for Nonconvex
-            Optimization in Machine Learning. arXiv preprint arXiv:2111.13984 (2021).
+            Optimization in Machine Learning, arXiv preprint arXiv:2111.13984 (2021).
             Available at https://arxiv.org/abs/2111.13984
 
-        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton
+        [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton,
             A BFGS-SQP method for nonsmooth, nonconvex, constrained
             optimization and its evaluation using relative minimization
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
@@ -411,11 +410,11 @@ def pygranso(var_spec,combinedFunction,user_opts=None):
 
         This file is a MATLAB-to-Python port of granso.m from
         GRANSO v1.6.4 with the following new functionality and/or changes:
-            1.Adding new options to handle pytorch neural network model.
-            2.Adding f_eval_fn to allow cheaper backtracking line search, as
-            eval gradient is not needed in backtracking line search.
+            1. Adding new options to handle pytorch neural network model.
+            2. Adding f_eval_fn to allow cheaper backtracking line search, as
+               eval gradient is not needed in backtracking line search.
             3. Add torch_device and double precision options to allow user
-            select cuda/cpu and double/float.
+               select cuda/cpu and double/float.
         Ported from MATLAB to Python and modified by Buyun Liang, 2021
 
         For comments/bug reports, please visit the PyGRANSO webpage:
@@ -509,7 +508,7 @@ def pygranso(var_spec,combinedFunction,user_opts=None):
         bfgssqp_obj = AlgBFGSSQP()
         info = bfgssqp_obj.bfgssqp(penaltyfn_obj,bfgs_hess_inv_obj,opts,printer, torch_device)
     except Exception as e:
-        print(traceback.format_exc())  
+        print(traceback.format_exc())
         # recover optimization computed so far
         penaltyfn_obj.restoreSnapShot()
 
