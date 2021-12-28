@@ -333,7 +333,7 @@ def pygransoOptions(n,options):
         In the default setting, user should provide [f,ci,ce] = combined_fn(X).
         When globalAD = False, user should provide [f,f_grad,ci,ci_grad,ce,ce_grad] = combined_fn(X) 
 
-        Please check the docstring of pygranso.py for more details of setting combinedFunction
+        Please check the docstring of pygranso.py for more details of setting combined_fn
 
         END OF STANDARD PARAMETERS
 
