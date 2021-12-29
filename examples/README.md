@@ -1,6 +1,6 @@
 # Demo 1: 2-variable nonsmooth Rosenbrock objective function
 
-Modified based on GRANSO's example 1,2 and 3.
+Modified based on GRANSO demo examples 1, 2, and 3.
 
 2-variable nonsmooth Rosenbrock objective function, subject to simple bound constraints
 
@@ -8,7 +8,7 @@ Reference: http://www.timmitchell.com/software/GRANSO/
 
 # Demo 2: Eigenvalue Optimization
 
-Modified based on GRANSO's example 4.
+Modified based on GRANSO demo example 4.
 
 Reference: http://www.timmitchell.com/software/GRANSO/
 
