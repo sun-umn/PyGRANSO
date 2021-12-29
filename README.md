@@ -41,7 +41,7 @@ Installing PyGRANSO is simple. Here is a step-by-step instruction:
 
         python test_cpu.py
 
-4. Check the Examples section (https://ncvx.org/PyGRANSO/examples) in the documentation website to get started.
+4. Check the [example folder](./examples) in the source code or [example section](https://ncvx.org/PyGRANSO/examples) on the documentation website to get started.
 
 ## Dependencies
     Python-3.9.7
