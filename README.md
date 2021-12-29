@@ -5,7 +5,7 @@
 
 PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation
 
-Please check https://ncvx.org for detailed instructions (introduction, installation, settings, examples...).
+Please check https://ncvx.org/PyGRANSO/ for detailed instructions (introduction, installation, settings, examples...).
 
 ## Brief Introduction
 
@@ -15,23 +15,23 @@ Optimizing nonconvex (NCVX) problems, especially those nonsmooth and constrained
 
 **NOTE: The installation process is tested on Ubuntu 20.04**
 
-Installing NCVX is simple. Here is a step-by-step instruction:
+Installing PyGRANSO is simple. Here is a step-by-step instruction:
 
 0. Prerequisite: install Anaconda on your system (recommend: Ubuntu 20.04). Detailed guidance: https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html
 
-1. Download the latest version of NCVX on GitHub (https://github.com/sun-umn/NCVX)
+1. Download the latest version of PyGRANSO on GitHub (https://github.com/sun-umn/PyGRANSO)
 
 2. Change the name and prefix in environment.yml.
 
     (GPU and CPU) Simply run:
 
         conda env create -f environment_cuda.yml
-        conda activate ncvx_cuda_env
+        conda activate pygranso_cuda_env
 
     (CPU only) Simply run:
 
         conda env create -f environment_cpu.yml
-        conda activate ncvx_cpu_env
+        conda activate pygranso_cpu_env
 
 3. (GPU and CPU) Run test to make sure the dependency installation is correct:
 
@@ -41,7 +41,7 @@ Installing NCVX is simple. Here is a step-by-step instruction:
 
         python test_cpu.py
 
-4. Check the Examples section (https://ncvx.org/examples) in the documentation website to get started.
+4. Check the Examples section (https://ncvx.org/PyGRANSO/examples) in the documentation website to get started.
 
 ## Dependencies
     Python-3.9.7
