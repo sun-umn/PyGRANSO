@@ -62,10 +62,10 @@ Please check [CHANGELOG.md](./CHANGELOG.md) in the main folder.
 
 ## Notes on Documentation
 
-PyGRANSO is a PyTorch-enabled port of GRANSO with auto-differentiation, and some of its documentation uses MATLAB conventions. Please see the notes for the data structures used in PyGRANSO and note that:
+PyGRANSO is a PyTorch-enabled port of GRANSO with auto-differentiation, and some of its documentation uses MATLAB conventions. In the PyGRANSO source code docstrings, please note that:
 
-* `struct` refers to `pygransoStruct`, which is a simple class that users need to use for specifying their problems and options
-* Vector and matrix refer to PyTorch tensor with *(n,1)* and *(m,n)* dimension 
+* `struct` refers to `pygransoStruct`, which is a simple class that users need to use for specifying their problems and options.
+* Vector and matrix refer to PyTorch tensor with *(n,1)* and *(m,n)* dimension, respectively. 
 
 
 ## Acknowledgements
