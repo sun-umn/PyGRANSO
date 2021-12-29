@@ -38,7 +38,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
                             close to the feasible region.
                             NOTE:   for unconstrained problems, this logical (set
                                     as true) must still be returned
-                            e.g. [f,g,is_feasible] = obj_fn(x,get_grad = True)
+                            e.g. [f,g,is_feasible] = obj_fn(x)
 
                             if set get_grad = False, the gradient won't be returned:
                                 [f,is_feasible] = obj_fn(x,get_grad = False)
@@ -233,7 +233,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
             # random setting, avoid error in 2nd wolfe condition
             gtd = 2*(torch.conj(grad0.t()) @ d)
         else:
-            [f,grad,is_feasible] = obj_fn(x,get_grad = True)
+            [f,grad,is_feasible] = obj_fn(x)
             gtd = torch.conj(grad.t()) @ d
 
         if torch.is_tensor(f):
@@ -243,7 +243,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
             fail = 0
             alpha = t  # normally beta is inf
             xalpha = x.detach().clone()
-            [f,grad,is_feasible] = obj_fn(x,get_grad = True)
+            [f,grad,is_feasible] = obj_fn(x)
             falpha = f
             gradalpha = grad.detach().clone()
             return [alpha, xalpha, falpha, gradalpha, fail]
@@ -263,7 +263,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
             alpha = t
             xalpha = x.detach().clone()
             if is_backtrack_linesearch:
-                [f,grad,is_feasible] = obj_fn(x,get_grad = True)
+                [f,grad,is_feasible] = obj_fn(x)
             falpha = f
             gradalpha = grad.detach().clone()
             beta = t
@@ -289,7 +289,7 @@ def linesearchWeakWolfe( x0, f0, grad0, d, obj_fn, c1 = 0, c2 = 0.5, fvalquit = 
     if is_backtrack_linesearch:
         alpha = t
         xalpha = x.detach().clone()
-        [f,grad,is_feasible] = obj_fn(x,get_grad = True)
+        [f,grad,is_feasible] = obj_fn(x)
         falpha = f
         gradalpha = grad.detach().clone()
         beta = t
