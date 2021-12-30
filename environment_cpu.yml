@@ -1,4 +1,4 @@
-name: ncvx_cpu_env
+name: pygranso_cpu_env
 channels:
   - pytorch
   - defaults
@@ -126,4 +126,4 @@ dependencies:
   - zipp=3.6.0=pyhd8ed1ab_0
   - zlib=1.2.11=h7b6447c_3
   - zstd=1.4.9=haebb681_0
-prefix: /home/buyun/anaconda3/envs/ncvx_cpu_env
+prefix: /home/buyun/anaconda3/envs/pygranso_cpu_env
