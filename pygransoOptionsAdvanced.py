@@ -274,7 +274,7 @@ def pygransoOptionsAdvanced(n,options):
 
         By default, NCVX will use Weak-Wolfe line search. By enabling this method, the curvature condition will be disabled.
 
-        searching_direction_rescaling
+        search_direction_rescaling
         --------------------------------
         Boolean value. Default value: False
 
@@ -310,7 +310,7 @@ def pygransoOptionsAdvanced(n,options):
         This file is a MATLAB-to-Python port of gransoOptionsAdvanced.m from
         GRANSO v1.6.4 with the following new functionality and/or changes:
             1. Adding new options: QPsolver, init_step_size, linesearch_maxit,
-            is_backtrack_linesearch, searching_direction_rescaling,
+            is_backtrack_linesearch, search_direction_rescaling,
             disable_terminationcode_6.
             See https://ncvx.org/settings/new_para.html for more details.
         Ported from MATLAB to Python and modified by Buyun Liang, 2021

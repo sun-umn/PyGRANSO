@@ -359,7 +359,7 @@ def pygransoOptions(n,options):
         This file is a MATLAB-to-Python port of gransoOptions.m from
         GRANSO v1.6.4 with the following new functionality and/or changes:
             1. Adding new options: QPsolver, init_step_size, linesearch_maxit,
-            is_backtrack_linesearch, searching_direction_rescaling,
+            is_backtrack_linesearch, search_direction_rescaling,
             disable_terminationcode_6.
             See https://ncvx.org/settings/new_para.html for more details.
         Ported from MATLAB to Python and modified by Buyun Liang, 2021
@@ -522,7 +522,7 @@ def pygransoOptions(n,options):
         validator.setRealNonnegative("init_step_size")
         validator.setLogical("is_backtrack_linesearch")
         validator.setLogical("double_precision")
-        validator.setLogical("searching_direction_rescaling")
+        validator.setLogical("search_direction_rescaling")
         validator.setLogical("disable_terminationcode_6")
         validator.setLogical("globalAD")
 
@@ -626,7 +626,7 @@ def getDefaults(n):
     setattr(default_opts,'init_step_size',1)
     setattr(default_opts,'is_backtrack_linesearch',False)
     setattr(default_opts,'double_precision',True)
-    setattr(default_opts,'searching_direction_rescaling',False)
+    setattr(default_opts,'search_direction_rescaling',False)
     setattr(default_opts,'disable_terminationcode_6',False)
     setattr(default_opts,'globalAD',True)
 

@@ -188,7 +188,7 @@ class AlgBFGSSQP():
         self.linesearch_maxit = opts.linesearch_maxit
         self.init_step_size = opts.init_step_size
         self.is_backtrack_linesearch = opts.is_backtrack_linesearch
-        self.searching_direction_rescaling = opts.searching_direction_rescaling
+        self.search_direction_rescaling = opts.search_direction_rescaling
         self.disable_terminationcode_6 = opts.disable_terminationcode_6
         self.double_precision = opts.double_precision
         if self.double_precision:
@@ -348,7 +348,7 @@ class AlgBFGSSQP():
                 p = rng.standard_normal(size=(n,1))
                 self.random_attempts = self.random_attempts + 1
             
-            if self.searching_direction_rescaling:
+            if self.search_direction_rescaling:
                 p_norm = torch.norm(p).item()
                 p =  1 * p / p_norm
                 
