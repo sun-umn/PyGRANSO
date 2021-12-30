@@ -335,6 +335,13 @@ def pygransoOptions(n,options):
 
         Please check the docstring of pygranso.py for more details of setting combined_fn
 
+        double_precision
+        --------------------------------
+        Boolean value. Default value: True
+
+        Set the floating number formats to be double precision for PyGRANSO solver. If double_precision = False, 
+        the floating number formats will be single precision.
+
         END OF STANDARD PARAMETERS
 
         See also pygransoOptions, pygransoOptionsAdvanced.
