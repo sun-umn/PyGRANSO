@@ -1,4 +1,4 @@
-name: ncvx_cuda_env
+name: pygranso_cuda_env
 channels:
   - pytorch
   - defaults
@@ -121,4 +121,4 @@ dependencies:
   - zipp=3.6.0=pyhd8ed1ab_0
   - zlib=1.2.11=h36c2ea0_1011
   - zstd=1.4.9=ha95c52a_0
-prefix: /home/buyun/anaconda3/envs/ncvx_cuda_env
+prefix: /home/buyun/anaconda3/envs/pygranso_cuda_env
