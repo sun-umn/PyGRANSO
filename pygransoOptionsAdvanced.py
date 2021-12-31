@@ -248,13 +248,9 @@ def pygransoOptionsAdvanced(n,options):
         lowering the penalty parameter for line search reattempts.
         NOTE: this option is irrelevant for unconstrained problems.
 
-        PyGRANSO New Options
+        EXPERIMENTAL OPTIONS
 
-        QPsolver
-        --------------------------------
-        String in {'osqp'}. Default value: 'osqp'
-
-        Select the QP solver used in the steering strategy and termination condition. Currently only OSQP is supported.
+        NOTE: The following options are still in development and may change or be removed in future releases. We don't recommend users use them in current version.
 
         init_step_size
         --------------------------------

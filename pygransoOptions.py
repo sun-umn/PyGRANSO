@@ -14,29 +14,29 @@ def pygransoOptions(n,options):
         not provided, returned opts will be PyGRANSO's default parameters.
         Standard or advanced options may be set.
 
-    Type:
-    help(pygransoOptions)
-    to see documentation for the advanced user options.
+        Type:
+        help(pygransoOptions)
+        to see documentation for the advanced user options.
 
-    USAGE:
-    opts = pygransoOptions(n,options)
+        USAGE:
+        opts = pygransoOptions(n,options)
 
-    INPUT:
-    n           Number of variables being optimized.
+        INPUT:
+        n           Number of variables being optimized.
 
-    user_opts   Struct of settable algorithm parameters.  No fields are
-                required, irrelevant fields are ignored, and user_opts
-                may be given as None.
+        user_opts   Struct of settable algorithm parameters.  No fields are
+                    required, irrelevant fields are ignored, and user_opts
+                    may be given as None.
 
-    OUTPUT:
-    opts        Struct of all tunable user parameters for PyGRANSO.
-                If a field is provided in user_opts, then the user's
-                value is checked to whether or not it is a valid value,
-                and if so, it is set in opts.  Otherwise, an error is
-                thrown.  If a field is not provided in user_opts, opts
-                will contain the field with PyGRANSO's default value.
+        OUTPUT:
+        opts        Struct of all tunable user parameters for PyGRANSO.
+                    If a field is provided in user_opts, then the user's
+                    value is checked to whether or not it is a valid value,
+                    and if so, it is set in opts.  Otherwise, an error is
+                    thrown.  If a field is not provided in user_opts, opts
+                    will contain the field with PyGRANSO's default value.
 
-    STANDARD PARAMETERS
+        STANDARD PARAMETERS
 
         x0
         ----------------
@@ -317,6 +317,14 @@ def pygransoOptions(n,options):
         to allow the user to signal to PyGRANSO for it to halt at that
         iteration and/or create historical logs of the progress of the
         algorithm.
+
+        PyGRANSO NEW OPTIONS
+
+        QPsolver
+        --------------------------------
+        String in {'osqp'}. Default value: 'osqp'
+
+        Select the QP solver used in the steering strategy and termination condition. Currently only OSQP is supported.
 
         torch_device
         --------------------------------
