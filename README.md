@@ -5,7 +5,7 @@
 
 PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation
 
-Please check https://ncvx.org/PyGRANSO/ for detailed instructions (introduction, installation, settings, examples...).
+Please check https://ncvx.org/PyGRANSO for detailed instructions (introduction, installation, settings, examples...).
 
 ## Brief Introduction
 
