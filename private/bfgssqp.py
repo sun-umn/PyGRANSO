@@ -126,6 +126,9 @@ class AlgBFGSSQP():
             =========================================================================
 
         """
+        # My para
+        self.lam = None
+
         self.penaltyfn_obj = penaltyfn_obj
         self.bfgs_obj = bfgs_obj
         self.printer = printer
@@ -327,7 +330,7 @@ class AlgBFGSSQP():
                     apply_H_steer = APPLY_IDENTITY; # "degraded" steering 
                 
                 try:
-                    [p,mu_new,*_] = steering_fn(self.penaltyfn_at_x,apply_H_steer)
+                    [p,mu_new,*_, self.lam] = steering_fn(self.penaltyfn_at_x,apply_H_steer)
                 except Exception as e:
                     print("PyGRANSO:steeringQuadprogFailure")
                     print(traceback.format_exc())
@@ -628,6 +631,7 @@ class AlgBFGSSQP():
     def prepareTermination(self,code):
         self.info = pygransoStruct()
         setattr(self.info, "termination_code", code)
+        setattr(self.info, "lam", self.lam)
         if code == 8 and self.constrained:
             self.info.mu_lowest      = self.mu_lowest
 

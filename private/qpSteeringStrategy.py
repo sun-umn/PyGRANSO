@@ -172,10 +172,10 @@ class qpSS:
     
         #  Check predicted violation reduction for search direction
         #  given by current penalty parameter
-        d                   = self.solveSteeringDualQP()
+        d, lam                   = self.solveSteeringDualQP()
         reduction           = predictedViolFn(d)
         if reduction >= c_viol*self.violation - violation_tol:
-            return [d,mu,reduction]
+            return [d,mu,reduction,lam]
         
     
         #  Disable steering if all inequality constraints are strictly 
@@ -183,7 +183,7 @@ class qpSS:
         #  and no equality constraints are present.
         #  Explicitly check for infinity in case ineq contains -inf 
         if ineq_margin != np.inf and not torch.any(self.ineq >= -ineq_margin) and n_eq == 0:
-            return [d,mu,reduction]
+            return [d,mu,reduction,lam]
         
             
         #  Predicted violation reduction was inadequate.  Check to see
@@ -192,10 +192,10 @@ class qpSS:
         #  objective removed, that is, with the penalty parameter temporarily 
         #  set to zero)
         self.updateSteeringQP(0)
-        d_reference         = self.solveSteeringDualQP()
+        d_reference, _         = self.solveSteeringDualQP()
         reduction_reference = predictedViolFn(d_reference)
         if reduction >= c_viol*reduction_reference - violation_tol:
-            return [d,mu,reduction]
+            return [d,mu,reduction,lam]
         
     
         #  iteratively lower penalty parameter to produce new search directions
@@ -204,18 +204,18 @@ class qpSS:
         for j in range(maxit):
             mu = c_mu * mu
             self.updateSteeringQP(mu)
-            d               = self.solveSteeringDualQP()
+            d, lam               = self.solveSteeringDualQP()
             reduction       = predictedViolFn(d)
             #  Test new step's predicted reduction against reference's
             if reduction >= c_viol*reduction_reference - violation_tol:
-                return [d,mu,reduction] # predicted reduction is acceptable
+                return [d,mu,reduction,lam] # predicted reduction is acceptable
             
         
         #  All d failed to meet acceptable predicted violation reduction so 
         #  just use the last search direction d produced for the lowest penalty 
         #  parameter value considered. 
         
-        return [d,mu,reduction]
+        return [d,mu,reduction,lam]
     
     #  private helper functions
     
@@ -253,7 +253,7 @@ class qpSS:
             sys.exit()
 
         d = -self.mu_Hinv_f_grad - (self.Hinv_c_grads @ y)
-        return d
+        return [d, y]
     
     #  update penalty parameter dependent values for QP
     def updateSteeringQP(self,mu):

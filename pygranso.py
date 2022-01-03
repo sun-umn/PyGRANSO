@@ -522,6 +522,8 @@ def pygranso(var_spec,combined_fn,user_opts=None):
     soln.fn_evals               = penaltyfn_obj.getNumberOfEvaluations()
     soln.termination_code       = info.termination_code
 
+    soln.lam                    = info.lam # get dual solution of the final iteration
+
     [qp_requests,qp_errs]       = getErr()
     if qp_requests == 0:
         qp_fail_rate = 0
