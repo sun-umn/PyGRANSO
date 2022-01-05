@@ -111,7 +111,7 @@ class nC:
             computed        = 0
         else:
             #  Calculate the distance from the new sample point x to the 
-            #  most recent;y added sample already in the cache 
+            #  most recently added sample already in the cache 
             # sample = self.samples[:,self.last_added_ind-1]
             # diff = x - sample
             # dist_to_last_added = LA.norm(diff)

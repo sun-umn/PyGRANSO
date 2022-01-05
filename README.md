@@ -123,3 +123,5 @@ For questions or bug reports, please either:
   - Ju Sun (*jusun an_at_symbol umn a_dot_symbol edu*)
 
 Thanks to bug reporters: 
+
+[Chen Jiang](https://github.com/shoopshoop): Tested perceptual attack example (ex6).
