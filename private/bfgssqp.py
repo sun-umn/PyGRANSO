@@ -573,7 +573,11 @@ class AlgBFGSSQP():
         #  If its norm is small, that indicates that we are at a smooth 
         #  stationary point and we can return this measure and terminate
         stat_vec        = self.penaltyfn_at_x.p_grad
-        stat_value      = torch.norm(stat_vec)
+
+        # stat_value      = torch.norm(stat_vec)
+        # Use inf norm intead to avoid the effect from dimensionality
+        stat_value      = torch.norm(stat_vec, float('inf')) 
+        # print("l2_norm = {} ; inf_norm = {}".format(torch.norm(stat_vec), torch.norm(stat_vec, float('inf')) ) )
 
         
         self.opt_tol = torch.as_tensor(self.opt_tol,device = self.torch_device, dtype=self.torch_dtype)
@@ -601,7 +605,12 @@ class AlgBFGSSQP():
         qPTC_obj = qpTC()
         [stat_vec,n_qps,ME] = qPTC_obj.qpTerminationCondition(   self.penaltyfn_at_x, grad_samples,
                                                         self.apply_H_QP_fn, self.QPsolver, self.torch_device, self.double_precision)
-        stat_value = torch.norm(stat_vec).item()
+
+        # stat_value = torch.norm(stat_vec).item()
+        # Use inf norm intead to avoid the effect from dimensionality
+        stat_value      = torch.norm(stat_vec, float('inf')).item() 
+        # print("l2_norm = {} ; inf_norm = {}".format(torch.norm(stat_vec), torch.norm(stat_vec, float('inf')) ) )
+
         self.penaltyfn_obj.addStationarityMeasure(stat_value)
         
         if self.print_level > 2 and  len(ME) > 0:
