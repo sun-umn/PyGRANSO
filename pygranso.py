@@ -718,7 +718,7 @@ def failedToBracketedMinimizerMsg(soln):
                 "the objective function is indeed bounded below on the feasible set, ",
                 "consider restarting PyGRANSO with opts.mu0 set even lower than {}.".format(soln.mu_lowest)]
     else:
-        s_mu = ""
+        s_mu = [""]
 
     s = ["line search failed to bracket a minimizer, indicating that the objective ",
         "function may be unbounded below. "] + s_mu
