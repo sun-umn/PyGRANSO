@@ -122,6 +122,6 @@ For questions or bug reports, please either:
   - Tim Mitchell (*tim an_at_symbol timmitchell a_dot_symbol com*)
   - Ju Sun (*jusun an_at_symbol umn a_dot_symbol edu*)
 
-Thanks to bug reporters: 
+Thanks to other contributors and bug reporters: 
 
-[Chen Jiang](https://github.com/shoopshoop): Tested perceptual attack example (ex6).
+[Chen Jiang](https://github.com/shoopshoop): Tested perceptual attack example (ex6). Prepared environment file for Win10.
