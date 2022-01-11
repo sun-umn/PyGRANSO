@@ -197,7 +197,7 @@ def getObjGradDL(nvar,model,f, torch_device, double_precision):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    f.backward()
+    f.backward(retain_graph=True)
     # transform f_grad form matrix form to vector form
     if double_precision:
         torch_dtype = torch.double
@@ -212,6 +212,8 @@ def getObjGradDL(nvar,model,f, torch_device, double_precision):
         f_grad_reshape = torch.reshape(parameter_lst[i].grad,(-1,1))
         f_grad_vec[curIdx:curIdx+f_grad_reshape.shape[0]] = f_grad_reshape
         curIdx += f_grad_reshape.shape[0]
+        # preventing gradient accumulating
+        parameter_lst[i].grad.zero_()
         
     f_grad_vec = f_grad_vec.detach()
     return f_grad_vec
