@@ -94,7 +94,9 @@ def get_lpips_model(
 
 
 
-device = torch.device('cuda')
+# device = torch.device('cuda')
+device = torch.device('cpu')
+
 
 dataset, model = get_dataset_model(
 dataset='cifar',
@@ -103,7 +105,7 @@ checkpoint_fname='/home/buyun/Documents/GitHub/PyGRANSO/examples/data/checkpoint
 )
 model = model.to(device=device, dtype=torch.double)
 # Create a validation set loader.
-batch_size = 1
+batch_size = 10
 _, val_loader = dataset.make_loaders(1, batch_size, only_val=True, shuffle_val=False)
 
 
@@ -213,8 +215,9 @@ opts = pygransoStruct()
 opts.torch_device = device
 opts.maxit = 10000
 # opts.opt_tol = 1e-3
-opts.print_frequency = 10
+opts.print_frequency = 1
 opts.x0 = torch.reshape(inputs,(torch.numel(inputs),1))
+opts.maxit = 1
 # opts.init_step_size = 0.1
 
 
@@ -224,7 +227,10 @@ opts.x0 = torch.reshape(inputs,(torch.numel(inputs),1))
 
 
 start = time.time()
-soln = pygranso(var_spec = var_in,combined_fn = comb_fn,user_opts = opts)
+pygranso(var_spec = var_in,combined_fn = comb_fn,user_opts = opts)
 end = time.time()
 print("Total Wall Time: {}s".format(end - start))
 
+for i in range(100):
+    print(i)
+    pygranso(var_spec = var_in,combined_fn = comb_fn,user_opts = opts)
