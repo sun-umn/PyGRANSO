@@ -1,7 +1,7 @@
 import time
 import torch
-from pygranso import pygranso
-from pygransoStruct import pygransoStruct
+from pygranso.pygranso import pygranso
+from pygranso.pygransoStruct import pygransoStruct
 import scipy.io
 from torch import linalg as LA
 import os

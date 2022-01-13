@@ -1,10 +1,10 @@
 import numpy as np
 import torch
-from private.getObjGrad import getObjGradDL,getObjGrad
-from pygransoStruct import pygransoStruct
-from private.vec2tensor import vec2tensor
-from private.getCiVec import getCiVec
-from private.getCiGradVec import getCiGradVec
+from pygranso.private.getObjGrad import getObjGradDL,getObjGrad
+from pygranso.pygransoStruct import pygransoStruct
+from pygranso.private.vec2tensor import vec2tensor
+from pygranso.private.getCiVec import getCiVec
+from pygranso.private.getCiGradVec import getCiGradVec
 import traceback,sys
 
 def tensor2vec(combinedFunction,x,var_dim_map,nvar,  torch_device = torch.device('cpu'), model = None, double_precision=True, get_grad = True, globalAD = True):

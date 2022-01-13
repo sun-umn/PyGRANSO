@@ -1,4 +1,4 @@
-from pygransoStruct import pygransoStruct
+from pygranso.pygransoStruct import pygransoStruct
 
 def makeStructWithFields(varargin):
     """

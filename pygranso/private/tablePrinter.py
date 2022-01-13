@@ -1,10 +1,10 @@
 from numpy.core.defchararray import isspace
-from pygransoStruct import pygransoStruct
-from private import formatOrange as fO, truncate as TR
-from private.centerString import centerString
+from pygranso.pygransoStruct import pygransoStruct
+from pygranso.private import formatOrange as fO, truncate as TR
+from pygranso.private.centerString import centerString
 from itertools import compress
 import numpy as np
-import math
+import math 
 
 class tP:
     def __init__(self):

@@ -1,17 +1,17 @@
-from pygransoStruct import pygransoStruct
+from pygranso.pygransoStruct import pygransoStruct
 import types
-from private.makeStructWithFields import makeStructWithFields
-from private.isAnInteger import isAnInteger
-from private.isARealNumber import isARealNumber
-from private.isRealValued import isRealValued
-from private.isFiniteValued import isFiniteValued
-from private.isRow import isRow
-from private.isColumn import isColumn
-from private.isMbyN import isMbyN
-from private.isPositiveDefinite import isPositiveDefinite
-from private.isString import isString
-from private.isTorchDevice import isTorchDevice
-from private.isRestartData import isRestartData
+from pygranso.private.makeStructWithFields import makeStructWithFields
+from pygranso.private.isAnInteger import isAnInteger
+from pygranso.private.isARealNumber import isARealNumber
+from pygranso.private.isRealValued import isRealValued
+from pygranso.private.isFiniteValued import isFiniteValued
+from pygranso.private.isRow import isRow
+from pygranso.private.isColumn import isColumn
+from pygranso.private.isMbyN import isMbyN
+from pygranso.private.isPositiveDefinite import isPositiveDefinite
+from pygranso.private.isString import isString
+from pygranso.private.isTorchDevice import isTorchDevice
+from pygranso.private.isRestartData import isRestartData
 import numpy as np
 import copy
 import torch

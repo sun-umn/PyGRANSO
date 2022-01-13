@@ -1,5 +1,5 @@
-from private.isRealValued import isRealValued
-from private.isARealNumber import isARealNumber
+from pygranso.private.isRealValued import isRealValued
+from pygranso.private.isARealNumber import isARealNumber
 
 def isRestartData(data):
     """  

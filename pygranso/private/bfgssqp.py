@@ -1,10 +1,10 @@
 import torch
-from private import pygransoConstants as pC, bfgsDamping as bD, regularizePosDefMatrix as rPDM, linesearchWeakWolfe as lWW
-from private.neighborhoodCache import nC
-from private.qpSteeringStrategy import qpSS
-from private.qpTerminationCondition import qpTC
+from pygranso.private import pygransoConstants as pC, bfgsDamping as bD, regularizePosDefMatrix as rPDM, linesearchWeakWolfe as lWW
+from pygranso.private.neighborhoodCache import nC
+from pygranso.private.qpSteeringStrategy import qpSS
+from pygranso.private.qpTerminationCondition import qpTC
 import time
-from pygransoStruct import pygransoStruct
+from pygranso.pygransoStruct import pygransoStruct
 import math
 import numpy as np
 from numpy.random import default_rng

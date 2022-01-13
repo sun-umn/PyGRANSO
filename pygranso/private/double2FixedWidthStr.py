@@ -1,5 +1,5 @@
 import math
-from private import nDigitsInWholePart as nDIWP
+from pygranso.private import nDigitsInWholePart as nDIWP
 
 def double2FixedWidthStr(width, str_in = None):
     """

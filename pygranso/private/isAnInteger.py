@@ -1,4 +1,4 @@
-from private.isARealNumber import isARealNumber
+from pygranso.private.isARealNumber import isARealNumber
 import math
 
 def isAnInteger(x):

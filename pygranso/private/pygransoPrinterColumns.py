@@ -1,5 +1,5 @@
-from pygransoStruct import pygransoStruct
-from private import nDigitsInWholePart as nDIWP, truncate, centerString as cS, double2FixedWidthStr as d2FWS, formatOrange as fO
+from pygranso.pygransoStruct import pygransoStruct
+from pygranso.private import nDigitsInWholePart as nDIWP, truncate, centerString as cS, double2FixedWidthStr as d2FWS, formatOrange as fO
 
 def pygransoPrinterColumns(opts,ineq_constraints,eq_constraints):
     """       
