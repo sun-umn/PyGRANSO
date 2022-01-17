@@ -1,5 +1,5 @@
 import numpy as np
-from private.isRealValued import isRealValued
+from pygranso.private.isRealValued import isRealValued
 
 def isARealNumber(x):
     """

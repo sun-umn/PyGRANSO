@@ -1,4 +1,4 @@
-from private import printOrange as pO
+from pygranso.private import printOrange as pO
 
 def printMessageBox(use_ascii,use_orange,margin_spaces,title_top,title_bottom,msg_lines,sides=True,user_width=0):
     """

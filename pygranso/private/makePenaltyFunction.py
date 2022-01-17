@@ -1,7 +1,7 @@
 import types
 import numpy as np
 import torch
-from pygransoStruct import pygransoStruct
+from pygranso.pygransoStruct import pygransoStruct
 import traceback,sys
 
 class PanaltyFuctions:

@@ -1,10 +1,10 @@
 from numpy.core.numeric import Inf
 import torch
-from private import pygransoConstants as pgC
-from private.optionValidator import oV
+from pygranso.private import pygransoConstants as pgC
+from pygranso.private.optionValidator import oV
 import numpy as np
-from pygransoStruct import pygransoStruct
-from private.isAnInteger import isAnInteger
+from pygranso.pygransoStruct import pygransoStruct
+from pygranso.private.isAnInteger import isAnInteger
 import traceback,sys
 
 def pygransoOptions(n,options):

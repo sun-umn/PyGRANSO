@@ -1,8 +1,8 @@
-from pygransoStruct import pygransoStruct
-from private import copyrightNotice, printMessageBox as pMB, pygransoConstants as pC, pygransoPrinterColumns as pPC
-from private.tablePrinter import tP
-from private.nDigitsInWholePart import nDigitsInWholePart
-from private.copyrightNotice import copyrightNotice
+from pygranso.pygransoStruct import pygransoStruct
+from pygranso.private import copyrightNotice, printMessageBox as pMB, pygransoConstants as pC, pygransoPrinterColumns as pPC
+from pygranso.private.tablePrinter import tP
+from pygranso.private.nDigitsInWholePart import nDigitsInWholePart
+from pygranso.private.copyrightNotice import copyrightNotice
 
 class pgP:
     def __init__(self):

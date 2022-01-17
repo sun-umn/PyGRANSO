@@ -1,12 +1,10 @@
-from pygransoStruct import pygransoStruct
-import numpy as np
-import torch
+from pygranso.pygransoStruct import pygransoStruct
 
-def vec2tensor(x,var_dim_map):
+def makeStructWithFields(varargin):
     """
-    vec2tensor:
-        vec2tensor transforms the vector form result to mnatrix/tensor form,
-        which is used in evaluating objective & constraints function
+    makeStructWithFields
+        Returns an empty struct with the fieldnames specified as input
+        arguments but all set to None.
 
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
@@ -21,11 +19,13 @@ def vec2tensor(x,var_dim_map):
             optimization and its evaluation using relative minimization
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
+            
+        makeStructWithFields.py (introduced in PyGRANSO v1.0.0)
+        Copyright (C) 2016-2021 Tim Mitchell
 
-        vec2tensor.py (introduced in PyGRANSO v1.0.0)
-        Copyright (C) 2021 Buyun Liang
-
-        New code and functionality for PyGRANSO v1.0.0.
+        This file is a direct port of makeStructWithFields.m, which is included as part
+        of GRANSO v1.6.4 and from URTM (http://www.timmitchell/software/URTM).
+        Ported from MATLAB to Python by Buyun Liang 2021
 
         For comments/bug reports, please visit the PyGRANSO webpage:
         https://github.com/sun-umn/PyGRANSO
@@ -51,15 +51,8 @@ def vec2tensor(x,var_dim_map):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    X = pygransoStruct()
-    # reshape vector input x to matrix form X, e.g., X.U and X.V
-    curIdx = 0
-    # current variable, e.g., U
-    for var in var_dim_map.keys():
-        # corresponding dimension of the variable, e.g, 3 by 2
-        dim = var_dim_map.get(var)
-        # reshape vector input x in to matrix variables, e.g, X.U, X.V
-        tmpMat = torch.reshape(x[curIdx:curIdx + np.prod(dim)],tuple(dim))
-        setattr(X, var, tmpMat)
-        curIdx += np.prod(dim)
-    return X
+    s = pygransoStruct()
+    for arg in varargin:
+      setattr(s,arg,None)
+    
+    return s

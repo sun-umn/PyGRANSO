@@ -1,4 +1,4 @@
-import pygransoOptions
+import pygranso.pygransoOptions
 
 def pygransoOptionsAdvanced(n,options):
     """

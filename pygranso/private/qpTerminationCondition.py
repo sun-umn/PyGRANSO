@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from private.solveQP import solveQP
+from pygranso.private.solveQP import solveQP
 from numpy import conjugate as conj
 from numpy import linalg as LA
 import traceback,sys

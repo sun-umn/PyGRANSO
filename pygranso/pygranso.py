@@ -1,16 +1,16 @@
 from numpy import double
 import torch
-from private.makePenaltyFunction import PanaltyFuctions
-from private import bfgsHessianInverse as bfgsHI, printMessageBox as pMB, bfgsHessianInverseLimitedMem as lbfgsHI
-from private.bfgssqp import AlgBFGSSQP
-from private.pygransoPrinter import pgP
-from pygransoOptions import pygransoOptions
-from private.solveQP import getErr
-from private.wrapToLines import wrapToLines
+from pygranso.private.makePenaltyFunction import PanaltyFuctions
+from pygranso.private import bfgsHessianInverse as bfgsHI, printMessageBox as pMB, bfgsHessianInverseLimitedMem as lbfgsHI
+from pygranso.private.bfgssqp import AlgBFGSSQP
+from pygranso.private.pygransoPrinter import pgP
+from pygranso.pygransoOptions import pygransoOptions
+from pygranso.private.solveQP import getErr
+from pygranso.private.wrapToLines import wrapToLines
 from time import sleep
-from private.tensor2vec import tensor2vec
-from private.getNvar import getNvar
-from private.processVarSpec import processVarSpec
+from pygranso.private.tensor2vec import tensor2vec
+from pygranso.private.getNvar import getNvar
+from pygranso.private.processVarSpec import processVarSpec
 import traceback,sys
 
 def pygranso(var_spec,combined_fn,user_opts=None):

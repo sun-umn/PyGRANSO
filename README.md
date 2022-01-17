@@ -19,23 +19,24 @@ Optimizing nonconvex (NCVX) problems, especially nonsmooth and constrained ones,
 
 Installing PyGRANSO is simple. Here is a step-by-step instruction:
 
-0. Prerequisite: install Anaconda on your system (recommend: Ubuntu 20.04). Detailed guidance: https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html
+1. Install [Python >= 3.9](https://www.python.org/)
 
-1. Download the latest version of PyGRANSO on GitHub (https://github.com/sun-umn/PyGRANSO)
+2.  (GPU and CPU) Install from PyPI::
 
-2. Change the name and prefix in environment.yml.
+        pip install pygranso -f https://download.pytorch.org/whl/cu111/torch_stable.html
 
-    (GPU and CPU) Simply run:
+    (CPU only) Install from PyPI::
 
-        conda env create -f environment_cuda.yml
-        conda activate pygranso_cuda_env
+        pip install pygranso==1.1.0+cpu
 
-    (CPU only) Simply run:
+Optional Steps:
 
-        conda env create -f environment_cpu.yml
-        conda activate pygranso_cpu_env
+3. Clone the most recent PyGRANSO package to get test examples:
 
-3. (GPU and CPU) Run test to make sure the dependency installation is correct:
+        git clone https://github.com/sun-umn/PyGRANSO.git
+        cd PyGRANSO
+
+4. (GPU and CPU) Run test to make sure the dependency installation is correct:
 
         python test_cuda.py
 
@@ -43,7 +44,7 @@ Installing PyGRANSO is simple. Here is a step-by-step instruction:
 
         python test_cpu.py
 
-4. Check the [example folder](./examples) in the source code or [example section](https://ncvx.org/PyGRANSO/examples) on the documentation website to get started.
+5. Check the [example folder](./examples) in the source code or [example section](https://ncvx.org/PyGRANSO/examples) on the documentation website to get started.
 
 ## Dependencies
     Python-3.9.7

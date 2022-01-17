@@ -1,14 +1,9 @@
-import time
 import torch
-from pygranso import pygranso
-from pygransoStruct import pygransoStruct
+from pygranso.pygranso import pygranso
+from pygranso.pygransoStruct import pygransoStruct
 import scipy.io
 from torch import linalg as LA
 import os
-currentdir = os.path.dirname(os.path.realpath(__file__))
-import sys
-## Adding PyGRANSO directories. Should be modified by user
-sys.path.append(currentdir)
 import numpy as np
 from scipy.stats import norm
 import numpy.linalg as la
@@ -104,7 +99,7 @@ def rosenbrock():
 
 def spectral_radius():
 
-
+    currentdir = os.path.dirname(os.path.realpath(__file__))
     file = "{}/examples/data/spec_radius_opt_data.mat".format(currentdir)
     mat = scipy.io.loadmat(file)
     mat_struct = mat['sys']

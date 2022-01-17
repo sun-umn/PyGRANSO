@@ -1,11 +1,11 @@
-from private.isRealValued import isRealValued
-from private.isARealNumber import isARealNumber
+from pygranso.private.isARealNumber import isARealNumber
+import math
 
-def isRestartData(data):
-    """  
-    isRestartData:
-        Checks whether data is lbfgs restart data.
-        
+def isAnInteger(x):
+    """
+    isAnInteger:
+        Returns whether or not x is an integer.  x must be finite.
+
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
@@ -20,10 +20,12 @@ def isRestartData(data):
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
 
-        isRestartData.py (introduced in PyGRANSO v1.0.0)
-        Copyright (C) 2021 Buyun Liang
+        isAnInteger.py (introduced in PyGRANSO v1.0.0)
+        Copyright (C) 2016-2021 Tim Mitchell
 
-        New code and functionality for PyGRANSO v1.0.0.
+        This file is a direct port of isAnInteger.m, which is included as part
+        of GRANSO v1.6.4 and from URTM (http://www.timmitchell/software/URTM).
+        Ported from MATLAB to Python by Buyun Liang 2021
 
         For comments/bug reports, please visit the PyGRANSO webpage:
         https://github.com/sun-umn/PyGRANSO
@@ -49,14 +51,6 @@ def isRestartData(data):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
+    tf = isARealNumber(x) and math.isfinite(x) and round(x) == x
 
-    if isinstance(data,dict) == False:
-        return False
-
-    if  'S' in data and 'Y' in data and 'rho' in data and 'gamma' in data:
-        return True
-    
-    return False
-
-
-    
+    return tf

@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.linalg as LA
 import torch
-from private.solveQP import solveQP
+from pygranso.private.solveQP import solveQP
 import traceback,sys
 
 class qpSS:
