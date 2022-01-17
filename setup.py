@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="pygranso",
-    version="0.0.6",
+    version="0.1.1-dev1",
     author="Tim Mitchell and Buyun Liang",
     author_email="liang664@umn.edu, tim@timmitchell.com",
     description="PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation",
@@ -19,11 +19,11 @@ setuptools.setup(
     package_dir={"": "."},
     packages=setuptools.find_packages(where="."),
     python_requires=">=3.9",
-#     install_requires=[
-#         "osqp >= 0.6.2",
-#         "numpy >= 1.20.3",
-#         "scipy >= 1.7.1",
-#         "pytorch >= 1.9.0",
-#         "notebook >= 6.4.5"
-#     ],
+    install_requires=[
+        "osqp >= 0.6.2",
+        "numpy >= 1.20.3",
+        "scipy >= 1.7.1",
+        "torch >= 1.9.0",
+        "notebook >= 6.4.5"
+    ],
 )
