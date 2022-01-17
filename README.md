@@ -21,13 +21,13 @@ Installing PyGRANSO is simple. Here is a step-by-step instruction:
 
 1. Install [Python >= 3.9](https://www.python.org/)
 
-2.  (GPU and CPU) Install from PyPI::
+2.  (GPU and CPU) Install from PyPI:
 
-        pip install pygranso -f https://download.pytorch.org/whl/cu111/torch_stable.html
+        pip install pygranso==1.0.0.dev1 -f https://download.pytorch.org/whl/cu111/torch_stable.html
 
-    (CPU only) Install from PyPI::
+    (CPU only) Install from PyPI:
 
-        pip install pygranso==1.1.0+cpu
+        pip install pygranso==1.0.0+cpu
 
 Optional Steps:
 
