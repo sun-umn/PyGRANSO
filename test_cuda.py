@@ -4,7 +4,6 @@ from pygranso.pygransoStruct import pygransoStruct
 import scipy.io
 from torch import linalg as LA
 import os
-## Adding PyGRANSO directories. Should be modified by user
 import numpy as np
 from scipy.stats import norm
 import numpy.linalg as la
