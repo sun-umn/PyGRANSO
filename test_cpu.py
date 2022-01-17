@@ -5,10 +5,10 @@ from pygranso.pygransoStruct import pygransoStruct
 import scipy.io
 from torch import linalg as LA
 import os
-currentdir = os.path.dirname(os.path.realpath(__file__))
+# currentdir = os.path.dirname(os.path.realpath(__file__))
 import sys
 ## Adding PyGRANSO directories. Should be modified by user
-sys.path.append(currentdir)
+# sys.path.append(currentdir)
 import numpy as np
 from scipy.stats import norm
 import numpy.linalg as la
