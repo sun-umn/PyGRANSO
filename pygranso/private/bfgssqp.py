@@ -545,7 +545,7 @@ class AlgBFGSSQP():
                 self.penaltyfn_obj.restoreSnapShot()
                 #  lower the trial line search penalty parameter further
                 mu_ls       = ls_c_mu * mu_ls
-                [f,g]       = self.penaltyfn_obj.updatePenaltyParameter(mu_ls)
+                [f,g,_]       = self.penaltyfn_obj.updatePenaltyParameter(mu_ls)
                 gprev_ls    = g
                 
                 if self.print_level > 1:
