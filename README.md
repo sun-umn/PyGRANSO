@@ -25,7 +25,7 @@ Installing PyGRANSO is simple. Here is a step-by-step instruction:
 
         pip install pygranso==1.0.0.dev1 -f https://download.pytorch.org/whl/cu111/torch_stable.html
 
-    (CPU only) Install from PyPI:
+    (CPU only) Install from PyPI (Currently under development):
 
         pip install pygranso==1.0.0+cpu
 
@@ -125,4 +125,5 @@ For questions or bug reports, please either:
 
 Thanks to other contributors and bug reporters: 
 
-[Chen Jiang](https://github.com/shoopshoop): Tested perceptual attack example (ex6). Prepared environment file for Win10.
+[Chen Jiang](https://github.com/shoopshoop): Tested perceptual attack example (ex6). Tested PyGRANSO on Win10. Debug updatePenaltyParameter function.
+
