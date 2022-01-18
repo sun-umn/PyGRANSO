@@ -32,7 +32,7 @@ Installing PyGRANSO is simple. Here is a step-by-step instruction:
 
 4. Install Dependencies from PyPI: 
 
-    OS: **Linux**; Compute Platform: **CUDA**:
+    OS: **Linux** OR **Windows**; Compute Platform: **CUDA**:
 
         pip install -r requirements.txt -f https://download.pytorch.org/whl/cu111/torch_stable.html
 
@@ -40,15 +40,7 @@ Installing PyGRANSO is simple. Here is a step-by-step instruction:
 
         pip install -r requirements_linux_cpu.txt -f https://download.pytorch.org/whl/cpu/torch_stable.html
 
-    OS: **Mac**; Compute Platform: **CPU**:
-
-        pip install -r requirements_cpu.txt
-    
-    OS: **Windows**; Compute Platform: **CUDA**:
-
-        pip install -r requirements_win_cuda.txt
-
-    OS: **Windows**; Compute Platform: **CPU**:
+    OS: **Mac** OR **Windows**; Compute Platform: **CPU**:
 
         pip install -r requirements_cpu.txt
     
