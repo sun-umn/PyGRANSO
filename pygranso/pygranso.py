@@ -450,7 +450,6 @@ def pygranso(var_spec,combined_fn,user_opts=None):
     #  - evaluate functions at x0
 
     [var_dim_map,nn_model] = processVarSpec(var_spec)
-
     try:
         if nn_model != None:
             n = getNvar(var_dim_map)
@@ -555,9 +554,10 @@ def pygranso(var_spec,combined_fn,user_opts=None):
 
 
     if hasattr(soln,"error"):
-        err = soln.error;
+        err = soln.error
         print("ERROR: In the end of main loop.")
         print(err)
+
 
     return soln
 

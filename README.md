@@ -15,8 +15,6 @@ Optimizing nonconvex (NCVX) problems, especially nonsmooth and constrained ones,
 
 ## Installation
 
-**NOTE: The installation process is tested on Ubuntu 20.04**
-
 Installing PyGRANSO is simple. Here is a step-by-step instruction:
 
 1. Install [Python >= 3.9](https://www.python.org/)
