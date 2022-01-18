@@ -21,30 +21,46 @@ Installing PyGRANSO is simple. Here is a step-by-step instruction:
 
 1. Install [Python >= 3.9](https://www.python.org/)
 
-2.  (GPU and CPU) Install from PyPI:
-
-        pip install pygranso==1.0.0.dev1 -f https://download.pytorch.org/whl/cu111/torch_stable.html
-
-    (CPU only) Install from PyPI (Currently under development):
-
-        pip install pygranso==1.0.0+cpu
-
-Optional Steps:
-
-3. Clone the most recent PyGRANSO package to get test examples:
+2. Get the most recent PyGRANSO package (including examples and requirements file):
 
         git clone https://github.com/sun-umn/PyGRANSO.git
         cd PyGRANSO
 
-4. (GPU and CPU) Run test to make sure the dependency installation is correct:
+3.  Install PyGRANSO solver from PyPI:
+
+        pip install pygranso==1.0.0.dev2
+
+4. Install Dependencies from PyPI: 
+
+    OS: Linux; Compute Platform: CUDA:
+
+        pip install -r requirements.txt -f https://download.pytorch.org/whl/cu111/torch_stable.html
+
+    OS: Linux; Compute Platform: CPU:
+
+        pip install -r requirements_linux_cpu.txt -f https://download.pytorch.org/whl/cpu/torch_stable.html
+
+    OS: Mac; Compute Platform: CPU:
+
+        pip install -r requirements_mac_cpu.txt
+    
+    OS: Windows; Compute Platform: CUDA:
+
+        pip install -r requirements_win_cuda.txt
+
+    OS: Windows; Compute Platform: CPU:
+
+        pip install -r requirements_win_cpu.txt
+    
+5. (CUDA) Run test to make sure the dependency installation is correct:
 
         python test_cuda.py
 
-    (CPU only) Run test to make sure the dependency installation is correct:
+    (CPU) Run test to make sure the dependency installation is correct:
 
         python test_cpu.py
 
-5. Check the [example folder](./examples) in the source code or [example section](https://ncvx.org/PyGRANSO/examples) on the documentation website to get started.
+6. Check the [example folder](./examples) in the source code or [example section](https://ncvx.org/PyGRANSO/examples) on the documentation website to get started.
 
 ## Dependencies
     Python-3.9.7
