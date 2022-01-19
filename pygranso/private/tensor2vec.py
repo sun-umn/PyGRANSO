@@ -1,10 +1,11 @@
+from tkinter.messagebox import NO
 import numpy as np
 import torch
 from pygranso.private.getObjGrad import getObjGradDL,getObjGrad
 from pygranso.pygransoStruct import pygransoStruct
 from pygranso.private.vec2tensor import vec2tensor
 from pygranso.private.getCiVec import getCiVec
-from pygranso.private.getCiGradVec import getCiGradVec
+from pygranso.private.getCiGradVec import getCiGradVec,getCiGradVecDL
 import traceback,sys
 
 def tensor2vec(combinedFunction,x,var_dim_map,nvar,  torch_device = torch.device('cpu'), model = None, double_precision=True, get_grad = True, globalAD = True):
@@ -184,7 +185,10 @@ def getValwithAD(X,f,ci,ce,var_dim_map,nvar, torch_device, model, double_precisi
     ##  ci and ci_grad
     if ci != None:
         [ci_vec,ci_vec_torch,nconstr_ci_total] = getCiVec(ci,torch_device,double_precision)
-        ci_grad_vec = getCiGradVec(nvar,nconstr_ci_total,var_dim_map,X,ci_vec_torch,torch_device,double_precision)
+        if model == None:
+            ci_grad_vec = getCiGradVec(nvar,nconstr_ci_total,var_dim_map,X,ci_vec_torch,torch_device,double_precision)
+        else:
+            ci_grad_vec = getCiGradVecDL(nvar,nconstr_ci_total,model,ci_vec_torch, torch_device, double_precision)
         # print(ci_grad_vec)
     else:
         ci_vec = None
@@ -193,7 +197,10 @@ def getValwithAD(X,f,ci,ce,var_dim_map,nvar, torch_device, model, double_precisi
     ##  ce and ce_grad
     if ce != None:
         [ce_vec,ce_vec_torch,nconstr_ce_total] = getCiVec(ce,torch_device,double_precision)
-        ce_grad_vec = getCiGradVec(nvar,nconstr_ce_total,var_dim_map,X,ce_vec_torch,torch_device,double_precision)
+        if model == None:
+            ce_grad_vec = getCiGradVec(nvar,nconstr_ce_total,var_dim_map,X,ce_vec_torch,torch_device,double_precision)
+        else:
+            ce_grad_vec = getCiGradVecDL(nvar,nconstr_ce_total,model,ce_vec_torch, torch_device, double_precision)
 
     else:
         ce_vec = None
