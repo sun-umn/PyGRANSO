@@ -1,4 +1,5 @@
 import traceback,sys
+import torch.nn as nn
 
 def processVarSpec(var_spec):
     """  
@@ -56,8 +57,8 @@ def processVarSpec(var_spec):
         if isinstance(var_spec,dict):
             return [var_spec,None]
         
-        elif isinstance(var_spec[0],dict) and var_spec[1] != None:
-            return [var_spec[0],var_spec[1]]
+        elif isinstance(var_spec,nn.Module):
+            return [None,var_spec]
         else: 
             print("Illegal variable definition")
             sys.exit()

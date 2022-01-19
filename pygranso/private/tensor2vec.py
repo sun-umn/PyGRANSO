@@ -125,7 +125,13 @@ def tensor2vec(combinedFunction,x,var_dim_map,nvar,  torch_device = torch.device
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    X = vec2tensor(x,var_dim_map)
+    if var_dim_map != None:
+        X = vec2tensor(x,var_dim_map)
+    else:
+        # update model parameters using current x
+        torch.nn.utils.vector_to_parameters(x, model.parameters())
+        X = model
+
     # obtain objective and constraint function and their corresponding gradient
     # matrix form functions
     try:
@@ -134,9 +140,11 @@ def tensor2vec(combinedFunction,x,var_dim_map,nvar,  torch_device = torch.device
                 # No auto-differentiation used here
                 [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = combinedFunction(X)
             else:
-                for var_name in X.__dict__:
-                    var = getattr(X,var_name)
-                    var.requires_grad_(True)
+                if isinstance(var_dim_map,dict):
+                    for var_name in X.__dict__:
+                        var = getattr(X,var_name)
+                        var.requires_grad_(True)
+
                 [f,ci,ce] = combinedFunction(X)
                 [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = getValwithAD(X,f,ci,ce,var_dim_map,nvar, torch_device, model, double_precision)
 

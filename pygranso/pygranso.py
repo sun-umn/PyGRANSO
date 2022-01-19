@@ -9,7 +9,7 @@ from pygranso.private.solveQP import getErr
 from pygranso.private.wrapToLines import wrapToLines
 from time import sleep
 from pygranso.private.tensor2vec import tensor2vec
-from pygranso.private.getNvar import getNvar
+from pygranso.private.getNvar import getNvar, getNvarTorch
 from pygranso.private.processVarSpec import processVarSpec
 import traceback,sys
 
@@ -452,7 +452,8 @@ def pygranso(var_spec,combined_fn,user_opts=None):
     [var_dim_map,nn_model] = processVarSpec(var_spec)
     try:
         if nn_model != None:
-            n = getNvar(var_dim_map)
+            n = getNvarTorch(nn_model.parameters())
+            
         else:
             # call the functions getNvar to get the total number of (scalar) variables
             n = getNvar(var_dim_map)
