@@ -559,7 +559,7 @@ class AlgBFGSSQP():
                     fail    = False
                     self.mu      = self.penaltyfn_obj.getPenaltyParameter()
                     self.g_prev  = gprev_ls
-                    return
+                    return [alpha, x_ls, f_ls, g_ls, fail]
        
         #  LINE SEARCH EITHER SUCCEEDED OR FAILED
         #  no need to restore snapshot if line search failed since 
