@@ -88,19 +88,27 @@ def user_fn(model,inputs,labels):
     logits = model(inputs)
     criterion = nn.CrossEntropyLoss()
     f = criterion(logits, labels)
+
+    # A = model.state_dict()['rnn.weight_hh_l0']
+    # A.requires_grad_(True)
+
+    # B = model.state_dict()['rnn.weight_ih_l0']
+    # B.requires_grad_(True)
+
     # inequality constraint
     ci = None
+    # ci = pygransoStruct()
+    # ci.c1 = torch.norm(B) - 100*f.detach().clone()
 
     # equality constraint 
 
     # special orthogonal group
-    ce = pygransoStruct()
-    # for param_tensor in model.state_dict():
-    #     print(param_tensor, "\t", model.state_dict()[param_tensor].size())
-    A = model.state_dict()['rnn.weight_hh_l0']
-    A.requires_grad_(True)
+    ce = None
+    # ce = pygransoStruct()
+    # # for param_tensor in model.state_dict():
+    # #     print(param_tensor, "\t", model.state_dict()[param_tensor].size())
     # ce.c1 = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=torch.double)
-    ce.c2 = torch.det(A) - 1
+    # ce.c2 = torch.det(A) - 1
 
     return [f,ci,ce]
 
