@@ -74,14 +74,6 @@ inputs, labels = inputs.reshape(-1, sequence_length, input_size).to(device=devic
 
 
 
-# variables and corresponding dimensions.
-var_in = {}
-var_count = 0
-var_str = "x"
-for i in model.parameters():
-    # print(i.shape)
-    var_in[var_str+str(var_count)]= list(i.shape)
-    var_count += 1
     
 def user_fn(model,inputs,labels):
     # objective function    
@@ -89,8 +81,8 @@ def user_fn(model,inputs,labels):
     criterion = nn.CrossEntropyLoss()
     f = criterion(logits, labels)
 
-    # A = model.state_dict()['rnn.weight_hh_l0']
-    # A.requires_grad_(True)
+    A = model.state_dict()['rnn.weight_hh_l0']
+    A.requires_grad_(True)
 
     # B = model.state_dict()['rnn.weight_ih_l0']
     # B.requires_grad_(True)
@@ -123,7 +115,7 @@ opts.opt_tol = 1e-5
 opts.maxit = 10000
 # opts.fvalquit = 1e-6
 opts.print_level = 1
-opts.print_frequency = 1
+opts.print_frequency = 20
 # opts.print_ascii = True
 # opts.linesearch_maxit = 10
 
