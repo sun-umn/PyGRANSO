@@ -49,16 +49,16 @@ def comb_fn(model):
     # objective function
     # for param_tensor in model.state_dict():
     #     print(param_tensor, "\t", model.state_dict()[param_tensor].size())
-    w = model.state_dict()['linear.weight']
-    w.requires_grad_(True)
+
+    w = list(model.parameters())[0]
 
     outputs = model(inputs)
     criterion = nn.CrossEntropyLoss()
     penalty = lambda_r*torch.norm(w,p=2)
-    f = criterion(outputs, labels) + penalty
+    f = criterion(outputs, labels) 
     # ci = None
     ci = pygransoStruct()
-    ci.c1 = -penalty
+    ci.c1 = penalty - 0.01
     ce = None
     return [f,ci,ce]
 

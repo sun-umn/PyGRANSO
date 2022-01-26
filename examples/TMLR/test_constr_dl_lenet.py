@@ -60,13 +60,15 @@ def user_fn(model,inputs,labels):
     outputs = model(inputs)
     criterion = nn.CrossEntropyLoss()
     f = criterion(outputs, labels)
+    
     # for param_tensor in model.state_dict():
     #     print(param_tensor, "\t", model.state_dict()[param_tensor].size())
-    A = model.state_dict()['conv1.bias']
-    A.requires_grad_(True)
+    
+    A = list(model.parameters())[0]
+    
     # ci = None
     ci = pygransoStruct()
-    ci.c1 = torch.norm(A) - 10
+    ci.c1 = torch.norm(A) - 1
     ce = None
     return [f,ci,ce]
 
