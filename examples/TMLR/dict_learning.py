@@ -49,7 +49,7 @@ x0 = norm.ppf(np.random.rand(n,1))
 x0 /= la.norm(x0,2)
 opts.x0 = torch.from_numpy(x0).to(device=device, dtype=torch.double)
 
-opts.print_frequency = 1
+opts.print_frequency = 10
 
 start = time.time()
 soln = pygranso(var_spec = var_in,combined_fn = comb_fn,user_opts = opts)

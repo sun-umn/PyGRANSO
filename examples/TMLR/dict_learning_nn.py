@@ -48,10 +48,7 @@ def user_fn(model,Y,m):
     f = model(Y,m)
 
     # q = model.state_dict()['q']
-    # q.requires_grad_(True)
     q = list(model.parameters())[0]
-    # for parameter in model.parameters():
-    #     q = parameter
 
     # inequality constraint
     ci = None
@@ -59,11 +56,7 @@ def user_fn(model,Y,m):
     # equality constraint 
     ce = pygransoStruct()
     ce.c1 = q.T @ q - 1
-    # for param_tensor in model.state_dict():
-    #     print(param_tensor, "\t", model.state_dict()[param_tensor].size())
-    # ce = None
-    # print("ce = {}".format(ce.c1.item()))
-    # print("q = {}".format(q))
+
     return [f,ci,ce]
 
 comb_fn = lambda model : user_fn(model,Y,m)
@@ -76,7 +69,7 @@ opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach().resha
 opts.maxit = 10000
 # opts.fvalquit = 1e-6
 opts.print_level = 1
-opts.print_frequency = 1
+opts.print_frequency = 10
 
 start = time.time()
 soln = pygranso(var_spec= model, combined_fn = comb_fn, user_opts = opts)
