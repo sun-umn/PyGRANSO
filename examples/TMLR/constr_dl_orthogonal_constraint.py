@@ -81,8 +81,11 @@ def user_fn(model,inputs,labels):
     criterion = nn.CrossEntropyLoss()
     f = criterion(logits, labels)
 
-    A = model.state_dict()['rnn.weight_hh_l0']
-    A.requires_grad_(True)
+    # for param_tensor in model.state_dict():
+    #     print(param_tensor, "\t", model.state_dict()[param_tensor].size())
+
+    # A.requires_grad_(True)
+    A = list(model.parameters())[1]
 
     # B = model.state_dict()['rnn.weight_ih_l0']
     # B.requires_grad_(True)
@@ -95,11 +98,10 @@ def user_fn(model,inputs,labels):
     # equality constraint 
 
     # special orthogonal group
-    ce = None
-    # ce = pygransoStruct()
-    # # for param_tensor in model.state_dict():
-    # #     print(param_tensor, "\t", model.state_dict()[param_tensor].size())
-    # ce.c1 = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=torch.double)
+    # ce = None
+    ce = pygransoStruct()
+
+    ce.c1 = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=torch.double)
     # ce.c2 = torch.det(A) - 1
 
     return [f,ci,ce]
@@ -115,7 +117,7 @@ opts.opt_tol = 1e-5
 opts.maxit = 10000
 # opts.fvalquit = 1e-6
 opts.print_level = 1
-opts.print_frequency = 20
+opts.print_frequency = 1
 # opts.print_ascii = True
 # opts.linesearch_maxit = 10
 
