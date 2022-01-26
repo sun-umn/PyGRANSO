@@ -33,23 +33,23 @@ def user_fn(X_struct,Y):
     ci = None
 
     # # equality constraint
-    # ce = pygransoStruct()
-    # ce.c1 = q.T @ q - 1
-    ce = None
-
+    ce = pygransoStruct()
+    ce.c1 = q.T @ q - 1
+    # ce = None
+    # print("ce = {}".format(ce.c1.item()))
     return [f,ci,ce]
 
 comb_fn = lambda X_struct : user_fn(X_struct,Y)
 
 opts = pygransoStruct()
 opts.torch_device = device
-opts.maxit = 500
+opts.maxit = 1000
 np.random.seed(1)
 x0 = norm.ppf(np.random.rand(n,1))
 x0 /= la.norm(x0,2)
 opts.x0 = torch.from_numpy(x0).to(device=device, dtype=torch.double)
 
-opts.print_frequency = 10
+opts.print_frequency = 1
 
 start = time.time()
 soln = pygranso(var_spec = var_in,combined_fn = comb_fn,user_opts = opts)
