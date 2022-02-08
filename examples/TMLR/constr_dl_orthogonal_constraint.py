@@ -84,25 +84,20 @@ def user_fn(model,inputs,labels):
     # for param_tensor in model.state_dict():
     #     print(param_tensor, "\t", model.state_dict()[param_tensor].size())
 
-    # A.requires_grad_(True)
     A = list(model.parameters())[1]
-
-    # B = model.state_dict()['rnn.weight_ih_l0']
-    # B.requires_grad_(True)
 
     # inequality constraint
     ci = None
-    # ci = pygransoStruct()
-    # ci.c1 = torch.norm(B) - 100*f.detach().clone()
 
     # equality constraint 
-
     # special orthogonal group
-    # ce = None
+    
     ce = pygransoStruct()
 
     ce.c1 = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=torch.double)
-    # ce.c2 = torch.det(A) - 1
+    ce.c2 = torch.det(A) - 1
+
+    # ce = None
 
     return [f,ci,ce]
 
@@ -119,9 +114,9 @@ opts.maxit = 10000
 opts.print_level = 1
 opts.print_frequency = 1
 # opts.print_ascii = True
-# opts.linesearch_maxit = 10
+opts.limited_mem_size = 100
 
-# opts.is_backtrack_linesearch = True
+
 
 logits = model(inputs)
 _, predicted = torch.max(logits.data, 1)
