@@ -9,7 +9,7 @@ from pygranso.private.getNvar import getNvarTorch
 from pygranso.private.getObjGrad import getObjGradDL
 import torch.nn as nn
 from torchvision import datasets
-from torchvision.transforms import ToTensor
+from torchvision import transforms
 
 device = torch.device('cuda')
 
@@ -22,6 +22,10 @@ batch_size = 100
 num_epochs = 2
 learning_rate = 0.01
 
+# double_precision = torch.float
+double_precision = torch.double
+
+
 class RNN(nn.Module):
     
     def __init__(self, input_size, hidden_size, num_layers, num_classes):
@@ -31,25 +35,24 @@ class RNN(nn.Module):
         # self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
         self.rnn = nn.RNN(input_size, hidden_size, num_layers, batch_first=True)
         self.fc = nn.Linear(hidden_size, num_classes)
-        pass
     
     def forward(self, x):
         # Set initial hidden and cell states 
-        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(device=device, dtype=torch.double)
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(device=device, dtype=double_precision)
         out, hidden = self.rnn(x, h0)  # out: tensor of shape (batch_size, seq_length, hidden_size)
         #Reshaping the outputs such that it can be fit into the fully connected layer
         out = self.fc(out[:, -1, :])
         return out
-    
+
 torch.manual_seed(0)
 
-model = RNN(input_size, hidden_size, num_layers, num_classes).to(device=device, dtype=torch.double)
+model = RNN(input_size, hidden_size, num_layers, num_classes).to(device=device, dtype=double_precision)
 model.train()
 
 train_data = datasets.MNIST(
     root = '/home/buyun/Documents/GitHub/PyGRANSO/examples/data/mnist',
     train = True,                         
-    transform = ToTensor(), 
+    transform = transforms.ToTensor(), 
     download = True,            
 )
 # test_data = datasets.MNIST(
@@ -60,7 +63,7 @@ train_data = datasets.MNIST(
 
 loaders = {
     'train' : torch.utils.data.DataLoader(train_data, 
-                                        batch_size=100, 
+                                        batch_size=batch_size, 
                                         shuffle=True, 
                                         num_workers=1),
 
@@ -71,7 +74,32 @@ loaders = {
 }
 
 inputs, labels = next(iter(loaders['train']))
-inputs, labels = inputs.reshape(-1, sequence_length, input_size).to(device=device, dtype=torch.double), labels.to(device=device)
+inputs, labels = inputs.reshape(-1, sequence_length, input_size).to(device=device, dtype=double_precision), labels.to(device=device)
+
+# # Load data (exprnn) #######################################
+# kwargs = {'num_workers': 1, 'pin_memory': True}
+# # train_loader = torch.utils.data.DataLoader(
+# #     datasets.MNIST('./mnist', train=True, download=True, transform=transforms.ToTensor()),
+# #     batch_size=batch_size, shuffle=True, **kwargs)
+# # test_loader = torch.utils.data.DataLoader(
+# #     datasets.MNIST('./mnist', train=False, transform=transforms.ToTensor()),
+# #     batch_size=batch_size, shuffle=True, **kwargs)
+
+# # subset of loader ####################
+# index = list(range(0,128))
+# trainset = datasets.MNIST('/home/buyun/Documents/GitHub/PyGRANSO/examples/data/mnist', train=True, download=True, transform=transforms.ToTensor())
+# train_set_small = torch.utils.data.Subset(trainset,index)
+
+# testset = datasets.MNIST('/home/buyun/Documents/GitHub/PyGRANSO/examples/data/mnist', train=False, transform=transforms.ToTensor())
+# test_set_small = torch.utils.data.Subset(testset,index)
+
+# train_loader = torch.utils.data.DataLoader(
+#     train_set_small, batch_size=batch_size, shuffle=True, **kwargs)
+# test_loader = torch.utils.data.DataLoader(
+#     test_set_small, batch_size=batch_size, shuffle=True, **kwargs)
+
+# inputs, labels = next(iter(train_loader))
+# inputs, labels = inputs.reshape(-1, sequence_length, input_size).to(device=device, dtype=double_precision), labels.to(device=device)
 
 
 
@@ -84,7 +112,7 @@ def user_fn(model,inputs,labels):
 
     # get f_grad by AD
     n = getNvarTorch(model.parameters())
-    f_grad = getObjGradDL(nvar=n,model=model,f=f, torch_device=device, double_precision=torch.double)
+    f_grad = getObjGradDL(nvar=n,model=model,f=f, torch_device=device, double_precision=True)
     f = f.detach().item()
 
     # for param_tensor in model.state_dict():
@@ -101,16 +129,16 @@ def user_fn(model,inputs,labels):
     
     ce = pygransoStruct()
 
-    ce = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=torch.double)
+    ce = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=double_precision)
     ce = ce.detach()
     nconstr = hidden_size*hidden_size
     ce = torch.reshape(ce,(nconstr,1))
-    ce_grad = torch.zeros((n,nconstr)).to(device=device, dtype=torch.double)
-    M = torch.zeros((nconstr,nconstr)).to(device=device, dtype=torch.double)
+    ce_grad = torch.zeros((n,nconstr)).to(device=device, dtype=double_precision)
+    M = torch.zeros((nconstr,nconstr)).to(device=device, dtype=double_precision)
 
     for i in range(hidden_size):
         for j in range(hidden_size):
-            J_ij = torch.zeros((hidden_size,hidden_size)).to(device=device, dtype=torch.double)
+            J_ij = torch.zeros((hidden_size,hidden_size)).to(device=device, dtype=double_precision)
             J_ij[i,j] = 1
             tmp = A.T@J_ij + J_ij.T@A
             M[hidden_size*i+j,:] = tmp.reshape((1,hidden_size*hidden_size))
@@ -127,13 +155,15 @@ opts = pygransoStruct()
 opts.torch_device = device
 nvar = getNvarTorch(model.parameters())
 opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach().reshape(nvar,1)
-opts.opt_tol = 1e-5
+opts.opt_tol = 1e-3
 opts.maxit = 10000
 # opts.fvalquit = 1e-6
 opts.print_level = 1
 opts.print_frequency = 1
 # opts.print_ascii = True
-opts.limited_mem_size = 100
+# opts.limited_mem_size = 100
+
+opts.double_precision = True
 
 opts.globalAD = False # disable global auto-differentiation
 

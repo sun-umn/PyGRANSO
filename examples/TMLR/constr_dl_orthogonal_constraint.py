@@ -21,6 +21,8 @@ batch_size = 100
 num_epochs = 2
 learning_rate = 0.01
 
+double_precision = torch.double
+
 class RNN(nn.Module):
     
     def __init__(self, input_size, hidden_size, num_layers, num_classes):
@@ -34,7 +36,7 @@ class RNN(nn.Module):
     
     def forward(self, x):
         # Set initial hidden and cell states 
-        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(device=device, dtype=torch.double)
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(device=device, dtype=double_precision)
         out, hidden = self.rnn(x, h0)  # out: tensor of shape (batch_size, seq_length, hidden_size)
         #Reshaping the outputs such that it can be fit into the fully connected layer
         out = self.fc(out[:, -1, :])
@@ -42,7 +44,7 @@ class RNN(nn.Module):
     
 torch.manual_seed(0)
 
-model = RNN(input_size, hidden_size, num_layers, num_classes).to(device=device, dtype=torch.double)
+model = RNN(input_size, hidden_size, num_layers, num_classes).to(device=device, dtype=double_precision)
 model.train()
 
 train_data = datasets.MNIST(
@@ -70,11 +72,11 @@ loaders = {
 }
 
 inputs, labels = next(iter(loaders['train']))
-inputs, labels = inputs.reshape(-1, sequence_length, input_size).to(device=device, dtype=torch.double), labels.to(device=device)
+inputs, labels = inputs.reshape(-1, sequence_length, input_size).to(device=device, dtype=double_precision), labels.to(device=device)
 
 
 
-    
+# @profile
 def user_fn(model,inputs,labels):
     # objective function    
     logits = model(inputs)
@@ -94,8 +96,8 @@ def user_fn(model,inputs,labels):
     
     ce = pygransoStruct()
 
-    ce.c1 = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=torch.double)
-    ce.c2 = torch.det(A) - 1
+    ce.c1 = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=double_precision)
+    # ce.c2 = torch.det(A) - 1
 
     # ce = None
 
@@ -108,13 +110,14 @@ opts = pygransoStruct()
 opts.torch_device = device
 nvar = getNvarTorch(model.parameters())
 opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach().reshape(nvar,1)
-opts.opt_tol = 1e-5
-opts.maxit = 10000
+opts.opt_tol = 1e-3
+# opts.maxit = 10
 # opts.fvalquit = 1e-6
 opts.print_level = 1
 opts.print_frequency = 1
 # opts.print_ascii = True
-opts.limited_mem_size = 100
+# opts.limited_mem_size = 100
+opts.double_precision = True
 
 
 
