@@ -10,6 +10,7 @@ from pygranso.private.getObjGrad import getObjGradDL
 import torch.nn as nn
 from torchvision import datasets
 from torchvision import transforms
+from examples.model import rnn_modrelu
 
 device = torch.device('cuda')
 
@@ -33,7 +34,7 @@ class RNN(nn.Module):
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         # self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
-        self.rnn = nn.RNN(input_size, hidden_size, num_layers, batch_first=True)
+        self.rnn = rnn_modrelu.RNN(input_size, hidden_size, num_layers, batch_first=True)
         self.fc = nn.Linear(hidden_size, num_classes)
     
     def forward(self, x):
