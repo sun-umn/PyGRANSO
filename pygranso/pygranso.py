@@ -480,7 +480,7 @@ def pygranso(var_spec,combined_fn,user_opts=None):
         # construct the penalty function object and evaluate at x0
         # unconstrained problems will reset mu to one and mu will be fixed
         mPF = PanaltyFuctions() # make penalty functions
-        [penaltyfn_obj,grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, f_eval_fn, problem_fns, torch_device = torch_device)
+        [penaltyfn_obj,grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, f_eval_fn, problem_fns, torch_device = torch_device, double_precision=opts.double_precision)
     except Exception as e:
         print(traceback.format_exc())
         sys.exit()
