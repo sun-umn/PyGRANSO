@@ -21,7 +21,7 @@ device = torch.device('cuda')
 hidden_size = 30
 # num_layers = 1
 num_classes = 10
-batch_size = 128
+batch_size = 28
 # num_epochs = 2
 # learning_rate = 0.01
 
@@ -84,10 +84,10 @@ def user_fn(model,inputs,labels):
     criterion = nn.CrossEntropyLoss()
     f = criterion(logits, labels)
 
-    for param_tensor in model.state_dict():
-        print(param_tensor, "\t", model.state_dict()[param_tensor].size())
+    # for param_tensor in model.state_dict():
+    #     print(param_tensor, "\t", model.state_dict()[param_tensor].size())
 
-    # A = list(model.parameters())[1]
+    A = list(model.parameters())[0]
 
     # inequality constraint
     ci = None
@@ -95,9 +95,9 @@ def user_fn(model,inputs,labels):
     # equality constraint 
     # special orthogonal group
     
-    ce = None
+    ce = pygransoStruct()
 
-    # ce = None
+    ce.c1 = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=double_precision)
 
     return [f,ci,ce]
 
