@@ -2,16 +2,12 @@ import torch
 import torch.nn as nn
 from torch.nn import Module
 from torch.nn.parameter import Parameter
-
-# class Recurrent(Module):
-#     """ Class that implements optimization restricted to the Stiefel manifold """
-#     def __init__(self, input_size, output_size):
-#         w_ih = Parameter(torch.empty((gate_size, layer_input_size), **factory_kwargs))
-#         w_hh = Parameter(torch.empty((gate_size, real_hidden_size), **factory_kwargs))
-#         b_ih = Parameter(torch.empty(gate_size, **factory_kwargs))
-#         # Second bias vector included for CuDNN compatibility. Only one
-#         # bias vector is needed in standard definition.
-#         b_hh = Parameter(torch.empty(gate_size, **factory_kwargs))
+import sys
+sys.path.append('/home/buyun/Documents/GitHub/unused/expRNN')
+from parametrization import Parametrization
+from orthogonal import Orthogonal
+from initialization import cayley_init_
+from trivializations import expm
 
 
 class modrelu(nn.Module):
@@ -33,15 +29,25 @@ class modrelu(nn.Module):
 
         return phase * magnitude
 
+exprnn = True
 
 class RNN(nn.Module):
     def __init__(self, input_size, hidden_size):
         super(RNN, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
-        self.recurrent_kernel = nn.Linear(in_features=self.hidden_size, out_features=self.hidden_size, bias=False)
+        
+        if exprnn:
+        
+            mode = ("dynamic", 100, 100)
+            param = expm
+            self.recurrent_kernel = Orthogonal(hidden_size, hidden_size, initializer_skew = cayley_init_, mode = mode, param=param)
+        else:
+            self.recurrent_kernel = nn.Linear(in_features=self.hidden_size, out_features=self.hidden_size, bias=False)
+        
         self.input_kernel = nn.Linear(in_features=self.input_size, out_features=self.hidden_size, bias=False)
-        self.nonlinearity = modrelu(hidden_size)
+        # self.nonlinearity = modrelu(hidden_size)
+        self.nonlinearity = nn.ReLU()
 
         self.reset_parameters()
 

@@ -73,28 +73,30 @@ device      = torch.device('cuda')
 #     mode = "static"
 #     param = cayley_map
 
+pixel_by_pixel = True
 
 class Model(nn.Module):
     def __init__(self, hidden_size):
         super(Model, self).__init__()
 
-        # self.rnn = new_rnn_modrelu.RNN(1, hidden_size)
-        self.rnn = new_rnn_modrelu.RNN(28, hidden_size)
+        if pixel_by_pixel:
+            self.rnn = new_rnn_modrelu.RNN(1, hidden_size)
+        else:
+            self.rnn = new_rnn_modrelu.RNN(28, hidden_size)
 
         self.lin = nn.Linear(hidden_size, n_classes)
         self.loss_func = nn.CrossEntropyLoss()
 
-
-    # def forward(self, inputs):
-    #     state = self.rnn.default_hidden(inputs[:, 0, ...])
-    #     for input in torch.unbind(inputs, dim=1):
-    #         out_rnn, state = self.rnn(input.unsqueeze(dim=1), state)
-    #     return self.lin(state)
-
     def forward(self, inputs):
+
         state = self.rnn.default_hidden(inputs[:, 0, ...])
-        for i in range(28):
-            out_rnn, state = self.rnn(inputs[:,i*28:(i+1)*28], state)
+
+        if pixel_by_pixel:
+            for input in torch.unbind(inputs, dim=1):
+                out_rnn, state = self.rnn(input.unsqueeze(dim=1), state)
+        else:
+            for i in range(28):
+                out_rnn, state = self.rnn(inputs[:,i*28:(i+1)*28], state)
         return self.lin(state)
 
     def loss(self, logits, y):
