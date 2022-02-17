@@ -78,18 +78,23 @@ class Model(nn.Module):
     def __init__(self, hidden_size):
         super(Model, self).__init__()
 
-        self.rnn = new_rnn_modrelu.RNN(1, hidden_size)
+        # self.rnn = new_rnn_modrelu.RNN(1, hidden_size)
+        self.rnn = new_rnn_modrelu.RNN(28, hidden_size)
 
         self.lin = nn.Linear(hidden_size, n_classes)
         self.loss_func = nn.CrossEntropyLoss()
 
 
+    # def forward(self, inputs):
+    #     state = self.rnn.default_hidden(inputs[:, 0, ...])
+    #     for input in torch.unbind(inputs, dim=1):
+    #         out_rnn, state = self.rnn(input.unsqueeze(dim=1), state)
+    #     return self.lin(state)
+
     def forward(self, inputs):
         state = self.rnn.default_hidden(inputs[:, 0, ...])
-        for input in torch.unbind(inputs, dim=1):
-            out_rnn, state = self.rnn(input.unsqueeze(dim=1), state)
-            if isinstance(self.rnn, nn.LSTMCell):
-                state = (out_rnn, state)
+        for i in range(28):
+            out_rnn, state = self.rnn(inputs[:,i*28:(i+1)*28], state)
         return self.lin(state)
 
     def loss(self, logits, y):
@@ -156,7 +161,7 @@ def main():
                 correct = model.correct(logits, batch_y)
 
             processed += len(batch_x)
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tAccuracy: {:.2f}%\tBest: {:.2f}%'.format(
+            print('\n Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tAccuracy: {:.2f}%\tBest: {:.2f}% \n'.format(
                 epoch, processed, len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.item(), 100 * correct/len(batch_x), best_test_acc))
 
@@ -174,10 +179,10 @@ def main():
         test_loss /= len(test_loader)
         test_acc = 100 * correct / len(test_loader.dataset)
         best_test_acc = max(test_acc, best_test_acc)
-        print()
-        print("Test set: Average loss: {:.4f}, Accuracy: {:.2f}%, Best Accuracy: {:.2f}%"
-                .format(test_loss, test_acc, best_test_acc))
-        print()
+        # print()
+        # print("Test set: Average loss: {:.4f}, Accuracy: {:.2f}%, Best Accuracy: {:.2f}%"
+                # .format(test_loss, test_acc, best_test_acc))
+        # print()
 
         model.train()
 
