@@ -74,10 +74,15 @@ device      = torch.device('cuda')
 #     param = cayley_map
 
 pixel_by_pixel = True
+exp_rnn = True
 
 class Model(nn.Module):
     def __init__(self, hidden_size):
         super(Model, self).__init__()
+        permute = False
+        self.permute = permute
+        permute = np.random.RandomState(92916)
+        self.register_buffer("permutation", torch.LongTensor(permute.permutation(784)))
 
         if pixel_by_pixel:
             self.rnn = new_rnn_modrelu.RNN(1, hidden_size)
@@ -88,6 +93,8 @@ class Model(nn.Module):
         self.loss_func = nn.CrossEntropyLoss()
 
     def forward(self, inputs):
+        if self.permute:
+            inputs = inputs[:, self.permutation]
 
         state = self.rnn.default_hidden(inputs[:, 0, ...])
 
@@ -138,7 +145,9 @@ def main():
 
     non_orth_params, log_orth_params = get_parameters(model)
     optim = torch.optim.RMSprop(non_orth_params, 7e-4)
-    # optim_orth = torch.optim.RMSprop(log_orth_params, lr=7e-5)
+
+    if exp_rnn:
+        optim_orth = torch.optim.RMSprop(log_orth_params, lr=7e-5)
 
     best_test_acc = 0.
     for epoch in range(epochs):
@@ -150,14 +159,14 @@ def main():
             loss = model.loss(logits, batch_y)
 
             optim.zero_grad()
-            # if optim_orth:
-            #     optim_orth.zero_grad()
+            if optim_orth:
+                optim_orth.zero_grad()
 
             loss.backward()
 
             optim.step()
-            # if optim_orth:
-            #     optim_orth.step()
+            if optim_orth:
+                optim_orth.step()
 
             with torch.no_grad():
                 correct = model.correct(logits, batch_y)

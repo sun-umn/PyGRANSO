@@ -1,6 +1,7 @@
 import time
 import torch
 import sys
+import numpy as np
 ## Adding PyGRANSO directories. Should be modified by user
 sys.path.append('/home/buyun/Documents/GitHub/PyGRANSO')
 from pygranso.pygranso import pygranso
@@ -33,6 +34,10 @@ pixel_by_pixel = True
 class Model(nn.Module):
     def __init__(self, hidden_size):
         super(Model, self).__init__()
+        permute = False
+        self.permute = permute
+        permute = np.random.RandomState(92916)
+        self.register_buffer("permutation", torch.LongTensor(permute.permutation(784)))
 
         if pixel_by_pixel:
             self.rnn = new_rnn_modrelu.RNN(1, hidden_size)
@@ -43,7 +48,9 @@ class Model(nn.Module):
         self.loss_func = nn.CrossEntropyLoss()
 
     def forward(self, inputs):
-
+        if self.permute:
+            inputs = inputs[:, self.permutation]
+            
         state = self.rnn.default_hidden(inputs[:, 0, ...])
 
         if pixel_by_pixel:

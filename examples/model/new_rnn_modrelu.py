@@ -38,7 +38,6 @@ class RNN(nn.Module):
         self.hidden_size = hidden_size
         
         if exprnn:
-        
             mode = ("dynamic", 100, 100)
             param = expm
             self.recurrent_kernel = Orthogonal(hidden_size, hidden_size, initializer_skew = cayley_init_, mode = mode, param=param)
@@ -46,8 +45,9 @@ class RNN(nn.Module):
             self.recurrent_kernel = nn.Linear(in_features=self.hidden_size, out_features=self.hidden_size, bias=False)
         
         self.input_kernel = nn.Linear(in_features=self.input_size, out_features=self.hidden_size, bias=False)
-        # self.nonlinearity = modrelu(hidden_size)
-        self.nonlinearity = nn.ReLU()
+        
+        self.nonlinearity = modrelu(hidden_size)
+        # self.nonlinearity = nn.ReLU()
 
         self.reset_parameters()
 
