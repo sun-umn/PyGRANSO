@@ -77,7 +77,7 @@ inputs, labels = next(iter(train_loader))
 inputs, labels = inputs.reshape(batch_size,784).to(device=device, dtype=double_precision), labels.to(device=device)
 
 
-# partial AD
+
 def user_fn(model,inputs,labels):
     # objective function    
     logits = model(inputs)
@@ -95,11 +95,58 @@ def user_fn(model,inputs,labels):
     # equality constraint 
     # special orthogonal group
     
-    ce = pygransoStruct()
+    # ce = pygransoStruct()
 
-    ce.c1 = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=double_precision)
+    # ce.c1 = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=double_precision)
+    # ce.c2 = torch.det(A) - 1
+    ce = None
 
     return [f,ci,ce]
+
+# # partial AD
+# def user_fn(model,inputs,labels):
+#     # objective function    
+#     logits = model(inputs)
+#     criterion = nn.CrossEntropyLoss()
+#     f = criterion(logits, labels)
+
+#     # get f_grad by AD
+#     n = getNvarTorch(model.parameters())
+#     f_grad = getObjGradDL(nvar=n,model=model,f=f, torch_device=device, double_precision=True)
+#     f = f.detach().item()
+
+#     # for param_tensor in model.state_dict():
+#     #     print(param_tensor, "\t", model.state_dict()[param_tensor].size())
+
+#     A = list(model.parameters())[0]
+
+#     # inequality constraint
+#     ci = None
+#     ci_grad = None
+
+#     # equality constraint 
+#     # special orthogonal group
+    
+#     ce = pygransoStruct()
+
+#     ce = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=double_precision)
+#     ce = ce.detach()
+#     nconstr = hidden_size*hidden_size
+#     ce = torch.reshape(ce,(nconstr,1))
+#     ce_grad = torch.zeros((n,nconstr)).to(device=device, dtype=double_precision)
+#     M = torch.zeros((nconstr,nconstr)).to(device=device, dtype=double_precision)
+
+#     for i in range(hidden_size):
+#         for j in range(hidden_size):
+#             J_ij = torch.zeros((hidden_size,hidden_size)).to(device=device, dtype=double_precision)
+#             J_ij[i,j] = 1
+#             tmp = A.T@J_ij + J_ij.T@A
+#             M[hidden_size*i+j,:] = tmp.reshape((1,hidden_size*hidden_size))
+
+#     ce_grad[0:hidden_size*(hidden_size),:] = M
+#     ce_grad = ce_grad.detach()
+
+#     return [f,f_grad,ci,ci_grad,ce,ce_grad]
 
 comb_fn = lambda model : user_fn(model,inputs,labels)
 
@@ -108,7 +155,7 @@ opts = pygransoStruct()
 opts.torch_device = device
 nvar = getNvarTorch(model.parameters())
 opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach().reshape(nvar,1)
-opts.opt_tol = 1e-3
+# opts.opt_tol = 1e-3
 opts.maxit = 10000
 # opts.fvalquit = 1e-6
 opts.print_level = 1
