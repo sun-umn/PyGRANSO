@@ -54,8 +54,10 @@ class Model(nn.Module):
         state = self.rnn.default_hidden(inputs[:, 0, ...])
 
         if pixel_by_pixel:
-            for input in torch.unbind(inputs, dim=1):
-                out_rnn, state = self.rnn(input.unsqueeze(dim=1), state)
+            # for input in torch.unbind(inputs, dim=1):
+            #     out_rnn, state = self.rnn(input.unsqueeze(dim=1), state)
+            for i in range(28*28):
+                out_rnn, state = self.rnn(inputs[:,i:(i+1)], state)
         else:
             for i in range(28):
                 out_rnn, state = self.rnn(inputs[:,i*28:(i+1)*28], state)

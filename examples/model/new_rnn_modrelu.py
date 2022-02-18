@@ -29,7 +29,7 @@ class modrelu(nn.Module):
 
         return phase * magnitude
 
-exprnn = True
+exprnn = False
 
 class RNN(nn.Module):
     def __init__(self, input_size, hidden_size):
