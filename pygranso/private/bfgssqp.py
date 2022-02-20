@@ -444,7 +444,7 @@ class AlgBFGSSQP():
                 self.printer.iter(   self.iter, self.penaltyfn_at_x, 
                                 self.fallback_level, self.random_attempts,  
                                 ls_evals,       alpha,  
-                                n_grad_samples, self.stat_val,   qps_solved  );     
+                                n_grad_samples, self.stat_val,   qps_solved  )
   
                 
             # reset fallback level counters
@@ -583,6 +583,7 @@ class AlgBFGSSQP():
             n_samples   = 1
             dist_evals  = 0
             self.penaltyfn_obj.addStationarityMeasure(stat_value)
+            stat_value = stat_value.item()
             return [  stat_vec, stat_value, n_qps, n_samples, dist_evals ]
       
         #  otherwise, we must do a nonsmooth stationary point test

@@ -75,3 +75,5 @@ examples/cifar-10-batches-py/*
 */.ipynb_checkpoints/*
 examples/data/checkpoints
 examples/examples
+examples/TMLR/user_grad_constr_dl_orthogonal_constraint.py.lprof
+examples/TMLR/constr_dl_orthogonal_constraint.py.lprof

@@ -85,12 +85,15 @@ def getObjGrad(nvar,var_dim_map,f,X, torch_device,double_precision):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
+    
+    if double_precision:
+        torch_dtype = torch.double
+    else:
+        torch_dtype = torch.float
+    
     try:
         f.backward(retain_graph=True)
-        if double_precision:
-            torch_dtype = torch.double
-        else:
-            torch_dtype = torch.float
+        
 
         f_grad_vec = torch.zeros((nvar,1),device=torch_device, dtype=torch_dtype)
 

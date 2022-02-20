@@ -9,7 +9,7 @@ from pygranso.private.solveQP import getErr
 from pygranso.private.wrapToLines import wrapToLines
 from time import sleep
 from pygranso.private.tensor2vec import tensor2vec
-from pygranso.private.getNvar import getNvar
+from pygranso.private.getNvar import getNvar, getNvarTorch
 from pygranso.private.processVarSpec import processVarSpec
 import traceback,sys
 
@@ -450,10 +450,10 @@ def pygranso(var_spec,combined_fn,user_opts=None):
     #  - evaluate functions at x0
 
     [var_dim_map,nn_model] = processVarSpec(var_spec)
-
     try:
         if nn_model != None:
-            n = getNvar(var_dim_map)
+            n = getNvarTorch(nn_model.parameters())
+            
         else:
             # call the functions getNvar to get the total number of (scalar) variables
             n = getNvar(var_dim_map)
@@ -480,7 +480,7 @@ def pygranso(var_spec,combined_fn,user_opts=None):
         # construct the penalty function object and evaluate at x0
         # unconstrained problems will reset mu to one and mu will be fixed
         mPF = PanaltyFuctions() # make penalty functions
-        [penaltyfn_obj,grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, f_eval_fn, problem_fns, torch_device = torch_device)
+        [penaltyfn_obj,grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, f_eval_fn, problem_fns, torch_device = torch_device, double_precision=opts.double_precision)
     except Exception as e:
         print(traceback.format_exc())
         sys.exit()
@@ -555,9 +555,10 @@ def pygranso(var_spec,combined_fn,user_opts=None):
 
 
     if hasattr(soln,"error"):
-        err = soln.error;
+        err = soln.error
         print("ERROR: In the end of main loop.")
         print(err)
+
 
     return soln
 
