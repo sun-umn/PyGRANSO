@@ -2,7 +2,7 @@
 
 PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation
 
-## Version: 1.1.0 --- 2022-01-15
+## Version: 1.1.0 --- 2022-02-20
 
 Description: major fixes and improvements. 
 
