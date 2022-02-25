@@ -6,6 +6,7 @@ import numpy as np
 from pygranso.pygransoStruct import pygransoStruct
 from pygranso.private.isAnInteger import isAnInteger
 import traceback,sys
+from scipy import sparse
 
 def pygransoOptions(n,options):
     """
@@ -581,8 +582,13 @@ def postProcess(n,opts, torch_device):
         opts.x0 = torch.randn(n,1).to(device=torch_device, dtype=torch_dtype)
 
     # If an initial inverse Hessian was not provided, use the identity
-    if opts.H0 == None:
+    if opts.H0 == None and opts.limited_mem_size == 0: 
         opts.H0 = torch.eye(n,device=torch_device, dtype=torch_dtype)
+
+    elif opts.H0 == None and opts.limited_mem_size > 0:
+        ii = [list(range(0,n)),list(range(0,n))]
+        vv = [1]*n
+        opts.H0 = torch.sparse_coo_tensor(ii, vv, (n, n)).to(device=torch_device, dtype=torch_dtype)
 
     if hasattr(opts,"QPsolver"):
         QPsolver = opts.QPsolver
