@@ -14,6 +14,7 @@ from torchvision import datasets
 import torch.nn as nn
 from torchvision.models import resnet50
 import os
+import numpy as np
 import gc
 
 
@@ -87,7 +88,7 @@ inputs, labels = next(iter(val_loader))
 i=0
 for inputs, labels in val_loader:
     i+=1
-    if i >2:
+    if i > 2:
         break
 
 # All the user-provided data (vector/matrix/tensor) must be in torch tensor format.
@@ -140,9 +141,9 @@ comb_fn = lambda X_struct : user_fn(X_struct, inputs, labels, lpips_model=base_m
 
 opts = pygransoStruct()
 opts.torch_device = device
-opts.maxit = 100
-opts.opt_tol = 1e-6
-opts.viol_ineq_tol = 1e-5
+opts.maxit = 50
+opts.opt_tol = 1e-4
+opts.viol_ineq_tol = 1e-4
 
 opts.print_frequency = 1
 opts.limited_mem_size = 100
@@ -152,3 +153,41 @@ start = time.time()
 soln = pygranso(var_spec = var_in,combined_fn = comb_fn,user_opts = opts)
 end = time.time()
 print("Total Wall Time: {}s".format(end - start))
+
+
+
+
+
+
+import matplotlib.pyplot as plt
+
+def rescale_array(array):
+    ele_min, ele_max = np.amin(array), np.amax(array)
+    array = (array - ele_min) / (ele_max - ele_min)
+    return array
+
+def tensor2img(tensor):
+    tensor = torch.nn.functional.interpolate(
+        tensor,
+        scale_factor=3,
+        mode="bilinear"
+    )
+    array = tensor.detach().cpu().numpy()[0, :, :, :]
+    array = np.transpose(array, [1, 2, 0])
+    return array
+
+final_adv_input = torch.reshape(soln.final.x,inputs.shape)
+
+ori_image = rescale_array(tensor2img(inputs))
+adv_image = rescale_array(tensor2img(final_adv_input))
+
+f = plt.figure()
+f.add_subplot(1,2,1)
+plt.imshow(ori_image)
+plt.title('Original Image')
+plt.axis('off')
+f.add_subplot(1,2,2)
+plt.imshow(adv_image)
+plt.title('Adversarial Attacked Image')
+plt.axis('off')
+plt.show()
