@@ -5,9 +5,6 @@ import sys
 sys.path.append('/home/buyun/Documents/GitHub/PyGRANSO')
 from pygranso.pygranso import pygranso
 from pygranso.pygransoStruct import pygransoStruct
-# from pygranso.private.getNvar import getNvarTorch
-# from perceptual_advex.utilities import get_dataset_model
-# from perceptual_advex.perceptual_attacks import get_lpips_model
 from perceptual_advex.distances import normalize_flatten_features
 from torchvision import transforms
 from torchvision import datasets

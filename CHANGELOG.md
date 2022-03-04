@@ -2,6 +2,17 @@
 
 PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation
 
+## Version: 1.2.0 --- 2022-03-X
+
+Description: major fixes and improvements on LBFGS. 
+
+**Fixed** 
+- Reducing memory usage for LBFGS. Now PyGRANSO can solve problem with ~15k parameters by using 8GB Memory 
+
+**Added**
+- Add examples: ex 12 perceptual attack on ImageNet images
+
+
 ## Version: 1.1.0 --- 2022-02-20
 
 Description: major fixes and improvements. 
