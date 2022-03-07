@@ -46,20 +46,11 @@ var_in = {"w": [4,1]}
 
 def user_fn(X_struct,X,y,C):
     w = X_struct.w
-
-    # objective function
-    # for i in range(n):
-    #     if i == 0:
-    #         f = torch.log(torch.exp(-y[i]* X[i,:]@w) + 1)
-    #     else:
-    #         f += torch.log(torch.exp(-y[i]* X[i,:]@w) + 1)
-
-    # torch.reshape(y,(n,1))
     
     f = torch.sum(torch.log(torch.exp(-y* (X@w)) + 1))
     f+= torch.norm(w,p=1)/C
 
-    # inequality constraint, matrix form
+    # inequality constraint 
     ci = None
 
     # equality constraint

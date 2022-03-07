@@ -14,7 +14,7 @@ import os
 import numpy as np
 import gc
 
-
+torch.manual_seed(0)
 device = torch.device('cuda')
 
 class ResNet_orig_LPIPS(nn.Module):
@@ -138,9 +138,9 @@ comb_fn = lambda X_struct : user_fn(X_struct, inputs, labels, lpips_model=base_m
 
 opts = pygransoStruct()
 opts.torch_device = device
-opts.maxit = 50
-opts.opt_tol = 1e-4
-opts.viol_ineq_tol = 1e-4
+opts.maxit = 1000
+opts.opt_tol = 1e-4*np.sqrt(torch.numel(inputs))
+opts.viol_ineq_tol = 5e-5
 
 opts.print_frequency = 1
 opts.limited_mem_size = 100
