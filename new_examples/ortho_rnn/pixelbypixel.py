@@ -90,7 +90,7 @@ device = torch.device('cuda')
 hidden_size = 30
 # num_layers = 1
 num_classes = 10
-batch_size = 28
+batch_size = 100
 # num_epochs = 2
 # learning_rate = 0.01
 

@@ -12,9 +12,16 @@ from torchvision.transforms import ToTensor
 
 device = torch.device('cuda')
 
-sequence_length = 28
-input_size = 28
+sequence_length = 28*28
+input_size = 1
+
+# sequence_length = 28
+# input_size = 28
+
 hidden_size = 30
+
+# hidden_size = 200
+
 num_layers = 1
 num_classes = 10
 batch_size = 100
@@ -35,6 +42,7 @@ class RNN(nn.Module):
         pass
 
     def forward(self, x):
+        x = torch.reshape(x,(batch_size,sequence_length,input_size))
         # Set initial hidden and cell states
         h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(device=device, dtype=double_precision)
         out, hidden = self.rnn(x, h0)  # out: tensor of shape (batch_size, seq_length, hidden_size)
@@ -64,6 +72,9 @@ loaders = {
 inputs, labels = next(iter(loaders['train']))
 inputs, labels = inputs.reshape(-1, sequence_length, input_size).to(device=device, dtype=double_precision), labels.to(device=device)
 
+for param_tensor in model.state_dict():
+    print(param_tensor, "\t", model.state_dict()[param_tensor].size())
+
 def user_fn(model,inputs,labels):
     # objective function
     logits = model(inputs)
@@ -83,7 +94,7 @@ def user_fn(model,inputs,labels):
     ce.c1 = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=double_precision)
     # ce.c2 = torch.det(A) - 1
 
-    # ce = None
+    ce = None
 
     return [f,ci,ce]
 
@@ -100,10 +111,10 @@ opts.maxit = 100
 opts.print_level = 1
 opts.print_frequency = 1
 # opts.print_ascii = True
-# opts.limited_mem_size = 100
+opts.limited_mem_size = 100
 opts.double_precision = True
 
-opts.mu0 = 200
+opts.mu0 = 0.1
 
 
 logits = model(inputs)
