@@ -93,14 +93,17 @@ opts = pygransoStruct()
 opts.torch_device = device
 nvar = getNvarTorch(model.parameters())
 opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach().reshape(nvar,1)
-# opts.opt_tol = 1e-4
-# opts.maxit = 10
+opts.opt_tol = 5e-4
+opts.viol_eq_tol = 1e-5
+opts.maxit = 100
 # opts.fvalquit = 1e-6
 opts.print_level = 1
 opts.print_frequency = 1
 # opts.print_ascii = True
 # opts.limited_mem_size = 100
 opts.double_precision = True
+
+opts.mu0 = 200
 
 
 logits = model(inputs)
