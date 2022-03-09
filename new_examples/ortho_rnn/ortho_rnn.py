@@ -55,6 +55,8 @@ torch.manual_seed(0)
 model = RNN(input_size, hidden_size, num_layers, num_classes).to(device=device, dtype=double_precision)
 model.train()
 
+nn.init.orthogonal_(list(model.parameters())[1])
+
 train_data = datasets.MNIST(
     root = '/home/buyun/Documents/GitHub/PyGRANSO/examples/data/mnist',
     train = True,
@@ -94,7 +96,7 @@ def user_fn(model,inputs,labels):
     ce.c1 = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=double_precision)
     # ce.c2 = torch.det(A) - 1
 
-    ce = None
+    # ce = None
 
     return [f,ci,ce]
 
@@ -114,7 +116,7 @@ opts.print_frequency = 1
 opts.limited_mem_size = 100
 opts.double_precision = True
 
-opts.mu0 = 0.1
+# opts.mu0 = 0.1
 
 
 logits = model(inputs)
