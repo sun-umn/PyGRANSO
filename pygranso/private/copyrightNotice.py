@@ -51,5 +51,5 @@ def copyrightNotice():
         =========================================================================
     """
     msg = ["PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation", 
-            "Version 1.0.0", "Licensed under the AGPLv3, Copyright (C) 2021 Tim Mitchell and Buyun Liang"]
+            "Version 1.2.0", "Licensed under the AGPLv3, Copyright (C) 2021-2022 Tim Mitchell and Buyun Liang"]
     return msg
