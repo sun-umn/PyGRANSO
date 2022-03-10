@@ -10,6 +10,9 @@ import torch.nn as nn
 from torchvision import datasets
 from torchvision.transforms import ToTensor
 
+from pygranso.private.getObjGrad import getObjGradDL
+
+
 device = torch.device('cuda')
 
 sequence_length = 28*28
@@ -25,8 +28,6 @@ hidden_size = 30
 num_layers = 1
 num_classes = 10
 batch_size = 100
-num_epochs = 2
-learning_rate = 0.01
 
 double_precision = torch.double
 
@@ -77,6 +78,30 @@ inputs, labels = inputs.reshape(-1, sequence_length, input_size).to(device=devic
 for param_tensor in model.state_dict():
     print(param_tensor, "\t", model.state_dict()[param_tensor].size())
 
+# def user_fn(model,inputs,labels):
+#     # objective function
+#     logits = model(inputs)
+#     criterion = nn.CrossEntropyLoss()
+#     f = criterion(logits, labels)
+
+#     A = list(model.parameters())[1]
+
+#     # inequality constraint
+#     ci = None
+
+#     # equality constraint
+#     # special orthogonal group
+
+#     ce = pygransoStruct()
+
+#     ce.c1 = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=double_precision)
+#     # ce.c2 = torch.det(A) - 1
+
+#     # ce = None
+
+#     return [f,ci,ce]
+
+# partial AD
 def user_fn(model,inputs,labels):
     # objective function
     logits = model(inputs)
@@ -85,20 +110,39 @@ def user_fn(model,inputs,labels):
 
     A = list(model.parameters())[1]
 
+    # get f_grad by AD
+    n = getNvarTorch(model.parameters())
+    f_grad = getObjGradDL(nvar=n,model=model,f=f, torch_device=device, double_precision=True)
+    f = f.detach().item()
+
     # inequality constraint
     ci = None
+    ci_grad = None
 
-    # equality constraint
+    # equality constraint 
     # special orthogonal group
-
+    
     ce = pygransoStruct()
 
-    ce.c1 = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=double_precision)
-    # ce.c2 = torch.det(A) - 1
+    ce = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=double_precision)
+    ce = ce.detach()
+    nconstr = hidden_size*hidden_size
+    ce = torch.reshape(ce,(nconstr,1))
+    ce_grad = torch.zeros((n,nconstr)).to(device=device, dtype=double_precision)
+    M = torch.zeros((nconstr,nconstr)).to(device=device, dtype=double_precision)
 
-    # ce = None
+    for i in range(hidden_size):
+        for j in range(hidden_size):
+            J_ij = torch.zeros((hidden_size,hidden_size)).to(device=device, dtype=double_precision)
+            J_ij[i,j] = 1
+            tmp = A.T@J_ij + J_ij.T@A
+            M[hidden_size*i+j,:] = tmp.reshape((1,hidden_size*hidden_size))
 
-    return [f,ci,ce]
+    ce_grad[input_size*hidden_size:input_size*hidden_size+ hidden_size*(hidden_size),:] = M
+    ce_grad = ce_grad.detach()
+
+    return [f,f_grad,ci,ci_grad,ce,ce_grad]
+
 
 comb_fn = lambda model : user_fn(model,inputs,labels)
 
@@ -116,7 +160,10 @@ opts.print_frequency = 1
 opts.limited_mem_size = 100
 opts.double_precision = True
 
-# opts.mu0 = 0.1
+opts.steering_c_viol = 0.02
+opts.mu0 = 0.1
+
+opts.globalAD = False # disable global auto-differentiation
 
 
 logits = model(inputs)
