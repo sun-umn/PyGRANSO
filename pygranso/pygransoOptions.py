@@ -383,7 +383,7 @@ def pygransoOptions(n,options):
         For comments/bug reports, please visit the PyGRANSO webpage:
         https://github.com/sun-umn/PyGRANSO
 
-        PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
+        PyGRANSO Version 1.2.0, 2021-2022, see AGPL license info below.
 
         =========================================================================
         |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
