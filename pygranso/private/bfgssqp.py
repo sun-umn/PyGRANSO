@@ -322,9 +322,9 @@ class AlgBFGSSQP():
             penalty_parameter_changed = False
             if self.fallback_level < POSTQP_FALLBACK_LEVEL:  
                 if self.fallback_level == 0:
-                    apply_H_steer = self.apply_H_QP_fn;  # standard steering   
+                    apply_H_steer = self.apply_H_QP_fn  # standard steering   
                 else:
-                    apply_H_steer = APPLY_IDENTITY; # "degraded" steering 
+                    apply_H_steer = APPLY_IDENTITY # "degraded" steering 
                 
                 try:
                     [p,mu_new,*_] = steering_fn(self.penaltyfn_at_x,apply_H_steer)
