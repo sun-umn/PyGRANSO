@@ -8,13 +8,17 @@ sys.path.append('/home/buyun/Documents/GitHub/PyGRANSO')
 from pygranso.pygranso import pygranso
 from pygranso.pygransoStruct import pygransoStruct
 
+from torch.linalg import norm
+from scipy.stats import ortho_group
+import numpy as np
+
 device = torch.device('cuda')
-n = 5
-d = 4
-torch.manual_seed(0)
+n = 10
+d = 5
+torch.manual_seed(2022)
 
 A = torch.randn(n,n)
-A = A + A.T
+A = (A + A.T)/2
 
 # A = torch.eye(n)
 
@@ -53,10 +57,22 @@ def user_fn(X_struct,A,d):
 
     # inequality constraint, matrix form
     ci = None
+    # ci = pygransoStruct()
+    # ci.c1 = torch.max(V.T@V - torch.eye(d).to(device=device, dtype=torch.double))
+    # ci.c2 = -torch.min(V.T@V - torch.eye(d).to(device=device, dtype=torch.double))
 
     # equality constraint
+    # ce = None
     ce = pygransoStruct()
-    ce.c1 = V.T@V - torch.eye(d).to(device=device, dtype=torch.double)
+    # ce.c1 = torch.max(V.T@V - torch.eye(d).to(device=device, dtype=torch.double))
+    # ce.c2 = torch.min(V.T@V - torch.eye(d).to(device=device, dtype=torch.double))
+
+    # ce.c1 = norm(V.T@V - torch.eye(d).to(device=device, dtype=torch.double),1)
+
+    ce.c1 = norm(V.T@V - torch.eye(d).to(device=device, dtype=torch.double),float('inf'))
+
+
+    # ce.c1 = V.T@V - torch.eye(d).to(device=device, dtype=torch.double)
 
     return [f,ci,ce]
 
@@ -64,12 +80,26 @@ comb_fn = lambda X_struct : user_fn(X_struct,A,d)
 
 opts = pygransoStruct()
 opts.torch_device = device
-opts.print_frequency = 1
-# opts.x0 = .2 * torch.ones((2*d1*d2,1)).to(device=device, dtype=torch.double)
+opts.print_frequency = 20
+
+torch.manual_seed(2021)
+
+# opts.x0 =  torch.randn((n*d,1)).to(device=device, dtype=torch.double)
+# opts.x0 = opts.x0/norm(opts.x0)
+
+eps = 1e-5
+
+np.random.seed(2022)
+x = ortho_group.rvs(n)
+x = x[:,0:d].reshape(-1,1)
+opts.x0 = torch.from_numpy(x).to(device=device, dtype=torch.double) + eps*torch.randn((n*d,1)).to(device=device, dtype=torch.double)
+
 # opts.opt_tol = 1e-7
-opts.maxit = 3000
-# opts.mu0 = 10
-opts.steering_c_viol = 0.02
+opts.maxit = 1500
+# opts.mu0 = 1e-2
+# opts.steering_c_viol = 0.02
+# opts.limited_mem_size = 100
+
 
 
 start = time.time()
