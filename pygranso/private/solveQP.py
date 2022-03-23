@@ -125,7 +125,8 @@ def solveQP(H,f,A,b,LB,UB,QPsolver,torch_device, double_precision):
             prob = osqp.OSQP()
 
             # Setup workspace and change alpha parameter
-            prob.setup(H_sparse, f, A_new, LB_new, UB_new, alpha=1.0,verbose=False)
+            prob.setup(H_sparse, f, A_new, LB_new, UB_new, eps_abs = 1e-12, eps_rel=1e-12, polish=True, verbose=False)
+            # prob.setup(H_sparse, f, A_new, LB_new, UB_new, alpha=1.0,verbose=False)
 
             # Solve problem
             res = prob.solve()
