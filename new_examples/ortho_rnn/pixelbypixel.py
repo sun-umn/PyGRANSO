@@ -26,6 +26,9 @@ from initialization import cayley_init_
 from trivializations import expm
 
 
+from torch.linalg import norm
+
+
 class modrelu(nn.Module):
     def __init__(self, features):
         # For now we just support square layers
@@ -94,7 +97,7 @@ batch_size = 100
 # num_epochs = 2
 # learning_rate = 0.01
 
-pixel_by_pixel = False
+pixel_by_pixel = True
 
 double_precision = torch.double
 
@@ -156,6 +159,8 @@ test_loader = torch.utils.data.DataLoader(
 
 # Model and optimizers
 model = Model(hidden_size).to(device=device, dtype=double_precision)
+nn.init.orthogonal_(list(model.parameters())[0])
+
 model.train()
 
 
@@ -179,11 +184,13 @@ def user_fn(model,inputs,labels):
     # equality constraint 
     # special orthogonal group
     
-    # ce = pygransoStruct()
+    ce = pygransoStruct()
 
     # ce.c1 = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=double_precision)
     # ce.c2 = torch.det(A) - 1
-    ce = None
+    # ce = None
+
+    ce.c1 = norm(A.T @ A - torch.eye(hidden_size).to(device=device, dtype=double_precision),float('inf'))
 
     return [f,ci,ce]
 
@@ -241,10 +248,10 @@ nvar = getNvarTorch(model.parameters())
 opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach().reshape(nvar,1)
 opts.opt_tol = 5e-4
 opts.viol_eq_tol = 1e-5
-opts.maxit = 100
+opts.maxit = 1500
 # opts.fvalquit = 1e-6
 opts.print_level = 1
-opts.print_frequency = 1
+opts.print_frequency = 20
 # opts.print_ascii = True
 # opts.limited_mem_size = 100
 opts.double_precision = True
