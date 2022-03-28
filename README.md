@@ -5,7 +5,7 @@
 
 PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation
 
-Please check https://ncvx.org/PyGRANSO for detailed instructions (introduction, installation, settings, examples...).
+Please check https://ncvx.org for detailed instructions (introduction, installation, settings, examples...).
 
 PyGRANSO is AGPL v3.0 licensed, but it also contains a small portion of GPL code.  Please see the LICENSE_INFO folder for more information.
 
@@ -50,7 +50,7 @@ Installing PyGRANSO is simple. Here is a step-by-step instruction:
 
         python test_cpu.py
 
-6. Check the [example folder](./examples) in the source code or [example section](https://ncvx.org/PyGRANSO/examples) on the documentation website to get started.
+6. Check the [example folder](./examples) in the source code or [example section](https://ncvx.org/examples) on the documentation website to get started.
 
 ## Dependencies
     Python-3.9.7
