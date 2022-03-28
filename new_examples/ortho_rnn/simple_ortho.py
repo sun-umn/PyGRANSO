@@ -13,8 +13,8 @@ from scipy.stats import ortho_group
 import numpy as np
 
 device = torch.device('cuda')
-n = 10
-d = 5
+n = 100
+d = 90
 torch.manual_seed(2022)
 
 A = torch.randn(n,n)
@@ -80,7 +80,7 @@ comb_fn = lambda X_struct : user_fn(X_struct,A,d)
 
 opts = pygransoStruct()
 opts.torch_device = device
-opts.print_frequency = 20
+opts.print_frequency = 500
 
 torch.manual_seed(2021)
 
@@ -95,8 +95,8 @@ x = x[:,0:d].reshape(-1,1)
 opts.x0 = torch.from_numpy(x).to(device=device, dtype=torch.double) + eps*torch.randn((n*d,1)).to(device=device, dtype=torch.double)
 
 # opts.opt_tol = 1e-7
-opts.maxit = 1500
-# opts.mu0 = 1e-2
+opts.maxit = 30000
+opts.mu0 = 1.3e-2
 # opts.steering_c_viol = 0.02
 # opts.limited_mem_size = 100
 
