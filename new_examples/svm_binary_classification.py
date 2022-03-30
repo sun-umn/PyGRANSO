@@ -69,8 +69,13 @@ def user_fn(X_struct,X,y, zeta):
     # inequality constraint 
     ci = pygransoStruct()
     # ci.c1 = norm(1 - zeta - y*(X@w+b),float('inf'))
-    ci.c1 = norm(1 - zeta - y*(X@w+b),2)
+    # ci.c1 = norm(1 - zeta - y*(X@w+b),2)
     # ci.c1 = norm(1 - zeta - y*(X@w+b),1)
+
+    # ci.c1 = torch.max(1 - zeta - y*(X@w+b))
+    # ci.c1 = torch.sum(torch.clamp(1 - zeta - y*(X@w+b), min=-0.)) # l1
+
+    ci.c1 = torch.sum(torch.clamp(1 - zeta - y*(X@w+b), min=-0.)**2)**0.5 # l2
 
 
     # ci.c1 = 1 - zeta - y*(X@w+b)
@@ -93,14 +98,14 @@ opts.viol_eq_tol = 1e-5
 opts.maxit = 3000
 # opts.fvalquit = 1e-6
 opts.print_level = 1
-opts.print_frequency = 10
+opts.print_frequency = 1
 # opts.print_ascii = True
 # opts.limited_mem_size = 100
 opts.double_precision = True
 
 # opts.steering_c_viol = 0.9
 
-# opts.mu0 = 1e-4
+opts.mu0 = 1e-4
 
 # opts.steering_c_mu = 0.5
 
