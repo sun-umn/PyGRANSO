@@ -204,7 +204,7 @@ def solveQP(H,f,A,b,LB,UB,QPsolver,torch_device, double_precision):
         w_sorted = np.sort(w)
         print(w_sorted)
         print(traceback.format_exc())
-        sys.exit()
+        # sys.exit()
 
 
 def getErr():

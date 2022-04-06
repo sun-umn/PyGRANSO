@@ -331,7 +331,9 @@ class AlgBFGSSQP():
                 except Exception as e:
                     print("PyGRANSO:steeringQuadprogFailure")
                     print(traceback.format_exc())
-                    sys.exit()
+                    self.prepareTermination(12); # not a descent descent direction
+                    return self.info
+                    # sys.exit()
                 
                 penalty_parameter_changed = (mu_new != self.mu)
                 if penalty_parameter_changed: 
