@@ -331,7 +331,7 @@ class AlgBFGSSQP():
                 except Exception as e:
                     print("PyGRANSO:steeringQuadprogFailure")
                     print(traceback.format_exc())
-                    self.prepareTermination(12); # not a descent descent direction
+                    self.prepareTermination(12); # qp failure
                     return self.info
                     # sys.exit()
                 
@@ -602,8 +602,15 @@ class AlgBFGSSQP():
         
         #  nonsmooth optimality measure
         qPTC_obj = qpTC()
-        [stat_vec,n_qps,ME] = qPTC_obj.qpTerminationCondition(   self.penaltyfn_at_x, grad_samples,
-                                                        self.apply_H_QP_fn, self.QPsolver, self.torch_device, self.double_precision)
+        try:
+            [stat_vec,n_qps,ME] = qPTC_obj.qpTerminationCondition(   self.penaltyfn_at_x, grad_samples,
+                                                            self.apply_H_QP_fn, self.QPsolver, self.torch_device, self.double_precision)
+        except Exception as e:
+            print("PyGRANSO:terminationQuadprogFailure")
+            print(traceback.format_exc())
+            self.prepareTermination(12); # not a descent descent direction
+            return self.info
+
         stat_value = torch.norm(stat_vec).item()
         self.penaltyfn_obj.addStationarityMeasure(stat_value)
         
