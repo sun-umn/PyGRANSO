@@ -7,10 +7,13 @@ PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation
 Description: major fixes and improvements on LBFGS. 
 
 **Fixed** 
-- Reducing memory usage for LBFGS. Now PyGRANSO can solve problem with ~15k parameters by using 8GB Memory 
+- Reducing memory usage for LBFGS. Now PyGRANSO can solve problem with ~15k parameters by using 14 GB memory. 
+- Update ex 11 ortho RNN with max folding and orthonormal initialization
+- Use hig precision for QP solver
 
 **Added**
-- Add examples: ex 12 perceptual attack on ImageNet images
+- Add examples: ex 12 perceptual attack on ImageNet images. ex 13 trace optimization with orthogonal constraints; ex 14 unconstrained deep learning with LeNet5; ex 15 logistic regression; ex 16 generic dictionary learning. 
+- Add max folding option: fold multiple constraints into a single inf norm constraint.
 
 
 ## Version: 1.1.0 --- 2022-02-20
