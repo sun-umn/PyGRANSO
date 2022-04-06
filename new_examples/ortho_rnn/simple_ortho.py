@@ -14,7 +14,7 @@ import numpy as np
 
 device = torch.device('cuda')
 n = 100
-d = 90
+d = 50
 torch.manual_seed(2022)
 
 A = torch.randn(n,n)
@@ -57,19 +57,14 @@ def user_fn(X_struct,A,d):
 
     # inequality constraint, matrix form
     ci = None
-    # ci = pygransoStruct()
-    # ci.c1 = torch.max(V.T@V - torch.eye(d).to(device=device, dtype=torch.double))
-    # ci.c2 = -torch.min(V.T@V - torch.eye(d).to(device=device, dtype=torch.double))
 
     # equality constraint
     # ce = None
     ce = pygransoStruct()
-    # ce.c1 = torch.max(V.T@V - torch.eye(d).to(device=device, dtype=torch.double))
-    # ce.c2 = torch.min(V.T@V - torch.eye(d).to(device=device, dtype=torch.double))
 
     # ce.c1 = norm(V.T@V - torch.eye(d).to(device=device, dtype=torch.double),1)
-
-    ce.c1 = norm(V.T@V - torch.eye(d).to(device=device, dtype=torch.double),float('inf'))
+    ce.c1 = norm(V.T@V - torch.eye(d).to(device=device, dtype=torch.double),2)
+    # ce.c1 = norm(V.T@V - torch.eye(d).to(device=device, dtype=torch.double),float('inf'))
 
 
     # ce.c1 = V.T@V - torch.eye(d).to(device=device, dtype=torch.double)
@@ -80,9 +75,9 @@ comb_fn = lambda X_struct : user_fn(X_struct,A,d)
 
 opts = pygransoStruct()
 opts.torch_device = device
-opts.print_frequency = 500
+opts.print_frequency = 200
 
-torch.manual_seed(2021)
+torch.manual_seed(2022)
 
 # opts.x0 =  torch.randn((n*d,1)).to(device=device, dtype=torch.double)
 # opts.x0 = opts.x0/norm(opts.x0)
@@ -95,8 +90,8 @@ x = x[:,0:d].reshape(-1,1)
 opts.x0 = torch.from_numpy(x).to(device=device, dtype=torch.double) + eps*torch.randn((n*d,1)).to(device=device, dtype=torch.double)
 
 # opts.opt_tol = 1e-7
-opts.maxit = 30000
-opts.mu0 = 1.3e-2
+opts.maxit = 5000
+# opts.mu0 = 1.3e-2
 # opts.steering_c_viol = 0.02
 # opts.limited_mem_size = 100
 

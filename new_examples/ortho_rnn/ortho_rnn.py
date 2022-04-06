@@ -160,10 +160,10 @@ opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach().resha
 # opts.x0 = torch.randn(nvar,1).to(device=device, dtype=torch.double)
 opts.opt_tol = 1e-6
 opts.viol_eq_tol = 1e-5
-opts.maxit = 2000
+opts.maxit = 5000
 # opts.fvalquit = 1e-6
 opts.print_level = 1
-opts.print_frequency = 50
+opts.print_frequency = 100
 # opts.print_ascii = True
 # opts.limited_mem_size = 100
 opts.double_precision = True
@@ -171,7 +171,7 @@ opts.double_precision = True
 # opts.steering_c_viol = 0.02
 opts.mu0 = 100
 
-opts.steering_c_mu = 0.95
+# opts.steering_c_mu = 0.95
 
 # opts.globalAD = False # disable global auto-differentiation
 

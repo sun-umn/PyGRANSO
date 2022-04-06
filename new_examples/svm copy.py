@@ -28,33 +28,10 @@ y = iris.target
 
 X = X[y != 2]
 y = y[y != 2]
-y[y==0] = -1
 
 X /= X.max()  # Normalize X to speed-up convergence
-# X = X[0:10,:]
-# y = y[0:10]
-
-##############################################################
-
-# import numpy as np
-# X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-# y = np.array([1, 1, -1, -1])
-# # X = np.array([[-1, -1],  [1, 1]])
-# # y = np.array([-1,1])
-
-# from sklearn.svm import SVC
-# clf = SVC(kernel='linear')
-# clf.fit(X, y)
-# prediction = clf.predict([[0,6]])
 
 
-##############################################################
-
-# bc = datasets.load_breast_cancer()
-# X = bc.data
-# y = bc.target
-# y[y==0] = -1
-# X /= X.max()  # Normalize X to speed-up convergence
 
 
 X = torch.from_numpy(X).to(device=device, dtype=torch.double)
@@ -62,67 +39,49 @@ y = torch.from_numpy(y).to(device=device, dtype=torch.double)
 [n,d] = X.shape
 y = y.unsqueeze(1)
 
-zeta = 0.00
-
 # variables and corresponding dimensions.
-# var_in = {"w": [d,1], "zeta": [n,1], "b": [n,1], "C": [1,1]}
-var_in = {"w": [d,1], "b": [1,1]}
+var_in = {"w": [d,1], "zeta": [n,1], "b": [n,1]}
 
 
-def user_fn(X_struct,X,y, zeta):
+def user_fn(X_struct,X,y):
     w = X_struct.w
-    b = X_struct.b    
-    f = 0.5*w.T@w 
+    zeta = X_struct.zeta
+    b = X_struct.b
+    
+    f = 0.5*w.T@w
 
     # inequality constraint 
     ci = pygransoStruct()
-
     constr = 1 - zeta - y*(X@w+b)
-
-    # ci.c1 = torch.sum(torch.clamp(constr, min=0)) # l1
-    ci.c1 = torch.sum(torch.clamp(constr, min=0)**2)**0.5 # l2
-    # ci.c1 = torch.max(constr) # l_inf
-
-
-
-    # ci.c1 = constr
+    ci.c1 = norm(constr,float('inf'))
 
     # equality constraint
     ce = None
 
-    # # inequality constraint 2
-    # ci = pygransoStruct()
-    # # constr = torch.zeros((2*n,1)).to(device=device, dtype=torch.double)
-    # # constr[0:n] = 1 - zeta - y*(X@w+b)
-    # # constr[n:2*n] = (1 - zeta)**2 - (y*(X@w+b))**2 # dummy nonlinear constr
-
     return [f,ci,ce]
 
 
-comb_fn = lambda X_struct : user_fn(X_struct,X,y,zeta)
+comb_fn = lambda X_struct : user_fn(X_struct,X,y)
 
 opts = pygransoStruct()
 opts.torch_device = device
 
-torch.manual_seed(2022)
-opts.x0 = torch.randn(d+1,1).to(device=device, dtype=torch.double)
-opts.opt_tol = 1e-5
-opts.viol_eq_tol = 1e-5
-opts.maxit = 60000
+torch.manual_seed(1)
+opts.x0 = torch.randn(2*n+d,1).to(device=device, dtype=torch.double)
+# opts.opt_tol = 1e-6
+# opts.viol_eq_tol = 1e-5
+opts.maxit = 5000
 # opts.fvalquit = 1e-6
 opts.print_level = 1
-opts.print_frequency = 20
+opts.print_frequency = 100
 # opts.print_ascii = True
 # opts.limited_mem_size = 100
 opts.double_precision = True
 
-# opts.maxclocktime = 440
+# opts.steering_c_viol = 0.02
+opts.mu0 = 100
 
-# opts.steering_c_viol = 0.9
-
-# opts.mu0 = 1e-4
-
-# opts.steering_c_mu = 0.5
+# opts.steering_c_mu = 0.95
 
 # opts.globalAD = False # disable global auto-differentiation
 
@@ -142,15 +101,9 @@ print("Total Wall Time: {}s".format(end - start))
 
 
 w = soln.final.x[0:d]
-b = soln.final.x[d:d+1]
-# zeta = soln.final.x[d:d+n]
+b = soln.final.x[d+n:d+2*n]
 res = X@w+b
 predicted = torch.zeros(n,1).to(device=device, dtype=torch.double)
-predicted[res>=0] = 1
-predicted[res<0] = -1
+predicted[res>=0.5] = 1
 correct = (predicted == y).sum().item()
 print("Final acc = {:.2f}%".format((100 * correct/n)))
-
-# print('zeta = {}'.format(zeta))
-print('w = {}'.format(w))
-print('b = {}'.format(b))
