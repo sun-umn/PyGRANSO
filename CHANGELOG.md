@@ -8,8 +8,9 @@ Description: major fixes and improvements on LBFGS.
 
 **Fixed** 
 - Reducing memory usage for LBFGS. Now PyGRANSO can solve problem with ~15k parameters by using 14 GB memory. 
-- Update ex 11 ortho RNN with max folding and orthonormal initialization
-- Use hig precision for QP solver
+- Update ex 11 ortho RNN with max folding and orthonormal initialization.
+- Use high precision for QP solver.
+- allow part of optimization variables not showing up in objective (see SVM example).
 
 **Added**
 - Add examples: ex 12 perceptual attack on ImageNet images. ex 13 trace optimization with orthogonal constraints; ex 14 unconstrained deep learning with LeNet5; ex 15 logistic regression; ex 16 generic dictionary learning. 
