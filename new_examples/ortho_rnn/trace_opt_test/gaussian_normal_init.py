@@ -14,21 +14,50 @@ import os
 from datetime import datetime
 
 ###############################################
-n = 10 # V: n*d
-d = 5 # copnst: d*d
+write_to_log = True
+
+n = 30 # V: n*d
+d = 15 # copnst: d*d
 # maxfolding = 'unfolding'
-maxfolding = 'l2'
-total = 500 # total number of starting points
+# maxfolding = 'l2'
+# maxfolding = 'l1'
+maxfolding = 'linf'
+
+total = 20 # total number of starting points
 feasible_init = False
 opt_tol = 1e-6
 maxit = 1000
-maxclocktime = 20
+maxclocktime = 100
 # QPsolver = "gurobi"
 QPsolver = "osqp"
 ###############################################
 
+
+# save file
+now = datetime.now() # current date and time
+date_time = now.strftime("%m%d%Y_%H:%M:%S")
+
+my_path = os.path.dirname(os.path.abspath(__file__))
+
+if feasible_init:
+    feasible = "feasible_init"
+else:
+    feasible = "gaussnormal_init"
+
+log_name = "log/" + date_time + "_n{}_d{}_{}_{}_total{}.txt".format(n,d,feasible,maxfolding,total)
+
+print("_n{}_d{}_{}_{}_total{} start\n\n".format(n,d,feasible,maxfolding,total))
+
+
+if write_to_log:
+    sys.stdout = open(os.path.join(my_path, log_name), 'w')
+
+
+
+###################################################
 device = torch.device('cuda')
 torch.manual_seed(2023)
+np.random.seed(2023)
 
 A = torch.randn(n,n)
 A = (A + A.T)/2
@@ -76,16 +105,6 @@ def user_fn(X_struct,A,d):
 
 comb_fn = lambda X_struct : user_fn(X_struct,A,d)
 
-# np.random.seed(2022)
-# x = ortho_group.rvs(n)
-# x = x[:,0:d].reshape(-1,1)
-# opts.x0 = torch.from_numpy(x).to(device=device, dtype=torch.double) + eps*torch.randn((n*d,1)).to(device=device, dtype=torch.double)
-
-# opts.maxit = 5000
-# opts.mu0 = 1.3e-2
-# opts.steering_c_viol = 0.02
-# opts.limited_mem_size = 100
-
 
 print("torch.trace(U.T@A@U) = {}".format(torch.trace(U.T@A@U)))
 print("sum of first d eigvals = {}".format(torch.sum(L[index[0:d]])))
@@ -93,13 +112,15 @@ time_lst = []
 F_lst = []
 MF_lst = []
 termination_lst = []
+termination_lst_all = []
 
 
 start_loop = time.time()
 
+
+
 for i in range(total):
     print("i = {}".format(i))
-    torch.manual_seed(2022+i)
     opts = pygransoStruct()
     opts.torch_device = device
     opts.print_frequency = 10
@@ -113,7 +134,6 @@ for i in range(total):
 
 
     if feasible_init:
-        np.random.seed(2022+i)
         x = ortho_group.rvs(n)
         x = x[:,0:d].reshape(-1,1)
         eps = 1e-5
@@ -132,6 +152,8 @@ for i in range(total):
             F_lst.append(soln.final.f)
             MF_lst.append(soln.most_feasible.f)
             termination_lst.append(soln.termination_code)
+        else:
+            termination_lst_all.append("i = {}, termination code = {} ".format(i,soln.termination_code) )
     except Exception as e:
         print('skip pygranso')
 
@@ -173,20 +195,24 @@ plt.plot(np.arange(arr_len),sorted_MF,'go-',label='sorted_pygranso_sol_MF')
 ana_sol = torch.trace(U.T@A@U).item()
 plt.plot(np.arange(arr_len),np.array(arr_len*[-ana_sol]),'b-',label='analytical_sol')
 plt.legend()
+
 # plt.show()
 
-now = datetime.now() # current date and time
-date_time = now.strftime("%m%d%Y_%H:%M:%S")
-if feasible_init:
-    feasible = "feasible_init"
-else:
-    feasible = "gaussnormal_init"
 
 
-png_title =  "png/sorted_F_" + date_time + "_n{}_d{}_{}_{}".format(n,d,feasible,maxfolding)
 
-my_path = os.path.dirname(os.path.abspath(__file__))
 
+png_title =  "png/sorted_F_" + date_time + "_n{}_d{}_{}_{}_total{}".format(n,d,feasible,maxfolding,total)
+
+
+plt.title("n{}_d{}_{}_{}".format(n,d,feasible,maxfolding))
+plt.xlabel('sorted sample index')
+plt.ylabel('obj_val')
 plt.savefig(os.path.join(my_path, png_title))
 
 print("successful rate = {}".format(arr_len/total))
+print(termination_lst_all)
+
+if write_to_log:
+    # end writing
+    sys.stdout.close()
