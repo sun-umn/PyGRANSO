@@ -1,4 +1,5 @@
 import time
+from typing import Tuple
 import torch
 import sys
 ## Adding PyGRANSO directories. Should be modified by user
@@ -15,13 +16,15 @@ from datetime import datetime
 ###############################################
 n = 10 # V: n*d
 d = 5 # copnst: d*d
-maxfolding = 'unfolding'
-# maxfolding = 'l2'
-total = 100 # total number of starting points
+# maxfolding = 'unfolding'
+maxfolding = 'l2'
+total = 500 # total number of starting points
 feasible_init = False
 opt_tol = 1e-6
-maxit = 200
+maxit = 1000
 maxclocktime = 20
+# QPsolver = "gurobi"
+QPsolver = "osqp"
 ###############################################
 
 device = torch.device('cuda')
@@ -95,7 +98,7 @@ termination_lst = []
 start_loop = time.time()
 
 for i in range(total):
-
+    print("i = {}".format(i))
     torch.manual_seed(2022+i)
     opts = pygransoStruct()
     opts.torch_device = device
@@ -106,6 +109,7 @@ for i in range(total):
     opts.quadprog_info_msg  = False
     opts.opt_tol = opt_tol
     opts.maxclocktime = maxclocktime
+    opts.QPsolver = QPsolver
 
 
     if feasible_init:
@@ -123,10 +127,11 @@ for i in range(total):
         soln = pygranso(var_spec = var_in,combined_fn = comb_fn,user_opts = opts)
         end = time.time()
         print("Total Wall Time: {}s".format(end - start))
-        time_lst.append(end-start)
-        F_lst.append(soln.final.f)
-        MF_lst.append(soln.most_feasible.f)
-        termination_lst.append(soln.termination_code)
+        if soln.termination_code != 5 and soln.termination_code != 12 and soln.termination_code != 8:
+            time_lst.append(end-start)
+            F_lst.append(soln.final.f)
+            MF_lst.append(soln.most_feasible.f)
+            termination_lst.append(soln.termination_code)
     except Exception as e:
         print('skip pygranso')
 
@@ -162,8 +167,8 @@ print("MF obj = {}".format(sorted_MF))
 print("termination code = {}".format(sorted_termination))
 
 arr_len = sorted_F.shape[0]
-plt.plot(np.arange(arr_len),sorted_F,'ro-',label='sorted_pygranso_sol')
-plt.plot(np.arange(arr_len),sorted_MF,'go-',label='sorted_pygranso_sol')
+plt.plot(np.arange(arr_len),sorted_F,'ro-',label='sorted_pygranso_sol_F')
+plt.plot(np.arange(arr_len),sorted_MF,'go-',label='sorted_pygranso_sol_MF')
 
 ana_sol = torch.trace(U.T@A@U).item()
 plt.plot(np.arange(arr_len),np.array(arr_len*[-ana_sol]),'b-',label='analytical_sol')
@@ -172,8 +177,16 @@ plt.legend()
 
 now = datetime.now() # current date and time
 date_time = now.strftime("%m%d%Y_%H:%M:%S")
-png_title =  "png/sorted_F_" + date_time
+if feasible_init:
+    feasible = "feasible_init"
+else:
+    feasible = "gaussnormal_init"
+
+
+png_title =  "png/sorted_F_" + date_time + "_n{}_d{}_{}_{}".format(n,d,feasible,maxfolding)
 
 my_path = os.path.dirname(os.path.abspath(__file__))
 
 plt.savefig(os.path.join(my_path, png_title))
+
+print("successful rate = {}".format(arr_len/total))
