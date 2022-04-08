@@ -79,3 +79,5 @@ examples/TMLR/user_grad_constr_dl_orthogonal_constraint.py.lprof
 examples/TMLR/constr_dl_orthogonal_constraint.py.lprof
 new_examples/ortho_rnn/trace_opt_test/png
 new_examples/ortho_rnn/trace_opt_test/log
+new_examples/svm/svm_test/png
+new_examples/svm/svm_test/log

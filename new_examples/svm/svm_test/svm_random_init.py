@@ -1,3 +1,4 @@
+from functools import partial
 import time
 from typing import Tuple
 import torch
@@ -12,24 +13,29 @@ import numpy as np
 from matplotlib import pyplot as plt 
 import os
 from datetime import datetime
+from sklearn import datasets
+
 
 ###############################################
 write_to_log = True
 
-n = 30 # V: n*d
-d = 15 # copnst: d*d
 # maxfolding = 'unfolding'
 # maxfolding = 'l2'
 # maxfolding = 'l1'
 maxfolding = 'linf'
 
-total = 100 # total number of starting points
-feasible_init = False
+data_iris = False
+
+total = 30 # total number of starting points
 opt_tol = 1e-6
-maxit = 1000
-maxclocktime = 100
+maxit = 2000
+maxclocktime = 3600
 # QPsolver = "gurobi"
 QPsolver = "osqp"
+
+partial_data = True
+dp_num = 30
+
 ###############################################
 
 
@@ -39,14 +45,21 @@ date_time = now.strftime("%m%d%Y_%H:%M:%S")
 
 my_path = os.path.dirname(os.path.abspath(__file__))
 
-if feasible_init:
-    feasible = "feasible_init"
+if data_iris:
+    data_name = 'iris'
 else:
-    feasible = "gaussnormal_init"
+    data_name = 'bc'
 
-log_name = "log/" + date_time + "_n{}_d{}_{}_{}_total{}.txt".format(n,d,feasible,maxfolding,total)
+if partial_data:
+    data_num = "dp_num {}".format(dp_num)
+else:
+    data_num = ""
 
-print("_n{}_d{}_{}_{}_total{} start\n\n".format(n,d,feasible,maxfolding,total))
+log_name = "log/" + date_time + "{}_{}_total{}.txt".format(data_name,maxfolding,total) + data_num
+
+
+
+print("{}_{}_total{} start\n\n".format(data_name,maxfolding,total))
 
 
 if write_to_log:
@@ -57,62 +70,75 @@ if write_to_log:
 ###################################################
 device = torch.device('cuda')
 torch.manual_seed(2023)
-np.random.seed(2023)
+# np.random.seed(2023)
 
-A = torch.randn(n,n)
-A = (A + A.T)/2
-# All the user-provided data (vector/matrix/tensor) must be in torch tensor format.
-# As PyTorch tensor is single precision by default, one must explicitly set `dtype=torch.double`.
-# Also, please make sure the device of provided torch tensor is the same as opts.torch_device.
-A = A.to(device=device, dtype=torch.double)
+if data_iris:
+    iris = datasets.load_iris()
+    X = iris.data
+    y = iris.target
 
-L, U = torch.linalg.eig(A)
-L = L.to(dtype=torch.double)
-U = U.to(dtype=torch.double)
-index = torch.argsort(L,descending=True)
-U = U[:,index[0:d]]
+    X = X[y != 2]
+    y = y[y != 2]
+    y[y==0] = -1
+
+    X /= X.max()  # Normalize X to speed-up convergence
+else:
+    bc = datasets.load_breast_cancer()
+    X = bc.data
+    y = bc.target
+    if partial_data:
+        X = X[0:dp_num]
+        y = y[0:dp_num]
+    y[y==0] = -1
+    X /= X.max()  # Normalize X to speed-up convergence
+
+
+X = torch.from_numpy(X).to(device=device, dtype=torch.double)
+y = torch.from_numpy(y).to(device=device, dtype=torch.double)
+[n,d] = X.shape
+y = y.unsqueeze(1)
+
+zeta = 0.00
 
 # variables and corresponding dimensions.
-var_in = {"V": [n,d]}
+var_in = {"w": [d,1], "b": [1,1]}
 
-
-def user_fn(X_struct,A,d):
-    V = X_struct.V
-
-    # objective function
-    f = -torch.trace(V.T@A@V)
-
-    # inequality constraint, matrix form
-    ci = None
-
-    # equality constraint
-    # ce = None
-    ce = pygransoStruct()
+def user_fn(X_struct,X,y, zeta):
+    w = X_struct.w
+    b = X_struct.b    
+    f = 0.5*w.T@w 
+    # inequality constraint 
+    ci = pygransoStruct()
+    constr = 1 - zeta - y*(X@w+b)
+    constr = constr.to(device=device, dtype=torch.double)
 
     if maxfolding == 'l1':
-        ce.c1 = norm(V.T@V - torch.eye(d).to(device=device, dtype=torch.double),1)
+        ci.c1 = torch.sum(torch.clamp(constr, min=0)) # l1
     elif maxfolding == 'l2':
-        ce.c1 = norm(V.T@V - torch.eye(d).to(device=device, dtype=torch.double),2)
+        ci.c1 = torch.sum(torch.clamp(constr, min=0)**2)**0.5 # l2
     elif maxfolding == 'linf':
-        ce.c1 = norm(V.T@V - torch.eye(d).to(device=device, dtype=torch.double),float('inf'))
+        ci.c1 = torch.max(constr) # l_inf
     elif maxfolding == 'unfolding':
-        ce.c1 = V.T@V - torch.eye(d).to(device=device, dtype=torch.double)
+        ci.c1 = constr
     else:
         print("Please specficy you maxfolding type!")
         exit()
 
+    # equality constraint
+    ce = None
+
     return [f,ci,ce]
 
-comb_fn = lambda X_struct : user_fn(X_struct,A,d)
+comb_fn = lambda X_struct : user_fn(X_struct,X,y,zeta)
 
 
-print("torch.trace(U.T@A@U) = {}".format(torch.trace(U.T@A@U)))
-print("sum of first d eigvals = {}".format(torch.sum(L[index[0:d]])))
+
 time_lst = []
 F_lst = []
 MF_lst = []
 termination_lst = []
 termination_lst_all = []
+acc_lst = []
 
 
 start_loop = time.time()
@@ -133,25 +159,29 @@ for i in range(total):
     opts.QPsolver = QPsolver
 
 
-    if feasible_init:
-        x = ortho_group.rvs(n)
-        x = x[:,0:d].reshape(-1,1)
-        eps = 1e-5
-        opts.x0 = torch.from_numpy(x).to(device=device, dtype=torch.double) + eps*torch.randn((n*d,1)).to(device=device, dtype=torch.double)
-    else:
-        opts.x0 =  torch.randn((n*d,1)).to(device=device, dtype=torch.double)
-        opts.x0 = opts.x0/norm(opts.x0)
+    opts.x0 =  torch.randn((d+1,1)).to(device=device, dtype=torch.double)
+    opts.x0 = opts.x0/norm(opts.x0)
 
     try:
         start = time.time()
         soln = pygranso(var_spec = var_in,combined_fn = comb_fn,user_opts = opts)
         end = time.time()
         print("Total Wall Time: {}s".format(end - start))
-        if soln.termination_code != 5 and soln.termination_code != 12 and soln.termination_code != 8:
+        if soln.termination_code != 12 and soln.termination_code != 8:
             time_lst.append(end-start)
             F_lst.append(soln.final.f)
             MF_lst.append(soln.most_feasible.f)
             termination_lst.append(soln.termination_code)
+            w = soln.final.x[0:d]
+            b = soln.final.x[d:d+1]
+            res = X@w+b
+            predicted = torch.zeros(n,1).to(device=device, dtype=torch.double)
+            predicted[res>=0] = 1
+            predicted[res<0] = -1
+            correct = (predicted == y).sum().item()
+            acc = correct/n
+            print("Final acc = {:.2f}%".format((100 * acc)))
+            acc_lst.append(acc)
         else:
             termination_lst_all.append("i = {}, termination code = {} ".format(i,soln.termination_code) )
     except Exception as e:
@@ -165,6 +195,7 @@ F_arr = np.array(F_lst)
 T_arr = np.array(time_lst)
 MF_arr = np.array(MF_lst)
 term_arr = np.array(termination_lst)
+acc_arr = np.array(acc_lst)
 
 index_sort = np.argsort(F_arr)
 index_sort = index_sort[::-1]
@@ -172,40 +203,26 @@ sorted_F = F_arr[index_sort]
 sorted_T = T_arr[index_sort]
 sorted_MF = MF_arr[index_sort]
 sorted_termination = term_arr[index_sort]
-
-V = torch.reshape(soln.final.x,(n,d))
-rel_dist = torch.norm(V@V.T - U@U.T)/torch.norm(U@U.T)
-
-print("torch.norm(V@V.T - U@U.T)/torch.norm(U@U.T) = {}".format(rel_dist))
-print("torch.trace(V.T@A@V) = {}".format(torch.trace(V.T@A@V)))
-print("torch.trace(U.T@A@U) = {}".format(torch.trace(U.T@A@U)))
-print("sum of first d eigvals = {}".format(torch.sum(L[index[0:d]])))
-
-print("sorted eigs = {}".format(L[index]))
+sorted_acc = acc_arr[index_sort]
 
 print( "Time = {}".format(sorted_T) )
 print("F obj = {}".format(sorted_F))
 print("MF obj = {}".format(sorted_MF))
 print("termination code = {}".format(sorted_termination))
+print("train acc = {}".format(sorted_acc))
 
 arr_len = sorted_F.shape[0]
 plt.plot(np.arange(arr_len),sorted_F,'ro-',label='sorted_pygranso_sol_F')
 plt.plot(np.arange(arr_len),sorted_MF,'go-',label='sorted_pygranso_sol_MF')
 
-ana_sol = torch.trace(U.T@A@U).item()
-plt.plot(np.arange(arr_len),np.array(arr_len*[-ana_sol]),'b-',label='analytical_sol')
 plt.legend()
 
 # plt.show()
 
+png_title =  "png/" + date_time + "_{}_{}_total{}".format(data_name,maxfolding,total) + data_num
 
 
-
-
-png_title =  "png/sorted_F_" + date_time + "_n{}_d{}_{}_{}_total{}".format(n,d,feasible,maxfolding,total)
-
-
-plt.title("n{}_d{}_{}_{}".format(n,d,feasible,maxfolding))
+plt.title("{}_{}_total{}".format(data_name,maxfolding,total) + data_num )
 plt.xlabel('sorted sample index')
 plt.ylabel('obj_val')
 plt.savefig(os.path.join(my_path, png_title))
