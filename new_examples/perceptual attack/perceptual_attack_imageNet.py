@@ -85,7 +85,7 @@ inputs, labels = next(iter(val_loader))
 i=0
 for inputs, labels in val_loader:
     i+=1
-    if i > 2:
+    if i > 200:
         break
 
 # All the user-provided data (vector/matrix/tensor) must be in torch tensor format.
@@ -97,18 +97,21 @@ labels = labels.to(device=device)
 # variables and corresponding dimensions.
 var_in = {"x_tilde": list(inputs.shape)}
 
-def MarginLoss(logits,labels):
-    correct_logits = torch.gather(logits, 1, labels.view(-1, 1))
-    max_2_logits, argmax_2_logits = torch.topk(logits, 2, dim=1)
-    top_max, second_max = max_2_logits.chunk(2, dim=1)
-    top_argmax, _ = argmax_2_logits.chunk(2, dim=1)
-    labels_eq_max = top_argmax.squeeze().eq(labels).float().view(-1, 1)
-    labels_ne_max = top_argmax.squeeze().ne(labels).float().view(-1, 1)
-    max_incorrect_logits = labels_eq_max * second_max + labels_ne_max * top_max
-    loss = -(max_incorrect_logits - correct_logits).clamp(max=1).squeeze().sum()
-    return loss
+# def neg_ce_loss(logits, labels):
+#     return -torch.nn.functional.cross_entropy(logits, labels)
 
-def user_fn(X_struct, inputs, labels, lpips_model, model, attack_type, eps=0.5):
+# def MarginLoss(logits,labels):
+#     correct_logits = torch.gather(logits, 1, labels.view(-1, 1))
+#     max_2_logits, argmax_2_logits = torch.topk(logits, 2, dim=1)
+#     top_max, second_max = max_2_logits.chunk(2, dim=1)
+#     top_argmax, _ = argmax_2_logits.chunk(2, dim=1)
+#     labels_eq_max = top_argmax.squeeze().eq(labels).float().view(-1, 1)
+#     labels_ne_max = top_argmax.squeeze().ne(labels).float().view(-1, 1)
+#     max_incorrect_logits = labels_eq_max * second_max + labels_ne_max * top_max
+#     loss = -(max_incorrect_logits - correct_logits).clamp(max=1).squeeze().sum()
+#     return loss
+
+def user_fn(X_struct, inputs, labels, lpips_model, model, attack_type, eps=1.5):
     adv_inputs = X_struct.x_tilde
     epsilon = eps
     logits_outputs = model(adv_inputs)
@@ -138,12 +141,24 @@ comb_fn = lambda X_struct : user_fn(X_struct, inputs, labels, lpips_model=base_m
 
 opts = pygransoStruct()
 opts.torch_device = device
-opts.maxit = 1000
+# opts.maxit = 1000
 opts.opt_tol = 1e-4*np.sqrt(torch.numel(inputs))
-opts.viol_ineq_tol = 5e-5
+# opts.viol_ineq_tol = 5e-5
+
+
 
 opts.print_frequency = 1
-opts.limited_mem_size = 100
+# opts.limited_mem_size = 100
+opts.limited_mem_size = 10
+
+# opts.mu0 = 0.1
+opts.viol_ineq_tol = 1e-5
+opts.maxit = 50
+opts.opt_tol = 1e-6
+
+# opts.is_backtrack_linesearch = True
+# opts.search_direction_rescaling = True
+
 opts.x0 = torch.reshape(inputs,(torch.numel(inputs),1))
 
 start = time.time()

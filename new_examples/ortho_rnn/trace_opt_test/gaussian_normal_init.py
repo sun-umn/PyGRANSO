@@ -19,19 +19,28 @@ write_to_log = True
 n = 30 # V: n*d
 d = 15 # copnst: d*d
 # maxfolding = 'unfolding'
-# maxfolding = 'l2'
+maxfolding = 'l2'
 # maxfolding = 'l1'
-maxfolding = 'linf'
+# maxfolding = 'linf'
 
-total = 100 # total number of starting points
+total = 20 # total number of starting points
 feasible_init = False
 opt_tol = 1e-6
 maxit = 1000
-maxclocktime = 100
+maxclocktime = 1000
 # QPsolver = "gurobi"
 QPsolver = "osqp"
+
+# square_flag = True
+square_flag = False
+
+mu0 = 0.1
 ###############################################
 
+if square_flag:
+    square_str = "square_"
+else:
+    square_str = ""
 
 # save file
 now = datetime.now() # current date and time
@@ -44,9 +53,9 @@ if feasible_init:
 else:
     feasible = "gaussnormal_init"
 
-log_name = "log/" + date_time + "_n{}_d{}_{}_{}_total{}.txt".format(n,d,feasible,maxfolding,total)
+log_name = "log/" + date_time + "_n{}_d{}_{}_{}{}_total{}.txt".format(n,d,feasible,square_str,maxfolding,total)
 
-print("_n{}_d{}_{}_{}_total{} start\n\n".format(n,d,feasible,maxfolding,total))
+print("_n{}_d{}_{}_{}{}_total{} start\n\n".format(n,d,feasible,square_str,maxfolding,total))
 
 
 if write_to_log:
@@ -101,6 +110,9 @@ def user_fn(X_struct,A,d):
         print("Please specficy you maxfolding type!")
         exit()
 
+    if square_flag:
+        ce.c1 = ce.c1**2
+
     return [f,ci,ce]
 
 comb_fn = lambda X_struct : user_fn(X_struct,A,d)
@@ -113,7 +125,8 @@ F_lst = []
 MF_lst = []
 termination_lst = []
 termination_lst_all = []
-
+TV_lst = []
+MF_TV_lst = []
 
 start_loop = time.time()
 
@@ -131,6 +144,7 @@ for i in range(total):
     opts.opt_tol = opt_tol
     opts.maxclocktime = maxclocktime
     opts.QPsolver = QPsolver
+    opts.mu0 = mu0
 
 
     if feasible_init:
@@ -147,11 +161,13 @@ for i in range(total):
         soln = pygranso(var_spec = var_in,combined_fn = comb_fn,user_opts = opts)
         end = time.time()
         print("Total Wall Time: {}s".format(end - start))
-        if soln.termination_code != 5 and soln.termination_code != 12 and soln.termination_code != 8:
+        if soln.termination_code != 12 and soln.termination_code != 8:
             time_lst.append(end-start)
             F_lst.append(soln.final.f)
             MF_lst.append(soln.most_feasible.f)
             termination_lst.append(soln.termination_code)
+            TV_lst.append(soln.final.tv) #total violation at x (vi + ve)
+            MF_TV_lst.append(soln.most_feasible.tv)
         else:
             termination_lst_all.append("i = {}, termination code = {} ".format(i,soln.termination_code) )
     except Exception as e:
@@ -165,6 +181,8 @@ F_arr = np.array(F_lst)
 T_arr = np.array(time_lst)
 MF_arr = np.array(MF_lst)
 term_arr = np.array(termination_lst)
+TV_arr = np.array(TV_lst)
+MF_TV_arr = np.array(MF_TV_lst)
 
 index_sort = np.argsort(F_arr)
 index_sort = index_sort[::-1]
@@ -172,6 +190,8 @@ sorted_F = F_arr[index_sort]
 sorted_T = T_arr[index_sort]
 sorted_MF = MF_arr[index_sort]
 sorted_termination = term_arr[index_sort]
+sorted_tv = TV_arr[index_sort]
+sorted_mf_tv = MF_TV_arr[index_sort]
 
 V = torch.reshape(soln.final.x,(n,d))
 rel_dist = torch.norm(V@V.T - U@U.T)/torch.norm(U@U.T)
@@ -187,6 +207,8 @@ print( "Time = {}".format(sorted_T) )
 print("F obj = {}".format(sorted_F))
 print("MF obj = {}".format(sorted_MF))
 print("termination code = {}".format(sorted_termination))
+print("total violation tvi + tve = {}".format(sorted_tv))
+print("MF total violation tvi + tve = {}".format(sorted_mf_tv))
 
 arr_len = sorted_F.shape[0]
 plt.plot(np.arange(arr_len),sorted_F,'ro-',label='sorted_pygranso_sol_F')
@@ -202,10 +224,10 @@ plt.legend()
 
 
 
-png_title =  "png/sorted_F_" + date_time + "_n{}_d{}_{}_{}_total{}".format(n,d,feasible,maxfolding,total)
+png_title =  "png/sorted_F_" + date_time + "_n{}_d{}_{}_{}{}_total{}".format(n,d,feasible,square_str,maxfolding,total)
 
 
-plt.title("n{}_d{}_{}_{}".format(n,d,feasible,maxfolding))
+plt.title("n{}_d{}_{}_{}{}".format(n,d,feasible,square_str,maxfolding))
 plt.xlabel('sorted sample index')
 plt.ylabel('obj_val')
 plt.savefig(os.path.join(my_path, png_title))
