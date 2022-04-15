@@ -15,25 +15,33 @@ import os
 from datetime import datetime
 from sklearn import datasets
 from sklearn.preprocessing import normalize
+import traceback
+from torchvision import datasets as torch_datasets
+from torchvision.transforms import ToTensor
+from torchvision import transforms
 
 ###############################################
 write_to_log = True
 
 
+folding_list = ['l2','l1','linf']
 # folding_list = ['l2','l1']
 
-folding_list = ['l2','l1','linf','unfolding']
+# folding_list = ['l2','l1','linf','unfolding']
 
 
 # data_name = 'iris'
 # data_name = 'bc' # breast cancer 
-data_name = 'lfw_pairs' # large dataset
+# data_name = 'lfw_pairs' # large dataset
+data_name = 'mnist'
 
 
-total = 10 # total number of starting points
+total = 1 # total number of starting points
 opt_tol = 1e-6
-maxit = 120000
-maxclocktime = 60
+# maxit = 120000
+maxit = 3000
+
+maxclocktime = 5
 # QPsolver = "gurobi"
 QPsolver = "osqp"
 
@@ -42,9 +50,12 @@ square_flag = False
 
 
 partial_data = False
-dp_num = 100
+dp_num = 2000
 
-zeta = 0.0
+zeta = 0.1
+
+device = torch.device('cpu')
+
 
 ###############################################
 if square_flag:
@@ -74,7 +85,6 @@ if write_to_log:
     sys.stdout = open(os.path.join(my_path, log_name), 'w')
 
 ###################################################
-device = torch.device('cuda')
 torch.manual_seed(2023)
 
 if data_name == 'iris':
@@ -98,22 +108,101 @@ elif data_name == 'bc':
     X = normalize(X,axis=0)  # Normalize X to speed-up convergence
 
 elif data_name == 'lfw_pairs':
+    # train_set
     lfw_pairs = datasets.fetch_lfw_pairs(subset='train')
     X = lfw_pairs.data
     y = lfw_pairs.target
     names = lfw_pairs.target_names
+    print("dataset names: {}".format(names))
     if partial_data:
         X = X[0:dp_num]
         y = y[0:dp_num]
     y[y==0] = -1
-    X = normalize(X,axis=0)  # Normalize X to speed-up convergence
+    # X = normalize(X,axis=1)  # Normalize X to speed-up convergence
+    
+    # test_set
+    lfw_pairs_test = datasets.fetch_lfw_pairs(subset='test')
+    X_test = lfw_pairs_test.data
+    y_test = lfw_pairs_test.target
+    if partial_data:
+        X_test = X_test[0:dp_num]
+        y_test = y_test[0:dp_num]
+    y_test[y_test==0] = -1
+    # X_test = normalize(X_test,axis=0)  # Normalize X to speed-up convergence
+
+    # # modify dataset
+    # X_test = X[1000:1500]
+    # y_test = y[1000:1500]
+    # X = X[0:1000]
+    # y = y[0:1000]
+
+elif data_name == 'mnist':
+    train_data = torch_datasets.MNIST(
+        root = '/home/buyun/Documents/GitHub/PyGRANSO/examples/data/mnist',
+        train = True,
+        transform=transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.1307,), (0.3081,))
+        ]),
+        download = True,
+    )
+
+    test_data = torch_datasets.MNIST(
+        root = '/home/buyun/Documents/GitHub/PyGRANSO/examples/data/mnist',
+        train = False,
+        transform=transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.1307,), (0.3081,))
+        ]),
+        download = True,
+    )
+
+
+    X_train = train_data.data
+    X_train = torch.reshape(X_train,(-1,28*28))
+    y_train = train_data.targets
+    y_train[y_train%2==1] = 1
+    y_train[y_train%2==0] = -1
+
+    X_test = test_data.data
+    X_test = torch.reshape(X_test,(-1,28*28))
+    y_test = test_data.targets
+
+
+    y_test[y_test%2==1] = 1
+    y_test[y_test%2==0] = -1
+
+
+    if partial_data:
+        X_train = X_train[0:dp_num]
+        y_train = y_train[0:dp_num]
+        X_test = X_test[0:dp_num]
+        y_test = y_test[0:dp_num]
+
+    X = X_train.to(device=device, dtype=torch.double)
+    y = y_train.to(device=device, dtype=torch.double)
+    X_test = X_test.to(device=device, dtype=torch.double)
+    y_test = y_test.to(device=device, dtype=torch.double)
+
 else:
     print('please specify a legal data name')
 
-X = torch.from_numpy(X).to(device=device, dtype=torch.double)
-y = torch.from_numpy(y).to(device=device, dtype=torch.double)
-[n,d] = X.shape
+if data_name != 'mnist':
+    X = torch.from_numpy(X).to(device=device, dtype=torch.double)
+    y = torch.from_numpy(y).to(device=device, dtype=torch.double)
+    [n,d] = X.shape
+    X_test = torch.from_numpy(X_test).to(device=device, dtype=torch.double)
+    y_test = torch.from_numpy(y_test).to(device=device, dtype=torch.double)
+    [n_test,_] = X_test.shape
+    
+else:
+    n = X.shape[0]
+    d = X.shape[1]
+    n_test = X_test.shape[0]
+
+
 y = y.unsqueeze(1)
+y_test = y_test.unsqueeze(1)
 
 # variables and corresponding dimensions.
 var_in = {"w": [d,1], "b": [1,1]}
@@ -121,6 +210,10 @@ var_in = {"w": [d,1], "b": [1,1]}
 #generate a list of markers and another of colors 
 markers = [ "," , "o" , "v" , "^" , "<", ">", "." ]
 colors = ['r','g','b','c','m', 'y', 'k']
+
+# Initialize the subplot function using number of rows and columns
+figure, axis = plt.subplots(2, 1)
+
 idx = 0 # index for plots
 for maxfolding in folding_list:
     print('\n\n\n'+maxfolding + '  start!')
@@ -163,6 +256,7 @@ for maxfolding in folding_list:
     termination_lst = []
     termination_lst_all = []
     acc_lst = []
+    test_acc_lst = []
     TV_lst = []
     MF_TV_lst = []
     iter_lst = []
@@ -198,6 +292,7 @@ for maxfolding in folding_list:
                 TV_lst.append(soln.final.tv) #total violation at x (vi + ve)
                 MF_TV_lst.append(soln.most_feasible.tv)
                 iter_lst.append(soln.iters)
+                # obtain train acc
                 w = soln.final.x[0:d]
                 b = soln.final.x[d:d+1]
                 res = X@w+b
@@ -206,11 +301,22 @@ for maxfolding in folding_list:
                 predicted[res<0] = -1
                 correct = (predicted == y).sum().item()
                 acc = correct/n
-                print("Final acc = {:.2f}%".format((100 * acc)))
+                print("train acc = {:.2f}%".format((100 * acc)))
                 acc_lst.append(acc)
+                # obtain test acc
+                res_test = X_test@w+b
+                predict_test = torch.zeros(n_test,1).to(device=device, dtype=torch.double)
+                predict_test[res_test>=0] = 1
+                predict_test[res_test<0] = -1
+                correct_test = (predict_test == y_test).sum().item()
+                test_acc = correct_test/n_test
+                print("test acc = {:.2f}%".format((100 * test_acc)))
+                test_acc_lst.append(test_acc)
+
             else:
                 termination_lst_all.append("i = {}, termination code = {} ".format(i,soln.termination_code) )
         except Exception as e:
+            print(traceback.format_exc())
             print('skip pygranso')
         
     end_loop = time.time()
@@ -221,6 +327,7 @@ for maxfolding in folding_list:
     MF_arr = np.array(MF_lst)
     term_arr = np.array(termination_lst)
     acc_arr = np.array(acc_lst)
+    test_acc_arr = np.array(test_acc_lst)
     TV_arr = np.array(TV_lst)
     MF_TV_arr = np.array(MF_TV_lst)
     iter_arr = np.array(iter_lst)
@@ -232,6 +339,7 @@ for maxfolding in folding_list:
     sorted_MF = MF_arr[index_sort]
     sorted_termination = term_arr[index_sort]
     sorted_acc = acc_arr[index_sort]
+    sorted_test_acc = test_acc_arr[index_sort]
     sorted_tv = TV_arr[index_sort]
     sorted_mf_tv = MF_TV_arr[index_sort]
     sorted_iter = iter_arr[index_sort]
@@ -241,20 +349,38 @@ for maxfolding in folding_list:
     print("MF obj = {}".format(sorted_MF))
     print("termination code = {}".format(sorted_termination))
     print("train acc = {}".format(sorted_acc))
+    print("test acc = {}".format(sorted_test_acc))
     print("total violation tvi + tve = {}".format(sorted_tv))
     print("MF total violation tvi + tve = {}".format(sorted_mf_tv))
-    print("all termination code = {}".format(termination_lst_all))
+    print("failed termination code = {}".format(termination_lst_all))
     print('iterations = {}'.format(sorted_iter))
 
     arr_len = sorted_F.shape[0]
-    plt.plot(np.arange(arr_len),sorted_acc,color = colors[idx], marker = markers[idx], linestyle = '-',label=maxfolding)
+    axis[0].plot(np.arange(arr_len),sorted_acc,color = colors[idx], marker = markers[idx], linestyle = '-',label=maxfolding)
+    axis[1].plot(np.arange(arr_len),sorted_test_acc,color = colors[idx], marker = markers[idx], linestyle = '-',label=maxfolding)
     # plt.plot(np.arange(arr_len),sorted_F,color = colors[idx], marker = markers[idx], linestyle = '-',label=maxfolding)
     # plt.plot(np.arange(arr_len),sorted_MF,'go-',label='sorted_pygranso_sol_MF')
 
-plt.legend()        
-plt.title(name_str + 'sorted train_acc' )
-plt.xlabel('sorted random seeds')
-plt.ylabel('training accuracy')
+axis[0].legend()        
+axis[0].set_title(name_str + 'sorted train_acc' )
+axis[0].set_xlabel('sorted random seeds')
+axis[0].set_ylabel('training accuracy')
+# png_title =  "png/" + date_time + name_str + '_train'
+# axis[0].savefig(os.path.join(my_path, png_title))
+
+axis[1].legend()        
+axis[1].set_title(name_str + 'sorted test_acc' )
+axis[1].set_xlabel('sorted random seeds')
+axis[1].set_ylabel('test accuracy')
+
+# set the spacing between subplots
+plt.subplots_adjust(left=0.15,
+                    bottom=0.1, 
+                    right=0.95, 
+                    top=0.9, 
+                    wspace=0.5, 
+                    hspace=0.5)
+
 png_title =  "png/" + date_time + name_str
 plt.savefig(os.path.join(my_path, png_title))
 
