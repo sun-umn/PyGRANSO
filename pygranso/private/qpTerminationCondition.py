@@ -1,9 +1,8 @@
 import numpy as np
 import torch
 from pygranso.private.solveQP import solveQP
-from numpy import conjugate as conj
 from numpy import linalg as LA
-import traceback,sys
+import traceback
 
 class qpTC:
     def __init__(self):
@@ -76,6 +75,9 @@ class qpTC:
 
             This is a direct port of qpTerminationCondition.m from GRANSO v1.6.4.
             Ported from MATLAB to Python by Buyun Liang 2021.
+
+            v1.2.0: fix stationarity measure problem. recalculate stationarity when 
+            encounter (nonconvex) numerical issue in QP
 
             For comments/bug reports, please visit the PyGRANSO webpage:
             https://github.com/sun-umn/PyGRANSO
@@ -158,19 +160,20 @@ class qpTC:
             #  formulation of QP has no 1/2
             self.solveQP_fn = lambda H: solveQP(H,f,Aeq,beq,LB,UB,QPsolver,torch_device, double_precision)
 
-        [y,_,qps_solved,ME] = self.solveQPRobust()
+        [y,_,qps_solved,ME] = self.solveQPRobust(torch_dtype)
       
         #  If the QP solve(s) failed, return infinite vector so it can't
         #  possibly trigger BFGS-SQP's convergence criteria
-        if y.size == 0:
+        if y == None:
             #  its length is equal to the number of variables
-            d = np.inf * np.ones((Hinv_grads.shape[0],1)); 
+            d = np.inf * np.ones((Hinv_grads.shape[0],1))
+            d = torch.from_numpy(d).to(device=torch_device, dtype=torch_dtype)
         else:
             d = -Hinv_grads @ y
 
         return [d,qps_solved,ME]
 
-    def solveQPRobust(self):
+    def solveQPRobust(self,torch_dtype):
        
         x       = None
         lambdas = None # not used here
@@ -193,8 +196,8 @@ class qpTC:
         #  Fall back strategy #1: replace Hinv with identity and try again
         try:
             stat_type = 2
-            R = conj(self.all_grads.T) @ self.all_grads
-            R = (R + conj(R.T))/2
+            R = torch.conj(self.all_grads.T) @ self.all_grads
+            R = (R + torch.conj(R.T))/2
             x = self.solveQP_fn(R)
             return [x,lambdas,stat_type,ME]
         except Exception as e:
@@ -212,9 +215,15 @@ class qpTC:
 
         try:
             stat_type = 4
-            [D,V] = LA.eig(self.H)
-            dvec = [x if x >= 0 else 0 for x in D]
-            Hreg = conj(V.T) @ np.diag(dvec) @ conj(V.T)
+            [D,V] = torch.linalg.eig(self.H)
+            D = D.real
+            V = V.real
+            D.to(dtype=torch_dtype)
+            
+            dvec = D.clone()
+            dvec[D<0] = 0
+            # dvec = [x if x >= 0 else 0 for x in D]
+            Hreg = torch.conj(V.T) @ torch.diag(dvec) @ torch.conj(V.T)
             x = self.solveQP_fn(Hreg)
             return [x,lambdas,stat_type,ME]
         except Exception as e:

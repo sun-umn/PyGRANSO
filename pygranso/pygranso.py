@@ -647,7 +647,7 @@ def getTerminationMsgLines(soln,constrained,width):
     elif soln.termination_code ==  5:
         s = "clock/wall time limit reached."
     elif soln.termination_code ==  6:
-        s = bracketedMinimizerFeasibleMsg(soln,constrained);
+        s = bracketedMinimizerFeasibleMsg(soln,constrained)
     elif soln.termination_code ==  7:
         s = bracketedMinimizerInfeasibleMsg()
     elif soln.termination_code ==  8:

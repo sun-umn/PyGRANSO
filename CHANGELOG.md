@@ -2,7 +2,7 @@
 
 PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation
 
-## Version: 1.2.0 --- 2022-03-X
+## Version: 1.2.0 --- 2022-0X-X
 
 Description: major fixes and improvements on LBFGS. 
 
@@ -11,10 +11,13 @@ Description: major fixes and improvements on LBFGS.
 - Update ex 11 ortho RNN with max folding and orthonormal initialization.
 - Use high precision for QP solver.
 - allow part of optimization variables not showing up in objective (see SVM example).
+- Fixed Code 12: terminated with steering failure.
+- Fixed stationary failure: try different stationarity calculation, or set stationarity measure to be inf if encounter numberical issue
 
 **Added**
 - Add examples: ex 12 perceptual attack on ImageNet images. ex 13 trace optimization with orthogonal constraints; ex 14 unconstrained deep learning with LeNet5; ex 15 logistic regression; ex 16 generic dictionary learning. 
 - Add max folding option: fold multiple constraints into a single inf norm constraint.
+
 
 
 ## Version: 1.1.0 --- 2022-02-20
