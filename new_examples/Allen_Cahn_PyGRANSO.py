@@ -20,10 +20,15 @@ import deepxde as dde
 import numpy as np
 from scipy.io import loadmat
 from deepxde import losses as losses_module
+from deepxde import gradients as grad
 
 
+torch.manual_seed(2022)
+np.random.seed(2022)
+dde.config.set_random_seed(2022)
 
 device = torch.device('cuda')
+# device = torch.device('cpu')
 
 double_precision = torch.double
 
@@ -31,6 +36,7 @@ geom = dde.geometry.Interval(-1, 1)
 timedomain = dde.geometry.TimeDomain(0, 1)
 geomtime = dde.geometry.GeometryXTime(geom, timedomain)
 d = 0.001
+
 
 def pde(x, y):
     dy_t = dde.grad.jacobian(y, x, i=0, j=1)
@@ -51,6 +57,7 @@ def gen_testdata():
     y = u.flatten()[:, None]
     return X, y
 
+
 class FNN(torch.nn.Module):
     """Fully-connected neural network."""
 
@@ -61,6 +68,8 @@ class FNN(torch.nn.Module):
         # initializer_zero = initializers.get("zeros")
 
         self.activation = torch.tanh
+        # self.activation = torch.nn.functional.relu
+
 
         self.linears = torch.nn.ModuleList()
         for i in range(1, len(layer_sizes)):
@@ -79,8 +88,7 @@ class FNN(torch.nn.Module):
         x = self.linears[-1](x)
         return x
 
-torch.manual_seed(0)
-np.random.seed(0)
+
 
 # define torch network 
 model = FNN([2] + [20] * 3 + [1])
@@ -102,15 +110,13 @@ X_test = X_test.to(device=device, dtype=double_precision)
 y_test = y_test.to(device=device, dtype=double_precision)
 
 
-
 def user_fn(model,X_train):
-    torch.cuda.empty_cache()# release mem
-
+    
     X_train.requires_grad_()
     y_predict = model(X_train) # graph of X_train
 
-
-    f = norm(pde(X_train,y_predict),2) 
+    f_vec = pde(X_train,y_predict)
+    f = norm(f_vec,2)
 
     # inequality constraint
     ci = None
@@ -131,19 +137,23 @@ def user_fn(model,X_train):
     # ce.c2 = model(X_pn1) +1
     constr_2 = model(X_pn1) +1
 
-    ce.c1 = norm(torch.vstack((constr_1,constr_2)),2)
+    # ce.c1 = norm(torch.vstack((constr_1,constr_2)),2)
 
+    ce.c1 = norm(constr_1,2)
+    ce.c2 = norm(constr_2,2)
+
+    grad.clear() # important: please clear jacobian and hessian in deepxde!
     return [f,ci,ce]
 
 comb_fn = lambda model : user_fn(model,X_train)
 
 opts = pygransoStruct()
 opts.torch_device = device
-# nvar = getNvarTorch(model.parameters())
-# opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach().reshape(nvar,1)
+nvar = getNvarTorch(model.parameters())
+opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach().reshape(nvar,1)
 # opts.opt_tol = 3e-4
 # opts.viol_eq_tol = 3e-4
-opts.maxit = 2000
+opts.maxit = 1000
 # # opts.fvalquit = 1e-6
 # opts.print_level = 1
 opts.print_frequency = 10
@@ -174,6 +184,7 @@ criterion = nn.MSELoss()
 
 l2_rel_err = norm(model(X_test)-y_test)/norm(y_test)
 print("initial test l2_rel_err = {}".format(l2_rel_err))
+
 
 start = time.time()
 soln = pygranso(var_spec= model, combined_fn = comb_fn, user_opts = opts)
