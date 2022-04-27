@@ -47,6 +47,6 @@ def isTorchDevice(x):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    tf = (x == torch.device('cuda') or x == torch.device('cpu'))
-
+    # tf = (x == torch.device('cuda') or x == torch.device('cpu'))
+    tf = isinstance(x, torch.device)
     return tf
