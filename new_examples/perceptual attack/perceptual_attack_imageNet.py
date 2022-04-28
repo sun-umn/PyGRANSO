@@ -16,6 +16,9 @@ import gc
 
 torch.manual_seed(0)
 device = torch.device('cuda')
+# precision = torch.double
+precision = torch.float
+
 
 class ResNet_orig_LPIPS(nn.Module):
     def __init__(self, num_classes, pretrained=False):
@@ -66,7 +69,7 @@ class ResNet_orig_LPIPS(nn.Module):
         logits = self.classifier(features[-1])
         return features, logits
 
-base_model = ResNet_orig_LPIPS(num_classes=100,pretrained=False).to(device)
+base_model = ResNet_orig_LPIPS(num_classes=100,pretrained=False).to(device=device, dtype = precision)
 
 # please download the checkpoint.pth from our Google Drive
 pretrained_path = os.path.join("/home/buyun/Documents/GitHub/PyGRANSO/examples/data/checkpoints/","checkpoint.pth")
@@ -85,13 +88,14 @@ inputs, labels = next(iter(val_loader))
 i=0
 for inputs, labels in val_loader:
     i+=1
-    if i > 200:
+    if i > 21:
         break
 
 # All the user-provided data (vector/matrix/tensor) must be in torch tensor format.
 # As PyTorch tensor is single precision by default, one must explicitly set `dtype=torch.double`.
 # Also, please make sure the device of provided torch tensor is the same as opts.torch_device.
-inputs = inputs.to(device=device, dtype=torch.double)
+# inputs = inputs.to(device=device, dtype=torch.double)
+inputs = inputs.to(device=device, dtype=precision)
 labels = labels.to(device=device)
 
 # variables and corresponding dimensions.
@@ -111,7 +115,7 @@ var_in = {"x_tilde": list(inputs.shape)}
 #     loss = -(max_incorrect_logits - correct_logits).clamp(max=1).squeeze().sum()
 #     return loss
 
-def user_fn(X_struct, inputs, labels, lpips_model, model, attack_type, eps=1.5):
+def user_fn(X_struct, inputs, labels, lpips_model, model, attack_type, eps=0.5):
     adv_inputs = X_struct.x_tilde
     epsilon = eps
     logits_outputs = model(adv_inputs)
@@ -119,10 +123,12 @@ def user_fn(X_struct, inputs, labels, lpips_model, model, attack_type, eps=1.5):
 
     # inequality constraint
     ci = pygransoStruct()
+    constr_vec = (inputs-adv_inputs).reshape((inputs.numel()))
     if attack_type == 'L_2':
-        ci.c1 = torch.norm((inputs - adv_inputs).reshape(inputs.size()[0], -1)) - epsilon
+        ci.c1 = torch.linalg.norm(constr_vec,2) - epsilon
+        # ci.c1 = torch.norm(inputs-adv_inputs).reshape(inputs.size()[0],-1) - epsilon
     elif attack_type == 'L_inf':
-        ci.c1 = torch.norm((inputs - adv_inputs).reshape(inputs.size()[0], -1), float('inf')) - epsilon
+        ci.c1 = torch.amax(torch.abs(constr_vec)) - epsilon
     else:
         input_features = normalize_flatten_features( lpips_model.features(inputs)).detach()
         adv_features = lpips_model.features(adv_inputs)
@@ -134,18 +140,23 @@ def user_fn(X_struct, inputs, labels, lpips_model, model, attack_type, eps=1.5):
     ce = None
     return [f,ci,ce]
 
-attack_type = "Perceptual"
+# attack_type = "Perceptual"
+# attack_type = "L_inf"
+attack_type = "L_2"
+
+
 var_in = {"x_tilde": list(inputs.shape)}
 
 comb_fn = lambda X_struct : user_fn(X_struct, inputs, labels, lpips_model=base_model, model=base_model, attack_type=attack_type, eps=0.25)
 
 opts = pygransoStruct()
 opts.torch_device = device
-# opts.maxit = 1000
+# opts.maxit = 50
 opts.opt_tol = 1e-4*np.sqrt(torch.numel(inputs))
 # opts.viol_ineq_tol = 5e-5
 
-
+# opts.steering_c_viol = 0.99
+# opts.steering_c_mu = 0.1
 
 opts.print_frequency = 1
 # opts.limited_mem_size = 100
@@ -192,6 +203,8 @@ final_adv_input = torch.reshape(soln.final.x,inputs.shape)
 
 ori_image = rescale_array(tensor2img(inputs))
 adv_image = rescale_array(tensor2img(final_adv_input))
+
+print( np.amax(np.abs(adv_image-ori_image).reshape(inputs.size()[0], -1)))
 
 f = plt.figure()
 f.add_subplot(1,2,1)
