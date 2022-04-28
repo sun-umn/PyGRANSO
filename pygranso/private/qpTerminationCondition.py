@@ -185,8 +185,9 @@ class qpTC:
             x = self.solveQP_fn(self.H)
             return [x,lambdas,stat_type,ME]
         except Exception as e:
-            print("PyGRANSO:qpTerminationCondition type 1 failure")
-            print(traceback.format_exc())
+            # print("PyGRANSO:qpTerminationCondition type 1 failure")
+            # print(traceback.format_exc())
+            pass
            
 
         #  QP solver failed, possibly because H was numerically nonconvex,
@@ -201,8 +202,9 @@ class qpTC:
             x = self.solveQP_fn(R)
             return [x,lambdas,stat_type,ME]
         except Exception as e:
-            print("PyGRANSO:qpTerminationCondition type 2 failure")
-            print(traceback.format_exc())
+            # print("PyGRANSO:qpTerminationCondition type 2 failure")
+            # print(traceback.format_exc())
+            pass
     
         # % Fall back strategy #2: revert to MATLAB's quadprog, if user is
         # % using a different quadprog solver and reattempt with original H
@@ -227,5 +229,6 @@ class qpTC:
             x = self.solveQP_fn(Hreg)
             return [x,lambdas,stat_type,ME]
         except Exception as e:
-            print("PyGRANSO:qpTerminationCondition type 4 failure")
-            print(traceback.format_exc())
+            # print("PyGRANSO:qpTerminationCondition type 4 failure")
+            # print(traceback.format_exc())
+            pass
