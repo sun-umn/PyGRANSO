@@ -20,15 +20,15 @@ from torchvision import datasets as torch_datasets
 from torchvision.transforms import ToTensor
 from torchvision import transforms
 import matplotlib.pyplot as matplot
-
+import scipy
 
 ###############################################
-write_to_log = True
+write_to_log = False
 
 
 # folding_list = ['l2','l1','linf']
-# maxfolding = 'l2'
-maxfolding = 'l1'
+maxfolding = 'l2'
+# maxfolding = 'l1'
 
 # folding_list = ['l2','l1','linf','unfolding']
 
@@ -36,13 +36,14 @@ maxfolding = 'l1'
 # data_name = 'iris'
 # data_name = 'bc' # breast cancer 
 # data_name = 'lfw_pairs' # large dataset
-data_name = 'mnist'
+# data_name = 'mnist'
+data_name = 'rcv1' # document classification
 
 
 total = 1 # total number of starting points
 opt_tol = 1e-6
 # maxit = 120000
-maxit = 3000
+maxit = 30000
 
 maxclocktime = 5
 # QPsolver = "gurobi"
@@ -52,13 +53,19 @@ QPsolver = "osqp"
 square_flag = False
 
 
-partial_data = False
-dp_num = 2000
+partial_data = True
+# partial_data = False
+dp_num = 10000
 
-zeta_list = np.arange(0,1,0.05)
+# zeta_list = np.arange(0,1,0.05)
+zeta_list = np.array([0])
 
-device = torch.device('cpu')
 
+# device = torch.device('cpu')
+device = torch.device('cuda')
+
+
+limited_mem_size = 20
 
 ###############################################
 if square_flag:
@@ -192,6 +199,24 @@ elif data_name == 'mnist':
     X_test = X_test.to(device=device, dtype=torch.double)
     y_test = y_test.to(device=device, dtype=torch.double)
 
+elif data_name == 'rcv1':
+    print('start reading data')
+    X, y = datasets.load_svmlight_file('/home/buyun/datasets/rcv1_train.binary.bz2')
+
+
+    if partial_data == False:
+        X_test, y_test = datasets.load_svmlight_file('/home/buyun/datasets/rcv1_test.binary.bz2') # very large
+    else:
+        X_test = X[0:dp_num]
+        y_test = y[0:dp_num]
+        X = X[dp_num:]
+        y = y[dp_num:]
+
+
+    X = scipy.sparse.csr_matrix.toarray(X)
+    X_test = scipy.sparse.csr_matrix.toarray(X_test)
+    print('end reading data')
+
 else:
     print('please specify a legal data name')
 
@@ -211,6 +236,7 @@ else:
 
 y = y.unsqueeze(1)
 y_test = y_test.unsqueeze(1)
+# y_test = np.reshape(y_test,(-1,1))
 
 # variables and corresponding dimensions.
 var_in = {"w": [d,1], "b": [1,1]}
@@ -284,6 +310,7 @@ for zeta in zeta_list:
     opts.opt_tol = opt_tol
     opts.maxclocktime = maxclocktime
     opts.QPsolver = QPsolver
+    opts.limited_mem_size = limited_mem_size
 
     opts.x0 =  torch.randn((d+1,1)).to(device=device, dtype=torch.double)
     opts.x0 = opts.x0/norm(opts.x0)
@@ -313,8 +340,11 @@ for zeta in zeta_list:
             print("train acc = {:.2f}%".format((100 * acc)))
             acc_lst.append(acc)
             # obtain test acc
+            # w = w.cpu().detach().numpy()
+            # b = b.cpu().detach().numpy()
             res_test = X_test@w+b
             predict_test = torch.zeros(n_test,1).to(device=device, dtype=torch.double)
+            # predict_test = np.zeros((n_test,1))
             predict_test[res_test>=0] = 1
             predict_test[res_test<0] = -1
             correct_test = (predict_test == y_test).sum().item()
