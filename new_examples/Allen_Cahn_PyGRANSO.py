@@ -16,11 +16,11 @@ from torch.linalg import norm
 
 sys.path.append('/home/buyun/Documents/GitHub/deepxde')
 
-import deepxde as dde
+
 import numpy as np
 from scipy.io import loadmat
-from deepxde import losses as losses_module
 from deepxde import gradients as grad
+import deepxde as dde
 
 
 torch.manual_seed(2022)
@@ -32,6 +32,7 @@ device = torch.device('cuda')
 
 double_precision = torch.double
 
+# Spatial and Time Domain for data generation
 geom = dde.geometry.Interval(-1, 1)
 timedomain = dde.geometry.TimeDomain(0, 1)
 geomtime = dde.geometry.GeometryXTime(geom, timedomain)
@@ -70,7 +71,6 @@ class FNN(torch.nn.Module):
         self.activation = torch.tanh
         # self.activation = torch.nn.functional.relu
 
-
         self.linears = torch.nn.ModuleList()
         for i in range(1, len(layer_sizes)):
             self.linears.append(
@@ -92,14 +92,15 @@ class FNN(torch.nn.Module):
 
 # define torch network 
 model = FNN([2] + [20] * 3 + [1])
+# model = FNN([2] + [50] * 5 + [1])
 model = model.to(device=device, dtype=double_precision)
 
 # get data
 data = dde.data.TimePDE(geomtime, pde, [], num_domain=8000, num_boundary=400, num_initial=800)
-
 X_train = torch.from_numpy(data.train_x)
-# y_train = torch.from_numpy(data.train_y)
 X_train = X_train.to(device=device, dtype=double_precision)
+
+# y_train = torch.from_numpy(data.train_y)
 # y_train = y_train.to(device=device, dtype=double_precision)
 
 
@@ -112,35 +113,40 @@ y_test = y_test.to(device=device, dtype=double_precision)
 
 def user_fn(model,X_train):
     
-    X_train.requires_grad_()
+    X_train.requires_grad_() # to enable AD in pde
     y_predict = model(X_train) # graph of X_train
 
     f_vec = pde(X_train,y_predict)
-    f = norm(f_vec,2)
+
+    # loss = nn.MSELoss()
+    # target = torch.zeros_like(f_vec)
+    # f = loss(f_vec,target)
+
+    f = norm(f_vec,2)**2
 
     # inequality constraint
     ci = None
 
     # equality constraint
-    # special orthogonal group
-
     ce = pygransoStruct()
     mask_t0 = (X_train[:,1:2]==0).squeeze()
     X_t0 = X_train[mask_t0] # when t = 0
     y_predict_t0 = y_predict[mask_t0]
     # ce.c1 = y_predict_t0 - X_t0[:,0:1]**2 * torch.cos(np.pi * X_t0[:, 0:1])
+
     constr_1 = y_predict_t0 - X_t0[:,0:1]**2 * torch.cos(np.pi * X_t0[:, 0:1])
 
     mask_pn1 = torch.logical_or(X_train[:,0:1]==1,X_train[:,0:1]==-1).squeeze()
 
     X_pn1 = X_train[mask_pn1] # when x = +/-1
     # ce.c2 = model(X_pn1) +1
+
     constr_2 = model(X_pn1) +1
 
-    # ce.c1 = norm(torch.vstack((constr_1,constr_2)),2)
+    ce.c1 = norm(torch.vstack((constr_1,constr_2)),2)
 
-    ce.c1 = norm(constr_1,2)
-    ce.c2 = norm(constr_2,2)
+    # ce.c1 = norm(constr_1,2)
+    # ce.c2 = norm(constr_2,2)
 
     grad.clear() # important: please clear jacobian and hessian in deepxde!
     return [f,ci,ce]
@@ -153,13 +159,15 @@ nvar = getNvarTorch(model.parameters())
 opts.x0 = torch.nn.utils.parameters_to_vector(model.parameters()).detach().reshape(nvar,1)
 # opts.opt_tol = 3e-4
 # opts.viol_eq_tol = 3e-4
-opts.maxit = 1000
+opts.maxit = 6000
 # # opts.fvalquit = 1e-6
 # opts.print_level = 1
 opts.print_frequency = 10
 # # opts.print_ascii = True
 # opts.limited_mem_size = 10
 # opts.double_precision = True
+opts.maxclocktime = 1000
+
 
 # opts.mu0 = 200
 
@@ -169,7 +177,7 @@ opts.print_frequency = 10
 # print("Initial acc = {:.2f}%".format((100 * correct/len(inputs))))
 
 
-criterion = nn.MSELoss()
+# criterion = nn.MSELoss()
 
 # l2_rel_err = norm(model(X_train)-y_train)/norm(y_train)
 # print("intial y_train l2_rel_err = {}".format(l2_rel_err))
