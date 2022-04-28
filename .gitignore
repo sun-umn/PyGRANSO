@@ -81,3 +81,7 @@ new_examples/ortho_rnn/trace_opt_test/png
 new_examples/ortho_rnn/trace_opt_test/log
 new_examples/svm/svm_test/png
 new_examples/svm/svm_test/log
+
+new_examples/trace_opt/png
+new_examples/trace_opt/log
+new_examples/trace_opt/data
