@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 import os
 from datetime import datetime
 
-def get_name(square_flag,folding_list,n,d,total,maxclocktime):
+def get_name(square_flag,folding_list,n,d,total,maxclocktime,N,K):
     if square_flag:
         square_str = "square_"
     else:
@@ -24,7 +24,7 @@ def get_name(square_flag,folding_list,n,d,total,maxclocktime):
     now = datetime.now() # current date and time
     date_time = now.strftime("%m%d%Y_%H:%M:%S")
     my_path = os.path.dirname(os.path.abspath(__file__))
-    name_str = "_n{}_d{}_{}{}_total{}_maxtime{}".format(n,d,square_str,maxfolding,total,maxclocktime)
+    name_str = "N{}K{}_n{}_d{}_{}{}_total{}_maxtime{}".format(N,K,n,d,square_str,maxfolding,total,maxclocktime)
     log_name = "log/" + date_time + name_str + '.txt'
 
     print( name_str + "start\n\n")
@@ -91,66 +91,84 @@ def opts_init(device,maxit,opt_tol,maxclocktime,QPsolver,mu0,ana_sol,threshold,n
     opts.x0 = opts.x0/norm(opts.x0)
     return opts
 
-def result_dict_init():
-    result_dict = {
-        'time':np.array([]),
-        'iter': np.array([]),
-        'F': np.array([]),
-        'MF': np.array([]),
-        'term_code_pass': np.array([]),
-        'tv': np.array([]),
-        'MF_tv': np.array([]),
-        'term_code_fail': [],
-        'E': np.array([]), # error
-        'index_sort': np.array([])
-        }
+def result_dict_init(N,folding_list):
+
+    result_dict = {}
+    for rng_seed in range(N):
+        for maxfolding in folding_list:
+            dict_key = str(rng_seed) + maxfolding
+
+            tmp_dict = {
+                'time':np.array([]),
+                'iter': np.array([]),
+                'F': np.array([]),
+                'MF': np.array([]),
+                'term_code_pass': np.array([]),
+                'tv': np.array([]),
+                'MF_tv': np.array([]),
+                'term_code_fail': [],
+                'E': np.array([]), # error
+                'index_sort': np.array([])
+                }
+            
+            result_dict[dict_key] = tmp_dict
+
     return result_dict
 
-def store_result(soln,end,start,n,d,i,result_dict,U):
-    print("Total Wall Time: {}s".format(end - start))
+def store_result(soln,end,start,n,d,i,result_dict,U,rng_seed,maxfolding):
+    dict_key = str(rng_seed) + maxfolding
+    cur_result_dict = result_dict[dict_key]
+    print("seed {} folding type {} Wall Time: {}s".format(rng_seed, maxfolding,end - start))
     if soln.termination_code != 12 and soln.termination_code != 8:
         # mean error
         V = torch.reshape(soln.final.x,(n,d))
         E = norm(V-U)/norm(U)
-        result_dict['E'] = np.append(result_dict['E'],E.item())
-        result_dict['time'] = np.append(result_dict['time'],end-start)
-        result_dict['F'] = np.append(result_dict['F'],soln.final.f)
-        result_dict['MF'] = np.append(result_dict['MF'],soln.most_feasible.f)
-        result_dict['term_code_pass'] = np.append(result_dict['term_code_pass'],soln.termination_code)
-        result_dict['tv'] = np.append(result_dict['tv'],soln.final.tv) #total violation at x (vi + ve)
-        result_dict['MF_tv'] = np.append(result_dict['MF_tv'],soln.most_feasible.tv)
-        result_dict['iter'] = np.append(result_dict['iter'],soln.iters)
+        cur_result_dict['E'] = np.append(cur_result_dict['E'],E.item())
+        cur_result_dict['time'] = np.append(cur_result_dict['time'],end-start)
+        cur_result_dict['F'] = np.append(cur_result_dict['F'],soln.final.f)
+        cur_result_dict['MF'] = np.append(cur_result_dict['MF'],soln.most_feasible.f)
+        cur_result_dict['term_code_pass'] = np.append(cur_result_dict['term_code_pass'],soln.termination_code)
+        cur_result_dict['tv'] = np.append(cur_result_dict['tv'],soln.final.tv) #total violation at x (vi + ve)
+        cur_result_dict['MF_tv'] = np.append(cur_result_dict['MF_tv'],soln.most_feasible.tv)
+        cur_result_dict['iter'] = np.append(cur_result_dict['iter'],soln.iters)
     else:
-        result_dict['term_code_fail'].append("i = {}, code = {}\n ".format(i,soln.termination_code) )
+        cur_result_dict['term_code_fail'].append("i = {}, code = {}\n ".format(i,soln.termination_code) )
 
     return result_dict
 
-def sort_result(result_dict):
-    index_sort = np.argsort(result_dict['F'])
+def sort_result(result_dict,rng_seed,maxfolding):
+
+    dict_key = str(rng_seed) + maxfolding
+    cur_result_dict = result_dict[dict_key]
+
+    index_sort = np.argsort(cur_result_dict['F'])
     index_sort = index_sort[::-1]
-    result_dict['F'] = result_dict['F'][index_sort]
-    result_dict['E'] = result_dict['E'][index_sort]
-    result_dict['time'] = result_dict['time'][index_sort]
-    result_dict['MF'] = result_dict['MF'][index_sort]
-    result_dict['term_code_pass'] = result_dict['term_code_pass'][index_sort]
-    result_dict['tv'] = result_dict['tv'][index_sort]
-    result_dict['MF_tv'] = result_dict['MF_tv'][index_sort]
-    result_dict['iter'] = result_dict['iter'][index_sort]
-    result_dict['index_sort'] = index_sort
+    cur_result_dict['F'] = cur_result_dict['F'][index_sort]
+    cur_result_dict['E'] = cur_result_dict['E'][index_sort]
+    cur_result_dict['time'] = cur_result_dict['time'][index_sort]
+    cur_result_dict['MF'] = cur_result_dict['MF'][index_sort]
+    cur_result_dict['term_code_pass'] = cur_result_dict['term_code_pass'][index_sort]
+    cur_result_dict['tv'] = cur_result_dict['tv'][index_sort]
+    cur_result_dict['MF_tv'] = cur_result_dict['MF_tv'][index_sort]
+    cur_result_dict['iter'] = cur_result_dict['iter'][index_sort]
+    cur_result_dict['index_sort'] = index_sort
 
-def print_result(result_dict,total):
-    print("Time = {}".format(result_dict['time']) )
-    print("F obj = {}".format(result_dict['F']))
-    print("MF obj = {}".format(result_dict['MF']))
-    print("termination code = {}".format(result_dict['term_code_pass']))
-    print("total violation tvi + tve = {}".format(result_dict['tv']))
-    print("MF total violation tvi + tve = {}".format(result_dict['MF_tv']))
-    print('iterations = {}'.format(result_dict['iter']))
-    print("Error = {}".format(result_dict['E']))
-    print("index sort = {}".format(result_dict['index_sort']))
-    print("failed code: {}".format(result_dict['term_code_fail']))
+def print_result(result_dict,total,rng_seed,maxfolding):
+    dict_key = str(rng_seed) + maxfolding
+    cur_result_dict = result_dict[dict_key]
 
-    arr_len = result_dict['F'].shape[0]
+    print("Time = {}".format(cur_result_dict['time']) )
+    print("F obj = {}".format(cur_result_dict['F']))
+    print("MF obj = {}".format(cur_result_dict['MF']))
+    print("termination code = {}".format(cur_result_dict['term_code_pass']))
+    print("total violation tvi + tve = {}".format(cur_result_dict['tv']))
+    print("MF total violation tvi + tve = {}".format(cur_result_dict['MF_tv']))
+    print('iterations = {}'.format(cur_result_dict['iter']))
+    print("Error = {}".format(cur_result_dict['E']))
+    print("index sort = {}".format(cur_result_dict['index_sort']))
+    print("failed code: {}".format(cur_result_dict['term_code_fail']))
+
+    arr_len = cur_result_dict['F'].shape[0]
     print("successful rate = {}".format(arr_len/total))
     return arr_len
 

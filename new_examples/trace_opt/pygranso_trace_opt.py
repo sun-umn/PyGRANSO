@@ -25,8 +25,11 @@ d = 5 # copnst: d*d
 folding_list = ['l2','l1','linf','unfolding']
 # folding_list = ['l2','unfolding']
 
-K = 3 # K number of starting points. random generated initial guesses
-N = 2 # number of different data matrix (with the same size)
+K = 200 # K number of starting points. random generated initial guesses
+N = 8 # number of different data matrix (with the same size)
+# K = 2
+# N = 3
+
 
 opt_tol = 1e-6
 maxit = 50000
@@ -44,13 +47,14 @@ device = torch.device('cuda')
 
 ###############################################
 
-[my_path, log_name, date_time, name_str] = utils.get_name(square_flag,folding_list,n,d,K,maxclocktime)
+[my_path, log_name, date_time, name_str] = utils.get_name(square_flag,folding_list,n,d,K,maxclocktime,N,K)
 
 if not debug_mode:
     sys.stdout = open(os.path.join(my_path, log_name), 'w')
 
 ###################################################
-
+start_all_seeds = time.time()
+result_dict = utils.result_dict_init(N,folding_list) # initialize result dict
 for rng_seed in range(N):
     [A, U, ana_sol] = utils.data_init(rng_seed, n, d, device)
     folding_idx = 0 # index for plots
@@ -58,10 +62,9 @@ for rng_seed in range(N):
         print('\n\n\n'+ maxfolding + '  start!')
         folding_idx+=1
         comb_fn = lambda X_struct : utils.user_fn(X_struct,A,d,device,maxfolding,square_flag)
-        result_dict = utils.result_dict_init()
         start_loop = time.time()
         for i in range(K):
-            print("the {}th test out of K = {} initial guesses.\n rng seed {} out of N = {} ".format(i+1,K, rng_seed,N))
+            print("the {}th test out of K = {} initial guesses.\n rng seed {} out of N = {}. \n folding type: {} ".format(i+1,K, rng_seed,N,maxfolding))
             try:
                 # call pygranso
                 start = time.time()
@@ -69,15 +72,16 @@ for rng_seed in range(N):
                 opts = utils.opts_init(device,maxit,opt_tol,maxclocktime,QPsolver,mu0,ana_sol,threshold,n,d)
                 soln = pygranso(var_spec = var_in,combined_fn = comb_fn,user_opts = opts)
                 end = time.time()
-                result_dict = utils.store_result(soln,end,start,n,d,i,result_dict,U)
+                result_dict = utils.store_result(soln,end,start,n,d,i,result_dict,U,rng_seed,maxfolding)
             except Exception as e:
                 print('skip pygranso')
         end_loop = time.time()
-        print("K Loop Wall Time for this folding: {}s".format(end_loop - start_loop))
-        utils.sort_result(result_dict)
-        arr_len = utils.print_result(result_dict,K)
+        print("K Loop Wall Time for {} folding: {}s".format(maxfolding,end_loop - start_loop))
+        utils.sort_result(result_dict,rng_seed,maxfolding)
+        arr_len = utils.print_result(result_dict,K,rng_seed,maxfolding)
         # plot
-        plt.plot(np.arange(arr_len),result_dict['F'],color = colors[folding_idx], marker = markers[folding_idx], linestyle = '-',label=maxfolding)
+        dict_key = str(rng_seed) + maxfolding
+        plt.plot(np.arange(arr_len),result_dict[dict_key]['F'],color = colors[folding_idx], marker = markers[folding_idx], linestyle = '-',label=maxfolding)
 
     plt.plot(np.arange(arr_len),np.array(arr_len*[ana_sol]),color = colors[folding_idx+1], linestyle = '-',label='analytical sol')
     plt.legend()
@@ -93,6 +97,9 @@ for rng_seed in range(N):
         plt.clf()
     else:
         plt.show()
+
+end_all_seeds = time.time()
+print("N seeds Wall Time: {}s".format(end_all_seeds - start_all_seeds))
 
 if not debug_mode:
     # end writing
