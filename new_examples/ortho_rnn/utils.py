@@ -13,6 +13,11 @@ from torchvision.transforms import ToTensor
 from pygranso.private.getObjGrad import getObjGradDL
 
 from torch.linalg import norm
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+from datetime import datetime
+
 
 class RNN(nn.Module):
 
@@ -80,7 +85,7 @@ def get_data(sequence_length, input_size, device, double_precision,train_size,te
 
     return X_train, y_train, X_test, y_test
 
-def user_fn(model,inputs,labels,hidden_size,device,double_precision,maxfolding):
+def user_fn(model,inputs,labels,hidden_size,device,double_precision,maxfolding,unconstrained):
     # objective function
     logits = model(inputs)
     criterion = nn.CrossEntropyLoss()
@@ -94,26 +99,31 @@ def user_fn(model,inputs,labels,hidden_size,device,double_precision,maxfolding):
     # equality constraint
     # special orthogonal group
 
-    ce = pygransoStruct()
+    if not unconstrained:
 
-    constr_vec = (A.T @ A - torch.eye(hidden_size).to(device=device, dtype=double_precision)).reshape(hidden_size**2,1)
-    constr_vec = torch.vstack((constr_vec,torch.det(A) - 1))
+        ce = pygransoStruct()
 
-    if maxfolding == 'l1':
-        ce.c1 = torch.sum(torch.abs(constr_vec))
-    elif maxfolding == 'l2':
-        ce.c1 = torch.sum(constr_vec**2)**0.5
-    elif maxfolding == 'linf':
-        ce.c1 = torch.amax(torch.abs(constr_vec))
-    elif maxfolding == 'unfolding':
-        ce.c1 = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=double_precision)
+        ce.c1 = (A.T @ A - torch.eye(hidden_size).to(device=device, dtype=double_precision)).reshape(hidden_size**2,1)
+        ce.c1 = torch.vstack((ce.c1,torch.det(A) - 1))
+
+        if maxfolding == 'l1':
+            ce.c1 = torch.sum(torch.abs(ce.c1))
+        elif maxfolding == 'l2':
+            ce.c1 = torch.sum(ce.c1**2)**0.5
+        elif maxfolding == 'linf':
+            ce.c1 = torch.amax(torch.abs(ce.c1))
+        elif maxfolding == 'unfolding':
+            ce.c1 = A.T @ A - torch.eye(hidden_size).to(device=device, dtype=double_precision)
+        else:
+            print("Please specficy you maxfolding type!")
+            exit()
+    
     else:
-        print("Please specficy you maxfolding type!")
-        exit()
+        ce = None
 
     return [f,ci,ce]
 
-def get_opts(device,model,maxit,maxclocktime,double_precision):
+def get_opts(device,model,maxit,maxclocktime,double_precision,limited_mem_size):
     opts = pygransoStruct()
     opts.torch_device = device
     nvar = getNvarTorch(model.parameters())
@@ -132,16 +142,91 @@ def get_opts(device,model,maxit,maxclocktime,double_precision):
         opts.double_precision = False
 
     opts.maxclocktime = maxclocktime
+    opts.limited_mem_size = limited_mem_size
+
     # opts.steering_c_viol = 0.02
     opts.mu0 = 100
     return opts
 
-def get_model_acc(model,X,y,train):
+def get_model_acc(model,X,y,train, list):
     logits = model(X)
     _, predicted = torch.max(logits.data, 1)
     correct = (predicted == y).sum().item()
+    acc = (100 * correct/len(X))
 
     if train:
-        print("Initial train acc = {:.2f}%".format((100 * correct/len(X))))
+        print("Initial train acc = {:.2f}%".format(acc))
     else:
-        print("Initial test acc = {:.2f}%".format((100 * correct/len(X))))
+        print("Initial test acc = {:.2f}%".format(acc))
+    
+    list = np.append(list,acc)
+    return list
+
+def get_restart_opts(device,model,maxit,maxclocktime,double_precision,soln,limited_mem_size,unconstrained):
+    opts = pygransoStruct()
+    opts.torch_device = device
+    opts.opt_tol = 1e-6
+    opts.viol_eq_tol = 1e-5
+    opts.maxit = maxit
+    # opts.fvalquit = 1e-6
+    opts.print_level = 1
+    opts.print_frequency = 10
+    # opts.print_ascii = True
+    # opts.limited_mem_size = 100
+    if double_precision == torch.double:
+        opts.double_precision = True
+    else:
+        opts.double_precision = False
+
+    opts.maxclocktime = maxclocktime
+    opts.limited_mem_size = limited_mem_size
+
+    opts.x0 = soln.final.x
+    if not unconstrained:
+        opts.mu0 = soln.final.mu
+
+    opts.limited_mem_warm_start = soln.H_final
+    opts.scaleH0 = False
+    opts.limited_mem_fixed_scaling = False
+
+    return opts
+
+def make_plot(train_acc_list,test_acc_list,restart_time,maxit,title,save_plot):
+    x_list = np.arange(0,maxit*(restart_time+2),maxit)
+    plt.plot(x_list,train_acc_list,label='train acc')
+    plt.plot(x_list,test_acc_list,label='test acc')
+    plt.legend()
+    plt.xlabel('pygranso iterations')
+    plt.ylabel('accuracy (%)')
+    plt.title(title)
+    if not save_plot:
+        plt.show()
+    else:
+        now = datetime.now() # current date and time
+        date_time = now.strftime("%m%d%Y_%H:%M:%S")
+        my_path = os.path.dirname(os.path.abspath(__file__))
+        png_name = 'png/' + title + date_time
+        plt.savefig(os.path.join(my_path, png_name))
+        plt.clf()
+
+def get_title(row_by_row,unconstrained,maxfolding,train_size,test_size,rng_seed,hidden_size):
+    if row_by_row:
+        sequence_type = 'row_by_row'
+    else:
+        sequence_type = 'pixel_by_pixel'
+
+    if unconstrained:
+        constr_name = 'unconstr'
+    else:
+        constr_name = maxfolding
+
+    title = sequence_type +'_' + constr_name + "_trn{}_tst{}_seed{}_hidden_size{}".format(train_size,test_size,rng_seed,hidden_size)
+
+    return title
+
+def get_logname(title):
+    now = datetime.now() # current date and time
+    date_time = now.strftime("%m%d%Y_%H:%M:%S")
+    my_path = os.path.dirname(os.path.abspath(__file__))
+    logname = 'log/' + title + date_time
+    return my_path,logname

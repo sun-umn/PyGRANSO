@@ -85,3 +85,7 @@ new_examples/svm/svm_test/log
 new_examples/trace_opt/png
 new_examples/trace_opt/log
 new_examples/trace_opt/data
+
+new_examples/*/png
+new_examples/*/log
+new_examples/*/data
