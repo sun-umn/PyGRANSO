@@ -18,7 +18,7 @@ row_by_row = False
 
 save_plot = True
 
-N = 16 # total random seeds number
+N = 3 # total random seeds number
 
 restart_time = 30
 
@@ -37,8 +37,11 @@ hidden_size = 30
 num_layers = 1
 num_classes = 10
 
-train_size=6000 # train acc 100; test acc 19%
-test_size=1000
+train_size=100 # train acc 100; test acc 19%
+test_size=100
+
+# train_size=6000 # train acc 100; test acc 19%
+# test_size=1000
 
 # train_size=60000 # train acc 100; test acc 19%
 # test_size=10000
@@ -54,6 +57,10 @@ limited_mem_size = 0
 
 
 debug_mode = False
+# debug_mode = True
+
+
+seed_list = [5]
 
 
 ###############################################
@@ -63,7 +70,8 @@ title = utils.get_title(row_by_row,unconstrained,maxfolding,train_size,test_size
 if not debug_mode:
     sys.stdout = open(os.path.join(my_path, log_name), 'w')
 
-for rng_seed in range(N):
+# for rng_seed in range(N):
+for rng_seed in seed_list:
 
     title = utils.get_title(row_by_row,unconstrained,maxfolding,train_size,test_size,rng_seed,hidden_size)
 

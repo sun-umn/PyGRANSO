@@ -185,9 +185,13 @@ def get_restart_opts(device,model,maxit,maxclocktime,double_precision,soln,limit
     if not unconstrained:
         opts.mu0 = soln.final.mu
 
-    opts.limited_mem_warm_start = soln.H_final
-    opts.scaleH0 = False
-    opts.limited_mem_fixed_scaling = False
+    if limited_mem_size != 0:
+        opts.limited_mem_warm_start = soln.H_final
+        opts.scaleH0 = False
+        opts.limited_mem_fixed_scaling = False
+    else:
+        opts.H0 = soln.H_final 
+        opts.scaleH0 = False
 
     return opts
 
