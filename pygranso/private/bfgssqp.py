@@ -346,8 +346,7 @@ class AlgBFGSSQP():
 
                 
             else:
-                rng = default_rng()
-                p = rng.standard_normal(size=(n,1))
+                p = torch.randn((n,1)).to(device = self.torch_device, dtype=self.torch_dtype)
                 self.random_attempts = self.random_attempts + 1
             
             if self.search_direction_rescaling:
@@ -482,7 +481,7 @@ class AlgBFGSSQP():
     
     def checkDirection(self,p,g):    
         fallback            = False
-        gtp                 = torch.conj(g.t())@p
+        gtp                 = torch.conj(g.T)@p
         gtp = gtp.item()
         if math.isnan(gtp) or math.isinf(gtp):
             is_descent      = False
