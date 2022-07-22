@@ -3,6 +3,8 @@ import osqp
 import numpy as np
 from scipy import sparse
 import traceback,sys
+import gurobipy as gp
+from gurobipy import GRB
 
 QP_REQUESTS = 0
 
@@ -88,64 +90,114 @@ def solveQP(H,f,A,b,LB,UB,QPsolver,torch_device, double_precision):
     global QP_REQUESTS
     QP_REQUESTS += 1
 
-    try:
-        if QPsolver == "osqp":
-            # H,f always exist
-            nvar = len(f)
-            # H and A has to be sparse
-            H = H.cpu().numpy()
-            # avoid numerical issue in pygranso
-            # epsilon = 1e-6
-            # H = H + epsilon * np.eye(nvar)
-            f = f.cpu().numpy()
-            if A != None:
-                A = A.cpu().numpy()
-            # b = b.cpu().numpy()
-            LB = LB.cpu().numpy()
-            UB = UB.cpu().numpy()
-            H_sparse = sparse.csc_matrix(H)
-            # LB and UB always exist
+    if QPsolver == "osqp":
+        # H,f always exist
+        nvar = len(f)
+        # H and A has to be sparse
+        H = H.cpu().numpy()
+        f = f.cpu().numpy()
+        if A != None:
+            A = A.cpu().numpy()
+        # b = b.cpu().numpy()
+        LB = LB.cpu().numpy()
+        UB = UB.cpu().numpy()
+        H_sparse = sparse.csc_matrix(H)
+        # LB and UB always exist
 
-            if np.any(A != None) and np.any(b != None):
-                Aeq = A
-                beq = b
-                speye = sparse.eye(nvar)
-                LB_new = np.vstack((beq,LB))
-                UB_new = np.vstack((beq,UB))
-                A_new = sparse.vstack([Aeq,speye])
-                A_new = sparse.csc_matrix(A_new)
-            else:
-                #  no constraint A*x == b
-                A_new = sparse.eye(nvar)
-                A_new = sparse.csc_matrix(A_new)
-                LB_new = LB
-                UB_new = UB
+        if np.any(A != None) and np.any(b != None):
+            Aeq = A
+            beq = b
+            speye = sparse.eye(nvar)
+            LB_new = np.vstack((beq,LB))
+            UB_new = np.vstack((beq,UB))
+            A_new = sparse.vstack([Aeq,speye])
+            A_new = sparse.csc_matrix(A_new)
+        else:
+            #  no constraint A*x == b
+            A_new = sparse.eye(nvar)
+            A_new = sparse.csc_matrix(A_new)
+            LB_new = LB
+            UB_new = UB
 
-            # Create an OSQP object
-            prob = osqp.OSQP()
+        # Create an OSQP object
+        prob = osqp.OSQP()
 
-            # Setup workspace and change alpha parameter
-            prob.setup(H_sparse, f, A_new, LB_new, UB_new, alpha=1.0,verbose=False)
+        # Setup workspace and change alpha parameter
+        prob.setup(H_sparse, f, A_new, LB_new, UB_new, eps_abs = 1e-12, eps_rel=1e-12, polish=True, verbose=False)
+        # prob.setup(H_sparse, f, A_new, LB_new, UB_new, alpha=1.0,verbose=False)
 
-            # Solve problem
-            res = prob.solve()
+        # Solve problem
+        res = prob.solve()
 
-            solution = res.x
-            sol_len = solution.size
-            solution = solution.reshape((sol_len,1))
-            if double_precision:
-                torch_dtype = torch.double
-            else:
-                torch_dtype = torch.float
-            solution = torch.from_numpy(solution).to(device=torch_device, dtype=torch_dtype) 
-            return solution
+        solution = res.x
+        sol_len = solution.size
+        solution = solution.reshape((sol_len,1))
+        if double_precision:
+            torch_dtype = torch.double
+        else:
+            torch_dtype = torch.float
+        solution = torch.from_numpy(solution).to(device=torch_device, dtype=torch_dtype) 
+        return solution
 
-    except Exception as e:
-        [w,v] = np.linalg.eigh(H)
-        w_sorted = np.sort(w)
-        print(w_sorted)
-        print(traceback.format_exc())
-        sys.exit()
+    if QPsolver == "gurobi":
+
+        H = H.cpu().numpy()
+        f = f.cpu().numpy()
+        if A != None:
+            A = A.cpu().numpy()
+        # H,f always exist
+        # LB and UB always exist
+        #  formulation of QP has no 1/2
+        H = H/2
+
+        nvar = len(f)
+        # Create a new model
+        m = gp.Model()
+        vtype = [GRB.CONTINUOUS] * nvar
+
+        # Add variables to model
+        vars = []
+        for j in range(nvar):
+            vars.append(m.addVar(lb=LB[j], ub=UB[j], vtype=vtype[j]))
+        x_vec = np.array(vars).reshape(nvar,1)
+
+        if np.any(A != None) and np.any(b != None):
+            Aeq = A
+            beq = b
+            # Populate A matrix
+            expr = gp.LinExpr()
+            Ax = Aeq @ x_vec
+            expr += Ax[0,0]
+            m.addLConstr(expr, GRB.GREATER_EQUAL, beq)
+        else:
+            #  no constraint A*x < b
+            pass
+
+        solution = np.zeros((nvar,1))
+
+        # Populate objective: x.THx + f.T x
+        obj = gp.QuadExpr()
+        xTHx = x_vec.T @ H @ x_vec + f.T @ x_vec
+        obj += xTHx[0,0]
+        m.setObjective(obj)
+
+        #  suppress output
+        # m.Params.LogToConsole = 0
+        m.Params.outputflag = 0
+        # m.params.NonConvex = 2
+
+        m.optimize()
+        x = m.getAttr('x', vars)
+        for i in range(nvar):
+            solution[i] = x[i]
+
+        if double_precision:
+            torch_dtype = torch.double
+        else:
+            torch_dtype = torch.float
+        solution = torch.from_numpy(solution).to(device=torch_device, dtype=torch_dtype) 
+        return solution
+
 
 
 def getErr():

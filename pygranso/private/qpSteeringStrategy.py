@@ -250,7 +250,7 @@ class qpSS:
         except Exception as e:
             print("PyGRANSO steeringQuadprogFailure: Steering aborted due to a quadprog failure.")        
             print(traceback.format_exc())
-            sys.exit()
+            # sys.exit()
 
         d = -self.mu_Hinv_f_grad - (self.Hinv_c_grads @ y)
         return d

@@ -420,7 +420,7 @@ def pygranso(var_spec,combined_fn,user_opts=None):
         For comments/bug reports, please visit the PyGRANSO webpage:
         https://github.com/sun-umn/PyGRANSO
 
-        PyGRANSO Version 1.0.0, 2021, see AGPL license info below.
+        PyGRANSO Version 1.2.0, 2021-2022, see AGPL license info below.
 
         =========================================================================
         |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
@@ -647,7 +647,7 @@ def getTerminationMsgLines(soln,constrained,width):
     elif soln.termination_code ==  5:
         s = "clock/wall time limit reached."
     elif soln.termination_code ==  6:
-        s = bracketedMinimizerFeasibleMsg(soln,constrained);
+        s = bracketedMinimizerFeasibleMsg(soln,constrained)
     elif soln.termination_code ==  7:
         s = bracketedMinimizerInfeasibleMsg()
     elif soln.termination_code ==  8:

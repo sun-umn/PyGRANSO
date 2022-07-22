@@ -176,6 +176,9 @@ def getObjGradDL(nvar,model,f, torch_device, double_precision):
 
         New code and functionality for PyGRANSO v1.0.0.
 
+        v1.2.0 bug fixed: allow part of optimization variables not showing up 
+        in objective (see SVM example).
+
         For comments/bug reports, please visit the PyGRANSO webpage:
         https://github.com/sun-umn/PyGRANSO
 
@@ -212,6 +215,9 @@ def getObjGradDL(nvar,model,f, torch_device, double_precision):
     curIdx = 0
     parameter_lst = list(model.parameters())
     for i in range(len(parameter_lst)):
+        if parameter_lst[i].grad == None:
+            curIdx += torch.numel(parameter_lst[i]) 
+            continue
         f_grad_reshape = torch.reshape(parameter_lst[i].grad,(-1,1))
         f_grad_vec[curIdx:curIdx+f_grad_reshape.shape[0]] = f_grad_reshape
         curIdx += f_grad_reshape.shape[0]

@@ -8,7 +8,7 @@ from pygranso.pygransoStruct import pygransoStruct
 import math
 import numpy as np
 from numpy.random import default_rng
-import traceback,sys
+import traceback
 
 class AlgBFGSSQP():
     def __init__(self):
@@ -245,7 +245,7 @@ class AlgBFGSSQP():
         self.get_nearby_grads_fn     = lambda : getNearbyGradients( self.penaltyfn_obj, get_nbd_grads_fn)
 
         [stat_vec,self.stat_val,qps_solved, _, _] = self.computeApproxStationarityVector()
-    
+
         if not self.constrained:
             #  disable steering QP solves by increasing min_fallback_level.
             min_fallback_level  = max(  min_fallback_level, POSTQP_FALLBACK_LEVEL )
@@ -322,16 +322,18 @@ class AlgBFGSSQP():
             penalty_parameter_changed = False
             if self.fallback_level < POSTQP_FALLBACK_LEVEL:  
                 if self.fallback_level == 0:
-                    apply_H_steer = self.apply_H_QP_fn;  # standard steering   
+                    apply_H_steer = self.apply_H_QP_fn  # standard steering   
                 else:
-                    apply_H_steer = APPLY_IDENTITY; # "degraded" steering 
+                    apply_H_steer = APPLY_IDENTITY # "degraded" steering 
                 
                 try:
                     [p,mu_new,*_] = steering_fn(self.penaltyfn_at_x,apply_H_steer)
                 except Exception as e:
                     print("PyGRANSO:steeringQuadprogFailure")
                     print(traceback.format_exc())
-                    sys.exit()
+                    self.prepareTermination(12) # qp failure
+                    return self.info
+                    # sys.exit()
                 
                 penalty_parameter_changed = (mu_new != self.mu)
                 if penalty_parameter_changed: 
@@ -340,12 +342,11 @@ class AlgBFGSSQP():
             elif self.fallback_level == 2:
                 p = -self.apply_H_fn(g)   # standard BFGS 
             elif self.fallback_level == 3:
-                p = -g;     # steepest descent
+                p = -g     # steepest descent
 
                 
             else:
-                rng = default_rng()
-                p = rng.standard_normal(size=(n,1))
+                p = torch.randn((n,1)).to(device = self.torch_device, dtype=self.torch_dtype)
                 self.random_attempts = self.random_attempts + 1
             
             if self.search_direction_rescaling:
@@ -358,7 +359,7 @@ class AlgBFGSSQP():
                 if self.bumpFallbackLevel():
                     continue    # try iteration again with new fallback
                 else: # all fallbacks have failed - quit!
-                    self.prepareTermination(9); # not a descent descent direction
+                    self.prepareTermination(9) # not a descent descent direction
                     return self.info
                 
             else: # ATTEMPT LINE SEARCH
@@ -423,7 +424,7 @@ class AlgBFGSSQP():
 
             # for stationarity condition
             [ stat_vec, self.stat_val, qps_solved, n_grad_samples,_]   = self.computeApproxStationarityVector()
-                
+
             
             ls_evals = self.penaltyfn_obj.getNumberOfEvaluations()-evals_so_far
             
@@ -480,7 +481,7 @@ class AlgBFGSSQP():
     
     def checkDirection(self,p,g):    
         fallback            = False
-        gtp                 = torch.conj(g.t())@p
+        gtp                 = torch.conj(g.T)@p
         gtp = gtp.item()
         if math.isnan(gtp) or math.isinf(gtp):
             is_descent      = False
@@ -575,7 +576,7 @@ class AlgBFGSSQP():
         stat_vec        = self.penaltyfn_at_x.p_grad
         stat_value      = torch.norm(stat_vec)
 
-        
+
         self.opt_tol = torch.as_tensor(self.opt_tol,device = self.torch_device, dtype=self.torch_dtype)
 
         if stat_value <= self.opt_tol:
@@ -600,8 +601,14 @@ class AlgBFGSSQP():
         
         #  nonsmooth optimality measure
         qPTC_obj = qpTC()
-        [stat_vec,n_qps,ME] = qPTC_obj.qpTerminationCondition(   self.penaltyfn_at_x, grad_samples,
-                                                        self.apply_H_QP_fn, self.QPsolver, self.torch_device, self.double_precision)
+        try:
+            [stat_vec,n_qps,ME] = qPTC_obj.qpTerminationCondition(   self.penaltyfn_at_x, grad_samples,
+                                                            self.apply_H_QP_fn, self.QPsolver, self.torch_device, self.double_precision)
+        except Exception as e:
+            print("PyGRANSO:terminationQuadprogFailure")
+            print(traceback.format_exc())
+            [stat_vec,n_qps,ME] = [ None, 1, None] # set a very large stat vec
+
         stat_value = torch.norm(stat_vec).item()
         self.penaltyfn_obj.addStationarityMeasure(stat_value)
         
