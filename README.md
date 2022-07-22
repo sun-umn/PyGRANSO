@@ -65,6 +65,8 @@ Installing PyGRANSO is simple. Here is a step-by-step instruction:
 
     Jupyter Notebook-6.4.5
 
+    gurobi
+
 ## Change Logs
 
 Please check [CHANGELOG.md](./CHANGELOG.md) in the main folder.
@@ -131,5 +133,9 @@ For questions or bug reports, please either:
 
 Thanks to other contributors and bug reporters: 
 
-[Chen Jiang](https://github.com/shoopshoop): Tested perceptual attack example (ex6). Tested PyGRANSO on Win10. Debug updatePenaltyParameter function.
+[Hengyue Liang](https://hengyuel.github.io/): Tested PyGRANSO on adversarial robustness problems. Tested PyGRANSO across multiple platforms. Debugged several functions.
+
+[Ying Cui](https://sites.google.com/site/optyingcui/home): Advised the adversarial robustness problems.
+
+[Chen Jiang](https://github.com/shoopshoop): Tested perceptual attack example (ex6). Tested PyGRANSO on Win10. Debugged updatePenaltyParameter function.
 
