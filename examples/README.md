@@ -30,15 +30,15 @@ Also including implementation of the same problem by using PyGRANSO default styl
 
 # Classical (Constrained) Optimization Problems
 
-# B1: Nonlinear Feasiblity Problem
+## Example B1: Nonlinear Feasiblity Problem
 
 Reference: https://www.mathworks.com/help/optim/ug/solve-feasibility-problem.html
 
-# B2: Optimization on Sphere Manifold
+## Example B2: Optimization on Sphere Manifold
 
 Reference: https://www.manopt.org/manifold_documentation_sphere.html
 
-# B3: Trace Optimization
+## Example B3: Trace Optimization
 
 Trace optimization with orthogonal constraints.
 
@@ -46,41 +46,41 @@ Reference: Effrosini Kokiopoulou, Jie Chen, and Yousef Saad. "Trace optimization
 
 # (Constrained) Machine Learning Problems
 
-## C1: Robust PCA 
+## Example C1: Robust PCA 
 
 Reference: Yi, Xinyang, et al. "Fast algorithms for robust PCA via gradient descent." Advances in neural information processing systems. 2016.
 
-## C2: Generalized LASSO
+## Example C2: Generalized LASSO
 
 Generalized LASSO: total variation denoising
 
 Reference: Boyd, Stephen, Neal Parikh, and Eric Chu. Distributed optimization and statistical learning via the alternating direction method of multipliers. Now Publishers Inc, 2011.
 
-## C3: Logistic Regression
+## Example C3: Logistic Regression
 
 Reference: Sören Laue, Matthias Mitterreiter, and Joachim Giesen. "GENO--GENeric Optimization for Classical Machine Learning." Advances in Neural Information Processing Systems 32 (2019). and https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
 
-# C4: Support Vector Machine
+## Example C4: Support Vector Machine
 
 TODO
 
 # (Constrained) Deep Learning Problems
 
-# D1: Unconstrained Deep Learning: LeNet-5
+## Example D1: Unconstrained Deep Learning: LeNet-5
 
 Reference: LeCun, Yann. "LeNet-5, convolutional neural networks." URL: http://yann. lecun. com/exdb/lenet 20.5 (2015): 14.
 
-# D2: Perceptual Attack
+## Example D2: Perceptual Attack
 
 Adversarial Perceptual Attack on CIFAR-10 and ImageNet datasets.
 
 Reference: Laidlaw, Cassidy, Sahil Singla, and Soheil Feizi. "Perceptual adversarial robustness: Defense against unseen threat models." arXiv preprint arXiv:2006.12655 (2020).
 
-# D3: Orthogonal RNN
+## Example D3: Orthogonal RNN
 
 Reference: Lezcano-Casado, Mario, and David Martınez-Rubio. "Cheap orthogonal constraints in neural networks: A simple parametrization of the orthogonal and unitary group." International Conference on Machine Learning. PMLR, 2019.
 
-# D4: Robustness Problems
+## Example D4: Robustness Problems
 
 TODO
 
