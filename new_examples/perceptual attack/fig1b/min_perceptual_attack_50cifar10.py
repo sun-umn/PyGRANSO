@@ -21,16 +21,10 @@ device = torch.device('cuda')
 # checkpoint_fname='/home/buyun/Documents/GitHub/PyGRANSO/examples/data/checkpoints/imagenet_checkpoint.pth',
 # )
 
-# dataset, model = get_dataset_model(
-# dataset='cifar',
-# arch='resnet50',
-# checkpoint_fname='/home/buyun/Documents/GitHub/PyGRANSO/examples/data/checkpoints/cifar_pgd_l2_1.pt',
-# )
-
 dataset, model = get_dataset_model(
 dataset='cifar',
 arch='resnet50',
-checkpoint_fname='/home/buyun/Documents/GitHub/MinMaxGranso/model/PAT-Cifar10/pat_alexnet_0.7.pt',
+checkpoint_fname='/home/buyun/Documents/GitHub/PyGRANSO/examples/data/checkpoints/cifar_pgd_l2_1.pt',
 )
 
 model = model.to(device=device, dtype=torch.double)
@@ -38,12 +32,7 @@ model = model.to(device=device, dtype=torch.double)
 batch_size = 1
 _, val_loader = dataset.make_loaders(1, batch_size, only_val=True, shuffle_val=False)
 
-# inputs, labels = next(next(iter(val_loader)))
-i = 0
-for inputs,labels in iter(val_loader):
-    i+=1
-    if i > 11:
-        break
+inputs, labels = next(iter(val_loader))
 
 # All the user-provided data (vector/matrix/tensor) must be in torch tensor format.
 # As PyTorch tensor is single precision by default, one must explicitly set `dtype=torch.double`.
@@ -57,14 +46,10 @@ lpips_model = get_lpips_model('alexnet_cifar', model).to(device=device, dtype=to
 # Don't reccoment use in the current version. self-bounded attack: AlexNet for both constraint and objective
 # model = get_lpips_model('alexnet_cifar', model).to(device=device, dtype=torch.double)
 
-# attack_type = 'L_2'
-# attack_type = 'L_inf'
-# attack_type = 'Perceptual'
-# attack_type = 'L_inf_reformulation'
-attack_type = 'L_inf_reformulation_folding'
+
 
 # variables and corresponding dimensions.
-var_in = {"x_tilde": list(inputs.shape)}
+var_in = {"delta": list(inputs.shape)}
 
 def MarginLoss(logits,labels):
     correct_logits = torch.gather(logits, 1, labels.view(-1, 1))
@@ -79,50 +64,39 @@ def MarginLoss(logits,labels):
     return loss
 
 def user_fn(X_struct,inputs,labels,lpips_model,model):
-    adv_inputs = X_struct.x_tilde
 
-    # objective function
-    # 8/255 for L_inf, 1 for L_2, 0.5 for PPGD/LPA
-    if attack_type == 'L_2':
-        epsilon = 1
-    elif attack_type == 'L_inf':
-        epsilon = 8/255
-    else:
-        epsilon = 0.5
+    delta = X_struct.delta
+    # alpha = X_struct.alpha
+    # alpha = alpha.to(dtype=torch.float)
 
-    logits_outputs = model(adv_inputs)
-
-    f = MarginLoss(logits_outputs,labels)
+    # objective
+    # if attack_type == 'L2':
+    # f = torch.linalg.vector_norm(delta,2)
+    # elif attack_type == 'L1':
+    f = torch.linalg.vector_norm(delta,1)/(inputs.numel())**0.5
 
     # inequality constraint
     ci = pygransoStruct()
-    if attack_type == 'L_2':
-        ci.c1 = torch.norm((inputs - adv_inputs).reshape(inputs.size()[0], -1)) - epsilon
-    elif attack_type == 'L_inf':
-        constr_vec = (inputs-adv_inputs).reshape((inputs.numel())) 
-        ci.c1 = torch.linalg.vector_norm(constr_vec,float('inf'))  - epsilon
-    elif attack_type == 'L_inf_reformulation':
-        constr_vec = (inputs-adv_inputs).reshape((inputs.numel()))
-        tmp = torch.abs(constr_vec) - epsilon
-        # ci.c1 = torch.sum(tmp**2)**0.5 # l2 folding
-        ci.c1 = tmp
+    # ci.c1 = torch.sum(torch.clamp(-alpha, min=0)**2)**0.5 # l2
 
-    elif attack_type == 'L_inf_reformulation_folding':
-        constr_vec = (inputs-adv_inputs).reshape((inputs.numel()))
-        tmp = torch.abs(constr_vec) - epsilon
-        torch.clamp(tmp,0)
-        ci.c1 = torch.sum(tmp**2)**0.5 # l2 folding
-    else:
-        input_features = normalize_flatten_features( lpips_model.features(inputs)).detach()
-        adv_features = lpips_model.features(adv_inputs)
-        adv_features = normalize_flatten_features(adv_features)
-        lpips_dists = (adv_features - input_features).norm(dim=1)
-        ci.c1 = lpips_dists - epsilon
-
+    adv_inputs = inputs + delta
+    logits_outputs = model(adv_inputs)
+    k = torch.numel(logits_outputs)
+    fc = logits_outputs[:,labels] # true class output
+    fl = torch.hstack((logits_outputs[:,0:labels],logits_outputs[:,labels+1:k])) # remove the true class output
+    ci.c1 = fc - torch.max(fl)
+    
+    # Input Box Constraint
+    ci.c2 = torch.hstack(
+        (adv_inputs.reshape(inputs.numel())-1,
+        -adv_inputs.reshape(inputs.numel()))
+    )
+    # ci.c2 = torch.sum(torch.clamp(ci.c2, min=0)**2)**0.5 # l2
     # equality constraint
     ce = None
 
     return [f,ci,ce]
+
 
 comb_fn = lambda X_struct : user_fn(X_struct,inputs,labels,lpips_model,model)
 

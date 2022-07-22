@@ -7,11 +7,13 @@ import matplotlib.pyplot as plt
 
 my_path = os.path.dirname(os.path.abspath(__file__))
 
-K = 200 # K number of starting points. random generated initial guesses
+K = 1000 # K number of starting points. random generated initial guesses
 N = 8 # number of different data matrix (with the same size)
 
-folding_list = ['l2','l1','linf','unfolding']
-# folding_list = ['l2']
+# folding_list = ['l2','l1','linf','unfolding']
+folding_list = ['l2','unfolding']
+# folding_list = ['l2','l1','linf']
+
 
 plt_data =[]
 
@@ -28,8 +30,11 @@ for maxfolding in folding_list:
 
     for rng_seed in range(N):
         [A, U, ana_sol] = utils.data_init(rng_seed, n=10, d=5, device = torch.device('cuda'))
-
-        data_name = 'data/'+ '04292022_10:58:30_seed_7N8K200_n10_d5_l2_l1_linf_unfolding__total200_maxtime30.npy'
+        if maxfolding == 'l2':
+            # data_name = 'data/'+ '04292022_10:58:30_seed_7N8K200_n10_d5_l2_l1_linf_unfolding__total200_maxtime30.npy'
+            data_name = 'data/'+ '05032022_09:51:31_seed_7N8K1000_n10_d5_l2__total1000_maxtime30.npy'
+        elif maxfolding == 'unfolding':
+            data_name = 'data/'+ '05032022_16:51:49_seed_7N8K1000_n10_d5_unfolding__total1000_maxtime30.npy'
         dict_name = os.path.join(my_path, data_name)
         test = np.load(dict_name, allow_pickle=True)
         
@@ -55,7 +60,7 @@ for maxfolding in folding_list:
         ge_arr = np.abs(tmp_dict['F'] / ana_sol) >=0.99
         le_arr = np.abs(tmp_dict['F'] / ana_sol) <=1.01
 
-        gamma_n = np.sum(np.logical_and(ge_arr,le_arr))/len(E_k)
+        gamma_n = np.sum(np.logical_and(ge_arr,le_arr))/len(E_k)*100
         gamma_arr = np.append(gamma_arr,gamma_n)
 
         T_k = tmp_dict['time']
@@ -69,7 +74,7 @@ for maxfolding in folding_list:
 
         pass
 
-    print("folding type: {}; E {}; sigma: {}; gamma: {}; T: {}".format(maxfolding,np.mean(E_arr),np.mean(sigma_arr),np.mean(gamma_arr),np.mean(T_arr)))
+    print("folding type: {}; E {:.2e}; sigma: {:.2e}; gamma: {:.2f}; T: {:.2f}".format(maxfolding,np.mean(E_arr),np.mean(sigma_arr),np.mean(gamma_arr),np.mean(T_arr)))
     plt_data.append(E_all_seeds)
     # print(code_arr)
     code0 = np.sum(code_arr==0)/len(code_arr)*100
@@ -77,7 +82,7 @@ for maxfolding in folding_list:
     code5 = np.sum(code_arr==5)/len(code_arr)*100
     code6 = np.sum(code_arr==6)/len(code_arr)*100
 
-    print("0: {}; 2: {}; 5: {}; 6: {}".format(code0,code2,code5,code6   ))
+    print("0: {:.2f}; 2: {:.2f}; 5: {:.2f}; 6: {:.2f}".format(code0,code2,code5,code6   ))
     print(code0+code2+code5+code6)
 
 
@@ -87,5 +92,12 @@ plt.title("Error of different folding types")
 # Creating plot
 plt.boxplot(plt_data)
 # Creating axes instance
-plt.xticks([1, 2, 3,4], ['l2', 'l1', 'linf', 'unfolding'])
+# plt.xticks([1, 2, 3,4], ['l2', 'l1', 'linf', 'unfolding'])
+# plt.xticks([1, 2, 3], ['l2_sq', 'l1_sq', 'linf_sq'])
+plt.xticks([1,2], ['l2','unfolding'])
+
+plt.ylim([-0.05, 0.85])
+plt.locator_params(axis="y", nbins=5)
+plt.ylabel('Error')
+
 plt.show()

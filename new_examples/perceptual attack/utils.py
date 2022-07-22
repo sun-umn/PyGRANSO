@@ -86,35 +86,71 @@ def move_data_device(device,precision,inputs,labels):
     labels = labels.to(device=device)
     return inputs,labels
 
-def user_fn(X_struct, inputs, labels, lpips_model, model, attack_type, eps,box_constr):
-    adv_inputs = X_struct.x_tilde + 1e-5
+def Neg_MarginLoss_2(logits,labels, target_order=4):
+    correct_logits = torch.gather(logits, 1, labels.view(-1, 1))
+    max_2_logits, argmax_2_logits = torch.topk(logits, target_order, dim=1)
+ 
+    chunk_values = max_2_logits.chunk(target_order, dim=1)
+    top_max = chunk_values[0]
+    second_max = chunk_values[-1]
+    top_argmax = argmax_2_logits.chunk(target_order, dim=1)[0]
+
+    labels_eq_max = top_argmax.squeeze().eq(labels).float().view(-1, 1)
+    labels_ne_max = top_argmax.squeeze().ne(labels).float().view(-1, 1)
+    max_incorrect_logits = labels_eq_max * second_max + labels_ne_max * top_max
+
+    loss = -(max_incorrect_logits - correct_logits).clamp(max=1).squeeze().sum()
+    return loss
+
+def user_fn(X_struct, inputs, labels, lpips_model, model, attack_type, eps,box_constr,loss_fn):
+    # adv_inputs = X_struct.x_tilde + 1e-5
+    adv_inputs = X_struct.x_tilde
     epsilon = eps
     logits_outputs = model(adv_inputs)
-    f = -torch.nn.functional.cross_entropy(logits_outputs,labels)
+    if loss_fn == 'ce':
+        f = -torch.nn.functional.cross_entropy(logits_outputs,labels)
+    elif loss_fn == 'margin':
+        f = Neg_MarginLoss_2(logits_outputs,labels)
 
     # inequality constraint
     ci = pygransoStruct()
     constr_vec = (inputs-adv_inputs).reshape((inputs.numel()))
     if attack_type == 'L_2':
-        ci.c1 = torch.linalg.norm(constr_vec,2) - epsilon
+        # ci.c1 = torch.linalg.norm(constr_vec,2) - epsilon
+        ci.c1 = torch.sum(constr_vec**2)**0.5 - epsilon
     elif attack_type == 'L_inf':
-        ci.c1 = torch.amax(torch.abs(constr_vec)) - epsilon
-    else:
+        # ci.c1 = torch.max(torch.abs(constr_vec)) - epsilon
+        ci.c1 = torch.linalg.norm(constr_vec,float('inf')) - epsilon
+        # ci.c1 = ci.c1/100
+
+    elif attack_type == 'L_1':
+        # ci.c1 = torch.linalg.norm(constr_vec,1) - epsilon
+        ci.c1 = torch.sum(torch.abs(constr_vec)) - epsilon
+
+    elif attack_type == "Perceptual":
         input_features = normalize_flatten_features( lpips_model.features(inputs)).detach()
         adv_features = lpips_model.features(adv_inputs)
         adv_features = normalize_flatten_features(adv_features)
         lpips_dists = (adv_features - input_features).norm(dim=1)
         ci.c1 = lpips_dists - epsilon
 
+    elif attack_type == 'l2folding':
+        tmp = torch.abs(constr_vec) - epsilon
+        ci.c1 = torch.sum(tmp**2)**0.5 # l2 folding
+
+        # ci.c1 = torch.sum(tmp) # l1 folding
+        # ci.c1 = torch.max(tmp) # linf folding
+
+
     if box_constr:
         box_constr_vec = torch.hstack((adv_inputs.reshape(inputs.numel())-1,-adv_inputs.reshape(inputs.numel())))
-        ci.c2 = torch.sum(torch.clamp(box_constr_vec, min=0)**2)**0.5 # l2
+        ci.c2 = torch.sum(torch.clamp(box_constr_vec, min=0)**2)**0.5 # l2 folding
 
     # equality constraint
     ce = None
     return [f,ci,ce]
 
-def get_opts(device,maxit,opt_tol,viol_ineq_tol,print_frequency,limited_mem_size,mu0,inputs,precision,maxclocktime):
+def get_opts(device,maxit,opt_tol,viol_ineq_tol,print_frequency,limited_mem_size,mu0,inputs,precision,maxclocktime,steering_c_viol,steering_c_mu):
     opts = pygransoStruct()
     opts.print_use_orange = False
     opts.print_ascii = True
@@ -127,12 +163,15 @@ def get_opts(device,maxit,opt_tol,viol_ineq_tol,print_frequency,limited_mem_size
     opts.limited_mem_size = limited_mem_size
     opts.mu0 = mu0
     opts.maxclocktime = maxclocktime
-    opts.x0 = torch.reshape(inputs,(torch.numel(inputs),1)) + 1e-5*torch.randn((torch.numel(inputs),1)).to(device=device, dtype=precision)
-    # opts.steering_c_viol = 0.99 # may be useful for l1 attack
-    # opts.steering_c_mu = 0.1
+    opts.x0 = torch.reshape(inputs,(torch.numel(inputs),1)) + 1e-4*torch.randn((torch.numel(inputs),1)).to(device=device, dtype=precision)
+    # opts.x0 = torch.randn((torch.numel(inputs),1)).to(device=device, dtype=precision)
+    # opts.x0 = torch.reshape(inputs,(torch.numel(inputs),1)) + torch.randn((torch.numel(inputs),1)).to(device=device, dtype=precision)
+
+    opts.steering_c_viol = steering_c_viol 
+    opts.steering_c_mu = steering_c_mu 
     return opts
 
-def visualize_attack(soln,inputs):
+def visualize_attack(soln,inputs,error):
 
     def rescale_array(array):
         ele_min, ele_max = np.amin(array), np.amax(array)
@@ -150,22 +189,38 @@ def visualize_attack(soln,inputs):
         return array
 
     final_adv_input = torch.reshape(soln.final.x,inputs.shape)
+    error_input = torch.reshape(error,inputs.shape)
 
     ori_image = rescale_array(tensor2img(inputs))
     adv_image = rescale_array(tensor2img(final_adv_input))
+    err_image = rescale_array(tensor2img(error_input))
 
     # print( np.amax(np.abs(adv_image-ori_image).reshape(inputs.size()[0], -1)))
 
     f = plt.figure()
-    f.add_subplot(1,2,1)
+    f.add_subplot(1,3,1)
     plt.imshow(ori_image)
     plt.title('Original Image')
     plt.axis('off')
-    f.add_subplot(1,2,2)
+    f.add_subplot(1,3,2)
     plt.imshow(adv_image)
     plt.title('Adversarial Attacked Image')
     plt.axis('off')
+    f.add_subplot(1,3,3)
+    plt.imshow(err_image)
+    plt.title('Error')
+    plt.axis('off')
     plt.show()
+
+def plot_histogram(target_array, save_path):
+    err = np.abs(target_array.reshape(-1))
+    plt.figure(figsize=(8,6))
+    plt.yscale('log')
+    plt.hist(err, bins=100)
+    plt.grid(linestyle='dotted')
+    plt.xlabel("\delta")
+    plt.ylabel("Number of points.")
+    plt.savefig(save_path)
 
 def get_name(batch_size,maxclocktime,attack_type,box_constr,rng_seed):
     if box_constr:

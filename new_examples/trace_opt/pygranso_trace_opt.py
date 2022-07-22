@@ -21,17 +21,17 @@ n = 10 # V: n*d
 d = 5 # copnst: d*d
 
 # folding_list = ['l2','l1','linf']
-# folding_list = ['l2','l1']
-folding_list = ['l2','l1','linf','unfolding']
-# folding_list = ['l2','unfolding']
+# folding_list = ['l2']
+# folding_list = ['l2','l1','linf','unfolding']
+folding_list = ['unfolding']
 
-K = 200 # K number of starting points. random generated initial guesses
+K = 1000 # K number of starting points. random generated initial guesses
 N = 8 # number of different data matrix (with the same size)
 # K = 2
 # N = 3
 
 
-opt_tol = 1e-6
+opt_tol = 1e-16
 maxit = 50000
 maxclocktime = 30
 # QPsolver = "gurobi"
