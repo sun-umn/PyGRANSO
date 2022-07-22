@@ -127,9 +127,9 @@ BibTex:
 For questions or bug reports, please either:
 - raise issues in the PyGRANSO repository (https://github.com/sun-umn/PyGRANSO/) or
 - send an email to:
-  - Buyun Liang (*liang664 an_at_symbol umn a_dot_symbol edu*)
-  - Tim Mitchell (*tim an_at_symbol timmitchell a_dot_symbol com*)
-  - Ju Sun (*jusun an_at_symbol umn a_dot_symbol edu*)
+  - [Buyun Liang](https://buyunliang.org/) (*liang664 an_at_symbol umn a_dot_symbol edu*)
+  - [Tim Mitchell](http://www.timmitchell.com/) (*tim an_at_symbol timmitchell a_dot_symbol com*)
+  - [Ju Sun](https://sunju.org/) (*jusun an_at_symbol umn a_dot_symbol edu*)
 
 Thanks to other contributors and bug reporters: 
 
