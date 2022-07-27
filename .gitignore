@@ -77,23 +77,4 @@ examples/data/checkpoints
 examples/examples
 examples/TMLR/user_grad_constr_dl_orthogonal_constraint.py.lprof
 examples/TMLR/constr_dl_orthogonal_constraint.py.lprof
-new_examples/ortho_rnn/trace_opt_test/png
-new_examples/ortho_rnn/trace_opt_test/log
-new_examples/svm/svm_test/png
-new_examples/svm/svm_test/log
-
-new_examples/trace_opt/png
-new_examples/trace_opt/log
-new_examples/trace_opt/data
-
-new_examples/*/png
-new_examples/*/log
-new_examples/*/data
-new_examples/perceptual attack/fig1b/log_min_folding.txt
-new_examples/perceptual attack/fig1b/log_min_unfolding.txt
-new_examples/perceptual attack/history/fig1a.zip
-new_examples/perceptual attack/history/log_w_rf.txt
-new_examples/perceptual attack/history/log_wo_R.txt
-new_examples/perceptual attack/history/fig1a/log_inf_reformualtion_folding.txt
-new_examples/perceptual attack/history/fig1a/log_inf_reformualtion.txt
-new_examples/perceptual attack/history/fig1a/log_linf.txt
+examples/TODO
