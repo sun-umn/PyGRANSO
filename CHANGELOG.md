@@ -12,7 +12,7 @@ Description: major fixes and improvements on LBFGS.
 - Allow high precision for QP solver.
 - Allow part of optimization variables not showing up in objective (see SVM example).
 - Fixed Code 12: terminated with steering failure.
-- Fixed stationary failure: try different stationarity calculation, or set stationarity measure to be inf if encounter numberical issue
+- Fixed stationary failure: try different stationarity calculation, or set stationarity measure to be inf if encounter numerical issue
 
 **Added**
 - Reorganize and add examples: perceptual/lp norm attack on ImageNet images. trace optimization with orthogonal constraints; unconstrained deep learning with LeNet5; logistic regression.
