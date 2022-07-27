@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="pygranso",
-    version="1.0.0-dev3",
+    version="1.2.0",
     author="Tim Mitchell and Buyun Liang",
     author_email="liang664@umn.edu, tim@timmitchell.com",
     description="PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation",
