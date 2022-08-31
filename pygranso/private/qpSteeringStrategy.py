@@ -227,13 +227,16 @@ class qpSS:
         tmp_arr = self.ineq + self.ineq_grad.T @ d
         tmp_arr[tmp_arr < 0] = 0
 
-        dL = self.violation - torch.sum(tmp_arr) - torch.norm(self.eq + self.eq_grad.t()@d, p = 1)
+        dL = self.violation - torch.sum(tmp_arr) - torch.linalg.vector_norm(self.eq + self.eq_grad.T@d, ord = 1)
         return dL
 
     #  l-infinity total violation
     def predictedViolationReduction(self,d):
         tmp_arr = self.ineq + self.ineq_grad.T @ d
-        dL = self.violation - np.max(np.max(tmp_arr),0) - LA.norm(self.eq + self.eq_grad.T@d,ord = np.inf)
+        if self.eq.shape[0] > 0:
+            dL = self.violation - max(torch.max(tmp_arr),0) - torch.linalg.vector_norm(self.eq + self.eq_grad.T@d, ord = float("inf"))
+        else: # linf norm is not allowed for empty tensor
+            dL = self.violation - max(torch.max(tmp_arr),0)
         return dL
     
     #  solve dual of steering QP to yeild new search direction

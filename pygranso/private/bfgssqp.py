@@ -7,7 +7,6 @@ import time
 from pygranso.pygransoStruct import pygransoStruct
 import math
 import numpy as np
-from numpy.random import default_rng
 import traceback
 
 class AlgBFGSSQP():
@@ -175,6 +174,9 @@ class AlgBFGSSQP():
         self.regularize_max_eigenvalues  = opts.regularize_max_eigenvalues
         
         self.QPsolver               = opts.QPsolver
+
+        # experimental options
+        self.stat_l2_model          = opts.stat_l2_model
 
         #  line search parameters
         wolfe1                      = opts.wolfe1
@@ -609,7 +611,11 @@ class AlgBFGSSQP():
             print(traceback.format_exc())
             [stat_vec,n_qps,ME] = [ None, 1, None] # set a very large stat vec
 
-        stat_value = torch.norm(stat_vec).item()
+        if self.stat_l2_model:
+            stat_value = torch.linalg.vector_norm(stat_vec,ord=2).item()
+        else: # use linf model
+            stat_value = torch.linalg.vector_norm(stat_vec,ord=float("inf")).item()
+
         self.penaltyfn_obj.addStationarityMeasure(stat_value)
         
         if self.print_level > 2 and  len(ME) > 0:
