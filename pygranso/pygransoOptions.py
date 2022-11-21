@@ -519,6 +519,7 @@ def pygransoOptions(n,options):
         validator.setString("QPsolver")
         validator.setRealInIntervalCC("regularize_threshold",1,np.inf)
         validator.setLogical("regularize_max_eigenvalues")
+        validator.setLogical("stat_l2_model")
 
         #  LINE SEARCH PARAMETERS
         #  wolfe1: conventionally wolfe1 should be positive in (0,1) but
@@ -627,6 +628,7 @@ def getDefaults(n):
     setattr(default_opts,'max_fallback_level',LAST_FALLBACK_LEVEL-1)
     setattr(default_opts,'max_random_attempts',5)
     setattr(default_opts,'steering_l1_model',True)
+    setattr(default_opts,'stat_l2_model',True)
     setattr(default_opts,'steering_ineq_margin',1e-6)
     setattr(default_opts,'steering_maxit',10)
     setattr(default_opts,'steering_c_viol',0.1)

@@ -1,8 +1,6 @@
 import numpy as np
 import torch
 from pygranso.private.solveQP import solveQP
-from numpy import linalg as LA
-import traceback
 
 class qpTC:
     def __init__(self):
