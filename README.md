@@ -126,16 +126,25 @@ BibTex:
 ## Contact
 For questions or bug reports, please either:
 - raise issues in the PyGRANSO repository (https://github.com/sun-umn/PyGRANSO/) or
-- send an email to:
-  - [Buyun Liang](https://buyunliang.org/) (*liang664 an_at_symbol umn a_dot_symbol edu*)
+- send an email to our NCVX PyGRANSO forum: ncvx@umn.edu
+
+Main authors:
+
+  - [Buyun Liang](https://buyunliang.org/) (*byliang an_at_symbol seas a_dot_symbol upenn a_dot_symbol edu*)
   - [Tim Mitchell](http://www.timmitchell.com/) (*tim an_at_symbol timmitchell a_dot_symbol com*)
   - [Ju Sun](https://sunju.org/) (*jusun an_at_symbol umn a_dot_symbol edu*)
 
 Thanks to other contributors and bug reporters: 
 
-[Hengyue Liang](https://hengyuel.github.io/): Tested PyGRANSO on adversarial robustness problems. Tested PyGRANSO across multiple platforms. Debugged several functions.
+- [Hengyue Liang](https://hengyuel.github.io/): Applied PyGRANSO on adversarial robustness problems. Tested PyGRANSO across multiple platforms. Debugged several functions.
 
-[Ying Cui](https://sites.google.com/site/optyingcui/home): Advised the adversarial robustness problems.
+- Wenjie Zhang: Tested practical techniques on various constrained deep learning problems, which can be used to accelerate the convergence of PyGRANSO.
 
-[Chen Jiang](https://github.com/shoopshoop): Tested perceptual attack example (ex6). Tested PyGRANSO on Win10. Debugged updatePenaltyParameter function.
+- [Ryan de Vera](https://github.com/rydevera3): Applied PyGRANSO on neural topology optimization problems.
+
+- Yash Travadi: Applied PyGRANSO on imbalanced classification problems.
+
+- [Ying Cui](https://sites.google.com/site/optyingcui/home): Advised the adversarial robustness problems.
+
+- [Chen Jiang](https://github.com/shoopshoop): Tested perceptual attack example (ex6). Tested PyGRANSO on Win10. Debugged updatePenaltyParameter function.
 
