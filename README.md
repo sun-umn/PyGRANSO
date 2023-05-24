@@ -89,10 +89,7 @@ implemented in the software package [GRANSO](http://www.timmitchell.com/software
 If you publish work that uses or refers to PyGRANSO, please cite the following two papers,
 which respectively introduced PyGRANSO and GRANSO:
 
-*[1] Buyun Liang, Tim Mitchell, and Ju Sun,
-    NCVX: A User-Friendly and Scalable Package for Nonconvex
-    Optimization in Machine Learning, arXiv preprint arXiv:2111.13984 (2021).*
-    Available at https://arxiv.org/abs/2111.13984
+*[1] Buyun Liang, Tim Mitchell, and Ju Sun, NCVX: A General-Purpose Optimization Solver for Constrained Machine and Deep Learning, arXiv preprint arXiv:2210.00973 (2022). Available at https://arxiv.org/abs/2210.00973*
 
 *[2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton,
     A BFGS-SQP method for nonsmooth, nonconvex, constrained
