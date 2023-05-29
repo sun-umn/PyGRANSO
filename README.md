@@ -122,8 +122,8 @@ BibTex:
 
 ## Contact
 For questions or bug reports, please either:
-- raise issues in the PyGRANSO repository (https://github.com/sun-umn/PyGRANSO/) or
-- send an email to our NCVX PyGRANSO forum (https://groups.google.com/a/umn.edu/g/ncvx): ncvx@umn.edu
+- raise issues in the [PyGRANSO repository](https://github.com/sun-umn/PyGRANSO/) or
+- send an email to our [NCVX PyGRANSO forum](https://groups.google.com/a/umn.edu/g/ncvx): ncvx@umn.edu
 
 Main authors:
 
