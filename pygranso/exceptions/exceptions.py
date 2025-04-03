@@ -1,0 +1,2 @@
+class PyGransoSystemExitException(Exception):
+    pass
