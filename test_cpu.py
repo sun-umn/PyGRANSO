@@ -7,7 +7,7 @@ import os
 import numpy as np
 from scipy.stats import norm
 import numpy.linalg as la
-
+import traceback
 """
     test_cpu.py:
         Test whether the dependency installation for the CPU version is correct.
@@ -390,4 +390,7 @@ if __name__ == "__main__" :
         sphere_manifold()
         print("Successfully passed all tests!")
     except Exception:
-        print("Test {} fail, please carefully read the instructions on https://ncvx.org/ for installation".format(count))
+        print()
+        print("\033[93m Test {} fail, please carefully read the instructions on https://ncvx.org/ for installation \033[0m".format(count))
+        print()
+        traceback.print_exc()

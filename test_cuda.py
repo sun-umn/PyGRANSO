@@ -8,7 +8,7 @@ import numpy as np
 from scipy.stats import norm
 import numpy.linalg as la
 from pygranso.private.tensor2vec import getCiGradVec
-
+import traceback
 """
     test_cuda.py:
         Test whether the dependency installation for the CUDA version is correct.
@@ -415,4 +415,7 @@ if __name__ == "__main__" :
         sphere_manifold()
         print("Successfully passed all tests!")
     except Exception:
-        print("Test {} fail, please carefully read the instructions on https://ncvx.org/ for installation".format(count))
+        print()
+        print("\033[93m Test {} fail, please carefully read the instructions on https://ncvx.org/ for installation \033[0m".format(count))
+        print()
+        traceback.print_exc()
