@@ -22,9 +22,9 @@ from pygranso.pygransoStruct import pygransoStruct
 
 
 def pygranso(
-    var_spec: Module | dict,
+    var_spec,
     combined_fn: Callable,
-    user_opts: None | pygransoStruct = None,
+    user_opts=None,
 ):
     """
     PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation

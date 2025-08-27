@@ -207,6 +207,11 @@ class H_obj_struct:
                 if self.fixed_scaling:
                     self.update_gamma = False
                 
+#         print(self.S.shape)
+#         print(self.Y.shape)
+#         print(self.rho.shape)
+#         print(self.count)
+#         print(self.nvec)
         
         if self.count < self.nvec:
             
@@ -214,6 +219,7 @@ class H_obj_struct:
             self.Y[:,self.count] = y[:,0]
             self.rho[0,self.count] = rho_new    
             self.count += 1
+            
         else:
             self.S = torch.hstack((self.S[:,1:], s)) 
             self.Y = torch.hstack((self.Y[:,1:], y)) 
@@ -225,7 +231,9 @@ class H_obj_struct:
 
         return skipped
 
-    def applyH(self,q_in):
+    def applyH(self, q_in):
+        print(q_in.shape)
+        
         q = q_in.detach().clone()
         #  q might be a matrix, not just a vector, so we want to apply
         #  multiplication to all columns of q
