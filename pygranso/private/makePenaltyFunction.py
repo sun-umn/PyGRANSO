@@ -615,8 +615,6 @@ class PanaltyFuctions:
     #     return s
 
     def snapShot(self):
-        print("Updated snapshot")
-
         # Helper function to safely detach tensors
         def safe_detach(tensor):
             if torch.is_tensor(tensor):

@@ -81,3 +81,5 @@ examples/TODO
 
 *.ipynb_checkpoints
 *.ipynb
+*.pt
+*.ini

@@ -350,9 +350,7 @@ class AlgBFGSSQP:
         self.iter = 1
         evals_so_far = self.penaltyfn_obj.getNumberOfEvaluations()
 
-        print(maxit)
         while self.iter <= maxit:
-            print_gpu_memory(f"Iter {self.iter} - Start")
             # Call standard steering strategy to produce search direction p
             # which hopefully "promotes progress towards feasibility".
             # However, if the returned p is empty, this means all QPs failed
@@ -383,11 +381,9 @@ class AlgBFGSSQP:
                     apply_H_steer = APPLY_IDENTITY  # "degraded" steering
 
                 try:
-                    print_gpu_memory(f"Iter {self.iter} - Before Steering")
                     # Note about penaltyfn_at_x - this is storing all of the computed value for different
                     # properties - for top opt thisi is also storing x which has 4M elements!
                     [p, mu_new, *_] = steering_fn(self.penaltyfn_at_x, apply_H_steer)
-                    print_gpu_memory(f"Iter {self.iter} - After Steering")
                 except Exception as e:
                     print("PyGRANSO:steeringQuadprogFailure")
                     print(traceback.format_exc())
@@ -397,9 +393,7 @@ class AlgBFGSSQP:
 
                 penalty_parameter_changed = mu_new != self.mu
                 if penalty_parameter_changed:
-                    print_gpu_memory(f"Iter {self.iter} - Before Update Parameter")
                     [f, g, self.mu] = self.penaltyfn_obj.updatePenaltyParameter(mu_new)
-                    print_gpu_memory(f"Iter {self.iter} - After Update Parameter")
 
             elif self.fallback_level == 2:
                 p = -self.apply_H_fn(g)  # standard BFGS
@@ -417,10 +411,6 @@ class AlgBFGSSQP:
                 p = 1 * p / p_norm
 
             [p, is_descent, fallback_on_this_direction] = self.checkDirection(p, g)
-            print_gpu_memory(f"Iter {self.iter} - After P and check direction")
-            # import pdb
-
-            # pdb.set_trace()
 
             if fallback_on_this_direction:
                 if self.bumpFallbackLevel():
@@ -430,7 +420,6 @@ class AlgBFGSSQP:
                     return self.info
 
             else:  # ATTEMPT LINE SEARCH
-                print_gpu_memory(f"Iter {self.iter} - Before line search")
                 f_prev = f  # for relative termination tolerance
                 self.g_prev = g  # necessary for BFGS update
                 if is_descent:
@@ -444,7 +433,6 @@ class AlgBFGSSQP:
 
                 # this will also update gprev if it lowers mu and it succeeds
                 [alpha, x_new, f, g, linesearch_failed] = ls_procedure_fn(x, f, g, p)
-                print_gpu_memory(f"Iter {self.iter} - After line search")
 
             if self.disable_terminationcode_6:
                 if linesearch_failed and self.fallback_level == 3:
@@ -491,9 +479,7 @@ class AlgBFGSSQP:
 
             # Update all components of the penalty function evaluated
             # at the new accepted iterate x and snapsnot the data.
-            print_gpu_memory(f"Iter {self.iter} - Before SnapShot")
             self.penaltyfn_at_x = self.penaltyfn_obj.snapShot()
-            print_gpu_memory(f"Iter {self.iter} - After Snapshot")
 
             # for stationarity condition
             [stat_vec, self.stat_val, qps_solved, n_grad_samples, _] = (
@@ -506,9 +492,7 @@ class AlgBFGSSQP:
             # This computation is done before checking the termination
             # conditions because we wish to provide the most recent (L)BFGS
             # data to users in case they desire to restart.
-            print_gpu_memory(f"Iter {self.iter} - Before Update")
             self.applyBfgsUpdate(alpha, p, g, self.g_prev)
-            print_gpu_memory(f"Iter {self.iter} - After Update")
 
             if np.any(halt_log_fn != None):
                 user_halt = halt_log_fn(
@@ -561,7 +545,7 @@ class AlgBFGSSQP:
 
             # In the while loop, add this every N iterations:
             if self.iter % 10 == 0:  # Every 10 iterations
-                print("Garbage collection & and clearing CUDA cache")
+                # Adding garbage collection and clearing cuda cache to avoid memory leak
                 gc.collect()
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
