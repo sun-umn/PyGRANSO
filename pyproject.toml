@@ -12,6 +12,7 @@ dependencies = [
     "pandas>=2.3.2",
     "polars>=1.32.3",
     "scipy>=1.16.1",
+    "tf-nightly>=2.21.0.dev20250903",
     "torch>=2.8.0",
     "torchaudio>=2.8.0",
     "torchvision>=0.23.0",

@@ -125,10 +125,8 @@ def solveQP(H, f, A, b, LB, UB, QPsolver, torch_device, double_precision):
         # Create an OSQP object
         # Set algebra based on device type
         if str(torch_device).startswith("cuda"):
-            print("Using CUDA algebra")
             algebra_type = "cuda"
         else:
-            print("Using builtin algebra")
             algebra_type = "builtin"
         prob = osqp.OSQP(algebra=algebra_type)
 
