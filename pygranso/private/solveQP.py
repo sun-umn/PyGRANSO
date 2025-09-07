@@ -122,13 +122,15 @@ def solveQP(H, f, A, b, LB, UB, QPsolver, torch_device, double_precision):
             LB_new = LB
             UB_new = UB
 
-        # Create an OSQP object
-        # Set algebra based on device type
-        if str(torch_device).startswith("cuda"):
-            algebra_type = "cuda"
-        else:
-            algebra_type = "builtin"
-        prob = osqp.OSQP(algebra=algebra_type)
+        # # Create an OSQP object
+        # # Set algebra based on device type
+        # if str(torch_device).startswith("cuda"):
+        #     algebra_type = "cuda"
+        # else:
+        #     algebra_type = "builtin"
+        # prob = osqp.OSQP(algebra=algebra_type)
+
+        prob = osqp.OSQP(algebra="builtin")
 
         # Setup workspace and change alpha parameter
         prob.setup(
