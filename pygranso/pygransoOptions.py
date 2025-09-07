@@ -331,6 +331,14 @@ def pygransoOptions(n, options):
 
         Select the QP solver used in the steering strategy and termination condition. Currently only OSQP is supported.
 
+        cuda_osqp_enabled
+        --------------------------------
+        Boolean value. Default value: True
+
+        When using OSQP solver, enables CUDA algebra for faster computation on GPU.
+        When True, OSQP will use algebra='cuda', otherwise algebra='builtin'.
+        This allows experimentation with different algebra types for performance optimization.
+
         torch_device
         --------------------------------
         torch.device('cpu') OR torch.device('cuda'). Default value: torch.device('cpu')
@@ -534,6 +542,7 @@ def pygransoOptions(n, options):
         validator.setRealInIntervalOO("steering_c_mu", 0, 1)
         validator.setLogical("quadprog_info_msg")
         validator.setString("QPsolver")
+        validator.setLogical("cuda_osqp_enabled")
         validator.setRealInIntervalCC("regularize_threshold", 1, np.inf)
         validator.setLogical("regularize_max_eigenvalues")
         validator.setLogical("stat_l2_model")
@@ -657,6 +666,7 @@ def getDefaults(n):
     setattr(default_opts, "regularize_max_eigenvalues", False)
     setattr(default_opts, "quadprog_info_msg", True)
     setattr(default_opts, "QPsolver", "osqp")
+    setattr(default_opts, "cuda_osqp_enabled", False)
     setattr(default_opts, "wolfe1", 1e-4)
     setattr(default_opts, "wolfe2", 0.5)
     setattr(default_opts, "linesearch_nondescent_maxit", 0)

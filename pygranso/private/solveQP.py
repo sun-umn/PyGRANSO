@@ -11,7 +11,9 @@ from scipy import sparse
 QP_REQUESTS = 0
 
 
-def solveQP(H, f, A, b, LB, UB, QPsolver, torch_device, double_precision):
+def solveQP(
+    H, f, A, b, LB, UB, QPsolver, torch_device, double_precision, cuda_osqp_enabled=True
+):
     """
     solveQP:
         Convenience wrapper for any quadprog interface QP solver.  This
@@ -122,15 +124,15 @@ def solveQP(H, f, A, b, LB, UB, QPsolver, torch_device, double_precision):
             LB_new = LB
             UB_new = UB
 
-        # # Create an OSQP object
-        # # Set algebra based on device type
-        # if str(torch_device).startswith("cuda"):
-        #     algebra_type = "cuda"
-        # else:
-        #     algebra_type = "builtin"
-        # prob = osqp.OSQP(algebra=algebra_type)
-
-        prob = osqp.OSQP(algebra="builtin")
+        # Create an OSQP object
+        # Set algebra based on cuda_osqp_enabled parameter
+        if cuda_osqp_enabled:
+            algebra_type = "cuda"
+            print("Using CUDA OSQP algebra")
+        else:
+            algebra_type = "builtin"
+            print("Using builtin OSQP algebra")
+        prob = osqp.OSQP(algebra=algebra_type)
 
         # Setup workspace and change alpha parameter
         prob.setup(
