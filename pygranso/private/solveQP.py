@@ -126,12 +126,13 @@ def solveQP(
 
         # Create an OSQP object
         # Set algebra based on cuda_osqp_enabled parameter
+        print(f"cuda_osqp_enabled: {cuda_osqp_enabled}")
+
         if cuda_osqp_enabled:
             algebra_type = "cuda"
-            print("Using CUDA OSQP algebra")
         else:
             algebra_type = "builtin"
-            print("Using builtin OSQP algebra")
+
         prob = osqp.OSQP(algebra=algebra_type)
 
         # Setup workspace and change alpha parameter
@@ -146,7 +147,6 @@ def solveQP(
             polish=True,
             verbose=False,
         )
-        # prob.setup(H_sparse, f, A_new, LB_new, UB_new, alpha=1.0,verbose=False)
 
         # Solve problem
         res = prob.solve()

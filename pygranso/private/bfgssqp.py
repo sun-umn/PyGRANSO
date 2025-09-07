@@ -181,6 +181,7 @@ class AlgBFGSSQP:
 
         self.QPsolver = opts.QPsolver
         self.cuda_osqp_enabled = opts.cuda_osqp_enabled
+        print(f"CUDA OSQP enabled: {self.cuda_osqp_enabled}")
 
         # experimental options
         self.stat_l2_model = opts.stat_l2_model
