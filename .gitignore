@@ -78,3 +78,6 @@ examples/examples
 examples/TMLR/user_grad_constr_dl_orthogonal_constraint.py.lprof
 examples/TMLR/constr_dl_orthogonal_constraint.py.lprof
 examples/TODO
+
+*.ipynb_checkpoints
+*.ipynb

@@ -1,30 +1,33 @@
 import torch
-from torch import conj
+
 from pygranso.pygransoStruct import pygransoStruct
 
-def bfgsHessianInverseLimitedMem(H0,scaleH0,fixed_scaling,nvec,restart_data,device, double_precision):
+
+def bfgsHessianInverseLimitedMem(
+    H0, scaleH0, fixed_scaling, nvec, restart_data, device, double_precision
+):
     """
     bfgsHessianInverseLimitedMem:
-        An object that maintains and updates a L-BFGS approximation to the 
+        An object that maintains and updates a L-BFGS approximation to the
         inverse Hessian.
-    
+
         INPUT:
             HO                  [ positive definite matrix ]
                 Initial inverse Hessian approximation to use in L-BFGS update
                 formula.
-        
+
             scaleH0             [ logical ]
                 Logical indicating whether or not to employ scaling to H0.
-        
+
             fixed_scaling       [ logical ]
                 When fixed_scaling is true (and scaleH0 is also true), the
                 first calculated value of the scaling parameter will be used
                 for all subsequent updates.  Otherwise, a new value of the
                 scaling parameter will be calculated on each update.
-        
+
             nvec                [ positive integer ]
                 number of vectors to store for L-BFGS.
-        
+
             restart_data        [ struct ]
                 Struct of data to warm-start L-BFGS from previous information:
                 .S          n by m real-valued finite matrix of s vectors
@@ -32,12 +35,12 @@ def bfgsHessianInverseLimitedMem(H0,scaleH0,fixed_scaling,nvec,restart_data,devi
                 .rho        length m real-valued row vector of 1/sty values
                 .gamma      real finite value
                 H_obj.getState() returns a struct containing this data.
-                        
+
         OUTPUT:
-            H_obj               [ a struct ] 
+            H_obj               [ a struct ]
                 A struct containing function handles for maintaining an L-BFGS
                 inverse Hessian approximation.
-        
+
                 skipped = H_obj.update(s,y,sty,damped)
                 Attempt an L-BFGS update.
                 INPUT:
@@ -45,25 +48,25 @@ def bfgsHessianInverseLimitedMem(H0,scaleH0,fixed_scaling,nvec,restart_data,devi
                     y           BFGS vector: y = g_{k_1} - g_k
                     sty         s.T@y
                     damped      logical: whether or not damping was applied to
-                                y to ensure that sty > 0 
+                                y to ensure that sty > 0
                 OUTPUT:
                     skipped     an integer indicating the status:
                                     skipped = 0:    successful L-BFGS update
                                     skipped = 1:    update but without scaling
                                     skipped = 2:    failed, s.T@y <= 0
                                     skipped = 3:    failed, contained nans/infs
-        
-                Hx = H_obj.applyH(x) 
+
+                Hx = H_obj.applyH(x)
                 Multiply matrix/vector x by H, the current L-BFGS inverse
                 Hessian approximation
-        
+
                 H = H_obj.getState()
                 Returns a struct with current L-BFGS state:
                     .S          n by m real-valued finite matrix of s vectors
                     .Y          n by m real-valued finite matrix of y vectors
                     .rho        length m real-valued row vector of 1/sty values
                     .gamma      real finite value
-                        
+
                 data = H_obj.getCounts()
                 Returns a struct of data with counts of the following:
                     requests            total requests to update
@@ -72,8 +75,8 @@ def bfgsHessianInverseLimitedMem(H0,scaleH0,fixed_scaling,nvec,restart_data,devi
                     damped_updates      update was damped
                     sty_fails           sty <= 0 prevented update
                     infnan_fail         inf/nan in result prevented update
-                    scaling_skips       numerical issue prevent scaling 
-            
+                    scaling_skips       numerical issue prevent scaling
+
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
@@ -87,14 +90,14 @@ def bfgsHessianInverseLimitedMem(H0,scaleH0,fixed_scaling,nvec,restart_data,devi
             optimization and its evaluation using relative minimization
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
-            
+
         bfgsHessianInverseLimitedMem.py (introduced in PyGRANSO v1.0.0)
         Copyright (C) 2016-2021 Tim Mitchell and Buyun Liang
 
         This file is a MATLAB-to-Python port of bfgsHessianInverseLimitedMem.m from
         GRANSO v1.6.4 with the following new functionality and/or changes:
             1. Using different method to achieve same functionality like restart_data
-            2. Capturing edge cases in PyTorch 
+            2. Capturing edge cases in PyTorch
         Ported from MATLAB to Python and modified by Buyun Liang, 2021
 
         For comments/bug reports, please visit the PyGRANSO webpage:
@@ -121,14 +124,16 @@ def bfgsHessianInverseLimitedMem(H0,scaleH0,fixed_scaling,nvec,restart_data,devi
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    H_obj = H_obj_struct(H0,scaleH0,fixed_scaling,nvec,restart_data,device,double_precision)
+    H_obj = H_obj_struct(
+        H0, scaleH0, fixed_scaling, nvec, restart_data, device, double_precision
+    )
     return H_obj
 
 
 class H_obj_struct:
-
-    def __init__(self,H0,scaleH0,fixed_scaling,nvec,restart_data,device,double_precision):
-
+    def __init__(
+        self, H0, scaleH0, fixed_scaling, nvec, restart_data, device, double_precision
+    ):
         self.H0 = H0
         self.fixed_scaling = fixed_scaling
         self.nvec = nvec
@@ -141,9 +146,9 @@ class H_obj_struct:
         else:
             self.torch_dtype = torch.float
 
-        self.S = torch.zeros((n,nvec)).to(device=self.device, dtype=self.torch_dtype)
-        self.Y = torch.zeros((n,nvec)).to(device=self.device, dtype=self.torch_dtype)
-        self.rho = torch.zeros((1,nvec)).to(device=self.device, dtype=self.torch_dtype)
+        self.S = torch.zeros((n, nvec)).to(device=self.device, dtype=self.torch_dtype)
+        self.Y = torch.zeros((n, nvec)).to(device=self.device, dtype=self.torch_dtype)
+        self.rho = torch.zeros((1, nvec)).to(device=self.device, dtype=self.torch_dtype)
 
         self.gamma = 1
         self.count = 0
@@ -158,44 +163,48 @@ class H_obj_struct:
         self.infnan_fails = 0
 
         if restart_data != None:
-            self.cols = restart_data['S'].shape[1]
+            self.cols = restart_data["S"].shape[1]
             if self.cols > self.nvec:
-                self.S = restart_data['S'][:,0:self.nvec]
-                self.Y = restart_data['Y'][:,0:self.nvec]
-                self.rho = restart_data['rho'][0:self.nvec]
+                self.S = restart_data["S"][:, 0 : self.nvec]
+                self.Y = restart_data["Y"][:, 0 : self.nvec]
+                self.rho = restart_data["rho"][0 : self.nvec]
                 self.count = self.nvec
             else:
-                self.S[:,0:self.cols] = restart_data['S']
-                self.Y[:,0:self.cols] = restart_data['Y']
-                self.rho[0:self.cols] = restart_data['rho']
+                self.S[:, 0 : self.cols] = restart_data["S"]
+                self.Y[:, 0 : self.cols] = restart_data["Y"]
+                self.rho[0 : self.cols] = restart_data["rho"]
                 self.count = self.cols
-            self.gamma = restart_data['gamma']
-        
-    def update(self,s,y,sty,damped = False):
-  
+            self.gamma = restart_data["gamma"]
+
+    def update(self, s, y, sty, damped=False):
         self.requests += 1
         skipped = 0
-        
+
         if damped:
             self.damped_requests += 1
-        
+
         #   sty > 0 should hold in theory but it can fail due to rounding
-        #   errors, even with if BFGS damping is applied. 
+        #   errors, even with if BFGS damping is applied.
         if sty <= 0:
             skipped = 2
             self.sty_fails += 1
             return skipped
-        
+
         #  We should also check that s and y only have finite entries.
-        if  torch.any(torch.isinf(s)) or torch.any(torch.isnan(s)) or torch.any(torch.isinf(y)) or torch.any(torch.isnan(y)): 
+        if (
+            torch.any(torch.isinf(s))
+            or torch.any(torch.isnan(s))
+            or torch.any(torch.isinf(y))
+            or torch.any(torch.isnan(y))
+        ):
             skipped = 3
             self.infnan_fails += 1
             return skipped
-        
-        rho_new = 1/(sty);  # this will be finite since sty > 0
-        
-        if self.update_gamma: 
-            gamma_new       = 1 / (rho_new * (y.T @ y))
+
+        rho_new = 1 / (sty)  # this will be finite since sty > 0
+
+        if self.update_gamma:
+            gamma_new = 1 / (rho_new * (y.T @ y))
             if torch.isinf(gamma_new) or torch.isnan(gamma_new):
                 #  can still apply update with scaling disabled and/or
                 #  previous value of scaling parameter.  We'll update the
@@ -203,64 +212,78 @@ class H_obj_struct:
                 skipped = 1
                 self.scale_fails += 1
             else:
-                self.gamma = gamma_new       
+                self.gamma = gamma_new
                 if self.fixed_scaling:
                     self.update_gamma = False
-                
-        
+
+        #         print(self.S.shape)
+        #         print(self.Y.shape)
+        #         print(self.rho.shape)
+        #         print(self.count)
+        #         print(self.nvec)
+
         if self.count < self.nvec:
-            
-            self.S[:,self.count] = s[:,0]
-            self.Y[:,self.count] = y[:,0]
-            self.rho[0,self.count] = rho_new    
+            self.S[:, self.count] = s[:, 0]
+            self.Y[:, self.count] = y[:, 0]
+            self.rho[0, self.count] = rho_new
             self.count += 1
+
         else:
-            self.S = torch.hstack((self.S[:,1:], s)) 
-            self.Y = torch.hstack((self.Y[:,1:], y)) 
-            self.rho = torch.hstack((self.rho[:,1:], rho_new))
-        
+            self.S = torch.hstack((self.S[:, 1:], s))
+            self.Y = torch.hstack((self.Y[:, 1:], y))
+            self.rho = torch.hstack((self.rho[:, 1:], rho_new))
+
         self.updates += 1
         if damped:
             self.damped_updates += 1
 
         return skipped
 
-    def applyH(self,q_in):
+    def applyH(self, q_in):
+        print(q_in.shape)
+
         q = q_in.detach().clone()
         #  q might be a matrix, not just a vector, so we want to apply
         #  multiplication to all columns of q
-        self.cols    = q.shape[1]
-        alpha = torch.zeros((self.count,self.cols)).to(device=self.device, dtype=self.torch_dtype)
+        self.cols = q.shape[1]
+        alpha = torch.zeros((self.count, self.cols)).to(
+            device=self.device, dtype=self.torch_dtype
+        )
 
         #  Now apply first updates to the columns of q
         for j in reversed(range(self.count)):
-            alpha[j,:]  = self.rho[0,j] * (self.S[:,j].T  @ q)
-            y = self.Y[:,j]
+            alpha[j, :] = self.rho[0, j] * (self.S[:, j].T @ q)
+            y = self.Y[:, j]
             for k in range(self.cols):
-                q[:,k]  = q[:,k] - alpha[j,k] * y
-        
-        #  Apply the sparse matvec and (possible) scaling 
-        r = self.gamma*(self.H0@q)
-        
+                q[:, k] = q[:, k] - alpha[j, k] * y
+
+        #  Apply the sparse matvec and (possible) scaling
+        r = self.gamma * (self.H0 @ q)
+
         #  Finally apply updates to the columns of r
         for j in range(self.count):
-            beta = self.rho[0,j] * ( conj(self.Y[:,j]).T @ r)
-            s = self.S[:,j]
+            beta = self.rho[0, j] * (self.Y[:, j].conj().T @ r)
+            s = self.S[:, j]
             for k in range(self.cols):
-                r[:,k] = r[:,k] + (alpha[j,k] - beta[k]) * s
+                r[:, k] = r[:, k] + (alpha[j, k] - beta[k]) * s
         return r
 
     def getState(self):
-        data = {'S':self.S[:,0:self.count], 'Y':self.Y[:,0:self.count], 'rho':self.rho[0:self.count], 'gamma':self.gamma}
+        data = {
+            "S": self.S[:, 0 : self.count],
+            "Y": self.Y[:, 0 : self.count],
+            "rho": self.rho[0 : self.count],
+            "gamma": self.gamma,
+        }
         return data
 
     def getCounts(self):
         counts = pygransoStruct()
-        setattr(counts,"requests",self.requests)
-        setattr(counts,"updates",self.updates)
-        setattr(counts,"damped_requests",self.damped_requests)
-        setattr(counts,"damped_updates",self.damped_updates)
-        setattr(counts,"scaling_skips",self.scale_fails)
-        setattr(counts,"sty_fails",self.sty_fails)
-        setattr(counts,"infnan_fails",self.infnan_fails)
+        setattr(counts, "requests", self.requests)
+        setattr(counts, "updates", self.updates)
+        setattr(counts, "damped_requests", self.damped_requests)
+        setattr(counts, "damped_updates", self.damped_updates)
+        setattr(counts, "scaling_skips", self.scale_fails)
+        setattr(counts, "sty_fails", self.sty_fails)
+        setattr(counts, "infnan_fails", self.infnan_fails)
         return counts
