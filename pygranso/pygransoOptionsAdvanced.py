@@ -1,7 +1,6 @@
-from pygranso import pygransoOptions
+import pygranso.pygransoOptions
 
-
-def pygransoOptionsAdvanced(n: int, options):
+def pygransoOptionsAdvanced(n,options):
     """
     pygransoOptionsAdvanced:
         Process user options struct for pygranso.py.  If user_opts is None or
@@ -62,16 +61,14 @@ def pygransoOptionsAdvanced(n: int, options):
         Integer in [0,4]. Default value: 0
 
         Min number of strategy to be employed
-        NOTE: fallback levels 0 and 1 are only relevant for constrained
-        problems.
+        NOTE: fallback levels 0 and 1 are only relevant for constrained problems.
 
         max_fallback_level
         --------------------------------
         Integer in [0,4]. Default value: 3
 
         Max number of strategy to be employed (>= min_fallback_level)
-        NOTE: fallback levels 0 and 1 are only relevant for constrained
-        problems.
+        NOTE: fallback levels 0 and 1 are only relevant for constrained problems.
 
         max_random_attempts
         --------------------------------
@@ -253,16 +250,13 @@ def pygransoOptionsAdvanced(n: int, options):
 
         EXPERIMENTAL OPTIONS
 
-        NOTE: The following options are still in development and may change
-        or be removed in future releases. We don't recommend users use them in
-        current version.
+        NOTE: The following options are still in development and may change or be removed in future releases. We don't recommend users use them in current version.
 
         init_step_size
         --------------------------------
         Positive real value. Default value: 1
 
-        Initial step size t in line search. Recommend using small value
-        (e.g., 1e-2) for deep learning problems.
+        Initial step size t in line search. Recommend using small value (e.g., 1e-2) for deep learning problems.
 
         linesearch_maxit
         --------------------------------
@@ -274,24 +268,19 @@ def pygransoOptionsAdvanced(n: int, options):
         --------------------------------
         Boolean value. Default value: False
 
-        By default, NCVX will use Weak-Wolfe line search. By enabling
-        this method, the curvature condition will be disabled.
+        By default, NCVX will use Weak-Wolfe line search. By enabling this method, the curvature condition will be disabled.
 
         search_direction_rescaling
         --------------------------------
         Boolean value. Default value: False
 
-        Rescale the norm of searching direction to be 1. Recommend setting
-        True in deep learning problem. Used only when backtracking
-        line search is enabled.
+        Rescale the norm of searching direction to be 1. Recommend setting True in deep learning problem. Used only when backtracking line search is enabled.
 
         disable_terminationcode_6
         --------------------------------
         Boolean value. Default value: False
 
-        Disable termination code 6 to ensure NCVX can always make a movement
-        even if the line search failed. Recommend setting True in deep
-        learning problem. Used only when backtracking line search is enabled.
+        Disable termination code 6 to ensure NCVX can always make a movement even if the line search failed. Recommend setting True in deep learning problem. Used only when backtracking line search is enabled.
 
         END OF ADVANCED PARAMETERS
 
@@ -302,8 +291,8 @@ def pygransoOptionsAdvanced(n: int, options):
 
         [1] Buyun Liang, Tim Mitchell, and Ju Sun,
             NCVX: A User-Friendly and Scalable Package for Nonconvex
-            Optimization in Machine Learning, arXiv preprint arXiv:2111.13984
-            (2021). Available at https://arxiv.org/abs/2111.13984
+            Optimization in Machine Learning, arXiv preprint arXiv:2111.13984 (2021).
+            Available at https://arxiv.org/abs/2111.13984
 
         [2] Frank E. Curtis, Tim Mitchell, and Michael L. Overton,
             A BFGS-SQP method for nonsmooth, nonconvex, constrained
@@ -328,8 +317,7 @@ def pygransoOptionsAdvanced(n: int, options):
         PyGRANSO Version 1.2.0, 2021-2022, see AGPL license info below.
 
         =========================================================================
-        |  PyGRANSO: A PyTorch-enabled port of GRANSO with                      |
-        |  auto-differentiation                                                 |
+        |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
         |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
@@ -356,6 +344,6 @@ def pygransoOptionsAdvanced(n: int, options):
 
     #  Just pass all the work to the standard pygransoOptions function.
 
-    opts = pygransoOptions(n, options)
+    opts = pygransoOptions(n,options)
 
     return opts
