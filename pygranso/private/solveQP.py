@@ -126,7 +126,7 @@ def solveQP(
 
         # Create an OSQP object
         # Set algebra based on cuda_osqp_enabled parameter
-        print(f"cuda_osqp_enabled: {cuda_osqp_enabled}")
+        # print(f"cuda_osqp_enabled: {cuda_osqp_enabled}")
 
         if cuda_osqp_enabled:
             algebra_type = "cuda"
