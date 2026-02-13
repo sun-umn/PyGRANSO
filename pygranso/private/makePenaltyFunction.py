@@ -583,27 +583,39 @@ class PanaltyFuctions:
     ################## PRIVATE helper functions  ##################
 
     def snapShot(self):
+        # Helper function to safely detach tensors
+        def safe_detach(tensor):
+            if tensor is None:
+                return None
+            if torch.is_tensor(tensor):
+                return tensor.detach().clone()
+            return tensor
+
+        # Clear previous snapshot to free memory
+        if hasattr(self, "snap_shot") and self.snap_shot is not None:
+            del self.snap_shot
+
         # scalings never change so no need to snapshot them
         self.snap_shot = pygransoStruct()
-        setattr(self.snap_shot, "f", self.f)
-        setattr(self.snap_shot, "f_grad", self.f_grad)
-        setattr(self.snap_shot, "ci", self.ci)
-        setattr(self.snap_shot, "ci_grad", self.ci_grad)
-        setattr(self.snap_shot, "ce", self.ce)
-        setattr(self.snap_shot, "ce_grad", self.ce_grad)
-        setattr(self.snap_shot, "tvi", self.tvi)
-        setattr(self.snap_shot, "tve", self.tve)
-        setattr(self.snap_shot, "tv", self.tv)
-        setattr(self.snap_shot, "tvi_l1", self.tvi_l1)
-        setattr(self.snap_shot, "tvi_l1_grad", self.tvi_l1_grad)
-        setattr(self.snap_shot, "tve_l1", self.tve_l1)
-        setattr(self.snap_shot, "tve_l1_grad", self.tve_l1_grad)
-        setattr(self.snap_shot, "tv_l1", self.tv_l1)
-        setattr(self.snap_shot, "tv_l1_grad", self.tv_l1_grad)
-        setattr(self.snap_shot, "p", self.p)
-        setattr(self.snap_shot, "p_grad", self.p_grad)
+        setattr(self.snap_shot, "f", safe_detach(self.f))
+        setattr(self.snap_shot, "f_grad", safe_detach(self.f_grad))
+        setattr(self.snap_shot, "ci", safe_detach(self.ci))
+        setattr(self.snap_shot, "ci_grad", safe_detach(self.ci_grad))
+        setattr(self.snap_shot, "ce", safe_detach(self.ce))
+        setattr(self.snap_shot, "ce_grad", safe_detach(self.ce_grad))
+        setattr(self.snap_shot, "tvi", safe_detach(self.tvi))
+        setattr(self.snap_shot, "tve", safe_detach(self.tve))
+        setattr(self.snap_shot, "tv", safe_detach(self.tv))
+        setattr(self.snap_shot, "tvi_l1", safe_detach(self.tvi_l1))
+        setattr(self.snap_shot, "tvi_l1_grad", safe_detach(self.tvi_l1_grad))
+        setattr(self.snap_shot, "tve_l1", safe_detach(self.tve_l1))
+        setattr(self.snap_shot, "tve_l1_grad", safe_detach(self.tve_l1_grad))
+        setattr(self.snap_shot, "tv_l1", safe_detach(self.tv_l1))
+        setattr(self.snap_shot, "tv_l1_grad", safe_detach(self.tv_l1_grad))
+        setattr(self.snap_shot, "p", safe_detach(self.p))
+        setattr(self.snap_shot, "p_grad", safe_detach(self.p_grad))
         setattr(self.snap_shot, "mu", self.mu)
-        setattr(self.snap_shot, "x", self.x)
+        setattr(self.snap_shot, "x", safe_detach(self.x))
         setattr(self.snap_shot, "feasible_to_tol", self.feasible_to_tol)
         setattr(self.snap_shot, "stat_value", self.stat_value)
 
