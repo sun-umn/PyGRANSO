@@ -1,36 +1,43 @@
 from pygranso.pygransoStruct import pygransoStruct
-from pygranso.private import nDigitsInWholePart as nDIWP, truncate, centerString as cS, double2FixedWidthStr as d2FWS, formatOrange as fO
+from pygranso.private import (
+    nDigitsInWholePart as nDIWP,
+    truncate,
+    centerString as cS,
+    double2FixedWidthStr as d2FWS,
+    formatOrange as fO,
+)
 
-def pygransoPrinterColumns(opts,ineq_constraints,eq_constraints):
-    """       
+
+def pygransoPrinterColumns(opts, ineq_constraints, eq_constraints):
+    """
     pygransoPrinterColumns:
         Sets up formatters for each column needed for PyGRANSO's printer,
         pygransoPrinter.
 
         INPUT:
-            opts    
+            opts
                 A struct of the necessary parameters:
-            .use_orange         logical indicating whether or not to enable 
-                                orange printing  
+            .use_orange         logical indicating whether or not to enable
+                                orange printing
             .print_width        integer between 9 and 23 to indicate printing
                                 widths of adjustable fields (values of the
                                 penalty andd the objective functions)
             .maxit              max number of iterations
-            .ls_max_estimate    estimate of the max number of line search 
+            .ls_max_estimate    estimate of the max number of line search
                                 evaluations that can ever be incurred
             .random_attempts    the max number of random search directions that
                                 may ever be attempted in a single iteration
             .ngrad              the max number of gradients that are cached for
-        
-            ineq_constraints    logical or positive number indicating the 
+
+            ineq_constraints    logical or positive number indicating the
                                 presence of inequality constraints
-        
-            eq_constraints      logical or positive number indicating the 
-                                presence of equality constraints 
-        
+
+            eq_constraints      logical or positive number indicating the
+                                presence of equality constraints
+
         OUTPUT:
             A struct containing formatters for the following columns/fields:
-            .iter               
+            .iter
             .mu
             .pen
             .obj
@@ -55,7 +62,7 @@ def pygransoPrinterColumns(opts,ineq_constraints,eq_constraints):
             optimization and its evaluation using relative minimization
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
-            
+
         pygransoPrinterColumns.py (introduced in PyGRANSO v1.0.0)
         Copyright (C) 2016-2021 Tim Mitchell
 
@@ -88,183 +95,204 @@ def pygransoPrinterColumns(opts,ineq_constraints,eq_constraints):
 
     """
 
-    field_width     = min(max(9,opts.print_width),23)
-    constrained     = ineq_constraints or eq_constraints
-   
+    field_width = min(max(9, opts.print_width), 23)
+    constrained = ineq_constraints or eq_constraints
+
     #  set up all the column formatters
     c = pygransoStruct()
-    setattr(c,"iter", getCount("Iter",opts.maxit))
-    
+    setattr(c, "iter", getCount("Iter", opts.maxit))
+
     if constrained:
-        setattr(c,"mu", getNumberColumn("Mu",9,True))
-        setattr(c,"pen", getNumberColumn("Value",field_width))
+        setattr(c, "mu", getNumberColumn("Mu", 9, True))
+        setattr(c, "pen", getNumberColumn("Value", field_width))
     else:
-        setattr(c,"mu", getBlank("Mu"))
-        setattr(c,"pen", getBlank("Value"))
-    
-    setattr(c,"obj", getNumberColumn("Objective",field_width))
-    setattr(c,"ineq", violationFormatter("Ineq",ineq_constraints))
-    setattr(c,"eq", violationFormatter("Eq",eq_constraints))
- 
+        setattr(c, "mu", getBlank("Mu"))
+        setattr(c, "pen", getBlank("Value"))
+
+    setattr(c, "obj", getNumberColumn("Objective", field_width))
+    setattr(c, "ineq", violationFormatter("Ineq", ineq_constraints))
+    setattr(c, "eq", violationFormatter("Eq", eq_constraints))
+
     gSD_object = gSD()
-    setattr(c,"sd", gSD_object.getSearchDirection(constrained,opts))
-    setattr(c,"ls_evals", getCount("Evals",opts.ls_max_estimate))
-    setattr(c,"ls_size", getNumberColumn("t",9,True))
-    setattr(c,"ngrad", getCount("Grads",opts.ngrad))
+    setattr(c, "sd", gSD_object.getSearchDirection(constrained, opts))
+    setattr(c, "ls_evals", getCount("Evals", opts.ls_max_estimate))
+    setattr(c, "ls_size", getNumberColumn("t", 9, True))
+    setattr(c, "ngrad", getCount("Grads", opts.ngrad))
     gSM_object = gSM()
-    setattr(c,"stat_value", gSM_object.getStationarityMeasure(opts.use_orange, opts.use_ascii))
-    
+    setattr(
+        c,
+        "stat_value",
+        gSM_object.getStationarityMeasure(opts.use_orange, opts.use_ascii),
+    )
+
     return c
 
-def getCount(label,maxit):
-    width   = max(nDIWP.nDigitsInWholePart(maxit),len(label))
+
+def getCount(label, maxit):
+    width = max(nDIWP.nDigitsInWholePart(maxit), len(label))
     iter = pygransoStruct()
-    setattr(iter,"label",label)
-    setattr(iter,"width",width)
-    setattr(iter,"format_fn",lambda x: "%*s" % (width,x) )
+    setattr(iter, "label", label)
+    setattr(iter, "width", width)
+    setattr(iter, "format_fn", lambda x: "%*s" % (width, x))
     # setattr(iter,"format_str",lambda x: " "*(width-1) + truncate.truncate(x,width) )
-    setattr(iter,"format_str",lambda x: "%*s" % (width,truncate.truncate(x,width))  )
-    setattr(iter,"blank_str"," " * width)
-    setattr(iter,"na_str",cS.centerString('-',width) )
-    setattr(iter,"label",label)
+    setattr(iter, "format_str", lambda x: "%*s" % (width, truncate.truncate(x, width)))
+    setattr(iter, "blank_str", " " * width)
+    setattr(iter, "na_str", cS.centerString("-", width))
+    setattr(iter, "label", label)
     return iter
 
-def getBlank(label,user_width = -1):   
+
+def getBlank(label, user_width=-1):
     label = label.strip()
     width = len(label)
-    width = max(width,user_width)
+    width = max(width, user_width)
     type = pygransoStruct()
-    setattr(type,"label",label)
-    setattr(type,"width",width)
-    setattr(type,"blank_str"," " * width)
-    setattr(type,"dash_str",cS.centerString('-',width))
-    setattr(type,"na_str",cS.centerString('n/a',width))
+    setattr(type, "label", label)
+    setattr(type, "width", width)
+    setattr(type, "blank_str", " " * width)
+    setattr(type, "dash_str", cS.centerString("-", width))
+    setattr(type, "na_str", cS.centerString("n/a", width))
     return type
 
-def getNumberColumn(label,num_width,nonnegative=False):
-    get_num_fn              = d2FWS.double2FixedWidthStr(num_width)
+
+def getNumberColumn(label, num_width, nonnegative=False):
+    get_num_fn = d2FWS.double2FixedWidthStr(num_width)
     if nonnegative:
-        format_number_fn    = lambda x: dropFirstChar(get_num_fn(x))
-        num_width           = num_width - 1
+        format_number_fn = lambda x: dropFirstChar(get_num_fn(x))
+        num_width = num_width - 1
     else:
-        format_number_fn    = get_num_fn
+        format_number_fn = get_num_fn
 
     type = pygransoStruct()
-    setattr(type,"label",label)
-    setattr(type,"width",num_width)
-    setattr(type,"format_fn",format_number_fn)
-    setattr(type,"blank_str"," " * num_width)
-    setattr(type,"dash_str",cS.centerString('-',num_width))
-    setattr(type,"na_str",cS.centerString('n/a',num_width))
-    
+    setattr(type, "label", label)
+    setattr(type, "width", num_width)
+    setattr(type, "format_fn", format_number_fn)
+    setattr(type, "blank_str", " " * num_width)
+    setattr(type, "dash_str", cS.centerString("-", num_width))
+    setattr(type, "na_str", cS.centerString("n/a", num_width))
+
     return type
+
 
 class gSD:
     def __init__(self):
         pass
-    
-    def getSearchDirection(self,constrained,opts):
+
+    def getSearchDirection(self, constrained, opts):
         self.constrained = constrained
         random_attempts = opts.random_attempts
-        
+
         if opts.use_orange and not opts.use_ascii:
-            format_fn = lambda sd_code,random_attempts: self.formatSearchDirectionOrange(sd_code,random_attempts,constrained)
+            format_fn = (
+                lambda sd_code, random_attempts: self.formatSearchDirectionOrange(
+                    sd_code, random_attempts, constrained
+                )
+            )
         else:
-            format_fn = lambda sd_code,random_attempts: self.formatSearchDirection(sd_code,random_attempts)
-        
+            format_fn = lambda sd_code, random_attempts: self.formatSearchDirection(
+                sd_code, random_attempts
+            )
+
         if random_attempts > 0:
-            self.width = max(nDIWP.nDigitsInWholePart(random_attempts)+1, 2)
+            self.width = max(nDIWP.nDigitsInWholePart(random_attempts) + 1, 2)
         else:
             self.width = 2
-        
-        self.sd_str_fn = lambda code,tries: searchDirectionStr(code,tries,self.width)
-        
+
+        self.sd_str_fn = lambda code, tries: searchDirectionStr(code, tries, self.width)
+
         type = pygransoStruct()
-        setattr(type,"label","SD")
-        setattr(type,"width",self.width)
-        setattr(type,"format_fn",format_fn)
-        setattr(type,"blank_str"," " * self.width)
-        setattr(type,"na_str",cS.centerString('-',self.width))
+        setattr(type, "label", "SD")
+        setattr(type, "width", self.width)
+        setattr(type, "format_fn", format_fn)
+        setattr(type, "blank_str", " " * self.width)
+        setattr(type, "na_str", cS.centerString("-", self.width))
 
         return type
-        
-    def formatSearchDirection(self,sd_code,random_attempts):
-        str = "%-*s"%(self.width,self.sd_str_fn(sd_code,random_attempts))
+
+    def formatSearchDirection(self, sd_code, random_attempts):
+        str = "%-*s" % (self.width, self.sd_str_fn(sd_code, random_attempts))
         return str
-        
-    def formatSearchDirectionOrange(self,sd_code,random_attempts,constrained):
-        str = self.formatSearchDirection(sd_code,random_attempts)
-        
+
+    def formatSearchDirectionOrange(self, sd_code, random_attempts, constrained):
+        str = self.formatSearchDirection(sd_code, random_attempts)
+
         #  print search direction type in orange if it isn't the default
         if sd_code > 2 or (self.constrained and sd_code > 0):
             str = fO.formatOrange(str)
 
         return str
 
+
 class gSM:
     def __init__(self):
         pass
 
-    def getStationarityMeasure(self,use_orange,use_ascii):
-        get_num_fn          = d2FWS.double2FixedWidthStr(9)
-        self.format_number_fn    = lambda x: dropFirstChar(get_num_fn(x))
-        width               = 10
-        
+    def getStationarityMeasure(self, use_orange, use_ascii):
+        get_num_fn = d2FWS.double2FixedWidthStr(9)
+        self.format_number_fn = lambda x: dropFirstChar(get_num_fn(x))
+        width = 10
+
         if use_orange and not use_ascii:
-            format_fn       = lambda value,stat_type: self.formatStationarityMeasureOrange(value,stat_type)
+            format_fn = lambda value, stat_type: self.formatStationarityMeasureOrange(
+                value, stat_type
+            )
         else:
-            format_fn       = lambda value,stat_type: self.formatStationarityMeasure(value,stat_type)
-        
+            format_fn = lambda value, stat_type: self.formatStationarityMeasure(
+                value, stat_type
+            )
+
         type = pygransoStruct()
-        setattr(type,"label","Value")
-        setattr(type,"width",width)
-        setattr(type,"format_fn",format_fn)
-        setattr(type,"blank_str"," " * width)
-        setattr(type,"dash_str",cS.centerString('-',width-2))
-        setattr(type,"na_str",cS.centerString('n/a',width-2))
+        setattr(type, "label", "Value")
+        setattr(type, "width", width)
+        setattr(type, "format_fn", format_fn)
+        setattr(type, "blank_str", " " * width)
+        setattr(type, "dash_str", cS.centerString("-", width - 2))
+        setattr(type, "na_str", cS.centerString("n/a", width - 2))
 
         return type
-    
-    def formatStationarityMeasure(self,value,stat_type):
+
+    def formatStationarityMeasure(self, value, stat_type):
         value = self.format_number_fn(value)
         if stat_type > 1:
-            str = "%s:%d"%(value,stat_type) 
+            str = "%s:%d" % (value, stat_type)
         else:
-            str = "%s  "%(value) 
+            str = "%s  " % (value)
         return str
 
-    def formatStationarityMeasureOrange(self,value,stat_type):
+    def formatStationarityMeasureOrange(self, value, stat_type):
         value = self.format_number_fn(value)
         if stat_type > 1:
-            str = "%s:%d"%(value,stat_type)  
+            str = "%s:%d" % (value, stat_type)
             str = fO.formatOrange(str)
         else:
-            str = "%s  "%(value)
+            str = "%s  " % (value)
         return str
 
-def violationFormatter(label,n_constraints):
+
+def violationFormatter(label, n_constraints):
     if n_constraints > 0:
-       col = getNumberColumn(label,9,True)
+        col = getNumberColumn(label, 9, True)
     else:
-       col = getBlank(label,4)
+        col = getBlank(label, 4)
     return col
+
 
 def dropFirstChar(s):
     s = s[1:]
     return s
 
-def searchDirectionStr(sd_code,random_attempts,width):
-    if sd_code == 0:      # Steering
+
+def searchDirectionStr(sd_code, random_attempts, width):
+    if sd_code == 0:  # Steering
         s = "S"
-    elif sd_code == 1:    # Steering w/ I in lieu of inverse Hessian approx
+    elif sd_code == 1:  # Steering w/ I in lieu of inverse Hessian approx
         s = "SI"
-    elif sd_code == 2:    # Regular BFGS on penalty function
+    elif sd_code == 2:  # Regular BFGS on penalty function
         s = "QN"
-    elif sd_code == 3:    # Gradient descent on penalty function
+    elif sd_code == 3:  # Gradient descent on penalty function
         s = "GD"
-    elif sd_code == 4:    # Random search direction
-        s = "R%0*d"%(width-1,random_attempts)
-    else:                 # not applicable (e.g. first iteration)
+    elif sd_code == 4:  # Random search direction
+        s = "R%0*d" % (width - 1, random_attempts)
+    else:  # not applicable (e.g. first iteration)
         s = "-"
     return s
-

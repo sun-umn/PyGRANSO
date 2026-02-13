@@ -2,7 +2,8 @@ import numpy as np
 from pygranso.pygransoStruct import pygransoStruct
 import torch
 
-def bfgsHessianInverse(H,scaleH0):
+
+def bfgsHessianInverse(H, scaleH0):
     """
     bfgsHessianInverse:
         An object that maintains and updates a BFGS approximation to the inverse Hessian.
@@ -122,25 +123,25 @@ def bfgsHessianInverse(H,scaleH0):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    H_obj = H_obj_struct(H,scaleH0)
+    H_obj = H_obj_struct(H, scaleH0)
     return H_obj
 
-class H_obj_struct:
 
-    def __init__(self,H,scaleH0):
-        self.requests        = 0
-        self.updates         = 0
+class H_obj_struct:
+    def __init__(self, H, scaleH0):
+        self.requests = 0
+        self.updates = 0
         self.damped_requests = 0
-        self.damped_updates  = 0
-        self.scale_fails     = 0
-        self.sty_fails       = 0
-        self.infnan_fails    = 0
+        self.damped_updates = 0
+        self.scale_fails = 0
+        self.sty_fails = 0
+        self.infnan_fails = 0
         self.H = H
         self.scaleH0 = scaleH0
 
-    def update(self,s,y,sty,damped=False):
+    def update(self, s, y, sty, damped=False):
         self.requests += 1
-        skipped  = 0
+        skipped = 0
 
         if damped == True:
             self.damped_requests += 1
@@ -158,27 +159,31 @@ class H_obj_struct:
             # before the first update only
 
             # gamma = sty/np.dot(np.transpose(y),y)
-            gamma = sty/(torch.conj(y.t()) @ y)
+            gamma = sty / (torch.conj(y.t()) @ y)
             gamma = gamma.item()
 
             if np.isinf(gamma) or np.isnan(gamma):
-                skipped     = 1
+                skipped = 1
                 self.scale_fails += 1
             else:
                 self.H *= gamma
 
-            self.scaleH0         = False # only allow first update to be scaled
+            self.scaleH0 = False  # only allow first update to be scaled
 
-        rho = (1./sty)[0][0]
+        rho = (1.0 / sty)[0][0]
         Hy = self.H @ y
-        rhoHyst = (rho*Hy) @ torch.conj(s.t())
+        rhoHyst = (rho * Hy) @ torch.conj(s.t())
 
         #  ytHy could be < 0 if H not numerically pos def
         ytHy = torch.conj(y.t()) @ Hy
-        sstfactor = max([(rho*rho*ytHy + rho).item(),  0])
-        sscaled = np.sqrt(sstfactor)*s
-        H_new = self.H - (torch.conj(rhoHyst.t()) + rhoHyst) + sscaled @ torch.conj(sscaled.t())
-        H_vec = torch.reshape(H_new, (torch.numel(H_new),1))
+        sstfactor = max([(rho * rho * ytHy + rho).item(), 0])
+        sscaled = np.sqrt(sstfactor) * s
+        H_new = (
+            self.H
+            - (torch.conj(rhoHyst.t()) + rhoHyst)
+            + sscaled @ torch.conj(sscaled.t())
+        )
+        H_vec = torch.reshape(H_new, (torch.numel(H_new), 1))
         notInf_flag = torch.all(torch.isinf(H_vec) == False)
         notNan_flag = torch.all(torch.isnan(H_vec) == False)
 
@@ -193,8 +198,8 @@ class H_obj_struct:
 
         return skipped
 
-    def applyH(self,q):
-        r = self.H @q
+    def applyH(self, q):
+        r = self.H @ q
         return r
 
     def getState(self):
@@ -203,11 +208,11 @@ class H_obj_struct:
 
     def getCounts(self):
         counts = pygransoStruct()
-        setattr(counts,"requests",self.requests)
-        setattr(counts,"updates",self.updates)
-        setattr(counts,"damped_requests",self.damped_requests)
-        setattr(counts,"damped_updates",self.damped_updates)
-        setattr(counts,"scaling_skips",self.scale_fails)
-        setattr(counts,"sty_fails",self.sty_fails)
-        setattr(counts,"infnan_fails",self.infnan_fails)
+        setattr(counts, "requests", self.requests)
+        setattr(counts, "updates", self.updates)
+        setattr(counts, "damped_requests", self.damped_requests)
+        setattr(counts, "damped_updates", self.damped_updates)
+        setattr(counts, "scaling_skips", self.scale_fails)
+        setattr(counts, "sty_fails", self.sty_fails)
+        setattr(counts, "infnan_fails", self.infnan_fails)
         return counts

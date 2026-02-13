@@ -1,5 +1,5 @@
-def isMbyN(A,m,n):
-    """  
+def isMbyN(A, m, n):
+    """
     isMbyN:
         Checks whether A is an M by N matrix.
 
@@ -16,7 +16,7 @@ def isMbyN(A,m,n):
             optimization and its evaluation using relative minimization
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
-            
+
         isMbyN.py (introduced in PyGRANSO v1.0.0)
         Copyright (C) 2016-2021 Tim Mitchell
 
@@ -48,6 +48,6 @@ def isMbyN(A,m,n):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    tf = A.shape[0] == m and A.shape[1] == n 
+    tf = A.shape[0] == m and A.shape[1] == n
 
     return tf

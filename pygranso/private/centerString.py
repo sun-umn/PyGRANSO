@@ -1,6 +1,7 @@
 import math
 
-def centerString(s,width):
+
+def centerString(s, width):
     """
     centerString:
         Centers string s in the specified width via adding spaces to each
@@ -54,17 +55,17 @@ def centerString(s,width):
         =========================================================================
     """
 
-    s                   = s.strip()
-    available_spaces    = width - len(s)
+    s = s.strip()
+    available_spaces = width - len(s)
 
     if available_spaces > 0:
-        spaces          = math.floor(available_spaces / 2)
-        spaces_str      = " " * spaces
+        spaces = math.floor(available_spaces / 2)
+        spaces_str = " " * spaces
         if available_spaces % 2 == 0:
-            s           = spaces_str + s + spaces_str
+            s = spaces_str + s + spaces_str
         else:
-            s           = " " + spaces_str + s + spaces_str
+            s = " " + spaces_str + s + spaces_str
     else:
-        s               = s[0:width]
+        s = s[0:width]
 
     return s

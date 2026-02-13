@@ -1,6 +1,7 @@
 from pygranso.private.isARealNumber import isARealNumber
 import math
 
+
 def isAnInteger(x):
     """
     isAnInteger:

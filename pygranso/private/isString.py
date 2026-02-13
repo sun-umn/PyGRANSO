@@ -1,8 +1,7 @@
-
 def isString(x):
     """
     isString:
-        Returns whether or not x is a string.  
+        Returns whether or not x is a string.
 
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
@@ -47,6 +46,6 @@ def isString(x):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    tf =   isinstance(x,str)
+    tf = isinstance(x, str)
 
     return tf

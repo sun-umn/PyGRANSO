@@ -1,11 +1,12 @@
 from pygranso.private.isRealValued import isRealValued
 from pygranso.private.isARealNumber import isARealNumber
 
+
 def isRestartData(data):
-    """  
+    """
     isRestartData:
         Checks whether data is lbfgs restart data.
-        
+
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
@@ -50,13 +51,10 @@ def isRestartData(data):
         =========================================================================
     """
 
-    if isinstance(data,dict) == False:
+    if isinstance(data, dict) == False:
         return False
 
-    if  'S' in data and 'Y' in data and 'rho' in data and 'gamma' in data:
+    if "S" in data and "Y" in data and "rho" in data and "gamma" in data:
         return True
-    
+
     return False
-
-
-    

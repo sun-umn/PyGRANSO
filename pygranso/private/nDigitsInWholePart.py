@@ -1,5 +1,6 @@
 import math
 
+
 def nDigitsInWholePart(number):
     """
     nDigitsInWholePart:

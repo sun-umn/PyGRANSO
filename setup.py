@@ -9,7 +9,12 @@ setuptools.setup(
     author="Tim Mitchell and Buyun Liang",
     author_email="liang664@umn.edu, tim@timmitchell.com",
     description="PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation",
-    keywords=['deep learning', 'machine learning', 'optimization software', 'mathematical software'],
+    keywords=[
+        "deep learning",
+        "machine learning",
+        "optimization software",
+        "mathematical software",
+    ],
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/sun-umn/PyGRANSO",

@@ -1,14 +1,25 @@
 from tkinter.messagebox import NO
 import numpy as np
 import torch
-from pygranso.private.getObjGrad import getObjGradDL,getObjGrad
+from pygranso.private.getObjGrad import getObjGradDL, getObjGrad
 from pygranso.pygransoStruct import pygransoStruct
 from pygranso.private.vec2tensor import vec2tensor
 from pygranso.private.getCiVec import getCiVec
-from pygranso.private.getCiGradVec import getCiGradVec,getCiGradVecDL
-import traceback,sys
+from pygranso.private.getCiGradVec import getCiGradVec, getCiGradVecDL
+import traceback, sys
 
-def tensor2vec(combinedFunction,x,var_dim_map,nvar,  torch_device = torch.device('cpu'), model = None, double_precision=True, get_grad = True, globalAD = True):
+
+def tensor2vec(
+    combinedFunction,
+    x,
+    var_dim_map,
+    nvar,
+    torch_device=torch.device("cpu"),
+    model=None,
+    double_precision=True,
+    get_grad=True,
+    globalAD=True,
+):
     """
     tensor2vec
         Return vector form objective and constraints information required by PyGRANSO
@@ -127,7 +138,7 @@ def tensor2vec(combinedFunction,x,var_dim_map,nvar,  torch_device = torch.device
         =========================================================================
     """
     if var_dim_map != None:
-        X = vec2tensor(x,var_dim_map)
+        X = vec2tensor(x, var_dim_map)
     else:
         # update model parameters using current x
         torch.nn.utils.vector_to_parameters(x, model.parameters())
@@ -139,56 +150,94 @@ def tensor2vec(combinedFunction,x,var_dim_map,nvar,  torch_device = torch.device
         if get_grad:
             if globalAD == False:
                 # No auto-differentiation used here
-                [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = combinedFunction(X)
+                [f_vec, f_grad_vec, ci_vec, ci_grad_vec, ce_vec, ce_grad_vec] = (
+                    combinedFunction(X)
+                )
             else:
-                if isinstance(var_dim_map,dict):
+                if isinstance(var_dim_map, dict):
                     for var_name in X.__dict__:
-                        var = getattr(X,var_name)
+                        var = getattr(X, var_name)
                         var.requires_grad_(True)
 
-                [f,ci,ce] = combinedFunction(X)
-                [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = getValwithAD(X,f,ci,ce,var_dim_map,nvar, torch_device, model, double_precision)
+                [f, ci, ce] = combinedFunction(X)
+                [f_vec, f_grad_vec, ci_vec, ci_grad_vec, ce_vec, ce_grad_vec] = (
+                    getValwithAD(
+                        X,
+                        f,
+                        ci,
+                        ce,
+                        var_dim_map,
+                        nvar,
+                        torch_device,
+                        model,
+                        double_precision,
+                    )
+                )
 
-            return [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec]
+            return [f_vec, f_grad_vec, ci_vec, ci_grad_vec, ce_vec, ce_grad_vec]
         else:
             # Not return grad information. Used in back tracking line-search
             if globalAD == False:
-                [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec] = combinedFunction(X)
+                [f_vec, f_grad_vec, ci_vec, ci_grad_vec, ce_vec, ce_grad_vec] = (
+                    combinedFunction(X)
+                )
             else:
-                [f,ci,ce] = combinedFunction(X)
-                [f_vec,ci_vec,ce_vec] = getVal4LineSearch(f,ci,ce,torch_device, double_precision)
+                [f, ci, ce] = combinedFunction(X)
+                [f_vec, ci_vec, ce_vec] = getVal4LineSearch(
+                    f, ci, ce, torch_device, double_precision
+                )
 
-            return [f_vec,ci_vec,ce_vec]
+            return [f_vec, ci_vec, ce_vec]
     except Exception as e:
         print(traceback.format_exc())
         print("Please check the setting of opts.globalAD")
         sys.exit()
 
-def getValwithAD(X,f,ci,ce,var_dim_map,nvar, torch_device, model, double_precision):
+
+def getValwithAD(
+    X, f, ci, ce, var_dim_map, nvar, torch_device, model, double_precision
+):
     """
     getValwithAD:
-        getValwithAD obtains vector form information [f,f_grad,ci,ci_grad,ce,ce_grad] 
+        getValwithAD obtains vector form information [f,f_grad,ci,ci_grad,ce,ce_grad]
         with autodifferentiation
     """
-        # obj function is a scalar form
+    # obj function is a scalar form
     try:
         f_vec = f.item()
     except Exception:
         f_vec = f
 
     if model == None:
-    # if True:
-        f_grad_vec = getObjGrad(nvar,var_dim_map,f,X,torch_device,double_precision)
+        # if True:
+        f_grad_vec = getObjGrad(nvar, var_dim_map, f, X, torch_device, double_precision)
     else:
-        f_grad_vec = getObjGradDL(nvar,model,f, torch_device, double_precision)
+        f_grad_vec = getObjGradDL(nvar, model, f, torch_device, double_precision)
 
     ##  ci and ci_grad
     if ci != None:
-        [ci_vec,ci_vec_torch,nconstr_ci_total] = getCiVec(ci,torch_device,double_precision)
+        [ci_vec, ci_vec_torch, nconstr_ci_total] = getCiVec(
+            ci, torch_device, double_precision
+        )
         if model == None:
-            ci_grad_vec = getCiGradVec(nvar,nconstr_ci_total,var_dim_map,X,ci_vec_torch,torch_device,double_precision)
+            ci_grad_vec = getCiGradVec(
+                nvar,
+                nconstr_ci_total,
+                var_dim_map,
+                X,
+                ci_vec_torch,
+                torch_device,
+                double_precision,
+            )
         else:
-            ci_grad_vec = getCiGradVecDL(nvar,nconstr_ci_total,model,ci_vec_torch, torch_device, double_precision)
+            ci_grad_vec = getCiGradVecDL(
+                nvar,
+                nconstr_ci_total,
+                model,
+                ci_vec_torch,
+                torch_device,
+                double_precision,
+            )
         # print(ci_grad_vec)
     else:
         ci_vec = None
@@ -196,25 +245,42 @@ def getValwithAD(X,f,ci,ce,var_dim_map,nvar, torch_device, model, double_precisi
 
     ##  ce and ce_grad
     if ce != None:
-        [ce_vec,ce_vec_torch,nconstr_ce_total] = getCiVec(ce,torch_device,double_precision)
+        [ce_vec, ce_vec_torch, nconstr_ce_total] = getCiVec(
+            ce, torch_device, double_precision
+        )
         if model == None:
-            ce_grad_vec = getCiGradVec(nvar,nconstr_ce_total,var_dim_map,X,ce_vec_torch,torch_device,double_precision)
+            ce_grad_vec = getCiGradVec(
+                nvar,
+                nconstr_ce_total,
+                var_dim_map,
+                X,
+                ce_vec_torch,
+                torch_device,
+                double_precision,
+            )
         else:
-            ce_grad_vec = getCiGradVecDL(nvar,nconstr_ce_total,model,ce_vec_torch, torch_device, double_precision)
+            ce_grad_vec = getCiGradVecDL(
+                nvar,
+                nconstr_ce_total,
+                model,
+                ce_vec_torch,
+                torch_device,
+                double_precision,
+            )
 
     else:
         ce_vec = None
         ce_grad_vec = None
 
-    return [f_vec,f_grad_vec,ci_vec,ci_grad_vec,ce_vec,ce_grad_vec]
+    return [f_vec, f_grad_vec, ci_vec, ci_grad_vec, ce_vec, ce_grad_vec]
 
 
-def getVal4LineSearch(f,ci,ce,torch_device, double_precision):
+def getVal4LineSearch(f, ci, ce, torch_device, double_precision):
     """
     getVal4LineSearch:
-        getValwithAD obtains vector form information [f,ci,ce] 
+        getValwithAD obtains vector form information [f,ci,ce]
     """
-        # obj function is a scalar form
+    # obj function is a scalar form
     try:
         f_vec = f.item()
     except Exception:
@@ -222,14 +288,14 @@ def getVal4LineSearch(f,ci,ce,torch_device, double_precision):
 
     ##  ci and ci_grad
     if ci != None:
-        [ci_vec,_,_] = getCiVec(ci,torch_device,double_precision)
+        [ci_vec, _, _] = getCiVec(ci, torch_device, double_precision)
     else:
         ci_vec = None
 
     ##  ce and ce_grad
     if ce != None:
-        [ce_vec,_,_] = getCiVec(ce,torch_device,double_precision)
+        [ce_vec, _, _] = getCiVec(ce, torch_device, double_precision)
     else:
         ce_vec = None
 
-    return [f_vec,ci_vec,ce_vec]
+    return [f_vec, ci_vec, ce_vec]

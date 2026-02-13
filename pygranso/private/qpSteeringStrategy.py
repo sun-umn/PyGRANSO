@@ -2,44 +2,57 @@ import numpy as np
 import numpy.linalg as LA
 import torch
 from pygranso.private.solveQP import solveQP
-import traceback,sys
+import traceback, sys
+
 
 class qpSS:
     def __init__(self):
         pass
 
-    def qpSteeringStrategy( self,penaltyfn_at_x, apply_Hinv, l1_model, ineq_margin, maxit, c_viol, c_mu, QPsolver, torch_device, double_precision):
+    def qpSteeringStrategy(
+        self,
+        penaltyfn_at_x,
+        apply_Hinv,
+        l1_model,
+        ineq_margin,
+        maxit,
+        c_viol,
+        c_mu,
+        QPsolver,
+        torch_device,
+        double_precision,
+    ):
         """
         qpSteeringStrategy:
             attempts to find a search direction which promotes progress towards
-            feasibility.  
+            feasibility.
 
             INPUT:
                penaltyfn_at_x  struct containing fields for:
                .mu             current penalty parameter
                .f_grad         gradient of objective function at x
-               .ci             inequality constraints evaluated at x 
+               .ci             inequality constraints evaluated at x
                .ci_grad        corresponding gradients at x
                .ce             equality constraints evaluated at x
                .ce_grad        corresponding gradients at x
                .tv_l1          total violation value at x (one norm)
                .tv             total violation value at x (infinity norm)
 
-               l1_model        logical: determines whether or not the one norm 
+               l1_model        logical: determines whether or not the one norm
                                (the standard choice) or the infinity norm is used
                                for the total violation measure, which affects the
                                predicted violation reduction.
 
-               ineq_margin     real value in [0,inf] setting the margin of 
-                               feasibility for problems having only inequality 
-                               constraints.  In this case, steering is selectively 
-                               disabled when the inequality constraints are all at 
-                               least ineq_margin away from being active.  Setting 
-                               ineq_margin to zero means that steering will only 
-                               be applied when one or more inequality constraints 
-                               are active ( >= 0).  Setting ineq_margin to inf 
-                               means that steering will be applied on every 
-                               iteration.  NOTE: this parameter has no effect if 
+               ineq_margin     real value in [0,inf] setting the margin of
+                               feasibility for problems having only inequality
+                               constraints.  In this case, steering is selectively
+                               disabled when the inequality constraints are all at
+                               least ineq_margin away from being active.  Setting
+                               ineq_margin to zero means that steering will only
+                               be applied when one or more inequality constraints
+                               are active ( >= 0).  Setting ineq_margin to inf
+                               means that steering will be applied on every
+                               iteration.  NOTE: this parameter has no effect if
                                equality constraints are present.
 
                apply_Hinv      function handle apply_Hinv(x)
@@ -48,16 +61,16 @@ class qpSS:
                                positive definite.  x may be a single column or
                                matrix.
 
-               maxit           max iteration count to try lowering penalty 
-                               parameter mu in order to find a good search 
+               maxit           max iteration count to try lowering penalty
+                               parameter mu in order to find a good search
                                direction
 
                c_viol          percentage of total violation needed to be acheived
-                               by the predicted reduction for a candidate 
+                               by the predicted reduction for a candidate
                                direction must be in (0,1)
 
-               c_mu            scalar factor to reduce penalty paremeter mu on 
-                               each iterative if resulting direction is not 
+               c_mu            scalar factor to reduce penalty paremeter mu on
+                               each iterative if resulting direction is not
                                acceptable must be in (0,1)
 
                quadprog_opts   struct of options for quadprog interface.
@@ -67,16 +80,16 @@ class qpSS:
                d               candidate search direction
                                d will be set to [] if all QP solves fail hard
 
-               mu              possibly lower value of the penalty parameter 
+               mu              possibly lower value of the penalty parameter
 
-               reduction       amount of total violation reduction d is predicted 
+               reduction       amount of total violation reduction d is predicted
                                to yield via the linearized constraint model
 
             THROWS:
                error           if any call to quadprog either throws an error
                                (which will be set as .cause of the GRANSO error)
-                               or if quadprog returns without error but its answer 
-                               is numerically invalid (e.g. inf, nan, empty, zero) 
+                               or if quadprog returns without error but its answer
+                               is numerically invalid (e.g. inf, nan, empty, zero)
 
             If you publish work that uses or refers to PyGRANSO, please cite both
             PyGRANSO and GRANSO paper:
@@ -91,13 +104,13 @@ class qpSS:
                 optimization and its evaluation using relative minimization
                 profiles, Optimization Methods and Software, 32(1):148-181, 2017.
                 Available at https://dx.doi.org/10.1080/10556788.2016.1208749
-                
+
             qpSteeringStrategy.py (introduced in PyGRANSO v1.0.0)
             Copyright (C) 2016-2021 Tim Mitchell and Buyun Liang
 
             This file is a MATLAB-to-Python port of qpSteeringStrategy.m from
             GRANSO v1.6.4 with the following new functionality and/or changes:
-                1. Deriving necessary input arguments for OSQP and Gurobi interfaces 
+                1. Deriving necessary input arguments for OSQP and Gurobi interfaces
             Ported from MATLAB to Python and modified by Buyun Liang, 2021
 
             For comments/bug reports, please visit the PyGRANSO webpage:
@@ -131,135 +144,175 @@ class qpSS:
         else:
             self.torch_dtype = torch.float
         self.QPsolver = QPsolver
-        mu                  = penaltyfn_at_x.mu
-        f_grad              = penaltyfn_at_x.f_grad
-        self.ineq                = penaltyfn_at_x.ci
-        self.ineq_grad           = penaltyfn_at_x.ci_grad
-        self.eq                  = penaltyfn_at_x.ce
-        self.eq_grad             = penaltyfn_at_x.ce_grad
+        mu = penaltyfn_at_x.mu
+        f_grad = penaltyfn_at_x.f_grad
+        self.ineq = penaltyfn_at_x.ci
+        self.ineq_grad = penaltyfn_at_x.ci_grad
+        self.eq = penaltyfn_at_x.ce
+        self.eq_grad = penaltyfn_at_x.ce_grad
         if l1_model:
             predictedViolFn = lambda d: self.predictedViolationReductionL1(d)
-            self.violation       = penaltyfn_at_x.tv_l1
+            self.violation = penaltyfn_at_x.tv_l1
         else:
             predictedViolFn = lambda d: self.predictedViolationReduction(d)
-            self.violation       = penaltyfn_at_x.tv
-        
-        
-        self.n_ineq              = len(self.ineq)
-        n_eq                = len(self.eq)
-        
-        self.Hinv_f_grad         = apply_Hinv(f_grad)
-        
+            self.violation = penaltyfn_at_x.tv
+
+        self.n_ineq = len(self.ineq)
+        n_eq = len(self.eq)
+
+        self.Hinv_f_grad = apply_Hinv(f_grad)
+
         #  factor to allow for some inaccuracy in the QP solver
-        violation_tol       = np.sqrt(np.finfo(np.float64).eps)*max(self.violation,1)
-     
-         
+        violation_tol = np.sqrt(np.finfo(np.float64).eps) * max(self.violation, 1)
+
         #  Set up arguments for quadprog interface
         #  Update (Buyun): Set up arguments for QPALM interface
-        self.c_grads             = torch.hstack((self.eq_grad, self.ineq_grad))
-        self.Hinv_c_grads        = apply_Hinv(self.c_grads)
-        self.H                   = torch.conj(self.c_grads.t()) @ self.Hinv_c_grads
-        #  Fix H since numerically, it is unlikely to be _perfectly_ symmetric 
-        self.H                   = (self.H + torch.conj(self.H.t())) / 2
-        self.mu_Hinv_f_grad      = mu * self.Hinv_f_grad
-        self.f                   = torch.conj(self.c_grads.t()) @ self.mu_Hinv_f_grad - torch.vstack((self.eq, self.ineq)) 
+        self.c_grads = torch.hstack((self.eq_grad, self.ineq_grad))
+        self.Hinv_c_grads = apply_Hinv(self.c_grads)
+        self.H = torch.conj(self.c_grads.t()) @ self.Hinv_c_grads
+        #  Fix H since numerically, it is unlikely to be _perfectly_ symmetric
+        self.H = (self.H + torch.conj(self.H.t())) / 2
+        self.mu_Hinv_f_grad = mu * self.Hinv_f_grad
+        self.f = torch.conj(self.c_grads.t()) @ self.mu_Hinv_f_grad - torch.vstack(
+            (self.eq, self.ineq)
+        )
 
-        self.LB                  = torch.vstack((-torch.ones((n_eq,1)), torch.zeros((self.n_ineq,1))  )).to(device=self.device, dtype=self.torch_dtype)   
-        self.UB                  = torch.ones((n_eq + self.n_ineq, 1),device=self.device, dtype=self.torch_dtype) 
-        
+        self.LB = torch.vstack(
+            (-torch.ones((n_eq, 1)), torch.zeros((self.n_ineq, 1)))
+        ).to(device=self.device, dtype=self.torch_dtype)
+        self.UB = torch.ones(
+            (n_eq + self.n_ineq, 1), device=self.device, dtype=self.torch_dtype
+        )
+
         #  Identity matrix: compatible with the constraint form in QPALM
-        self.A                   = torch.eye(n_eq + self.n_ineq,device=self.device, dtype=self.torch_dtype) 
-    
+        self.A = torch.eye(
+            n_eq + self.n_ineq, device=self.device, dtype=self.torch_dtype
+        )
+
         #  Check predicted violation reduction for search direction
         #  given by current penalty parameter
-        d                   = self.solveSteeringDualQP()
-        reduction           = predictedViolFn(d)
-        if reduction >= c_viol*self.violation - violation_tol:
-            return [d,mu,reduction]
-        
-    
-        #  Disable steering if all inequality constraints are strictly 
+        d = self.solveSteeringDualQP()
+        reduction = predictedViolFn(d)
+        if reduction >= c_viol * self.violation - violation_tol:
+            return [d, mu, reduction]
+
+        #  Disable steering if all inequality constraints are strictly
         #  feasible, i.e., at least ineq_margin away from the feasible boundary,
         #  and no equality constraints are present.
-        #  Explicitly check for infinity in case ineq contains -inf 
-        if ineq_margin != np.inf and not torch.any(self.ineq >= -ineq_margin) and n_eq == 0:
-            return [d,mu,reduction]
-        
-            
+        #  Explicitly check for infinity in case ineq contains -inf
+        if (
+            ineq_margin != np.inf
+            and not torch.any(self.ineq >= -ineq_margin)
+            and n_eq == 0
+        ):
+            return [d, mu, reduction]
+
         #  Predicted violation reduction was inadequate.  Check to see
-        #  if reduction is an adequate fraction of the predicted reduction 
-        #  when using the reference direction (given by the QP with the 
-        #  objective removed, that is, with the penalty parameter temporarily 
+        #  if reduction is an adequate fraction of the predicted reduction
+        #  when using the reference direction (given by the QP with the
+        #  objective removed, that is, with the penalty parameter temporarily
         #  set to zero)
         self.updateSteeringQP(0)
-        d_reference         = self.solveSteeringDualQP()
+        d_reference = self.solveSteeringDualQP()
         reduction_reference = predictedViolFn(d_reference)
-        if reduction >= c_viol*reduction_reference - violation_tol:
-            return [d,mu,reduction]
-        
-    
+        if reduction >= c_viol * reduction_reference - violation_tol:
+            return [d, mu, reduction]
+
         #  iteratively lower penalty parameter to produce new search directions
-        #  which should hopefully have predicted reductions that are larger 
+        #  which should hopefully have predicted reductions that are larger
         #  fractions of the predicted reduction of the reference direction
         for j in range(maxit):
             mu = c_mu * mu
             self.updateSteeringQP(mu)
-            d               = self.solveSteeringDualQP()
-            reduction       = predictedViolFn(d)
+            d = self.solveSteeringDualQP()
+            reduction = predictedViolFn(d)
             #  Test new step's predicted reduction against reference's
-            if reduction >= c_viol*reduction_reference - violation_tol:
-                return [d,mu,reduction] # predicted reduction is acceptable
-            
-        
-        #  All d failed to meet acceptable predicted violation reduction so 
-        #  just use the last search direction d produced for the lowest penalty 
-        #  parameter value considered. 
-        
-        return [d,mu,reduction]
-    
+            if reduction >= c_viol * reduction_reference - violation_tol:
+                return [d, mu, reduction]  # predicted reduction is acceptable
+
+        #  All d failed to meet acceptable predicted violation reduction so
+        #  just use the last search direction d produced for the lowest penalty
+        #  parameter value considered.
+
+        return [d, mu, reduction]
+
     #  private helper functions
-    
-    #  calculate predicted violation reduction for search direction d  using 
+
+    #  calculate predicted violation reduction for search direction d  using
     #  a linearized constraint model
-    
+
     #  l1 total violation
-    def predictedViolationReductionL1(self,d):
+    def predictedViolationReductionL1(self, d):
         tmp_arr = self.ineq + self.ineq_grad.T @ d
         tmp_arr[tmp_arr < 0] = 0
 
-        dL = self.violation - torch.sum(tmp_arr) - torch.linalg.vector_norm(self.eq + self.eq_grad.T@d, ord = 1)
+        dL = (
+            self.violation
+            - torch.sum(tmp_arr)
+            - torch.linalg.vector_norm(self.eq + self.eq_grad.T @ d, ord=1)
+        )
         return dL
 
     #  l-infinity total violation
-    def predictedViolationReduction(self,d):
+    def predictedViolationReduction(self, d):
         tmp_arr = self.ineq + self.ineq_grad.T @ d
         if self.eq.shape[0] > 0:
-            dL = self.violation - max(torch.max(tmp_arr),0) - torch.linalg.vector_norm(self.eq + self.eq_grad.T@d, ord = float("inf"))
-        else: # linf norm is not allowed for empty tensor
-            dL = self.violation - max(torch.max(tmp_arr),0)
+            dL = (
+                self.violation
+                - max(torch.max(tmp_arr), 0)
+                - torch.linalg.vector_norm(
+                    self.eq + self.eq_grad.T @ d, ord=float("inf")
+                )
+            )
+        else:  # linf norm is not allowed for empty tensor
+            dL = self.violation - max(torch.max(tmp_arr), 0)
         return dL
-    
+
     #  solve dual of steering QP to yeild new search direction
     #  throws an error if QP solver failed somehow
     def solveSteeringDualQP(self):
-        try: 
+        try:
             # qpalm only for linux
             if self.QPsolver == "gurobi":
                 #  formulation of QP has no 1/2
-                y = solveQP(self.H,self.f,None,None,self.LB,self.UB, "gurobi", self.device, self.double_precision)
+                y = solveQP(
+                    self.H,
+                    self.f,
+                    None,
+                    None,
+                    self.LB,
+                    self.UB,
+                    "gurobi",
+                    self.device,
+                    self.double_precision,
+                )
             elif self.QPsolver == "osqp":
                 #  formulation of QP has no 1/2
-                y = solveQP(self.H,self.f,None,None,self.LB,self.UB, "osqp", self.device, self.double_precision)
+                y = solveQP(
+                    self.H,
+                    self.f,
+                    None,
+                    None,
+                    self.LB,
+                    self.UB,
+                    "osqp",
+                    self.device,
+                    self.double_precision,
+                )
         except Exception as e:
-            print("PyGRANSO steeringQuadprogFailure: Steering aborted due to a quadprog failure.")        
+            print(
+                "PyGRANSO steeringQuadprogFailure: Steering aborted due to a quadprog failure."
+            )
             print(traceback.format_exc())
             # sys.exit()
 
         d = -self.mu_Hinv_f_grad - (self.Hinv_c_grads @ y)
         return d
-    
+
     #  update penalty parameter dependent values for QP
-    def updateSteeringQP(self,mu):
-        self.mu_Hinv_f_grad  = mu * self.Hinv_f_grad
-        self.f               = torch.conj(self.c_grads.t()) @ self.mu_Hinv_f_grad - torch.vstack((self.eq, self.ineq))
+    def updateSteeringQP(self, mu):
+        self.mu_Hinv_f_grad = mu * self.Hinv_f_grad
+        self.f = torch.conj(self.c_grads.t()) @ self.mu_Hinv_f_grad - torch.vstack(
+            (self.eq, self.ineq)
+        )
         return

@@ -1,7 +1,10 @@
 import numpy as np
 import torch
 
-def getCiGradVec(nvar,nconstr_ci_total,var_dim_map,X,ci_vec_torch, torch_device, double_precision):
+
+def getCiGradVec(
+    nvar, nconstr_ci_total, var_dim_map, X, ci_vec_torch, torch_device, double_precision
+):
     """
     getCiGradVec:
         getCiGradVec obtains gradient of constraints function (in the vector form) by using pytorch autodiff
@@ -96,8 +99,9 @@ def getCiGradVec(nvar,nconstr_ci_total,var_dim_map,X,ci_vec_torch, torch_device,
     else:
         torch_dtype = torch.float
 
-    ci_grad_vec = torch.zeros((nvar,nconstr_ci_total),device=torch_device, dtype=torch_dtype)
-
+    ci_grad_vec = torch.zeros(
+        (nvar, nconstr_ci_total), device=torch_device, dtype=torch_dtype
+    )
 
     for i in range(nconstr_ci_total):
         ci_vec_torch[i].backward(retain_graph=True)
@@ -106,17 +110,20 @@ def getCiGradVec(nvar,nconstr_ci_total,var_dim_map,X,ci_vec_torch, torch_device,
         for var in var_dim_map.keys():
             # corresponding dimension of the variable, e.g, 3 by 2
             dim = var_dim_map.get(var)
-            ci_grad_tmp = getattr(X,var).grad
+            ci_grad_tmp = getattr(X, var).grad
             if ci_grad_tmp != None:
                 varLen = np.prod(dim)
-                ci_grad_reshape = torch.reshape(ci_grad_tmp,(varLen,1))[:,0]
-                ci_grad_vec[curIdx:curIdx+varLen,i] = ci_grad_reshape
+                ci_grad_reshape = torch.reshape(ci_grad_tmp, (varLen, 1))[:, 0]
+                ci_grad_vec[curIdx : curIdx + varLen, i] = ci_grad_reshape
                 curIdx += varLen
-                getattr(X,var).grad.zero_()
+                getattr(X, var).grad.zero_()
     ci_grad_vec = ci_grad_vec.detach()
     return ci_grad_vec
 
-def getCiGradVecDL(nvar,nconstr_ci_total,model,ci_vec_torch, torch_device, double_precision):
+
+def getCiGradVecDL(
+    nvar, nconstr_ci_total, model, ci_vec_torch, torch_device, double_precision
+):
     """
     TODO
 
@@ -169,7 +176,9 @@ def getCiGradVecDL(nvar,nconstr_ci_total,model,ci_vec_torch, torch_device, doubl
     else:
         torch_dtype = torch.float
 
-    ci_grad_vec = torch.zeros((nvar,nconstr_ci_total),device=torch_device, dtype=torch_dtype)
+    ci_grad_vec = torch.zeros(
+        (nvar, nconstr_ci_total), device=torch_device, dtype=torch_dtype
+    )
 
     parameter_lst = list(model.parameters())
 
@@ -182,8 +191,8 @@ def getCiGradVecDL(nvar,nconstr_ci_total,model,ci_vec_torch, torch_device, doubl
             varLen = torch.numel(parameter)
             ci_grad_tmp = parameter.grad
             if ci_grad_tmp != None:
-                ci_grad_reshape = torch.reshape(ci_grad_tmp,(varLen,1))[:,0]
-                ci_grad_vec[curIdx:curIdx+varLen,i] = ci_grad_reshape
+                ci_grad_reshape = torch.reshape(ci_grad_tmp, (varLen, 1))[:, 0]
+                ci_grad_vec[curIdx : curIdx + varLen, i] = ci_grad_reshape
                 curIdx += varLen
                 # preventing gradient accumulating
                 parameter.grad.zero_()

@@ -1,11 +1,12 @@
 # import torch
 from numpy import linalg as LA
 
+
 def isPositiveDefinite(A):
-    """  
+    """
     isPositiveDefinite:
         Checks whether A is a positive definite by attempting to form its
-        Cholesky factorization.  Returns true if chol() succeeds, false 
+        Cholesky factorization.  Returns true if chol() succeeds, false
         otherwise.
 
         If you publish work that uses or refers to PyGRANSO, please cite both
@@ -21,8 +22,8 @@ def isPositiveDefinite(A):
             optimization and its evaluation using relative minimization
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
-            
-            
+
+
         isPositiveDefinite.py (introduced in PyGRANSO v1.0.0)
         Copyright (C) 2016-2021 Tim Mitchell
 
@@ -54,14 +55,14 @@ def isPositiveDefinite(A):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    try :
+    try:
         # torch.linalg.cholesky(A)
         A = A.cpu()
         LA.cholesky(A)
-    except: 
+    except:
         tf = False
         return tf
-    
+
     tf = True
 
     return tf

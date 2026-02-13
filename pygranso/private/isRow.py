@@ -16,7 +16,7 @@ def isRow(r):
             optimization and its evaluation using relative minimization
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
-                
+
         isRow.py (introduced in PyGRANSO v1.0.0)
         Copyright (C) 2016-2021 Tim Mitchell
 
@@ -48,7 +48,7 @@ def isRow(r):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    [m,n]   = r.shape
-    tf      = m == 1 and n > 0
+    [m, n] = r.shape
+    tf = m == 1 and n > 0
 
     return tf

@@ -1,4 +1,4 @@
-def truncate(s,width):
+def truncate(s, width):
     """
     truncate:
         Truncate string so that it's length is at most width chars long.
@@ -48,5 +48,5 @@ def truncate(s,width):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    s = s[0:min(len(s),width)]
+    s = s[0 : min(len(s), width)]
     return s

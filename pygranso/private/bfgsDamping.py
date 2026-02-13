@@ -1,7 +1,8 @@
 from numpy import conjugate as conj
 import torch
 
-def bfgsDamping(damping,applyH,s,y,sty):
+
+def bfgsDamping(damping, applyH, s, y, sty):
     """
     bfgsDamping:
         This function implements Procedure 18.2 from Nocedal and Wright,
@@ -80,14 +81,14 @@ def bfgsDamping(damping,applyH,s,y,sty):
         =========================================================================
     """
 
-    damped      = False
-    Hs          = applyH(s)
-    stHs        = torch.conj(s.t())@Hs
+    damped = False
+    Hs = applyH(s)
+    stHs = torch.conj(s.t()) @ Hs
 
     if sty < damping * stHs:
-        theta   = ((1 - damping) * stHs) / (stHs - sty)
-        y       = theta * y + (1 - theta) * Hs
-        sty     = theta * sty + (1- theta) * stHs # s.T@y;
-        damped  = True
+        theta = ((1 - damping) * stHs) / (stHs - sty)
+        y = theta * y + (1 - theta) * Hs
+        sty = theta * sty + (1 - theta) * stHs  # s.T@y;
+        damped = True
 
-    return [y,sty,damped]
+    return [y, sty, damped]

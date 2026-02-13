@@ -1,7 +1,11 @@
 from numpy import double
 import torch
 from pygranso.private.makePenaltyFunction import PanaltyFuctions
-from pygranso.private import bfgsHessianInverse as bfgsHI, printMessageBox as pMB, bfgsHessianInverseLimitedMem as lbfgsHI
+from pygranso.private import (
+    bfgsHessianInverse as bfgsHI,
+    printMessageBox as pMB,
+    bfgsHessianInverseLimitedMem as lbfgsHI,
+)
 from pygranso.private.bfgssqp import AlgBFGSSQP
 from pygranso.private.pygransoPrinter import pgP
 from pygranso.pygransoOptions import pygransoOptions
@@ -11,9 +15,10 @@ from time import sleep
 from pygranso.private.tensor2vec import tensor2vec
 from pygranso.private.getNvar import getNvar, getNvarTorch
 from pygranso.private.processVarSpec import processVarSpec
-import traceback,sys
+import traceback, sys
 
-def pygranso(var_spec,combined_fn,user_opts=None):
+
+def pygranso(var_spec, combined_fn, user_opts=None):
     """
     PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation
 
@@ -449,118 +454,184 @@ def pygranso(var_spec,combined_fn,user_opts=None):
     #  - set initial Hessian inverse approximation
     #  - evaluate functions at x0
 
-    [var_dim_map,nn_model] = processVarSpec(var_spec)
+    [var_dim_map, nn_model] = processVarSpec(var_spec)
     try:
         if nn_model != None:
             n = getNvarTorch(nn_model.parameters())
-            
+
         else:
             # call the functions getNvar to get the total number of (scalar) variables
             n = getNvar(var_dim_map)
 
-        opts = pygransoOptions(n,user_opts)
+        opts = pygransoOptions(n, user_opts)
         torch_device = opts.torch_device
 
         if nn_model != None:
-            problem_fns = lambda x: tensor2vec(combined_fn ,x,var_dim_map,n,torch_device, model = nn_model,double_precision=opts.double_precision,globalAD=opts.globalAD)
+            problem_fns = lambda x: tensor2vec(
+                combined_fn,
+                x,
+                var_dim_map,
+                n,
+                torch_device,
+                model=nn_model,
+                double_precision=opts.double_precision,
+                globalAD=opts.globalAD,
+            )
             if opts.is_backtrack_linesearch == True:
-                f_eval_fn = lambda x: tensor2vec(combined_fn ,x,var_dim_map,n,torch_device, model = nn_model,double_precision=opts.double_precision,get_grad=False,globalAD=opts.globalAD)
+                f_eval_fn = lambda x: tensor2vec(
+                    combined_fn,
+                    x,
+                    var_dim_map,
+                    n,
+                    torch_device,
+                    model=nn_model,
+                    double_precision=opts.double_precision,
+                    get_grad=False,
+                    globalAD=opts.globalAD,
+                )
             else:
                 f_eval_fn = None
 
         else:
             n = getNvar(var_dim_map)
-            problem_fns = lambda x: tensor2vec(combined_fn ,x,var_dim_map,n,torch_device, double_precision=opts.double_precision,globalAD=opts.globalAD)
+            problem_fns = lambda x: tensor2vec(
+                combined_fn,
+                x,
+                var_dim_map,
+                n,
+                torch_device,
+                double_precision=opts.double_precision,
+                globalAD=opts.globalAD,
+            )
             if opts.is_backtrack_linesearch == True:
-                f_eval_fn = lambda x: tensor2vec(combined_fn ,x,var_dim_map,n,torch_device, model = nn_model,double_precision=opts.double_precision,get_grad=False,globalAD=opts.globalAD)
+                f_eval_fn = lambda x: tensor2vec(
+                    combined_fn,
+                    x,
+                    var_dim_map,
+                    n,
+                    torch_device,
+                    model=nn_model,
+                    double_precision=opts.double_precision,
+                    get_grad=False,
+                    globalAD=opts.globalAD,
+                )
             else:
                 f_eval_fn = None
 
-        [bfgs_hess_inv_obj,opts] = getBfgsManager(opts,torch_device,opts.double_precision)
+        [bfgs_hess_inv_obj, opts] = getBfgsManager(
+            opts, torch_device, opts.double_precision
+        )
         # construct the penalty function object and evaluate at x0
         # unconstrained problems will reset mu to one and mu will be fixed
-        mPF = PanaltyFuctions() # make penalty functions
-        [penaltyfn_obj,grad_norms_at_x0] =  mPF.makePenaltyFunction(opts, f_eval_fn, problem_fns, torch_device = torch_device, double_precision=opts.double_precision)
+        mPF = PanaltyFuctions()  # make penalty functions
+        [penaltyfn_obj, grad_norms_at_x0] = mPF.makePenaltyFunction(
+            opts,
+            f_eval_fn,
+            problem_fns,
+            torch_device=torch_device,
+            double_precision=opts.double_precision,
+        )
     except Exception as e:
         print(traceback.format_exc())
         sys.exit()
 
-    msg_box_fn = lambda margin_spaces,title_top,title_bottom,msg_lines,sides=True,user_width=0: pMB.printMessageBox(opts.print_ascii,opts.print_use_orange, margin_spaces,title_top,title_bottom,msg_lines,sides,user_width)
+    msg_box_fn = (
+        lambda margin_spaces,
+        title_top,
+        title_bottom,
+        msg_lines,
+        sides=True,
+        user_width=0: pMB.printMessageBox(
+            opts.print_ascii,
+            opts.print_use_orange,
+            margin_spaces,
+            title_top,
+            title_bottom,
+            msg_lines,
+            sides,
+            user_width,
+        )
+    )
 
-    print_notice_fn = lambda title,msg: msg_box_fn(2,title,"",msg,True)
+    print_notice_fn = lambda title, msg: msg_box_fn(2, title, "", msg, True)
     if opts.print_level:
         print("\n")
         if opts.quadprog_info_msg:
-            print_notice_fn('QP SOLVER NOTICE',quadprogInfoMsg())
+            print_notice_fn("QP SOLVER NOTICE", quadprogInfoMsg())
 
         if opts.prescaling_info_msg:
-            printPrescalingMsg( opts.prescaling_threshold,grad_norms_at_x0,print_notice_fn)
+            printPrescalingMsg(
+                opts.prescaling_threshold, grad_norms_at_x0, print_notice_fn
+            )
 
     printer = None
     if opts.print_level:
-        n_ineq          = penaltyfn_obj.numberOfInequalities()
-        n_eq            = penaltyfn_obj.numberOfEqualities()
-        constrained     = n_ineq or n_eq
+        n_ineq = penaltyfn_obj.numberOfInequalities()
+        n_eq = penaltyfn_obj.numberOfEqualities()
+        constrained = n_ineq or n_eq
         pygransoPrinter_object = pgP()
-        printer         = pygransoPrinter_object.pygransoPrinter(opts,n,n_ineq,n_eq)
+        printer = pygransoPrinter_object.pygransoPrinter(opts, n, n_ineq, n_eq)
 
     try:
         bfgssqp_obj = AlgBFGSSQP()
-        info = bfgssqp_obj.bfgssqp(penaltyfn_obj,bfgs_hess_inv_obj,opts,printer, torch_device)
+        info = bfgssqp_obj.bfgssqp(
+            penaltyfn_obj, bfgs_hess_inv_obj, opts, printer, torch_device
+        )
     except Exception as e:
         print(traceback.format_exc())
         # recover optimization computed so far
         penaltyfn_obj.restoreSnapShot()
 
     # package up solution in output argument
-    [ soln, stat_value ]        = penaltyfn_obj.getBestSolutions()
-    soln.H_final                = bfgs_hess_inv_obj.getState()
-    soln.stat_value             = stat_value
-    bfgs_counts                 = bfgs_hess_inv_obj.getCounts()
-    soln.iters                  = bfgs_counts.requests
-    soln.BFGS_updates           = bfgs_counts
-    soln.fn_evals               = penaltyfn_obj.getNumberOfEvaluations()
-    soln.termination_code       = info.termination_code
+    [soln, stat_value] = penaltyfn_obj.getBestSolutions()
+    soln.H_final = bfgs_hess_inv_obj.getState()
+    soln.stat_value = stat_value
+    bfgs_counts = bfgs_hess_inv_obj.getCounts()
+    soln.iters = bfgs_counts.requests
+    soln.BFGS_updates = bfgs_counts
+    soln.fn_evals = penaltyfn_obj.getNumberOfEvaluations()
+    soln.termination_code = info.termination_code
 
-    [qp_requests,qp_errs]       = getErr()
+    [qp_requests, qp_errs] = getErr()
     if qp_requests == 0:
         qp_fail_rate = 0
     else:
-        qp_fail_rate                = 100 * (qp_errs / qp_requests)
-    soln.quadprog_failure_rate  = qp_fail_rate
-    if hasattr(info,"error"):
-        soln.error              = info.error
-    elif hasattr(info,"mu_lowest"):
-        soln.mu_lowest          = info.mu_lowest
+        qp_fail_rate = 100 * (qp_errs / qp_requests)
+    soln.quadprog_failure_rate = qp_fail_rate
+    if hasattr(info, "error"):
+        soln.error = info.error
+    elif hasattr(info, "mu_lowest"):
+        soln.mu_lowest = info.mu_lowest
 
     # python version: new function for printSummary
-    printSummary = lambda name,fieldname: printSummaryAux(name,fieldname,soln,printer)
+    printSummary = lambda name, fieldname: printSummaryAux(
+        name, fieldname, soln, printer
+    )
 
     if opts.print_level:
-        printer.msg({ 'Optimization results:', getResultsLegend() })
-        sleep(0.0001) # Prevent race condition
-        printSummary("F","final")
-        printSummary("B","best")
-        printSummary("MF","most_feasible")
+        printer.msg({"Optimization results:", getResultsLegend()})
+        sleep(0.0001)  # Prevent race condition
+        printSummary("F", "final")
+        printSummary("B", "best")
+        printSummary("MF", "most_feasible")
         if penaltyfn_obj.isPrescaled():
             printer.unscaledMsg()
-            printSummary("F","final_unscaled")
-            printSummary("B","best_unscaled")
-            printSummary("MF","most_feasible_unscaled")
+            printSummary("F", "final_unscaled")
+            printSummary("B", "best_unscaled")
+            printSummary("MF", "most_feasible_unscaled")
         width = printer.msgWidth()
-        printer.msg(getTerminationMsgLines(soln,constrained,width))
+        printer.msg(getTerminationMsgLines(soln, constrained, width))
         if qp_fail_rate > 1:
             printer.quadprogFailureRate(qp_fail_rate)
         printer.close()
 
-
-    if hasattr(soln,"error"):
+    if hasattr(soln, "error"):
         err = soln.error
         print("ERROR: In the end of main loop.")
         print(err)
 
-
     return soln
+
 
 # # only combined function allowed here. simpler form compare with pygranso
 # # different cases needed if seperate obj eq and ineq are using
@@ -570,108 +641,138 @@ def pygranso(var_spec,combined_fn,user_opts=None):
 #     options = pygransoOptions(n,options,torch_device)
 #     return [problem_fns,options]
 
-def getBfgsManager(opts,torch_device,double_precision):
-    if opts.limited_mem_size == 0:
-        get_bfgs_fn = lambda H,scaleH0 : bfgsHI.bfgsHessianInverse(H,scaleH0)
-    else:
-        get_bfgs_fn = lambda H,scaleH0 : lbfgsHI.bfgsHessianInverseLimitedMem(H,scaleH0,opts.limited_mem_fixed_scaling,opts.limited_mem_size,opts.limited_mem_warm_start,torch_device,double_precision)
 
-    bfgs_obj = get_bfgs_fn(opts.H0,opts.scaleH0)
+def getBfgsManager(opts, torch_device, double_precision):
+    if opts.limited_mem_size == 0:
+        get_bfgs_fn = lambda H, scaleH0: bfgsHI.bfgsHessianInverse(H, scaleH0)
+    else:
+        get_bfgs_fn = lambda H, scaleH0: lbfgsHI.bfgsHessianInverseLimitedMem(
+            H,
+            scaleH0,
+            opts.limited_mem_fixed_scaling,
+            opts.limited_mem_size,
+            opts.limited_mem_warm_start,
+            torch_device,
+            double_precision,
+        )
+
+    bfgs_obj = get_bfgs_fn(opts.H0, opts.scaleH0)
 
     # remove potentially large and unnecessary data from the opts structure
-    delattr(opts,'H0')
-    delattr(opts,'limited_mem_warm_start')
+    delattr(opts, "H0")
+    delattr(opts, "limited_mem_warm_start")
 
-    return [bfgs_obj,opts]
+    return [bfgs_obj, opts]
 
-def printPrescalingMsg(prescaling_threshold,grad_norms,block_msg_fn):
+
+def printPrescalingMsg(prescaling_threshold, grad_norms, block_msg_fn):
     pass
 
-def getPrescalingConstraintLines(type_str,c_large,width,cols):
+
+def getPrescalingConstraintLines(type_str, c_large, width, cols):
     pass
 
-def getTableRows(nums,num_width,cols,indent,brackets):
+
+def getTableRows(nums, num_width, cols, indent, brackets):
     pass
+
 
 def quadprogInfoMsg():
-    msg = ["PyGRANSO requires a quadratic program (QP) solver that has a quadprog-compatible interface,",
-            "the default is osqp. Users may provide their own wrapper for the QP solver.", ""
-            "To disable this notice, set opts.quadprog_info_msg = False"]
+    msg = [
+        "PyGRANSO requires a quadratic program (QP) solver that has a quadprog-compatible interface,",
+        "the default is osqp. Users may provide their own wrapper for the QP solver.",
+        "To disable this notice, set opts.quadprog_info_msg = False",
+    ]
     return msg
+
 
 def poorScalingDetectedMsgs():
     title = "POOR SCALING DETECTED"
 
-    pre = ["The supplied problem appears to be poorly scaled at x0, which may adversely affect",
-    "optimization quality.  In particular, the following functions have gradients whose",
-    "norms evaluted at x0 are greater than 100:"]
+    pre = [
+        "The supplied problem appears to be poorly scaled at x0, which may adversely affect",
+        "optimization quality.  In particular, the following functions have gradients whose",
+        "norms evaluted at x0 are greater than 100:",
+    ]
 
-    post = ["NOTE: One may wish to consider whether the problem can be alternatively formulated",
-    "with better inherent scaling, which may yield improved optimization results.",
-    "Alternatively, PyGRANSO can optionally apply automatic pre-scaling to poorly-scaled",
-    "objective and/or constraint functions if opts.prescaling_threshold is set to some",
-    "sufficiently small positive number (e.g. 100).  For more details, see pygransoOptions.",
-    "",
-    "To disable this notice, set opts.prescaling_info_msg = false."]
-    return [title,pre,post]
+    post = [
+        "NOTE: One may wish to consider whether the problem can be alternatively formulated",
+        "with better inherent scaling, which may yield improved optimization results.",
+        "Alternatively, PyGRANSO can optionally apply automatic pre-scaling to poorly-scaled",
+        "objective and/or constraint functions if opts.prescaling_threshold is set to some",
+        "sufficiently small positive number (e.g. 100).  For more details, see pygransoOptions.",
+        "",
+        "To disable this notice, set opts.prescaling_info_msg = false.",
+    ]
+    return [title, pre, post]
+
 
 def prescalingEnabledMsgs():
     title = "PRE-SCALING ENABLED"
 
-    pre = ["PyGRANSO has applied pre-scaling to functions whose norms were considered large at x0.",
+    pre = [
+        "PyGRANSO has applied pre-scaling to functions whose norms were considered large at x0.",
         "PyGRANSO will now try to solve this pre-scaled version instead of the original problem",
         "given.  Specifically, the following functions have been automatically scaled",
         "downward so that the norms of their respective gradients evaluated at x0 no longer",
-        "exceed opts.prescaling_threshold and instead are now equal to it:"]
+        "exceed opts.prescaling_threshold and instead are now equal to it:",
+    ]
 
-    post = ["NOTE: While automatic pre-scaling may help ameliorate issues stemming from when the",
+    post = [
+        "NOTE: While automatic pre-scaling may help ameliorate issues stemming from when the",
         "objective/constraint functions are poorly scaled, a solution to the pre-scaled",
         "problem MAY OR MAY NOT BE A SOLUTION to the original unscaled problem.  One may wish",
         "to consider if the problem can be reformulated with better inherent scaling.  The",
         "amount of pre-scaling applied by PyGRANSO can be tuned, or disabled completely, via",
         "adjusting opts.prescaling_threshold.  For more details, see pygransoOptions.",
-        "To disable this notice, set opts.prescaling_info_msg = false."]
-    return [title,pre,post]
+        "To disable this notice, set opts.prescaling_info_msg = false.",
+    ]
+    return [title, pre, post]
 
-def getTerminationMsgLines(soln,constrained,width):
+
+def getTerminationMsgLines(soln, constrained, width):
     if soln.termination_code == 0:
         s = convergedToTolerancesMsg(constrained)
-    elif soln.termination_code ==  1:
+    elif soln.termination_code == 1:
         s = progressSlowMsg(constrained)
-    elif soln.termination_code ==  2:
+    elif soln.termination_code == 2:
         s = targetValueAttainedMsg(constrained)
-    elif soln.termination_code ==  3:
+    elif soln.termination_code == 3:
         s = "halt signaled by user via opts.halt_log_fn."
-    elif soln.termination_code ==  4:
+    elif soln.termination_code == 4:
         s = "max iterations reached."
-    elif soln.termination_code ==  5:
+    elif soln.termination_code == 5:
         s = "clock/wall time limit reached."
-    elif soln.termination_code ==  6:
-        s = bracketedMinimizerFeasibleMsg(soln,constrained)
-    elif soln.termination_code ==  7:
+    elif soln.termination_code == 6:
+        s = bracketedMinimizerFeasibleMsg(soln, constrained)
+    elif soln.termination_code == 7:
         s = bracketedMinimizerInfeasibleMsg()
-    elif soln.termination_code ==  8:
+    elif soln.termination_code == 8:
         s = failedToBracketedMinimizerMsg(soln)
-    elif soln.termination_code ==  9:
+    elif soln.termination_code == 9:
         s = "failed to produce a descent direction."
     #  Case 10 is no longer used
-    elif soln.termination_code ==  11:
+    elif soln.termination_code == 11:
         s = "user-supplied functions threw an error."
-    elif soln.termination_code ==  12:
+    elif soln.termination_code == 12:
         s = "steering aborted due to quadprog() error; see opts.halt_on_quadprog_error."
     else:
         s = "unknown termination condition."
 
-    s = "PyGRANSO termination code: %d --- %s" % (soln.termination_code,"".join(s))
-    lines = [   "Iterations:              %d" % (soln.iters),
-                "Function evaluations:    %d" % (soln.fn_evals)]
-    lines.extend( wrapToLines(s,width,0))
+    s = "PyGRANSO termination code: %d --- %s" % (soln.termination_code, "".join(s))
+    lines = [
+        "Iterations:              %d" % (soln.iters),
+        "Function evaluations:    %d" % (soln.fn_evals),
+    ]
+    lines.extend(wrapToLines(s, width, 0))
 
     return lines
+
 
 def getResultsLegend():
     s = "F = final iterate, B = Best (to tolerance), MF = Most Feasible"
     return s
+
 
 def convergedToTolerancesMsg(constrained):
     if constrained:
@@ -680,12 +781,14 @@ def convergedToTolerancesMsg(constrained):
         s = "converged to stationarity tolerance."
     return s
 
+
 def progressSlowMsg(constrained):
     if constrained:
         s = "relative decrease in penalty function is below tolerance and feasibility tolerances satisfied."
     else:
         s = "relative decrease in objective function is below tolerance."
     return s
+
 
 def targetValueAttainedMsg(constrained):
     if constrained:
@@ -694,7 +797,8 @@ def targetValueAttainedMsg(constrained):
         s = "target objective reached."
     return s
 
-def bracketedMinimizerFeasibleMsg(soln,constrained):
+
+def bracketedMinimizerFeasibleMsg(soln, constrained):
     if constrained:
         if soln.final.tv == 0:
             s2 = " at a (strictly) feasible point. "
@@ -703,65 +807,98 @@ def bracketedMinimizerFeasibleMsg(soln,constrained):
     else:
         s2 = ". "
 
-    s = [   "line search bracketed a minimizer but failed to satisfy Wolfe conditions",
-            s2, "This may be an indication that approximate stationarity has been attained." ]
+    s = [
+        "line search bracketed a minimizer but failed to satisfy Wolfe conditions",
+        s2,
+        "This may be an indication that approximate stationarity has been attained.",
+    ]
     return s
+
 
 def bracketedMinimizerInfeasibleMsg():
-    s = [  "line search bracketed a minimizer but failed to satisfy Wolfe conditions ",
-            "at an infeasible point. The closest point encountered to the feasible ",
-            "region is available in soln.most_feasible."]
+    s = [
+        "line search bracketed a minimizer but failed to satisfy Wolfe conditions ",
+        "at an infeasible point. The closest point encountered to the feasible ",
+        "region is available in soln.most_feasible.",
+    ]
     return s
 
+
 def failedToBracketedMinimizerMsg(soln):
-    if hasattr(soln,"mu_lowest"):
-        s_mu = ["PyGRANSO attempted mu values down to {} unsuccessively.  However, if ".format(soln.mu_lowest),
-                "the objective function is indeed bounded below on the feasible set, ",
-                "consider restarting PyGRANSO with opts.mu0 set even lower than {}.".format(soln.mu_lowest)]
+    if hasattr(soln, "mu_lowest"):
+        s_mu = [
+            "PyGRANSO attempted mu values down to {} unsuccessively.  However, if ".format(
+                soln.mu_lowest
+            ),
+            "the objective function is indeed bounded below on the feasible set, ",
+            "consider restarting PyGRANSO with opts.mu0 set even lower than {}.".format(
+                soln.mu_lowest
+            ),
+        ]
     else:
         s_mu = [""]
 
-    s = ["line search failed to bracket a minimizer, indicating that the objective ",
-        "function may be unbounded below. "] + s_mu
+    s = [
+        "line search failed to bracket a minimizer, indicating that the objective ",
+        "function may be unbounded below. ",
+    ] + s_mu
 
     return s
 
-def displayError(partial_computation,error_msg,err):
+
+def displayError(partial_computation, error_msg, err):
     pass
 
-def displayErrorRecursive(err,full_report):
+
+def displayErrorRecursive(err, full_report):
     pass
+
 
 def partialComputationMsg():
-    s = ["PyGRANSO: optimization halted on error.\n" ,
+    s = [
+        "PyGRANSO: optimization halted on error.\n",
         "  - Output argument soln.final contains last accepted iterate prior to error\n",
         "  - See soln.error and console output below for more details on the cause of the error\n",
-        "TODO..."]
+        "TODO...",
+    ]
     return s
+
 
 def noComputationMsg():
-    s = ["PyGRANSO: error on initialization.\n",
-        "  - See console output below for more details on the cause of error.\n"]
+    s = [
+        "PyGRANSO: error on initialization.\n",
+        "  - See console output below for more details on the cause of error.\n",
+    ]
     return s
+
 
 def userSuppliedFunctionsErrorMsg():
-    s = ["Please check your supplied routines defining the objective and constraints \n",
-        "functions for correctness.\n"]
+    s = [
+        "Please check your supplied routines defining the objective and constraints \n",
+        "functions for correctness.\n",
+    ]
     return s
+
 
 def quadprogErrorMsg():
-    s = ["Incurring a quadprog error may be an indication of:\n",
+    s = [
+        "Incurring a quadprog error may be an indication of:\n",
         "  a) a weakness/flaw in the specific QP solver being used\n",
-        "TODO" ]
+        "TODO",
+    ]
     return s
+
 
 def unknownErrorMsg():
-    s = ["An unknown error has incurred.  ",
+    s = [
+        "An unknown error has incurred.  ",
         "Please report it on PyGRANSO''s GitHub page.\n",
         " ",
-        "    TODO"]
+        "    TODO",
+    ]
     return s
 
-def printSummaryAux(name,fieldname,soln,printer):
-        if hasattr(soln,fieldname):
-            printer.summary(name,getattr(soln,fieldname))
+
+def printSummaryAux(name, fieldname, soln, printer):
+    if hasattr(soln, fieldname):
+        printer.summary(name, getattr(soln, fieldname))

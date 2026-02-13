@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 
-def getObjGrad(nvar,var_dim_map,f,X, torch_device,double_precision):
+def getObjGrad(nvar, var_dim_map, f, X, torch_device, double_precision):
     """
     getObjGrad:
         getObjGrad obtains gradient of objective function by using pytorch autodiff
@@ -85,40 +85,40 @@ def getObjGrad(nvar,var_dim_map,f,X, torch_device,double_precision):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    
+
     if double_precision:
         torch_dtype = torch.double
     else:
         torch_dtype = torch.float
-    
+
     try:
         f.backward(retain_graph=True)
-        
 
-        f_grad_vec = torch.zeros((nvar,1),device=torch_device, dtype=torch_dtype)
+        f_grad_vec = torch.zeros((nvar, 1), device=torch_device, dtype=torch_dtype)
 
         curIdx = 0
         # current variable, e.g., U
         for var in var_dim_map.keys():
             # corresponding dimension of the variable, e.g, 3 by 2
             dim = var_dim_map.get(var)
-            grad_tmp = getattr(X,var).grad
+            grad_tmp = getattr(X, var).grad
             varLen = np.prod(dim)
             if grad_tmp == None:
                 curIdx += varLen
                 continue
-            f_grad_reshape = torch.reshape(grad_tmp,(varLen,1))
-            f_grad_vec[curIdx:curIdx+varLen] = f_grad_reshape
+            f_grad_reshape = torch.reshape(grad_tmp, (varLen, 1))
+            f_grad_vec[curIdx : curIdx + varLen] = f_grad_reshape
             curIdx += varLen
 
             # preventing gradient accumulating
-            getattr(X,var).grad.zero_()
+            getattr(X, var).grad.zero_()
     except Exception:
-        f_grad_vec = torch.zeros((nvar,1),device=torch_device, dtype=torch_dtype)
+        f_grad_vec = torch.zeros((nvar, 1), device=torch_device, dtype=torch_dtype)
     f_grad_vec = f_grad_vec.detach()
     return f_grad_vec
 
-def getObjGradDL(nvar,model,f, torch_device, double_precision):
+
+def getObjGradDL(nvar, model, f, torch_device, double_precision):
     """
     getObjGradDL:
         getObjGrad obtains gradient of objective function defined by torch.nn module
@@ -176,7 +176,7 @@ def getObjGradDL(nvar,model,f, torch_device, double_precision):
 
         New code and functionality for PyGRANSO v1.0.0.
 
-        v1.2.0 bug fixed: allow part of optimization variables not showing up 
+        v1.2.0 bug fixed: allow part of optimization variables not showing up
         in objective (see SVM example).
 
         For comments/bug reports, please visit the PyGRANSO webpage:
@@ -210,19 +210,19 @@ def getObjGradDL(nvar,model,f, torch_device, double_precision):
     else:
         torch_dtype = torch.float
 
-    f_grad_vec = torch.zeros((nvar,1),device=torch_device, dtype=torch_dtype)
+    f_grad_vec = torch.zeros((nvar, 1), device=torch_device, dtype=torch_dtype)
 
     curIdx = 0
     parameter_lst = list(model.parameters())
     for i in range(len(parameter_lst)):
         if parameter_lst[i].grad == None:
-            curIdx += torch.numel(parameter_lst[i]) 
+            curIdx += torch.numel(parameter_lst[i])
             continue
-        f_grad_reshape = torch.reshape(parameter_lst[i].grad,(-1,1))
-        f_grad_vec[curIdx:curIdx+f_grad_reshape.shape[0]] = f_grad_reshape
+        f_grad_reshape = torch.reshape(parameter_lst[i].grad, (-1, 1))
+        f_grad_vec[curIdx : curIdx + f_grad_reshape.shape[0]] = f_grad_reshape
         curIdx += f_grad_reshape.shape[0]
         # preventing gradient accumulating
         parameter_lst[i].grad.zero_()
-        
+
     f_grad_vec = f_grad_vec.detach()
     return f_grad_vec

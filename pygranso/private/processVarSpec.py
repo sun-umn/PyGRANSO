@@ -1,13 +1,14 @@
-import traceback,sys
+import traceback, sys
 import torch.nn as nn
 
+
 def processVarSpec(var_spec):
-    """  
+    """
     processVarSpec:
         Checks whether var_spec is a python dictionary or not.
 
-        We replaced the struct in the original GRANSO code with a python dictionary. 
-        
+        We replaced the struct in the original GRANSO code with a python dictionary.
+
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
@@ -53,13 +54,12 @@ def processVarSpec(var_spec):
     """
 
     try:
-    
-        if isinstance(var_spec,dict):
-            return [var_spec,None]
-        
-        elif isinstance(var_spec,nn.Module):
-            return [None,var_spec]
-        else: 
+        if isinstance(var_spec, dict):
+            return [var_spec, None]
+
+        elif isinstance(var_spec, nn.Module):
+            return [None, var_spec]
+        else:
             print("Illegal variable definition")
             sys.exit()
 
@@ -67,5 +67,3 @@ def processVarSpec(var_spec):
         print("Illegal variable definition")
         print(traceback.format_exc())
         sys.exit()
-
-    
