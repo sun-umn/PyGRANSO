@@ -118,12 +118,103 @@ class qpTC:
         else:
             torch_dtype = torch.float
 
+        # ========================================================================
+        # STATIONARITY QP SETUP: Differences for constrained vs unconstrained
+        # ========================================================================
+        # IMPORTANT: QP solver is ALWAYS used in Stage 2, even for unconstrained!
+        #
+        # For UNCONSTRAINED problems:
+        #   - penaltyfn_at_x.ci and penaltyfn_at_x.ce are empty (shape (0,1))
+        #   - p = l * 0 = 0 (no inequality constraint multipliers)
+        #   - q = l * 0 = 0 (no equality constraint multipliers)
+        #   - CI_grads and CE_grads are empty tensors (shape n x 0)
+        #   - all_grads = hstack([empty, F_grads, empty]) = F_grads only
+        #   - QP still solved but simpler: finds smallest vector in convex hull of
+        #     objective gradients only (no constraint multipliers)
+        #
+        # For CONSTRAINED problems:
+        #   - p = l * num_ineq_constraints (inequality multipliers)
+        #   - q = l * num_eq_constraints (equality multipliers)
+        #   - all_grads = hstack([CE_grads, F_grads, CI_grads]) includes all
+        #   - QP includes constraint gradients and multipliers
         # obtain # of variables
         n = torch.numel(gradient_samples[0].F)
         mu = penaltyfn_at_x.mu
+        # ========================================================================
+        # WHAT ARE grad_samples? Structure and how they determine QP size
+        # ========================================================================
+        # grad_samples is an array/list of gradient objects from the neighborhood cache
+        # Each element gradient_samples[i] is a struct/object with fields:
+        #   - .F  = objective gradient at iterate i (shape: n × 1)
+        #   - .CI = inequality constraint gradients at iterate i (shape: n × num_ineq)
+        #   - .CE = equality constraint gradients at iterate i (shape: n × num_eq)
+        #
+        # HOW THE NEIGHBORHOOD CACHE WORKS:
+        # 1. Each iteration, getNearbyGradients() is called:
+        #    - Gets current gradients: [f_grad, ci_grad, ce_grad] at current x
+        #    - Packages them into struct with .F, .CI, .CE fields
+        #    - Calls neighborhoodCache.getCachedNeighborhoodAbout(x, grads)
+        #
+        # 2. The cache stores up to ngrad previous iterates (x values) and their gradients
+        #    - Computes Euclidean distance: ||x_current - x_previous||
+        #    - Returns all iterates where distance <= evaldist
+        #
+        # 3. "Within evaldist" means:
+        #    - Euclidean distance in variable space: ||x_i - x_current|| <= evaldist
+        #    - Current iterate always included (distance = 0)
+        #    - Previous iterates only if they're "close" to current x
+        #
+        # 4. Why l might be small:
+        #    - Early iterations: cache hasn't accumulated enough history
+        #    - Large steps: previous iterates are too far away (> evaldist)
+        #    - evaldist too small: default is 1e-4, which is quite small
+        #
+        # 5. QP size calculation:
+        #    l = number of gradient samples (current + nearby previous iterates)
+        #    H shape = (q + l + p, q + l + p) where:
+        #      - For unconstrained: (0 + l + 0, 0 + l + 0) = (l, l)
+        #      - For constrained: (q + l + p, q + l + p) with q, p > 0
+        #    So H > 1×1 when l > 1 (multiple gradient samples are being used)
+        #
+        # HOW TO FORCE A LARGER l:
+        # 1. Increase evaldist (default: 1e-4):
+        #    opts.evaldist = 1e-3  # or larger - makes radius bigger
+        # 2. Increase ngrad (default: min(100, 2*n, n+10)):
+        #    opts.ngrad = 200  # allows more samples to be cached
+        # 3. Ensure small steps (algorithm naturally does this near convergence):
+        #    - Small steps mean iterates cluster together
+        #    - More iterates will be within evaldist radius
+        # 4. Note: Larger l makes QP more expensive to solve!
+        #
+        # MAXIMUM VALUE OF l:
+        # If evaldist is set very large (e.g., inf), then ALL cached gradients
+        # will be returned. The maximum l is limited by:
+        #   - ngrad: maximum cache size (default: min(100, 2*n, n+10))
+        #   - Number of iterations completed (early on, cache hasn't filled yet)
+        # After ngrad iterations, the cache uses a circular buffer and maintains
+        # exactly ngrad samples (the most recent ones). So:
+        #   Maximum l = ngrad (after at least ngrad iterations)
+        #   Early iterations: l <= iteration_number (up to ngrad)
         l = gradient_samples.size
-        p = l * len(penaltyfn_at_x.ci)
-        q = l * len(penaltyfn_at_x.ce)
+        print("\ngradient_samples structure:")
+        print(f"  Type: {type(gradient_samples)}")
+        print(f"  Length (l): {l}")
+        if l > 0:
+            print(f"  First sample type: {type(gradient_samples[0])}")
+            if hasattr(gradient_samples[0], "F"):
+                print(
+                    f"  First sample has .F (objective grad): {gradient_samples[0].F.shape if hasattr(gradient_samples[0].F, 'shape') else 'N/A'}"
+                )
+            if hasattr(gradient_samples[0], "CI"):
+                print(
+                    f"  First sample has .CI (ineq grad): {gradient_samples[0].CI.shape if hasattr(gradient_samples[0].CI, 'shape') else 'N/A'}"
+                )
+            if hasattr(gradient_samples[0], "CE"):
+                print(
+                    f"  First sample has .CE (eq grad): {gradient_samples[0].CE.shape if hasattr(gradient_samples[0].CE, 'shape') else 'N/A'}"
+                )
+        p = l * len(penaltyfn_at_x.ci)  # Will be 0 for unconstrained
+        q = l * len(penaltyfn_at_x.ce)  # Will be 0 for unconstrained
 
         F = penaltyfn_at_x.f * torch.ones(
             (l, 1), device=torch_device, dtype=torch_dtype
@@ -139,20 +230,51 @@ class qpTC:
         CI_grads_lst = []
         CE_grads_lst = []
 
+        # ========================================================================
+        # STEP-BY-STEP QP CONSTRUCTION FROM GRADIENT SAMPLES
+        # ========================================================================
+        # For each of the l gradient samples, extract F, CI, CE gradients:
+        # - gradient_samples[i].F  = objective grad at iterate i (n × 1)
+        # - gradient_samples[i].CI = ineq grad at iterate i (n × num_ineq)
+        # - gradient_samples[i].CE = eq grad at iterate i (n × num_eq)
         for i in range(l):
             # convert cell array fields F, CI, CE to struct array with same
             grads_array = gradient_samples[i]
             #  convert struct array into individual arrays of samples
-            F_grads_lst.append(grads_array.F)  # n by l
-            CI_grads_lst.append(grads_array.CI)  # n by p
-            CE_grads_lst.append(grads_array.CE)  # n by q
+            F_grads_lst.append(grads_array.F)  # n × 1 per sample
+            CI_grads_lst.append(grads_array.CI)  # n × num_ineq per sample
+            CE_grads_lst.append(grads_array.CE)  # n × num_eq per sample
+
+        # Concatenate all samples horizontally:
+        # - F_grads: n × l (l columns, one per sample)
+        # - CI_grads: n × (l * num_ineq) = n × p
+        # - CE_grads: n × (l * num_eq) = n × q
         F_grads = torch.cat(F_grads_lst, 1)
         CI_grads = torch.cat(CI_grads_lst, 1)
         CE_grads = torch.cat(CE_grads_lst, 1)
 
         #  Set up arguments for quadprog interface
+        print(f"CE_grads shape: {CE_grads.shape}")
+        print(f"F_grads shape: {F_grads.shape}")
+        print(f"CI_grads shape: {CI_grads.shape}")
+        print(f"CE shape: {CE}")
+
+        # Stack all gradients: [CE_grads | F_grads | CI_grads]
+        # Shape: n × (q + l + p)
+        # This represents all gradient information from l nearby iterates
         self.all_grads = torch.hstack((CE_grads, F_grads, CI_grads))
+
+        # Apply inverse Hessian: Hinv_grads = H^{-1} @ all_grads
+        # Shape: n × (q + l + p)
         Hinv_grads = apply_Hinv(self.all_grads)
+
+        print(f"Hinv_grads shape: {Hinv_grads.shape}")
+        print(f"all_grads shape: {self.all_grads.shape}")
+
+        # Build QP Hessian: H = all_grads^T @ H^{-1} @ all_grads
+        # Shape: (q + l + p) × (q + l + p)
+        # This measures how "aligned" the gradients are with the Hessian
+        # For unconstrained: H is l × l (one row/col per gradient sample)
         self.H = torch.conj(self.all_grads.t()) @ Hinv_grads
         #  Fix H since numerically, it is unlikely to be _perfectly_ symmetric
         self.H = (self.H + torch.conj(self.H.t())) / 2
@@ -179,6 +301,44 @@ class qpTC:
         )
         beq = mu
 
+        # ========================================================================
+        # DEBUG: Print shapes of QP variables for nonsmooth stationarity test
+        # ========================================================================
+        print(f"\n{'=' * 80}")
+        print("NONSMOOTH STATIONARITY QP - Variable Shapes")
+        print(f"{'=' * 80}")
+        print("Problem dimensions:")
+        print(f"  n (variables): {n}")
+        print(f"  l (gradient samples): {l} <- FROM: gradient_samples.size")
+        print(f"     (number of iterates within evaldist radius, including current)")
+        print(f"  p (ineq multipliers): {p} = l * {len(penaltyfn_at_x.ci)} constraints")
+        print(f"  q (eq multipliers): {q} = l * {len(penaltyfn_at_x.ce)} constraints")
+        print(f"  mu (penalty param): {mu}")
+        print(
+            f"  QP size: H will be ({q + l + p}, {q + l + p}) = ({q + l + p}, {q + l + p})"
+        )
+        print("\nGradient matrices:")
+        print(
+            f"  F_grads shape: {F_grads.shape if hasattr(F_grads, 'shape') else 'N/A'}"
+        )
+        print(
+            f"  CI_grads shape: {CI_grads.shape if hasattr(CI_grads, 'shape') else 'N/A'}"
+        )
+        print(
+            f"  CE_grads shape: {CE_grads.shape if hasattr(CE_grads, 'shape') else 'N/A'}"
+        )
+        print(
+            f"  all_grads shape: {self.all_grads.shape if hasattr(self.all_grads, 'shape') else 'N/A'}"
+        )
+        print("\nQP problem matrices:")
+        print(f"  H shape: {self.H.shape if hasattr(self.H, 'shape') else 'N/A'}")
+        print(f"  f shape: {f.shape if hasattr(f, 'shape') else 'N/A'}")
+        print(f"  Aeq shape: {Aeq.shape if hasattr(Aeq, 'shape') else 'N/A'}")
+        print(f"  beq: {beq} (scalar)")
+        print(f"  LB shape: {LB.shape if hasattr(LB, 'shape') else 'N/A'}")
+        print(f"  UB shape: {UB.shape if hasattr(UB, 'shape') else 'N/A'}")
+        print(f"{'=' * 80}\n")
+
         # Choose solver
         if QPsolver == "gurobi":
             #  formulation of QP has no 1/2
@@ -193,6 +353,7 @@ class qpTC:
                 torch_device,
                 double_precision,
                 cuda_osqp_enabled,
+                source="QP Termination Condition",
             )
         elif QPsolver == "osqp":
             #  formulation of QP has no 1/2
@@ -207,6 +368,7 @@ class qpTC:
                 torch_device,
                 double_precision,
                 cuda_osqp_enabled,
+                source="QP Termination Condition",
             )
 
         [y, _, qps_solved, ME] = self.solveQPRobust(torch_dtype)
@@ -269,8 +431,8 @@ class qpTC:
             V = V.real
             D.to(dtype=torch_dtype)
 
-            dvec = D.clone()
-            dvec[D < 0] = 0
+            # OPTIMIZED: Use clamp instead of clone + in-place modify
+            dvec = torch.clamp(D, min=0)
             # dvec = [x if x >= 0 else 0 for x in D]
             Hreg = torch.conj(V.T) @ torch.diag(dvec) @ torch.conj(V.T)
             x = self.solveQP_fn(Hreg)

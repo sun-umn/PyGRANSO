@@ -291,6 +291,7 @@ class qpSS:
                     self.device,
                     self.double_precision,
                     self.cuda_osqp_enabled,
+                    source="QP Steering Strategy",
                 )
             elif self.QPsolver == "osqp":
                 #  formulation of QP has no 1/2
@@ -305,6 +306,7 @@ class qpSS:
                     self.device,
                     self.double_precision,
                     self.cuda_osqp_enabled,
+                    source="QP Steering Strategy",
                 )
         except Exception as e:
             print(

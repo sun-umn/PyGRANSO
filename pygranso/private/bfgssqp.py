@@ -153,6 +153,12 @@ class AlgBFGSSQP:
         ngrad = opts.ngrad
         evaldist = opts.evaldist
 
+        # DEBUG: Verify evaldist is being read correctly
+        print(f"\n[BFGS-SQP DEBUG] Reading options:")
+        print(f"  opts.evaldist = {opts.evaldist}")
+        print(f"  opts.ngrad = {opts.ngrad}")
+        print(f"  Using evaldist = {evaldist} for neighborhood cache")
+
         #  early termination parameters
         maxit = opts.maxit
         maxclocktime = opts.maxclocktime
@@ -253,6 +259,9 @@ class AlgBFGSSQP:
         #  The gradients from the current iterate are simultaneously added to
         #  the cache.
         nC_obj = nC(torch_device, self.double_precision)
+        print(f"[BFGS-SQP DEBUG] Creating neighborhood cache with:")
+        print(f"  ngrad = {ngrad}")
+        print(f"  evaldist = {evaldist}")
         get_nbd_grads_fn = nC_obj.neighborhoodCache(ngrad, evaldist)
         self.get_nearby_grads_fn = lambda: getNearbyGradients(
             self.penaltyfn_obj, get_nbd_grads_fn
@@ -262,6 +271,12 @@ class AlgBFGSSQP:
             self.computeApproxStationarityVector()
         )
 
+        # ========================================================================
+        # UNCONSTRAINED PROBLEM HANDLING: Disable steering QP solves
+        # ========================================================================
+        # For unconstrained problems, skip steering QP (levels 0-1) and jump
+        # directly to BFGS direction (level 2). This is because steering is only
+        # needed to handle constraint violations, which don't exist here.
         if not self.constrained:
             #  disable steering QP solves by increasing min_fallback_level.
             min_fallback_level = max(min_fallback_level, POSTQP_FALLBACK_LEVEL)
@@ -367,7 +382,16 @@ class AlgBFGSSQP:
             # produce an accepted step.
 
             penalty_parameter_changed = False
+            # ====================================================================
+            # UNCONSTRAINED PROBLEM: Search direction computation
+            # ====================================================================
+            # For unconstrained problems, fallback_level >= POSTQP_FALLBACK_LEVEL (2)
+            # so steering QP (levels 0-1) is SKIPPED. Algorithm goes directly to:
+            # - Level 2: Standard BFGS direction (p = -H_inv @ g)
+            # - Level 3: Steepest descent (p = -g)
+            # - Level 4+: Random directions (fallback only)
             if self.fallback_level < POSTQP_FALLBACK_LEVEL:
+                # This branch is SKIPPED for unconstrained problems
                 if self.fallback_level == 0:
                     apply_H_steer = self.apply_H_QP_fn  # standard steering
                 else:
@@ -387,8 +411,10 @@ class AlgBFGSSQP:
                     [f, g, self.mu] = self.penaltyfn_obj.updatePenaltyParameter(mu_new)
 
             elif self.fallback_level == 2:
+                # UNCONSTRAINED: Standard BFGS direction (no steering QP needed)
                 p = -self.apply_H_fn(g)  # standard BFGS
             elif self.fallback_level == 3:
+                # UNCONSTRAINED: Steepest descent fallback
                 p = -g  # steepest descent
 
             else:
@@ -594,6 +620,12 @@ class AlgBFGSSQP:
         # [alpha,x_ls,f_ls,g_ls,fail,_,_,_] = ls_fn(f,g)
         [alpha, x_ls, f_ls, g_ls, fail] = ls_fn(f, g)
 
+        # ========================================================================
+        # UNCONSTRAINED PROBLEM: Line search behavior
+        # ========================================================================
+        # For unconstrained problems, this condition is FALSE, so penalty
+        # parameter adjustment is SKIPPED. The line search uses the objective
+        # function directly (mu = 1 is fixed).
         #  If the problem is constrained and the line search fails without
         #  bracketing a minimizer, it may be because the objective is
         #  unbounded below off the feasible set.  In this case, we can retry
@@ -636,6 +668,34 @@ class AlgBFGSSQP:
         return [alpha, x_ls, f_ls, g_ls, fail]
 
     def computeApproxStationarityVector(self):
+        """
+        Compute approximate stationarity measure for convergence checking.
+
+        This function computes the stationarity measure using a two-stage approach.
+        First, it checks the smooth case by computing the norm of the penalty function
+        gradient. If this is sufficiently small (<= opt_tol), it returns immediately
+        indicating a smooth stationary point. Otherwise, it performs a nonsmooth
+        stationarity test by solving a quadratic program (QP) that finds the smallest
+        vector in the convex hull of nearby gradient samples from the optimization
+        history. The resulting stationarity measure is used to determine if the
+        algorithm has converged to an approximate stationary point.
+
+        Returns:
+            stat_vec: Stationarity vector (penalty gradient or QP solution)
+            stat_value: Scalar stationarity measure (norm of stat_vec)
+            n_qps: Number of QP solves attempted
+            n_samples: Number of gradient samples used
+            dist_evals: Number of distance evaluations performed
+        """
+        # ========================================================================
+        # STATIONARITY COMPUTATION: Same process for constrained and unconstrained
+        # ========================================================================
+        # The penalty gradient p_grad contains:
+        # - UNCONSTRAINED: p_grad = mu * f_grad + tv_l1_grad = 1 * f_grad + 0 = f_grad
+        #   (just the objective gradient, since mu=1 and no constraint violations)
+        # - CONSTRAINED:   p_grad = mu * f_grad + tv_l1_grad
+        #   (objective gradient weighted by mu plus constraint violation gradients)
+        #
         #  first check the smooth case (gradient of the penalty function).
         #  If its norm is small, that indicates that we are at a smooth
         #  stationary point and we can return this measure and terminate
@@ -646,6 +706,7 @@ class AlgBFGSSQP:
             self.opt_tol, device=self.torch_device, dtype=self.torch_dtype
         )
 
+        print(f"stat_value: {stat_value}; opt_tol: {self.opt_tol}")
         if stat_value <= self.opt_tol:
             n_qps = 0
             n_samples = 1
@@ -654,6 +715,12 @@ class AlgBFGSSQP:
             stat_value = stat_value.item()
             return [stat_vec, stat_value, n_qps, n_samples, dist_evals]
 
+        # ========================================================================
+        # STAGE 2: Nonsmooth QP Test (ALWAYS uses QP solver, even unconstrained!)
+        # ========================================================================
+        # NOTE: Both constrained AND unconstrained problems use QP solver here.
+        # For unconstrained: QP is simpler (only objective gradients, no constraint
+        # multipliers), but still solves a QP to find smallest vector in convex hull.
         #  otherwise, we must do a nonsmooth stationary point test
 
         #  add new gradients at current iterate to cache and then get
@@ -665,6 +732,29 @@ class AlgBFGSSQP:
         #  number of previous iterates that are considered sufficiently
         #  close, including the current iterate
         n_samples = len(grad_samples)
+
+        # ========================================================================
+        # DEBUG: Show where l comes from
+        # ========================================================================
+        print(f"\n{'=' * 80}")
+        print("GRADIENT SAMPLES FOR NONSMOOTH STATIONARITY")
+        print(f"{'=' * 80}")
+        print(f"Current iteration: {self.iter}")
+        print(f"Number of gradient samples (l): {n_samples}")
+        print(f"  This is the length of grad_samples array")
+        print(f"  Includes: current iterate + previous iterates within evaldist radius")
+        print(f"  Source: neighborhoodCache returns samples with distance <= evaldist")
+        print(f"\n  IMPORTANT: Why l might be 1:")
+        print(f"    - Iteration 0: Cache only has 1 sample (current iterate) → l = 1")
+        print(f"    - Early iterations: Cache hasn't accumulated enough samples yet")
+        print(
+            f"    - Large steps: Even with large evaldist, if steps are huge, distances > evaldist"
+        )
+        print(
+            f"    - Check later iterations (iter >= 5) to see if cache accumulates samples"
+        )
+        print(f"  If evaldist=1e6 and l=1 at iteration > 0, check step sizes!")
+        print(f"{'=' * 80}\n")
 
         #  nonsmooth optimality measure
         qPTC_obj = qpTC()
@@ -697,6 +787,12 @@ class AlgBFGSSQP:
 
     def converged(self):
         tf = True
+        # ========================================================================
+        # UNCONSTRAINED PROBLEM: Convergence checking
+        # ========================================================================
+        # For unconstrained problems, feasible_to_tol is ALWAYS True (no constraints
+        # to violate), so convergence is determined solely by stationarity (stat_val)
+        # or relative tolerance (rel_diff). Termination code 0 is still possible.
         #  only converged if point is feasible to tolerance
         if self.penaltyfn_at_x.feasible_to_tol:
             if self.stat_val <= self.opt_tol:

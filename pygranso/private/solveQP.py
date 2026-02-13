@@ -12,7 +12,17 @@ QP_REQUESTS = 0
 
 
 def solveQP(
-    H, f, A, b, LB, UB, QPsolver, torch_device, double_precision, cuda_osqp_enabled=True
+    H,
+    f,
+    A,
+    b,
+    LB,
+    UB,
+    QPsolver,
+    torch_device,
+    double_precision,
+    cuda_osqp_enabled=True,
+    source="Unknown",
 ):
     """
     solveQP:
@@ -95,6 +105,27 @@ def solveQP(
     global QP_REQUESTS
     QP_REQUESTS += 1
 
+    # ========================================================================
+    # DEBUG: Print QP problem information
+    # ========================================================================
+    print(f"\n{'=' * 80}")
+    print(f"QP SOLVER CALL - Source: {source}")
+    print(f"{'=' * 80}")
+    print(f"H shape: {H.shape if hasattr(H, 'shape') else 'N/A'}")
+    print(f"f shape: {f.shape if hasattr(f, 'shape') else 'N/A'}")
+    if A is not None:
+        print(f"A shape: {A.shape if hasattr(A, 'shape') else 'N/A'}")
+    else:
+        print(f"A: None (no equality constraints)")
+    if b is not None:
+        print(f"b shape: {b.shape if hasattr(b, 'shape') else type(b)}")
+    else:
+        print(f"b: None")
+    print(f"LB shape: {LB.shape if hasattr(LB, 'shape') else 'N/A'}")
+    print(f"UB shape: {UB.shape if hasattr(UB, 'shape') else 'N/A'}")
+    print(f"QPsolver: {QPsolver}")
+    print(f"{'=' * 80}\n")
+
     if QPsolver == "osqp":
         # H,f always exist
         nvar = len(f)
@@ -102,32 +133,15 @@ def solveQP(
         # OPTIMIZATION: Use pinned memory for faster CPU-GPU transfers
         # Only allocate pinned memory if on CUDA device
         if torch_device.type == "cuda":
-            # Pin memory for 2-3x faster GPU->CPU->GPU roundtrip
-            if not H.is_pinned():
-                H_cpu = H.pin_memory().cpu().numpy()
-            else:
-                H_cpu = H.cpu().numpy()
-
-            if not f.is_pinned():
-                f_cpu = f.pin_memory().cpu().numpy()
-            else:
-                f_cpu = f.cpu().numpy()
-
-            if not LB.is_pinned():
-                LB_cpu = LB.pin_memory().cpu().numpy()
-            else:
-                LB_cpu = LB.cpu().numpy()
-
-            if not UB.is_pinned():
-                UB_cpu = UB.pin_memory().cpu().numpy()
-            else:
-                UB_cpu = UB.cpu().numpy()
+            # Transfer to CPU first, then pin for faster transfers
+            # Note: Must do .cpu() BEFORE .pin_memory()
+            H_cpu = H.cpu().pin_memory().numpy()
+            f_cpu = f.cpu().pin_memory().numpy()
+            LB_cpu = LB.cpu().pin_memory().numpy()
+            UB_cpu = UB.cpu().pin_memory().numpy()
 
             if A is not None:
-                if not A.is_pinned():
-                    A_cpu = A.pin_memory().cpu().numpy()
-                else:
-                    A_cpu = A.cpu().numpy()
+                A_cpu = A.cpu().pin_memory().numpy()
             else:
                 A_cpu = None
         else:
@@ -201,37 +215,19 @@ def solveQP(
             solution_tensor = torch.from_numpy(solution).to(
                 device=torch_device, dtype=torch_dtype
             )
-
         return solution_tensor
 
     if QPsolver == "gurobi":
         # OPTIMIZATION: Use pinned memory for faster CPU-GPU transfers
         if torch_device.type == "cuda":
-            if not H.is_pinned():
-                H_cpu = H.pin_memory().cpu().numpy()
-            else:
-                H_cpu = H.cpu().numpy()
-
-            if not f.is_pinned():
-                f_cpu = f.pin_memory().cpu().numpy()
-            else:
-                f_cpu = f.cpu().numpy()
-
-            if not LB.is_pinned():
-                LB_cpu = LB.pin_memory().cpu().numpy()
-            else:
-                LB_cpu = LB.cpu().numpy()
-
-            if not UB.is_pinned():
-                UB_cpu = UB.pin_memory().cpu().numpy()
-            else:
-                UB_cpu = UB.cpu().numpy()
+            # Transfer to CPU first, then pin for faster transfers
+            H_cpu = H.cpu().pin_memory().numpy()
+            f_cpu = f.cpu().pin_memory().numpy()
+            LB_cpu = LB.cpu().pin_memory().numpy()
+            UB_cpu = UB.cpu().pin_memory().numpy()
 
             if A is not None:
-                if not A.is_pinned():
-                    A_cpu = A.pin_memory().cpu().numpy()
-                else:
-                    A_cpu = A.cpu().numpy()
+                A_cpu = A.cpu().pin_memory().numpy()
             else:
                 A_cpu = None
         else:

@@ -243,20 +243,23 @@ class H_obj_struct:
 
         #  Now apply first updates to the columns of q
         for j in reversed(range(self.count)):
-            alpha[j, :] = self.rho[0, j] * (self.S[:, j].T @ q)
-            y = self.Y[:, j]
-            for k in range(self.cols):
-                q[:, k] = q[:, k] - alpha[j, k] * y
+            # Use @ directly on 1D tensor (no .T needed, avoids deprecation)
+            alpha[j, :] = self.rho[0, j] * (self.S[:, j] @ q)
+            # OPTIMIZED: Vectorized update instead of Python loop
+            # Broadcasting: y is (n,), alpha[j,:] is (cols,)
+            # y[:, None] creates (n, 1), broadcasts to (n, cols)
+            q -= self.Y[:, j : j + 1] * alpha[j : j + 1, :]
 
         #  Apply the sparse matvec and (possible) scaling
         r = self.gamma * (self.H0 @ q)
 
         #  Finally apply updates to the columns of r
         for j in range(self.count):
-            beta = self.rho[0, j] * (torch.conj(self.Y[:, j]).T @ r)
-            s = self.S[:, j]
-            for k in range(self.cols):
-                r[:, k] = r[:, k] + (alpha[j, k] - beta[k]) * s
+            # Use @ directly on 1D tensor (no .T needed, avoids deprecation)
+            beta = self.rho[0, j] * (torch.conj(self.Y[:, j]) @ r)
+            # OPTIMIZED: Vectorized update instead of Python loop
+            # Broadcasting: s is (n,), (alpha - beta) is (cols,)
+            r += self.S[:, j : j + 1] * (alpha[j : j + 1, :] - beta)
         return r
 
     def getState(self):

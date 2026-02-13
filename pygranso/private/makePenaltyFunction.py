@@ -324,6 +324,9 @@ class PanaltyFuctions:
         self.prescaled = len(self.scalings.__dict__) != 0
 
         constrained = ineq_constrained or eq_constrained
+        # ========================================================================
+        # UNCONSTRAINED PROBLEM HANDLING: Penalty parameter and feasibility
+        # ========================================================================
         if constrained:
             self.mu = params.mu0
             update_penalty_parameter_fn = lambda mu_new: self.updatePenaltyParameter(
@@ -333,6 +336,12 @@ class PanaltyFuctions:
             self.viol_eq_tol = params.viol_eq_tol
             self.is_feasible_to_tol_fn = lambda tvi, tve: self.isFeasibleToTol(tvi, tve)
         else:
+            # ====================================================================
+            # UNCONSTRAINED: Key differences from constrained problems
+            # ====================================================================
+            # 1. Penalty parameter mu is FIXED at 1 (cannot be adjusted)
+            # 2. Always considered feasible (no constraints to violate)
+            # 3. Penalty function = objective function (no constraint terms)
             #  unconstrained problems should have fixed mu := 1
             self.mu = 1
             update_penalty_parameter_fn = lambda varargin: self.penaltyParameterIsFixed(
@@ -347,6 +356,13 @@ class PanaltyFuctions:
         self.tv_l1 = self.tvi_l1 + self.tve_l1
         self.tv_l1_grad = self.tvi_l1_grad + self.tve_l1_grad
         self.p = self.mu * self.f + self.tv_l1
+        # ========================================================================
+        # PENALTY GRADIENT: Key difference for constrained vs unconstrained
+        # ========================================================================
+        # UNCONSTRAINED: tv_l1_grad = 0 (no constraints), mu = 1
+        #   → p_grad = 1 * f_grad + 0 = f_grad (just objective gradient)
+        # CONSTRAINED: tv_l1_grad contains constraint violation gradients, mu varies
+        #   → p_grad = mu * f_grad + tv_l1_grad (weighted objective + constraint terms)
         if isinstance(self.tv_l1_grad, int):
             self.p_grad = self.mu * self.f_grad + self.tv_l1_grad
         else:
@@ -921,10 +937,9 @@ def rescaleObjective(x, fn, scaling):
 
 
 def violationsInequality(ci):
-    vi = ci.detach().clone()
     violated_indx = ci >= 0
-    not_violated_indx = ~violated_indx
-    vi[not_violated_indx] = 0
+    # OPTIMIZED: Use where instead of clone + in-place modify
+    vi = torch.where(violated_indx, ci, torch.zeros_like(ci))
     return [vi, violated_indx]
 
 

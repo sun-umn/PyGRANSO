@@ -158,5 +158,26 @@ class nC:
         indx            = (self.distances <= self.radius).cpu().numpy()
         n_x             = self.samples[:,indx[0,:]]
         n_data          = self.data[indx[:]]
+        
+        # DEBUG: Show cache state
+        # n_data is a numpy array of objects, count non-None entries
+        if isinstance(n_data, np.ndarray):
+            n_returned = np.sum(indx[0, :]) if indx.ndim > 1 else np.sum(indx)
+        else:
+            n_returned = len(n_data) if hasattr(n_data, '__len__') else 1
+        
+        print(f"\n  [NEIGHBORHOOD CACHE DEBUG]")
+        print(f"    Samples in cache (self.n): {self.n}")
+        print(f"    Max cache size (max_size): {self.max_size}")
+        print(f"    Radius (evaldist): {self.radius}")
+        print(f"    Samples returned (l): {n_returned}")
+        if self.n > 1:
+            # Show some distance info
+            valid_distances = self.distances[0, self.distances[0] != float('inf')]
+            if len(valid_distances) > 0:
+                print(f"    Min distance in cache: {torch.min(valid_distances).item():.6e}")
+                print(f"    Max distance in cache: {torch.max(valid_distances).item():.6e}")
+                within_radius = torch.sum(self.distances[0] <= self.radius).item()
+                print(f"    Samples within radius: {within_radius}")
 
         return [n_x,n_data,computed]

@@ -1,7 +1,10 @@
 import numpy as np
 import torch
 
-def getCiGradVec(nvar,nconstr_ci_total,var_dim_map,X,ci_vec_torch, torch_device, double_precision):
+
+def getCiGradVec(
+    nvar, nconstr_ci_total, var_dim_map, X, ci_vec_torch, torch_device, double_precision
+):
     """
     getCiGradVec:
         getCiGradVec obtains gradient of constraints function (in the vector form) by using pytorch autodiff
@@ -96,27 +99,41 @@ def getCiGradVec(nvar,nconstr_ci_total,var_dim_map,X,ci_vec_torch, torch_device,
     else:
         torch_dtype = torch.float
 
-    ci_grad_vec = torch.zeros((nvar,nconstr_ci_total),device=torch_device, dtype=torch_dtype)
+    ci_grad_vec = torch.zeros(
+        (nvar, nconstr_ci_total), device=torch_device, dtype=torch_dtype
+    )
 
+    # OPTIMIZED: Batch gradient computation using torch.autograd.grad
+    # This is much faster than sequential .backward() calls
+    var_list = [getattr(X, var) for var in var_dim_map.keys()]
 
     for i in range(nconstr_ci_total):
-        ci_vec_torch[i].backward(retain_graph=True)
-        # current variable, e.g., U
+        # Compute gradients for all variables at once for this constraint
+        grads = torch.autograd.grad(
+            ci_vec_torch[i],
+            var_list,
+            retain_graph=True,
+            create_graph=False,
+            allow_unused=True,
+        )
+
+        # Flatten and concatenate all gradients
         curIdx = 0
-        for var in var_dim_map.keys():
-            # corresponding dimension of the variable, e.g, 3 by 2
+        for var, grad_tensor in zip(var_dim_map.keys(), grads):
             dim = var_dim_map.get(var)
-            ci_grad_tmp = getattr(X,var).grad
-            if ci_grad_tmp != None:
+            if grad_tensor is not None:
                 varLen = np.prod(dim)
-                ci_grad_reshape = torch.reshape(ci_grad_tmp,(varLen,1))[:,0]
-                ci_grad_vec[curIdx:curIdx+varLen,i] = ci_grad_reshape
-                curIdx += varLen
-                getattr(X,var).grad.zero_()
+                ci_grad_reshape = grad_tensor.reshape(-1)
+                ci_grad_vec[curIdx : curIdx + varLen, i] = ci_grad_reshape
+            curIdx += np.prod(dim)
+
     ci_grad_vec = ci_grad_vec.detach()
     return ci_grad_vec
 
-def getCiGradVecDL(nvar,nconstr_ci_total,model,ci_vec_torch, torch_device, double_precision):
+
+def getCiGradVecDL(
+    nvar, nconstr_ci_total, model, ci_vec_torch, torch_device, double_precision
+):
     """
     TODO
 
@@ -169,23 +186,32 @@ def getCiGradVecDL(nvar,nconstr_ci_total,model,ci_vec_torch, torch_device, doubl
     else:
         torch_dtype = torch.float
 
-    ci_grad_vec = torch.zeros((nvar,nconstr_ci_total),device=torch_device, dtype=torch_dtype)
+    ci_grad_vec = torch.zeros(
+        (nvar, nconstr_ci_total), device=torch_device, dtype=torch_dtype
+    )
 
+    # OPTIMIZED: Batch gradient computation using torch.autograd.grad
+    # This is much faster than sequential .backward() calls
     parameter_lst = list(model.parameters())
 
     for i in range(nconstr_ci_total):
-        ci_vec_torch[i].backward(retain_graph=True)
-        # current variable, e.g., U
+        # Compute gradients for all parameters at once for this constraint
+        grads = torch.autograd.grad(
+            ci_vec_torch[i],
+            parameter_lst,
+            retain_graph=True,
+            create_graph=False,
+            allow_unused=True,
+        )
+
+        # Flatten and concatenate all gradients
         curIdx = 0
-        for parameter in parameter_lst:
-            # corresponding dimension of the variable, e.g, 3 by 2
+        for parameter, grad_tensor in zip(parameter_lst, grads):
             varLen = torch.numel(parameter)
-            ci_grad_tmp = parameter.grad
-            if ci_grad_tmp != None:
-                ci_grad_reshape = torch.reshape(ci_grad_tmp,(varLen,1))[:,0]
-                ci_grad_vec[curIdx:curIdx+varLen,i] = ci_grad_reshape
-                curIdx += varLen
-                # preventing gradient accumulating
-                parameter.grad.zero_()
+            if grad_tensor is not None:
+                ci_grad_reshape = grad_tensor.reshape(-1)
+                ci_grad_vec[curIdx : curIdx + varLen, i] = ci_grad_reshape
+            curIdx += varLen
+
     ci_grad_vec = ci_grad_vec.detach()
     return ci_grad_vec
