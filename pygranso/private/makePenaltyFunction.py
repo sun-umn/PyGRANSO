@@ -215,7 +215,7 @@ class PanaltyFuctions:
 
             =========================================================================
             |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-            |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+            |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
             |                                                                       |
             |  This file is part of PyGRANSO.                                       |
             |                                                                       |
@@ -250,7 +250,7 @@ class PanaltyFuctions:
             [self.f, self.f_grad, self.obj_fn, ineq_fn, eq_fn] = (
                 splitEvalAtX_obj.splitEvalAtX(self.obj_fn, self.x)
             )
-        except Exception as e:
+        except Exception:
             print(traceback.format_exc())
             sys.exit()
 
@@ -315,29 +315,31 @@ class PanaltyFuctions:
         setattr(grad_norms_at_x0, "ce", ce_grad_norms)
 
         self.scalings = pygransoStruct()
-        if np.any(self.scaling_f != None):
+        if np.any(self.scaling_f is not None):
             setattr(self.scalings, "f", self.scaling_f)
-        if np.any(self.scaling_ci != None):
+        if np.any(self.scaling_ci is not None):
             setattr(self.scalings, "ci", self.scaling_ci)
-        if np.any(self.scaling_ce != None):
+        if np.any(self.scaling_ce is not None):
             setattr(self.scalings, "ce", self.scaling_ce)
         self.prescaled = len(self.scalings.__dict__) != 0
 
         constrained = ineq_constrained or eq_constrained
         if constrained:
             self.mu = params.mu0
-            update_penalty_parameter_fn = lambda mu_new: self.updatePenaltyParameter(
-                mu_new
-            )
+
+            def update_penalty_parameter_fn(mu_new):
+                return self.updatePenaltyParameter(mu_new)
+
             self.viol_ineq_tol = params.viol_ineq_tol
             self.viol_eq_tol = params.viol_eq_tol
             self.is_feasible_to_tol_fn = lambda tvi, tve: self.isFeasibleToTol(tvi, tve)
         else:
             #  unconstrained problems should have fixed mu := 1
             self.mu = 1
-            update_penalty_parameter_fn = lambda varargin: self.penaltyParameterIsFixed(
-                varargin
-            )
+
+            def update_penalty_parameter_fn(varargin):
+                return self.penaltyParameterIsFixed(varargin)
+
             self.is_feasible_to_tol_fn = (
                 lambda tvi, tve: True
             )  # unconstrained is always true
@@ -364,13 +366,19 @@ class PanaltyFuctions:
         if constrained:
             self.unscale_fields_fn = lambda data: self.unscaleFieldsConstrained(data)
             self.update_best_fn = lambda: self.updateBestSoFarConstrained()
-            get_best_fn = lambda: self.getBestConstrained()
+
+            def get_best_fn():
+                return self.getBestConstrained()
+
             self.most_feasible = self.getInfoForXConstrained()
             self.best_to_tol = None
         else:
             self.unscale_fields_fn = lambda data: self.unscaleFields(data)
             self.update_best_fn = lambda: self.updateBestSoFar()
-            get_best_fn = lambda: self.getBest()
+
+            def get_best_fn():
+                return self.getBest()
+
             self.best_unconstrained = self.getInfoForX()
 
         self.update_best_fn()
@@ -439,7 +447,7 @@ class PanaltyFuctions:
                 # evaluate constraints and their violations (nested update)
                 self.eval_ineq_fn(x_in)
                 self.eval_eq_fn(x_in)
-            except Exception as e:
+            except Exception:
                 print(
                     "PyGRANSO userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x."
                 )
@@ -485,7 +493,7 @@ class PanaltyFuctions:
             # evaluate objective and its gradient
             [f, ci, ce] = self.f_eval_fn(x_in)
 
-            if ci == None:
+            if ci is None:
                 # ci                   = torch.zeros((0,1),device=torch_device, dtype=torch_dtype)
                 # [vi,_] = violationsInequality(ci)
                 tvi = 0
@@ -497,7 +505,7 @@ class PanaltyFuctions:
                 #  l_1 penalty term for penalty function
                 tvi_l1 = torch.sum(vi)
 
-            if ce == None:
+            if ce is None:
                 # ce                   = torch.zeros((0,1),device=torch_device, dtype=torch_dtype)
                 # [ve,_] = violationsEquality(ce)
                 tve = 0
@@ -516,7 +524,7 @@ class PanaltyFuctions:
 
             return [p, feasible_to_tol]
 
-        except Exception as e:
+        except Exception:
             print(
                 "PyGRANSO userSuppliedFunctionsError: failed to evaluate objective/constraint functions at x for line search."
             )
@@ -625,12 +633,12 @@ class PanaltyFuctions:
         return s
 
     def restoreSnapShot(self, user_snap_shot=None):
-        if user_snap_shot != None:
+        if user_snap_shot is not None:
             s = user_snap_shot
         else:
             s = self.snap_shot
 
-        if np.any(s != None):
+        if np.any(s is not None):
             self.f = s.f
             self.f_grad = s.f_grad
             self.ci = s.ci
@@ -708,7 +716,7 @@ class PanaltyFuctions:
         # Update iterate which is feasible w.r.t violation tolerances and
         # most minimizes the objective function
         update_btt = self.feasible_to_tol and (
-            np.all(self.best_to_tol == None) or self.f < self.best_to_tol.f
+            np.all(self.best_to_tol is None) or self.f < self.best_to_tol.f
         )
 
         if update_mf or update_btt:
@@ -772,7 +780,7 @@ class PanaltyFuctions:
     def getBestConstrained(self):
         final_field = ("final", self.getInfoForXConstrained())
         feas_field = ("most_feasible", self.most_feasible)
-        if np.all(self.best_to_tol == None):
+        if np.all(self.best_to_tol is None):
             best_field = ()
         else:
             best_field = ("best", self.best_to_tol)
@@ -848,7 +856,7 @@ def assertFnOutputs(n, f, g, fn_name):
         fn_name,
         "should be real valued",
     )
-    assertFn(torch.isreal(g) == True, arg2, fn_name, "should be real valued")
+    assertFn(torch.isreal(g), arg2, fn_name, "should be real valued")
     assertFn(
         torch.isfinite(f) if torch.is_tensor(f) else np.isfinite(f),
         arg1,
@@ -862,15 +870,11 @@ def assertFnOutputs(n, f, g, fn_name):
 def assertFn(cond, arg_name, fn_name, msg):
     if torch.is_tensor(cond):
         assert torch.all(cond), (
-            "PyGRANSO userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(
-                arg_name, fn_name, msg
-            )
+            f"PyGRANSO userSuppliedFunctionsError: The {arg_name} at x0 returned by the {fn_name} function should {msg}!"
         )
     else:
         assert np.all(cond), (
-            "PyGRANSO userSuppliedFunctionsError: The {} at x0 returned by the {} function should {}!".format(
-                arg_name, fn_name, msg
-            )
+            f"PyGRANSO userSuppliedFunctionsError: The {arg_name} at x0 returned by the {fn_name} function should {msg}!"
         )
 
 
@@ -884,7 +888,9 @@ class Class_splitEvalAtX:
             x0
         )
 
-        obj_fn = lambda x: self.objective(x)
+        def obj_fn(x):
+            return self.objective(x)
+
         ineq_fn = (
             (lambda varargin: self.inequality(varargin))
             if (torch.is_tensor(self.ci))
@@ -974,7 +980,7 @@ def rescaleConstraint(x, fn, scalings):
 
 
 def unscaleValues(values, scalars):
-    if np.any(scalars != None):
+    if np.any(scalars is not None):
         values = np.divide(values, scalars)
     return values
 
@@ -992,16 +998,25 @@ def setupConstraint(
     #  eval_fn is either a function handle for evaluateInequality or
     #  evaluateEquality so we can detect which we have based on its length
     if inequality_constraint:
-        viol_fn = lambda ci, ci_grad: totalViolationInequality(ci, ci_grad)
+
+        def viol_fn(ci, ci_grad):
+            return totalViolationInequality(ci, ci_grad)
+
         type_str = "in"
     else:
-        viol_fn = lambda ce, ce_grad: totalViolationEquality(ce, ce_grad)
+
+        def viol_fn(ce, ce_grad):
+            return totalViolationEquality(ce, ce_grad)
+
         type_str = ""
 
     scalings = None  # default if no prescaling is applied
     # isempty function
-    if np.all(c_fn == None):
-        eval_fn_ret = lambda x: None
+    if np.all(c_fn is None):
+
+        def eval_fn_ret(x):
+            return None
+
         # These must have the right dimensions for computations to be
         # done even if there are no such constraints
         if double_precision:
@@ -1020,11 +1035,9 @@ def setupConstraint(
     elif isinstance(c_fn, types.LambdaType):
         try:
             [c, c_grad] = c_fn(x0)
-        except Exception as e:
+        except Exception:
             print(
-                "PyGRANSO userSuppliedFunctionsError : failed to evaluate [c,c_grad] = {}eq_fn(x0).".format(
-                    type_str
-                )
+                f"PyGRANSO userSuppliedFunctionsError : failed to evaluate [c,c_grad] = {type_str}eq_fn(x0)."
             )
             print(traceback.format_exc())
             sys.exit()
@@ -1038,21 +1051,25 @@ def setupConstraint(
             # we want to rescale these "too large" functions so that
             # the norms of their gradients are set to limit at x0
             scalings[indx] = np.divide(prescaling_threshold, c_grad_norms(indx))
-            c_fn = lambda x: rescaleConstraint(x, c_fn, scalings)
+
+            def c_fn(x):
+                return rescaleConstraint(x, c_fn, scalings)
+
             # rescale already computed constraints and gradients
             c = np.multiply(c, scalings)
             c_grad = c_grad @ np.diag(scalings)
 
         [tv, tv_l1, tv_l1_grad] = viol_fn(c, c_grad)
+
         # reset eval_fn so that it computes the values and gradients
         # for both the constraint and the corresponding violation
-        eval_fn_ret = lambda x: eval_fn(x, c_fn)
+        def eval_fn_ret(x):
+            return eval_fn(x, c_fn)
+
         constrained = True
     else:
         print(
-            "PyGRANSO userSuppliedFunctionsError: {}eq_fn must be a function handle of x or empty, that is, None.\n".format(
-                type_str
-            )
+            f"PyGRANSO userSuppliedFunctionsError: {type_str}eq_fn must be a function handle of x or empty, that is, None.\n"
         )
 
     return [

@@ -1,13 +1,10 @@
-from private.isRealValued import isRealValued
-from private.isARealNumber import isARealNumber
-
 def isStruct(data):
-    """  
+    """
     isStruct:
         Checks whether data is a python dictionary or not.
 
-        We replaced the struct in the original GRANSO code with a python dictionary. 
-        
+        We replaced the struct in the original GRANSO code with a python dictionary.
+
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
 
@@ -32,7 +29,7 @@ def isStruct(data):
 
         =========================================================================
         |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
@@ -51,8 +48,5 @@ def isStruct(data):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    
-    return isinstance(data,dict)
 
-
-    
+    return isinstance(data, dict)

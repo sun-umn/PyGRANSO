@@ -18,3 +18,7 @@
 
 * Ju Sun (http://www.sunju.org/)
     * Advised the development of PyGRANSO.
+
+* Ryan Devera (dever120@umn.edu)
+    * Enhancements to PyGRANSO.
+    * Maintaining PyGRANSO 2.0.

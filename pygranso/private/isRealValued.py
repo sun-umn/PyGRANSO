@@ -1,11 +1,12 @@
-import torch
 import numpy as np
+import torch
+
 
 def isRealValued(X):
-    """  
+    """
     isRealValued:
         Checks whether X is real-valued, that is, it either has no
-        imaginary part or it's imaginary part is exactly zero.  
+        imaginary part or it's imaginary part is exactly zero.
 
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
@@ -20,7 +21,7 @@ def isRealValued(X):
             optimization and its evaluation using relative minimization
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
-            
+
         isRealValued.py (introduced in PyGRANSO v1.0.0)
         Copyright (C) 2016-2021 Tim Mitchell
 
@@ -33,7 +34,7 @@ def isRealValued(X):
 
         =========================================================================
         |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
@@ -54,7 +55,7 @@ def isRealValued(X):
     """
 
     if torch.is_tensor(X):
-        tf = torch.all(torch.isreal(X) == True).item()  
+        tf = torch.all(torch.isreal(X)).item()
     else:
         tf = np.isreal(X)
 

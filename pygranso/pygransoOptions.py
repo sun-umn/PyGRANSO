@@ -4,7 +4,6 @@ import traceback
 import numpy as np
 import torch
 from numpy import inf
-from scipy import sparse
 
 from pygranso.private import pygransoConstants as pgC
 from pygranso.private.isAnInteger import isAnInteger
@@ -391,7 +390,7 @@ def pygransoOptions(n, options):
 
         =========================================================================
         |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
@@ -417,17 +416,16 @@ def pygransoOptions(n, options):
 
     # This will be disabled by the default options or if the user does not
     # activate debug mode
-    debug_mode = True
 
     #  need error handler here
     assert isinstance(n, int) and n > 0, (
         "PyGRANSO invalidUserOption: Number of variables n must be a positive integer!"
     )
 
-    if default_opts == None:
+    if default_opts is None:
         [default_opts, LAST_FALLBACK_LEVEL] = getDefaults(n)
 
-    if options == None:
+    if options is None:
         opts = postProcess(n, default_opts)
         return opts
     else:
@@ -446,11 +444,11 @@ def pygransoOptions(n, options):
     # surround the validation so we can rethrow the error from PyGRANSO
     try:
         #  Set debug mode first as we need its value in the catch block
-        debug_mode = validator.getValue("debug_mode")
+        validator.getValue("debug_mode")
         validator.setLogical("debug_mode")
 
         #  SET INITIAL POINT AND PENALTY PARAMETER VALUE
-        if hasattr(user_opts, "x0") and np.any(user_opts.x0 != None):
+        if hasattr(user_opts, "x0") and np.any(user_opts.x0 is not None):
             validator.setColumnDimensioned("x0", n)
             validator.setRealFiniteValued("x0")
 
@@ -467,7 +465,7 @@ def pygransoOptions(n, options):
         if (
             lim_mem_mode
             and hasattr(user_opts, "limited_mem_warm_start")
-            and user_opts.limited_mem_warm_start != None
+            and user_opts.limited_mem_warm_start is not None
         ):
             #  Ensure all the necessary subfields for L-BFGS data exist and
             #  if so, it returns a validator for this sub-struct of data.
@@ -483,7 +481,7 @@ def pygransoOptions(n, options):
                 "PyGRANSO invalidUserOption: subfields S, Y, and rho must all have the same (positive) number of columns"
             )
 
-        if hasattr(user_opts, "H0") and torch.any(user_opts.H0) != None:
+        if hasattr(user_opts, "H0") and torch.any(user_opts.H0) is not None:
             validator.setDimensioned("H0", n, n)
             validator.setRealFiniteValued("H0")
             if lim_mem_mode:
@@ -570,12 +568,12 @@ def pygransoOptions(n, options):
         # Torch Device
         validator.setTorchDevice("torch_device")
 
-        if hasattr(user_opts, "halt_log_fn") and user_opts.halt_log_fn != None:
+        if hasattr(user_opts, "halt_log_fn") and user_opts.halt_log_fn is not None:
             validator.setFunctionHandle("halt_log_fn")
 
         opts = validator.getValidatedOpts()
 
-    except Exception as e:
+    except Exception:
         print(traceback.format_exc())
         sys.exit()
 
@@ -596,14 +594,14 @@ def postProcess(n, opts, torch_device):
     else:
         torch_dtype = torch.float
 
-    if opts.x0 == None:
+    if opts.x0 is None:
         opts.x0 = torch.randn(n, 1).to(device=torch_device, dtype=torch_dtype)
 
     # If an initial inverse Hessian was not provided, use the identity
-    if opts.H0 == None and opts.limited_mem_size == 0:
+    if opts.H0 is None and opts.limited_mem_size == 0:
         opts.H0 = torch.eye(n, device=torch_device, dtype=torch_dtype)
 
-    elif opts.H0 == None and opts.limited_mem_size > 0:
+    elif opts.H0 is None and opts.limited_mem_size > 0:
         ii = [list(range(0, n)), list(range(0, n))]
         vv = [1] * n
         opts.H0 = torch.sparse_coo_tensor(ii, vv, (n, n)).to(
@@ -611,7 +609,7 @@ def postProcess(n, opts, torch_device):
         )
 
     if hasattr(opts, "QPsolver"):
-        QPsolver = opts.QPsolver
+        pass
 
     return opts
 

@@ -111,7 +111,7 @@ class AlgBFGSSQP:
 
             =========================================================================
             |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-            |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+            |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
             |                                                                       |
             |  This file is part of PyGRANSO.                                       |
             |                                                                       |
@@ -160,7 +160,6 @@ class AlgBFGSSQP:
             t_start = time.time()
 
         self.fvalquit = opts.fvalquit
-        halt_on_quadprog_error = opts.halt_on_quadprog_error
         halt_on_linesearch_bracket = opts.halt_on_linesearch_bracket
 
         #  fallback parameters - allowable last resort "heuristics"
@@ -233,10 +232,13 @@ class AlgBFGSSQP:
         self.torch_device = torch_device
 
         if full_memory and self.regularize_threshold < float("inf"):
-            get_apply_H_QP_fn = lambda: self.getApplyHRegularized()
+
+            def get_apply_H_QP_fn():
+                return self.getApplyHRegularized()
         else:
             #  No regularization option for limited memory BFGS
-            get_apply_H_QP_fn = lambda: self.getApplyH()
+            def get_apply_H_QP_fn():
+                return self.getApplyH()
 
         [self.apply_H_QP_fn, H_QP] = get_apply_H_QP_fn()
         #  For applying the normal non-regularized version of H
@@ -267,10 +269,15 @@ class AlgBFGSSQP:
             self.max_fallback_level = max(min_fallback_level, self.max_fallback_level)
 
         if self.max_fallback_level > 0:
-            APPLY_IDENTITY = lambda x: x
 
-        if np.any(halt_log_fn != None):
-            get_bfgs_state_fn = lambda: self.bfgs_obj.getState()
+            def APPLY_IDENTITY(x):
+                return x
+
+        if np.any(halt_log_fn is not None):
+
+            def get_bfgs_state_fn():
+                return self.bfgs_obj.getState()
+
             user_halt = halt_log_fn(
                 0,
                 x,
@@ -298,18 +305,20 @@ class AlgBFGSSQP:
 
         #  set up a more convenient function handles to reduce fixed arguments
         qpSS_obj = qpSS()
-        steering_fn = lambda penaltyfn_parts, H: qpSS_obj.qpSteeringStrategy(
-            penaltyfn_parts,
-            H,
-            steering_l1_model,
-            steering_ineq_margin,
-            steering_maxit,
-            steering_c_viol,
-            steering_c_mu,
-            self.QPsolver,
-            torch_device,
-            self.double_precision,
-        )
+
+        def steering_fn(penaltyfn_parts, H):
+            return qpSS_obj.qpSteeringStrategy(
+                penaltyfn_parts,
+                H,
+                steering_l1_model,
+                steering_ineq_margin,
+                steering_maxit,
+                steering_c_viol,
+                steering_c_mu,
+                self.QPsolver,
+                torch_device,
+                self.double_precision,
+            )
 
         self.linesearch_fn = lambda x, f, g, p, ls_maxit: lWW.linesearchWeakWolfe(
             x,
@@ -372,7 +381,7 @@ class AlgBFGSSQP:
 
                 try:
                     [p, mu_new, *_] = steering_fn(self.penaltyfn_at_x, apply_H_steer)
-                except Exception as e:
+                except Exception:
                     print("PyGRANSO:steeringQuadprogFailure")
                     print(traceback.format_exc())
                     self.prepareTermination(12)  # qp failure
@@ -411,13 +420,13 @@ class AlgBFGSSQP:
                 f_prev = f  # for relative termination tolerance
                 self.g_prev = g  # necessary for BFGS update
                 if is_descent:
-                    ls_procedure_fn = lambda x, f, g, p: self.linesearchDescent(
-                        x, f, g, p
-                    )
+
+                    def ls_procedure_fn(x, f, g, p):
+                        return self.linesearchDescent(x, f, g, p)
                 else:
-                    ls_procedure_fn = lambda x, f, g, p: self.linesearchNondescent(
-                        x, f, g, p
-                    )
+
+                    def ls_procedure_fn(x, f, g, p):
+                        return self.linesearchNondescent(x, f, g, p)
 
                 # this will also update gprev if it lowers mu and it succeeds
                 [alpha, x_new, f, g, linesearch_failed] = ls_procedure_fn(x, f, g, p)
@@ -482,7 +491,7 @@ class AlgBFGSSQP:
             # data to users in case they desire to restart.
             self.applyBfgsUpdate(alpha, p, g, self.g_prev)
 
-            if np.any(halt_log_fn != None):
+            if np.any(halt_log_fn is not None):
                 user_halt = halt_log_fn(
                     self.iter,
                     x,
@@ -587,7 +596,9 @@ class AlgBFGSSQP:
     #  NOTE: this function may lower variable "mu" for constrained problems
     def linesearchDescent(self, x, f, g, p):
         #  we need to keep around f and g so use _ls names for ls results
-        ls_fn = lambda f, g: self.linesearch_fn(x, f, g, p, float("inf"))
+        def ls_fn(f, g):
+            return self.linesearch_fn(x, f, g, p, float("inf"))
+
         # [alpha,x_ls,f_ls,g_ls,fail,_,_,_] = ls_fn(f,g)
         [alpha, x_ls, f_ls, g_ls, fail] = ls_fn(f, g)
 
@@ -674,7 +685,7 @@ class AlgBFGSSQP:
                 self.torch_device,
                 self.double_precision,
             )
-        except Exception as e:
+        except Exception:
             print("PyGRANSO:terminationQuadprogFailure")
             print(traceback.format_exc())
             [stat_vec, n_qps, ME] = [None, 1, None]  # set a very large stat vec
@@ -743,7 +754,8 @@ class AlgBFGSSQP:
         if code == 2 and self.print_level > 2:
             self.printer.regularizeError(iter)
 
-        applyHr = lambda x: Hr @ x
+        def applyHr(x):
+            return Hr @ x
 
         #  We only return Hr so that it may be passed to the halt_log_fn,
         #  since (advanced) users may wish to look at it.  However, if

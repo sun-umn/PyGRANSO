@@ -105,7 +105,7 @@ def bfgsHessianInverseLimitedMem(
 
         =========================================================================
         |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
@@ -162,7 +162,7 @@ class H_obj_struct:
         self.sty_fails = 0
         self.infnan_fails = 0
 
-        if restart_data != None:
+        if restart_data is not None:
             self.cols = restart_data["S"].shape[1]
             if self.cols > self.nvec:
                 self.S = restart_data["S"][:, 0 : self.nvec]

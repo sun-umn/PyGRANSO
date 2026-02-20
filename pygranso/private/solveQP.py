@@ -1,6 +1,3 @@
-import sys
-import traceback
-
 import gurobipy as gp
 import numpy as np
 import osqp
@@ -71,7 +68,7 @@ def solveQP(H, f, A, b, LB, UB, QPsolver, torch_device, double_precision):
 
         =========================================================================
         |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
@@ -99,7 +96,7 @@ def solveQP(H, f, A, b, LB, UB, QPsolver, torch_device, double_precision):
         # H and A has to be sparse
         H = H.cpu().numpy()
         f = f.cpu().numpy()
-        if A != None:
+        if A is not None:
             A = A.cpu().numpy()
         # b = b.cpu().numpy()
         LB = LB.cpu().numpy()
@@ -107,7 +104,7 @@ def solveQP(H, f, A, b, LB, UB, QPsolver, torch_device, double_precision):
         H_sparse = sparse.csc_matrix(H)
         # LB and UB always exist
 
-        if np.any(A != None) and np.any(b != None):
+        if np.any(A is not None) and np.any(b is not None):
             Aeq = A
             beq = b
             speye = sparse.eye(nvar)
@@ -162,7 +159,7 @@ def solveQP(H, f, A, b, LB, UB, QPsolver, torch_device, double_precision):
     if QPsolver == "gurobi":
         H = H.cpu().numpy()
         f = f.cpu().numpy()
-        if A != None:
+        if A is not None:
             A = A.cpu().numpy()
         # H,f always exist
         # LB and UB always exist
@@ -180,7 +177,7 @@ def solveQP(H, f, A, b, LB, UB, QPsolver, torch_device, double_precision):
             vars.append(m.addVar(lb=LB[j], ub=UB[j], vtype=vtype[j]))
         x_vec = np.array(vars).reshape(nvar, 1)
 
-        if np.any(A != None) and np.any(b != None):
+        if np.any(A is not None) and np.any(b is not None):
             Aeq = A
             beq = b
             # Populate A matrix

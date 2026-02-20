@@ -2,8 +2,8 @@ def pygransoConstants():
     """
     pygransoConstants:
         Simple routine for defining constants for use in:
-            1) pygranso 
-            2) pygransoOptions 
+            1) pygranso
+            2) pygransoOptions
             3) pygransoOptionsAdvanced
 
             If you publish work that uses or refers to PyGRANSO, please cite both
@@ -19,7 +19,7 @@ def pygransoConstants():
                 optimization and its evaluation using relative minimization
                 profiles, Optimization Methods and Software, 32(1):148-181, 2017.
                 Available at https://dx.doi.org/10.1080/10556788.2016.1208749
-                
+
         pygransoConstants.py (introduced in PyGRANSO v1.0.0)
         Copyright (C) 2016-2021 Tim Mitchell
 
@@ -31,7 +31,7 @@ def pygransoConstants():
 
         =========================================================================
         |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
@@ -51,8 +51,8 @@ def pygransoConstants():
         =========================================================================
     """
     # Number of first fallback level after QP approaches have failed
-    POSTQP_FALLBACK_LEVEL       = 2
+    POSTQP_FALLBACK_LEVEL = 2
     # Number of last fallback level (randomly generated search directions)
-    LAST_FALLBACK_LEVEL         = 4
+    LAST_FALLBACK_LEVEL = 4
 
     return [POSTQP_FALLBACK_LEVEL, LAST_FALLBACK_LEVEL]
