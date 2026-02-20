@@ -81,6 +81,14 @@ Optional extras used by some examples: `pandas`, `polars`, `scikit-learn`, `wand
 
 Please check [CHANGELOG.md](./CHANGELOG.md) in the main folder.
 
+## Additional documentation
+
+The [docs/](./docs/) folder contains short notes on algorithm behavior and using PyGRANSO with common PyTorch features:
+
+- **[Unconstrained problems and OSQP](./docs/UNCONSTRAINED_AND_OSQP.md)** — How unconstrained problems are handled, stationarity and gradient samples, and when CPU vs CUDA OSQP helps.
+- **[Mixed precision and `torch.autocast`](./docs/MIXED_PRECISION.md)** — What to expect when using autocast (speed, memory, impact on PyGRANSO) and how to wrap it inside your `combined_fn`.
+- **[`torch.compile`](./docs/TORCH_COMPILE.md)** — Impact of compiling your model or combined_fn with `torch.compile` (recompilation, speed, and recommendations).
+
 ## Notes on Documentation
 
 PyGRANSO is a PyTorch-enabled port of GRANSO with auto-differentiation, and some of its documentation uses MATLAB conventions. In the PyGRANSO source code docstrings, please note that:
