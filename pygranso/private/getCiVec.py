@@ -1,27 +1,28 @@
 import torch
 
-def getCiVec(ci,torch_device, double_precision):
+
+def getCiVec(ci, torch_device, double_precision):
     """
     getCiVec:
         getCiVec transforms the original tensor form constrained function into vector form
 
         USAGE:
             [ci_vec,ci_vec_torch,nconstr_ci_total] = ci_grad_vec = getCiVec(ci,torch_device, double_precision)
-        
+
         INPUT:
-            ci        
-                    A struct contains all equality OR inquality constraints 
+            ci
+                    A struct contains all equality OR inquality constraints
 
             torch_device
 
-                    Choose torch.device used for matrix operation in PyGRANSO. 
-                    torch_device = torch.device('cuda') if one wants to use cuda device 
+                    Choose torch.device used for matrix operation in PyGRANSO.
+                    torch_device = torch.device('cuda') if one wants to use cuda device
 
             double_precision
 
                     float precision used in PyGRANSO, torch.float or torch.double
-        
-        OUTPUT:         
+
+        OUTPUT:
 
             ci_vec
                     Vector, i.e., p by 1 torch tensor form inequality OR equality constraints.
@@ -59,7 +60,7 @@ def getCiVec(ci,torch_device, double_precision):
 
         =========================================================================
         |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
@@ -83,7 +84,7 @@ def getCiVec(ci,torch_device, double_precision):
     # get # of constraints
     # current constraint, e.g., c1, c2
     for constr_i in ci.__dict__.keys():
-        constrMatrix = getattr(ci,constr_i)
+        constrMatrix = getattr(ci, constr_i)
         nconstr = nconstr + torch.numel(constrMatrix)
 
     if double_precision:
@@ -92,20 +93,21 @@ def getCiVec(ci,torch_device, double_precision):
         torch_dtype = torch.float
 
     # inquality constraints
-    ci_vec_torch = torch.zeros((nconstr,1),device=torch_device, dtype=torch_dtype)
-   
-   
+    ci_vec_torch = torch.zeros((nconstr, 1), device=torch_device, dtype=torch_dtype)
+
     curIdx = 0
     # nconstr_ci = genral_struct()
     nconstr_ci_total = 0
     # current constraint, e.g., c1, c2
     for constr_i in ci.__dict__.keys():
-        constrMatrix = getattr(ci,constr_i)
-        ci_vec_torch[curIdx:curIdx + torch.numel(constrMatrix)] = torch.reshape(constrMatrix,(torch.numel(constrMatrix),1))
+        constrMatrix = getattr(ci, constr_i)
+        ci_vec_torch[curIdx : curIdx + torch.numel(constrMatrix)] = torch.reshape(
+            constrMatrix, (torch.numel(constrMatrix), 1)
+        )
         curIdx = curIdx + torch.numel(constrMatrix)
         # setattr(nconstr_ci,constr_i,torch.numel(constrMatrix))
         nconstr_ci_total += torch.numel(constrMatrix)
 
-    ci_vec = ci_vec_torch.detach() # detach from current computational graph
+    ci_vec = ci_vec_torch.detach()  # detach from current computational graph
 
-    return [ci_vec,ci_vec_torch,nconstr_ci_total]
+    return [ci_vec, ci_vec_torch, nconstr_ci_total]

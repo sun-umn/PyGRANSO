@@ -15,61 +15,79 @@ Optimizing nonconvex (NCVX) problems, especially nonsmooth and constrained ones,
 
 ## Installation
 
-Installing PyGRANSO is simple. Here is a step-by-step instruction:
+PyGRANSO requires **Python 3.10+** (3.13+ recommended). Dependencies are managed via `pyproject.toml`.
 
-1. Install [Python >= 3.9](https://www.python.org/)
+### Option 1: Install from source with uv (recommended)
 
-2. Get the most recent PyGRANSO package (including examples and requirements file):
+1. Install [uv](https://docs.astral.sh/uv/) (Python package installer and resolver).
+
+2. Clone the repository and install in editable mode with dependencies:
+
+        git clone https://github.com/sun-umn/PyGRANSO.git
+        cd PyGRANSO
+        uv sync
+
+   Or install the package in your current environment:
+
+        uv pip install -e .
+
+### Option 2: Install with pip
+
+1. Clone the repository:
 
         git clone https://github.com/sun-umn/PyGRANSO.git
         cd PyGRANSO
 
-3.  Install PyGRANSO solver from PyPI:
+2. Create a virtual environment (recommended), then install:
 
-        pip install git+https://github.com/sun-umn/PyGRANSO.git
+        pip install -e .
 
-4. Install Dependencies from PyPI: 
+   Dependencies (including PyTorch, SciPy, OSQP, etc.) will be installed from `pyproject.toml`.
 
-    OS: **Linux** OR **Windows**; Compute Platform: **CUDA**:
+### PyTorch with CUDA
 
-        pip install -r requirements.txt -f https://download.pytorch.org/whl/cu111/torch_stable.html
+By default, `pip` or `uv` may install a CPU-only build of PyTorch. For **GPU (CUDA) support**, install a CUDA-enabled PyTorch first, then install PyGRANSO:
 
-    OS: **Linux**; Compute Platform: **CPU**:
+    # Example: PyTorch with CUDA 12.x (check https://pytorch.org for your CUDA version)
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 
-        pip install -r requirements_linux_cpu.txt -f https://download.pytorch.org/whl/cpu/torch_stable.html
+    cd PyGRANSO
+    pip install -e .   # or: uv pip install -e .
 
-    OS: **Mac** OR **Windows**; Compute Platform: **CPU**:
+Set `opts.torch_device = torch.device("cuda")` when calling PyGRANSO to use the GPU.
 
-        pip install -r requirements_cpu.txt
-    
-5. (CUDA) Run test to make sure the dependency installation is correct:
+### Verify installation
 
-        python test_cuda.py
+- **CPU:** `python test_cpu.py`
+- **CUDA:** `python test_cuda.py`
 
-    (CPU) Run test to make sure the dependency installation is correct:
-
-        python test_cpu.py
-
-6. Check the [example folder](./examples) in the source code or [example section](https://ncvx.org/examples) on the documentation website to get started.
+Then check the [example folder](./examples) or the [example section](https://ncvx.org/examples) on the documentation website to get started.
 
 ## Dependencies
-    Python-3.9.7
 
-    numpy-1.20.3
+Core dependencies (see `pyproject.toml` for full list and versions):
 
-    scipy-1.7.1
+- **Python** 3.10+ (3.13+ recommended)
+- **PyTorch** >= 2.8.0 (install with CUDA support separately if needed)
+- **SciPy** >= 1.16
+- **OSQP** >= 1.0.4 (QP solver)
+- **NumPy** (compatible with NumPy 2.x)
+- **Jupyter** (for examples)
+- **Gurobi** (optional; `gurobipy` for alternative QP solver)
 
-    pytorch-1.9.0
-
-    osqp-0.6.2
-
-    Jupyter Notebook-6.4.5
-
-    gurobi
+Optional extras used by some examples: `pandas`, `polars`, `scikit-learn`, `wandb`, `optuna`, etc.
 
 ## Change Logs
 
 Please check [CHANGELOG.md](./CHANGELOG.md) in the main folder.
+
+## Additional documentation
+
+The [docs/](./docs/) folder contains short notes on algorithm behavior and using PyGRANSO with common PyTorch features:
+
+- **[Unconstrained problems and OSQP](./docs/UNCONSTRAINED_AND_OSQP.md)** — How unconstrained problems are handled, stationarity and gradient samples, and when CPU vs CUDA OSQP helps.
+- **[Mixed precision and `torch.autocast`](./docs/MIXED_PRECISION.md)** — What to expect when using autocast (speed, memory, impact on PyGRANSO) and how to wrap it inside your `combined_fn`.
+- **[`torch.compile`](./docs/TORCH_COMPILE.md)** — Impact of compiling your model or combined_fn with `torch.compile` (recompilation, speed, and recommendations).
 
 ## Notes on Documentation
 
@@ -130,14 +148,15 @@ Main authors:
   - [Buyun Liang](https://buyunliang.org/) (*byliang an_at_symbol seas a_dot_symbol upenn a_dot_symbol edu*)
   - [Tim Mitchell](http://www.timmitchell.com/) (*tim an_at_symbol timmitchell a_dot_symbol com*)
   - [Ju Sun](https://sunju.org/) (*jusun an_at_symbol umn a_dot_symbol edu*)
+  - Ryan Devera (*dever120 an_at_symbol umn a_dot_symbol edu*) — enhancements and maintainer of PyGRANSO 2.0
 
-Thanks to other contributors and bug reporters: 
+Thanks to other contributors and bug reporters:
 
 - [Hengyue Liang](https://hengyuel.github.io/): Applied PyGRANSO on adversarial robustness problems. Tested PyGRANSO across multiple platforms. Debugged several functions.
 
 - Wenjie Zhang: Tested practical techniques on various constrained deep learning problems, which can be used to accelerate the convergence of PyGRANSO.
 
-- [Ryan de Vera](https://github.com/rydevera3): Applied PyGRANSO on neural topology optimization problems.
+- Ryan Devera: Applied PyGRANSO on neural topology optimization problems.
 
 - Yash Travadi: Applied PyGRANSO on imbalanced classification problems.
 

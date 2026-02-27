@@ -1,6 +1,7 @@
-import pygranso.pygransoOptions
+from pygranso.pygransoOptions import pygransoOptions
 
-def pygransoOptionsAdvanced(n,options):
+
+def pygransoOptionsAdvanced(n, options):
     """
     pygransoOptionsAdvanced:
         Process user options struct for pygranso.py.  If user_opts is None or
@@ -318,7 +319,7 @@ def pygransoOptionsAdvanced(n,options):
 
         =========================================================================
         |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
@@ -344,6 +345,6 @@ def pygransoOptionsAdvanced(n,options):
 
     #  Just pass all the work to the standard pygransoOptions function.
 
-    opts = pygransoOptions(n,options)
+    opts = pygransoOptions(n, options)
 
     return opts

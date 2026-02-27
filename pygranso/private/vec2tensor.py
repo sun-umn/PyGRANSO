@@ -1,8 +1,10 @@
-from pygranso.pygransoStruct import pygransoStruct
 import numpy as np
 import torch
 
-def vec2tensor(x,var_dim_map):
+from pygranso.pygransoStruct import pygransoStruct
+
+
+def vec2tensor(x, var_dim_map):
     """
     vec2tensor:
         vec2tensor transforms the vector form result to mnatrix/tensor form,
@@ -32,7 +34,7 @@ def vec2tensor(x,var_dim_map):
 
         =========================================================================
         |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
@@ -59,7 +61,7 @@ def vec2tensor(x,var_dim_map):
         # corresponding dimension of the variable, e.g, 3 by 2
         dim = var_dim_map.get(var)
         # reshape vector input x in to matrix variables, e.g, X.U, X.V
-        tmpMat = torch.reshape(x[curIdx:curIdx + np.prod(dim)],tuple(dim))
+        tmpMat = torch.reshape(x[curIdx : curIdx + np.prod(dim)], tuple(dim))
         setattr(X, var, tmpMat)
         curIdx += np.prod(dim)
     return X

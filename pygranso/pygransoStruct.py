@@ -28,7 +28,7 @@ pygransoStruct:
 
     =========================================================================
     |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-    |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+    |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
     |                                                                       |
     |  This file is part of PyGRANSO.                                       |
     |                                                                       |

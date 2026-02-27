@@ -2,9 +2,32 @@
 
 PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation
 
-## Version: 1.2.1 --- 2026-02-13
+## Version: 2.0.0 --- 2026-02-13
 
-Patch release. Version bump for release tagging.
+Description: Major release with package management migration, CUDA/memory fixes, and code quality improvements.
+
+**Fixed**
+- Fixed critical memory leak in snapshot mechanism - snapshots now properly detach tensors from computation graph
+- Fixed NumPy 2.0 compatibility issue with `Inf` import from `numpy.core.numeric`
+- Fixed CUDA memory allocation issues - tensors now properly allocated on GPU when `torch_device` is set to CUDA
+- Improved memory management throughout the codebase
+
+**Changed**
+- Migrated package management from pip/setuptools to `uv` for faster and more reliable dependency management
+- Updated codebase formatting using ruff formatter for consistent style
+- Updated dependencies to support PyTorch 2.8+, NumPy 2.0+, and other modern package versions
+- Python version requirement updated (verify minimum version)
+
+**Added**
+- Added comprehensive test notebooks for CPU/CUDA compatibility testing
+- Added `pyproject.toml` for modern Python packaging
+- Added `uv.lock` for reproducible dependency resolution
+- Added `.python-version` file for Python version specification
+
+**Improved**
+- Code formatting and linting improvements across all files
+- Better separation of concerns in snapshot/restore functionality
+- Enhanced error handling and memory cleanup
 
 ## Version: 1.2.0 --- 2022-07-26
 
