@@ -2,6 +2,10 @@
 
 PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation
 
+## Version: 1.2.1 --- 2026-02-13
+
+Patch release. Version bump for release tagging.
+
 ## Version: 1.2.0 --- 2022-07-26
 
 Description: major fixes and improvements on LBFGS. 
