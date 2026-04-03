@@ -1,7 +1,9 @@
 import math
+
 from pygranso.private import nDigitsInWholePart as nDIWP
 
-def double2FixedWidthStr(width, str_in = None):
+
+def double2FixedWidthStr(width, str_in=None):
     """
     double2FixedWidthStr:
         Formats number x in the desired width field so that the length of
@@ -15,10 +17,10 @@ def double2FixedWidthStr(width, str_in = None):
         USAGE:
             1) Get a function handle to do formatting for a given width
             format_fn   = double2FixedWidth(width);
-        
+
             2) Format a number to a string of a given width
             str         = double2FixedWidth(number,width);
-        
+
         INPUT:
             width       An integer between 9 and 23 specifying the number
                         of chars to use for representing a number as a string.
@@ -26,20 +28,20 @@ def double2FixedWidthStr(width, str_in = None):
                         show the first two most significant digits while width
                         == 23, the representation will show all the significant
                         digits up to machine precision.
-        
+
             number      A double to convert to a fixed width string.
-        
-        OUTPUT:         [Either one of the following] 
+
+        OUTPUT:         [Either one of the following]
             format_fn   Function handle that takes single argument x and
                         converts it to a string representation with fixed width
                         such that the most significant digit will always be the
                         second character.  Note that if x is a number, variable
                         precision is used to ensure the width of the string
                         representation does not change.  Nonnumeric x will
-                        cause a centered 'n/a' to be returned.  Both infs 
+                        cause a centered 'n/a' to be returned.  Both infs
                         (positive and negative) and NaNs are supported.
-        
-            str         fixed width aligned string representation of number. 
+
+            str         fixed width aligned string representation of number.
 
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
@@ -54,7 +56,7 @@ def double2FixedWidthStr(width, str_in = None):
             optimization and its evaluation using relative minimization
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
-            
+
         double2FixedWidthStr.py (introduced in PyGRANSO v1.0.0)
         Copyright (C) 2016-2021 Tim Mitchell
 
@@ -67,7 +69,7 @@ def double2FixedWidthStr(width, str_in = None):
 
         =========================================================================
         |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
@@ -90,70 +92,79 @@ def double2FixedWidthStr(width, str_in = None):
     #  - sign (1 char)
     #  - minimum of 2 digits with decimal point (3 chars)
     #  - up to 5 chars for exponent e+111
-    MIN_WIDTH   = 9
+    MIN_WIDTH = 9
 
     #  must be able to display up to 16 digits
     #  - sign (1 char)
     #  - 16 digits + decimal point (17 chars)
     #  - up to 5 chars for exponent
-    MAX_WIDTH   = 23
-    
+    MAX_WIDTH = 23
+
     def assertWidth(width):
-        assert width >= MIN_WIDTH and width <= MAX_WIDTH, "double2FixedWidthStr invalidInput : double2FixedWidthStr: width must be in [9,10,...,23]."
+        assert width >= MIN_WIDTH and width <= MAX_WIDTH, (
+            "double2FixedWidthStr invalidInput : double2FixedWidthStr: width must be in [9,10,...,23]."
+        )
 
-
-    if str_in == None:
+    if str_in is None:
         assertWidth(width)
-        out     = lambda x: double2FixedWidth(x,width)
+
+        def out(x):
+            return double2FixedWidth(x, width)
     else:
         assertWidth(width)
-        out     = double2FixedWidth(str_in,width)
+        out = double2FixedWidth(str_in, width)
 
     return out
-    
-def double2FixedWidth(x,width):
+
+
+def double2FixedWidth(x, width):
     if x == 0:
-        x_str       = " 0.%s"%("0"*(width-3))
+        x_str = " 0.%s" % ("0" * (width - 3))
         return x_str
     elif x == float("inf"):
-        x_str       = " Inf%s"%(" "*(width-4))  
+        x_str = " Inf%s" % (" " * (width - 4))
         return x_str
     elif x == -float("inf"):
-        x_str       = "-Inf%s"%(" "*(width-4)) 
+        x_str = "-Inf%s" % (" " * (width - 4))
         return x_str
     elif math.isnan(x):
-        x_str       = " NaN%s"%(" "*(width-4)) 
+        x_str = " NaN%s" % (" " * (width - 4))
         return x_str
-    elif not isinstance(x,int)  and not isinstance(x,float) and x.dtype != "int64" and x.dtype != "float32":
-        x_str       = " n/a%s"%(" "*(width-4))
+    elif (
+        not isinstance(x, int)
+        and not isinstance(x, float)
+        and x.dtype != "int64"
+        and x.dtype != "float32"
+    ):
+        x_str = " n/a%s" % (" " * (width - 4))
         return x_str
 
-    is_negative     = x < 0
-    x               = abs(x)
-    n_whole         = nDIWP.nDigitsInWholePart(x)
+    is_negative = x < 0
+    x = abs(x)
+    n_whole = nDIWP.nDigitsInWholePart(x)
 
-    if x >= 1e+100 or x < 1e-99:
+    if x >= 1e100 or x < 1e-99:
         #  this assumes x is positive
-        x_str       = "%.*e"%(width - 8,x) 
+        x_str = "%.*e" % (width - 8, x)
     elif n_whole > width - 3 or x < 1e-3:
         #  this assumes x is positive
-        x_str       = "%.*e"%(width - 7,x)
+        x_str = "%.*e" % (width - 7, x)
     else:
-        digits      = width - 2 - n_whole
+        digits = width - 2 - n_whole
         if n_whole < 1:
-            digits  = digits - 1
-        
-        x_str       = "%.*f"%(digits,x)  
-        #  get length without sign since the actual number of whole digits 
+            digits = digits - 1
+
+        x_str = "%.*f" % (digits, x)
+        #  get length without sign since the actual number of whole digits
         #  may be increased by one due to rounding in sprintf (e.g.
         #  99.99999999...)
-        expected    = int(width - float(x >= 0)  )
+        expected = int(width - float(x >= 0))
         if len(x_str) > expected:
-            x_str   = x_str[0:expected]
-        
+            x_str = x_str[0:expected]
+
     if is_negative:
-        x_str       = "-" + x_str  
+        x_str = "-" + x_str
     else:
-        x_str       = " " + x_str 
+        x_str = " " + x_str
 
     return x_str

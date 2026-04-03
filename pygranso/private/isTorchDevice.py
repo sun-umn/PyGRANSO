@@ -1,8 +1,10 @@
 import torch
+
+
 def isTorchDevice(x):
     """
     isTorchDevice:
-        Returns whether or not x is a torch device.  
+        Returns whether or not x is a torch device.
 
         If you publish work that uses or refers to PyGRANSO, please cite both
         PyGRANSO and GRANSO paper:
@@ -28,7 +30,7 @@ def isTorchDevice(x):
 
         =========================================================================
         |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |

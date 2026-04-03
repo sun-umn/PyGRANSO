@@ -19,7 +19,7 @@ def formatOrange(s):
             optimization and its evaluation using relative minimization
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
-            
+
         formatOrange.py (introduced in PyGRANSO v1.0.0)
         Copyright (C) 2016-2021 Tim Mitchell
 
@@ -32,7 +32,7 @@ def formatOrange(s):
 
         =========================================================================
         |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
@@ -51,7 +51,7 @@ def formatOrange(s):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    O  = '\033[33m' # orange
-    W  = '\033[0m'  # white (normal)
-    s = (O + s + W)
+    O = "\033[33m"  # orange
+    W = "\033[0m"  # white (normal)
+    s = O + s + W
     return s

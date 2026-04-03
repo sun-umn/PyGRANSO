@@ -78,3 +78,5 @@ examples/examples
 examples/TMLR/user_grad_constr_dl_orthogonal_constraint.py.lprof
 examples/TMLR/constr_dl_orthogonal_constraint.py.lprof
 examples/TODO
+
+*neural-structural-optimization*

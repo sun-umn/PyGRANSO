@@ -1,4 +1,4 @@
-def truncate(s,width):
+def truncate(s, width):
     """
     truncate:
         Truncate string so that it's length is at most width chars long.
@@ -29,7 +29,7 @@ def truncate(s,width):
 
         =========================================================================
         |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
@@ -48,5 +48,5 @@ def truncate(s,width):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    s = s[0:min(len(s),width)]
+    s = s[0 : min(len(s), width)]
     return s

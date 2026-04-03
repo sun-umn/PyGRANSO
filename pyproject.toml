@@ -1,0 +1,45 @@
+[project]
+name = "pygranso"
+version = "2.0.0"
+description = "PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation"
+readme = "README.md"
+requires-python = ">=3.13.7"
+dependencies = [
+    "click>=8.2.1",
+    "e3nn>=0.5.7",
+    "gurobipy>=12.0.3",
+    "ipykernel>=6.30.1",
+    "jupyter>=1.1.1",
+    "optuna>=4.7.0",
+    "osqp[cu12]>=1.0.4",
+    "pandas>=2.3.2",
+    "polars>=1.32.3",
+    "scikit-learn>=1.7.1",
+    "scipy>=1.16.1",
+    "tf-nightly>=2.21.0.dev20250903",
+    "torch>=2.8.0",
+    "torchaudio>=2.8.0",
+    "torchvision>=0.23.0",
+    "wandb>=0.21.3",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+exclude = ["examples", "cuda_examples", ".git", "__pycache__", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP"]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "E722",   # bare except (legacy)
+    "E741",   # ambiguous variable name l, O (legacy)
+    "F811",   # redefinition (e.g. copyrightNotice import + use)
+    "UP031",  # percent format (legacy; can migrate later)
+    "UP038",  # X | Y isinstance (Python 3.10+)
+]
+isort = { known-first-party = ["pygranso"] }
+
+[tool.ruff.lint.per-file-ignores]
+"test_cpu.py" = ["F841"]
+"test_cuda.py" = ["F841"]

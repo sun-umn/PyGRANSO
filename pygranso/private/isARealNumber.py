@@ -1,11 +1,13 @@
 import numpy as np
+
 from pygranso.private.isRealValued import isRealValued
+
 
 def isARealNumber(x):
     """
     isARealNumber:
-        Returns whether or not x is a real number.  
-        +Inf or -Inf are considered real numbers.  
+        Returns whether or not x is a real number.
+        +Inf or -Inf are considered real numbers.
         NaNs are not considered real numbers.
 
         If you publish work that uses or refers to PyGRANSO, please cite both
@@ -21,7 +23,7 @@ def isARealNumber(x):
             optimization and its evaluation using relative minimization
             profiles, Optimization Methods and Software, 32(1):148-181, 2017.
             Available at https://dx.doi.org/10.1080/10556788.2016.1208749
-            
+
         isARealNumber.py (introduced in PyGRANSO v1.0.0)
         Copyright (C) 2016-2021 Tim Mitchell
 
@@ -34,7 +36,7 @@ def isARealNumber(x):
 
         =========================================================================
         |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
@@ -53,6 +55,6 @@ def isARealNumber(x):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    tf =    np.isscalar(x)  and not np.isnan(x) and isRealValued(x)
+    tf = np.isscalar(x) and not np.isnan(x) and isRealValued(x)
 
     return tf

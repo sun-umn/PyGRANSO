@@ -1,5 +1,6 @@
-import torch
 import numpy as np
+import torch
+
 
 def getNvar(var_dim_map):
     """
@@ -8,15 +9,15 @@ def getNvar(var_dim_map):
 
         USAGE:
             var_total = getNvar(var_dim_map)
-        
+
         INPUT:
             var_dim_map
 
                     A dictionary for optmization variable information,
                     where the key is the variable name and val is a list for correpsonding dimension:
                     e.g., var_in = {"x": [1,1]}; var_in = {"U": [5,10], "V": [10,20]}
-    
-        OUTPUT:         
+
+        OUTPUT:
 
             var_total
 
@@ -46,7 +47,7 @@ def getNvar(var_dim_map):
 
         =========================================================================
         |  PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation |
-        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
@@ -71,22 +72,23 @@ def getNvar(var_dim_map):
         nvar = nvar + np.prod(dim)
     return int(nvar)
 
+
 def getNvarTorch(parameters):
     """
     getNvarTorch:
-        getNvarTorch calculates the total number of scalar variables from 
+        getNvarTorch calculates the total number of scalar variables from
         the parameters of torch.nn module
 
         USAGE:
             var_total = getNvarTorch(parameters)
-        
+
         INPUT:
             parameters
 
-                    parameters of torch.nn model, which contains 
+                    parameters of torch.nn model, which contains
                     information of optimization variables
-    
-        OUTPUT:         
+
+        OUTPUT:
 
             var_total
 
@@ -117,7 +119,7 @@ def getNvarTorch(parameters):
         =========================================================================
         |  PyGRANSO: A User-Friendly and Scalable Package for                   |
         |  Nonconvex Optimization in Machine Learning.                          |
-        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang                      |
+        |  Copyright (C) 2021 Tim Mitchell and Buyun Liang; 2026 Ryan Devera     |
         |                                                                       |
         |  This file is part of PyGRANSO.                                       |
         |                                                                       |
