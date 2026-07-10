@@ -1,0 +1,46 @@
+name: Torch OSQP nightly stability
+
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+
+jobs:
+  cpu-stability:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        dtype: [float32, float64]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install current stable CPU environment
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            python -m pip install torch
+          else
+            python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          fi
+          python -m pip install numpy scipy osqp pytest gurobipy
+          python -m pip install -e . --no-deps
+      - name: Generate fixed-seed evidence
+        run: >-
+          python torch_osqp_stability.py
+          --device cpu
+          --dtype ${{ matrix.dtype }}
+          --seeds 100
+          --stress-seeds 100
+          --time-limit-seconds 7200
+          --output artifacts/${{ matrix.os }}-${{ matrix.dtype }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: torch-osqp-${{ matrix.os }}-${{ matrix.dtype }}
+          path: artifacts/${{ matrix.os }}-${{ matrix.dtype }}

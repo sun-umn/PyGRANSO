@@ -1,6 +1,7 @@
 # Unconstrained Problem Handling and OSQP in PyGRANSO
 
-Notes on how PyGRANSO handles unconstrained problems, how stationarity is computed, and practical implications for the QP solver (including when CUDA/OSQP helps or does not).
+Notes on how PyGRANSO handles unconstrained problems, how stationarity is
+computed, and how the dense Torch reference and builtin OSQP policies apply.
 
 ---
 
@@ -77,75 +78,31 @@ For unconstrained problems, PyGRANSO uses a **two-stage stationarity check**.
 
 ---
 
-## QP Size, CUDA OSQP, and Memory
+## QP Size, Dense Torch OSQP, and Memory
 
-Given the above, the **QP dimension** fed to the QP solver is on the order of **`l`** (for unconstrained) or **`q + l + p`** in general, often in the **hundreds to low thousands** (e.g. ~1000), not the full variable dimension `n`.
+The QP dimension is on the order of `l` for unconstrained stationarity checks
+or `q + l + p` in general. It is usually much smaller than the original model
+dimension, but can still reach the low thousands.
 
-- **CUDA-based OSQP** is aimed at **large-scale** QPs where GPU parallelism pays off.
-- At **~1000 variables**, there is **virtually no timing benefit** from the CUDA algebra compared to the built-in (CPU) solver, and the GPU path can be **more memory intensive**.
-- So for typical PyGRANSO use (moderate `l`, QP size ~hundreds to ~1k), **CPU OSQP (`algebra="builtin"`) is appropriate**; enabling CUDA OSQP is unlikely to help and may use more memory.
+- The Torch-direct route is a correctness-first **dense reference solver**, not
+  a scalable sparse solver.
+- `opts.osqp_algebra = "auto"` keeps CPU-targeted work on builtin OSQP and uses
+  Torch only for independently promoted accelerator backends.
+- `opts.osqp_algebra = "torch"` explicitly requests the dense Torch route.
+- Automatic Torch selection is limited to `n + m <= 2400` plus a conservative
+  dense-memory preflight. Explicit Torch requests above the envelope warn and
+  attempt the requested backend.
+- Torch reuses `torch.linalg.lu_factor_ex`/`lu_solve` factors and includes Ruiz
+  scaling, deterministic adaptive rho, strict polishing, and per-run warm state.
+- Automatic exceptions or unsolved statuses produce a warned builtin retry with
+  causal telemetry. MPS float64 requests return a builtin CPU float64 result.
+- Sparse-CG, Jacobi, sparse operators, and CUDA Graph execution exist only on
+  the research archive branch; their former settings produce a migration error.
 
----
+Local NVIDIA correctness evidence passed, but representative B1/B2/B3 runs
+were 12.48x, 21.33x, and 43.46x slower than builtin CPU OSQP. CUDA therefore
+remains unpromoted for `auto`. Sparse acceleration and performance-oriented
+backends are later milestones behind the same private factorization boundary.
 
-## OSQP Experiment: ~1000 Variables (CPU vs CUDA)
-
-Example run with **~1000 QP variables** (903 variables, 900 constraints). Timings are effectively the same between CPU and CUDA OSQP.
-
-**Run 1 (CUDA):**
-
-```
------------------------------------------------------------------
-           OSQP v1.0.0  -  Operator Splitting QP Solver
-              (c) The OSQP Developer Team
------------------------------------------------------------------
-problem:  variables n = 903, constraints m = 900
-          nnz(P) + nnz(A) = 1935
-settings: algebra = CUDA 12.5,
-          OSQPInt = 4 bytes, OSQPFloat = 4 bytes,
-          device = Tesla T4 (Compute capability 7.5),
-          linear system solver = CUDA Conjugate Gradient - Diagonal preconditioner,
-          eps_abs = 1.0e-03, eps_rel = 1.0e-03,
-          eps_prim_inf = 1.0e-15, eps_dual_inf = 1.0e-15,
-          rho = 1.00e-01 (adaptive: 50 iterations),
-          sigma = 1.00e-06, alpha = 1.60, max_iter = 1000000000
-          check_termination: on (interval 5, duality gap: off),
-          time_limit: 1.00e+03 sec,
-          scaling: on (10 iterations), scaled_termination: off
-          warm starting: on, polishing: off,
-Solving using OSQP with algebra=cuda (indirect)
-iter   objective    prim res   dual res   gap        rel kkt    rho         time
-   1  -9.5998e+03   1.64e+01   4.15e+00  -9.66e+03   1.64e+01   1.00e-01    2.02e-02s
- 110   1.1065e+02   8.89e-03   2.57e-04  -2.29e-01   8.89e-03   1.00e-01    2.07e-01s
-
-status:               solved
-number of iterations: 110
-optimal objective:    110.6477
-dual objective:       110.8764
-duality gap:          -2.2873e-01
-primal-dual integral: 1.6890e+04
-run time:             2.07e-01s
-optimal rho estimate: 1.46e-01
-```
-
-**Run 2 (CUDA, repeated):**
-
-```
------------------------------------------------------------------
-           OSQP v1.0.0  -  Operator Splitting QP Solver
-              (c) The OSQP Developer Team
------------------------------------------------------------------
-problem:  variables n = 903, constraints m = 900
-          nnz(P) + nnz(A) = 1935
-settings: algebra = CUDA 12.5,
-          ...
-Solving using OSQP with algebra=cuda (indirect)
-iter   objective    prim res   dual res   gap        rel kkt    rho         time
-   1  -9.5998e+03   1.64e+01   4.15e+00  -9.66e+03   1.64e+01   1.00e-01    1.74e-02s
- 110   1.1065e+02   7.81e-03   1.77e-04  -2.24e-01   7.81e-03   1.00e-01    2.07e-01s
-
-status:               solved
-run time:             2.08e-01s
-optimal rho estimate: 1.81e-01
-```
-
-**Conclusion:** At this problem size there is **virtually no difference in timing** between runs, and CPU OSQP is typically sufficient and less memory-intensive than CUDA for PyGRANSO’s QP subproblems.
+PyGRANSO does not differentiate through a QP solve. Autograd forms objective
+and constraint gradients before QP construction.

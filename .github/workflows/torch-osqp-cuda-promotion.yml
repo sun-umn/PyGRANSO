@@ -1,0 +1,57 @@
+name: Torch OSQP CUDA promotion gate
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cuda-real-hardware:
+    runs-on: [self-hosted, cuda]
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify preinstalled CUDA PyTorch
+        run: >-
+          python -c "import torch; assert torch.cuda.is_available();
+          print(torch.__version__, torch.cuda.get_device_name())"
+      - name: Install non-Torch test dependencies
+        run: >-
+          python -m pip install numpy scipy osqp pytest gurobipy
+      - name: Install PyGRANSO without replacing CUDA PyTorch
+        run: python -m pip install -e . --no-deps
+      - name: CUDA float64 correctness and stress
+        run: >-
+          python torch_osqp_stability.py
+          --device cuda
+          --dtype float64
+          --seeds 100
+          --stress-seeds 100
+          --time-limit-seconds 7200
+          --output artifacts/cuda-float64
+      - name: CUDA qualified float32 correctness
+        run: >-
+          python torch_osqp_stability.py
+          --device cuda
+          --dtype float32
+          --seeds 100
+          --stress-seeds 100
+          --time-limit-seconds 7200
+          --output artifacts/cuda-float32
+      - name: End-to-end five-times promotion ceiling
+        run: >-
+          python bench_pygranso_osqp_workloads.py
+          --workloads B1 B2 B3
+          --repeats 5
+          --warmups 2
+          --maxit 20
+          --maximum-slowdown 5
+          --enforce-gate
+          --export-csv artifacts/cuda-performance.csv
+          --export-md artifacts/cuda-performance.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: torch-osqp-cuda-promotion
+          path: artifacts

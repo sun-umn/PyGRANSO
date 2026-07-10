@@ -3,7 +3,7 @@ name = "pygranso"
 version = "2.0.0"
 description = "PyGRANSO: A PyTorch-enabled port of GRANSO with auto-differentiation"
 readme = "README.md"
-requires-python = ">=3.13.7"
+requires-python = ">=3.10"
 dependencies = [
     "click>=8.2.1",
     "e3nn>=0.5.7",
@@ -36,9 +36,17 @@ ignore = [
     "E741",   # ambiguous variable name l, O (legacy)
     "F811",   # redefinition (e.g. copyrightNotice import + use)
     "UP031",  # percent format (legacy; can migrate later)
-    "UP038",  # X | Y isinstance (Python 3.10+)
 ]
 isort = { known-first-party = ["pygranso"] }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "nightly: deterministic randomized or numerical-stress coverage",
+    "cuda: requires a real CUDA device",
+    "rocm: requires a real ROCm device",
+    "mps: requires a real Apple MPS device",
+]
 
 [tool.ruff.lint.per-file-ignores]
 "test_cpu.py" = ["F841"]

@@ -56,10 +56,54 @@ By default, `pip` or `uv` may install a CPU-only build of PyTorch. For **GPU (CU
 
 Set `opts.torch_device = torch.device("cuda")` when calling PyGRANSO to use the GPU.
 
+### OSQP backend options
+
+PyGRANSO uses OSQP for its internal quadprog-compatible QP subproblems. The
+Torch route is a correctness-first dense reference implementation with a
+replaceable linear-solver boundary. It is not a sparse large-scale solver.
+
+- `opts.osqp_algebra = "auto"` follows `opts.torch_device`: CPU uses builtin
+  OSQP; a validated accelerator uses Torch inside the supported KKT and memory
+  envelope. Unsupported or unsuccessful Torch solves visibly fall back to
+  builtin OSQP and retain structured fallback diagnostics.
+- `opts.osqp_algebra = "builtin"` forces CPU OSQP.
+- `opts.osqp_algebra = "torch"` explicitly requests the dense Torch reference
+  route on `opts.torch_device`. Above the validated `n + m <= 2400` KKT limit,
+  it warns and attempts the solve rather than silently changing backend.
+- `opts.osqp_settings` overrides common settings shared by builtin and Torch.
+  Defaults are dtype-aware (`1e-8` for float64 and `1e-5` for float32) and
+  enable 10-pass Ruiz scaling, deterministic adaptive rho, polishing, and
+  structurally compatible warm starts.
+
+Float64 is authoritative through estimated KKT conditioning around `1e8`.
+Float32 is a qualified route with a conservative conditioning envelope around
+`1e2`; harder float32 cases are retained as stress evidence rather than
+claimed support.
+
+Archived sparse-CG and CUDA Graph settings are recognized for one migration
+release but raise an actionable deprecation error. The research implementation
+is preserved on `archive/sparse-cg-cuda-graph`.
+
+Torch support is promoted backend-by-backend. CPU and CUDA require their own
+release gates. ROCm remains unclaimed until real-hardware CI is available. MPS
+is float32-only and remains unclaimed until reusable LU is validated on Apple
+hardware; float64 MPS auto requests return the builtin CPU float64 solution.
+
+The current local NVIDIA run passed the fixed-seed correctness buckets but
+failed the end-to-end promotion gate at 12.48x, 21.33x, and 43.46x builtin CPU
+runtime on representative B1/B2/B3 workloads, so CUDA remains unpromoted and
+`auto` falls back visibly to builtin OSQP.
+
+PyGRANSO does not differentiate through the OSQP QP solve; autograd is used to
+compute the objective and constraint gradients before QP construction.
+
 ### Verify installation
 
 - **CPU:** `python test_cpu.py`
 - **CUDA:** `python test_cuda.py`
+- **Torch OSQP core:** `python -m pytest tests -q`
+- **Stability evidence:** `python torch_osqp_stability.py --seeds 100`
+- **Dense reference benchmark:** `python bench_osqp_dense_reference.py`
 
 Then check the [example folder](./examples) or the [example section](https://ncvx.org/examples) on the documentation website to get started.
 
@@ -163,4 +207,3 @@ Thanks to other contributors and bug reporters:
 - [Ying Cui](https://sites.google.com/site/optyingcui/home): Advised the adversarial robustness problems.
 
 - [Chen Jiang](https://github.com/shoopshoop): Tested perceptual attack example (ex6). Tested PyGRANSO on Win10. Debugged updatePenaltyParameter function.
-

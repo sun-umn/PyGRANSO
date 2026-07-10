@@ -22,6 +22,7 @@ class qpSS:
         QPsolver,
         torch_device,
         double_precision,
+        osqp_options=None,
     ):
         """
         qpSteeringStrategy:
@@ -145,6 +146,7 @@ class qpSS:
         else:
             self.torch_dtype = torch.float
         self.QPsolver = QPsolver
+        self.osqp_options = osqp_options
         mu = penaltyfn_at_x.mu
         f_grad = penaltyfn_at_x.f_grad
         self.ineq = penaltyfn_at_x.ci
@@ -305,13 +307,14 @@ class qpSS:
                     "osqp",
                     self.device,
                     self.double_precision,
+                    self.osqp_options,
                 )
         except Exception:
             print(
                 "PyGRANSO steeringQuadprogFailure: Steering aborted due to a quadprog failure."
             )
             print(traceback.format_exc())
-            # sys.exit()
+            raise
 
         d = -self.mu_Hinv_f_grad - (self.Hinv_c_grads @ y)
         return d

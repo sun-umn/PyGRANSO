@@ -330,9 +330,28 @@ def pygransoOptions(n, options):
 
         Select the QP solver used in the steering strategy and termination condition. Currently only OSQP is supported.
 
+        osqp_algebra
+        --------------------------------
+        String in {'auto','builtin','torch'}. Default value: 'auto'
+
+        Selects the OSQP algebra policy for PyGRANSO's QP subproblems.
+        The 'auto' policy follows torch_device: CPU uses builtin OSQP and a
+        validated accelerator uses the dense Torch reference route inside its
+        supported KKT and memory envelope. Unsupported or unsuccessful Torch
+        solves fall back to builtin OSQP with a warning and diagnostics.
+        The Torch route exposes no nested linear-solver selector.
+        Builtin workspaces and structurally compatible warm starts are reused
+        automatically within one BFGS-SQP run.
+
+        osqp_settings
+        --------------------------------
+        Dict of common builtin/Torch OSQP settings. The adapter supplies
+        dtype-aware defaults (1e-8 for float64 and 1e-5 for float32), Ruiz
+        scaling, adaptive rho, polishing, and warm starts.
+
         torch_device
         --------------------------------
-        torch.device('cpu') OR torch.device('cuda'). Default value: torch.device('cpu')
+        A supported torch.device. Default value: torch.device('cpu')
 
         Choose torch.device used for matrix operation in PyGRANSO.
         opts.torch_device = torch.device('cuda') if one wants to use cuda device
@@ -532,6 +551,17 @@ def pygransoOptions(n, options):
         validator.setRealInIntervalOO("steering_c_mu", 0, 1)
         validator.setLogical("quadprog_info_msg")
         validator.setString("QPsolver")
+        validator.setString("osqp_algebra")
+        validator.validateAndSet(
+            "osqp_algebra",
+            lambda x: x in {"auto", "builtin", "torch"},
+            "one of {'auto','builtin','torch'}",
+        )
+        validator.validateAndSet(
+            "osqp_settings",
+            lambda x: isinstance(x, dict),
+            "a dict of OSQP settings",
+        )
         validator.setRealInIntervalCC("regularize_threshold", 1, np.inf)
         validator.setLogical("regularize_max_eigenvalues")
         validator.setLogical("stat_l2_model")
@@ -655,6 +685,12 @@ def getDefaults(n):
     setattr(default_opts, "regularize_max_eigenvalues", False)
     setattr(default_opts, "quadprog_info_msg", True)
     setattr(default_opts, "QPsolver", "osqp")
+    setattr(default_opts, "osqp_algebra", "auto")
+    setattr(
+        default_opts,
+        "osqp_settings",
+        {},
+    )
     setattr(default_opts, "wolfe1", 1e-4)
     setattr(default_opts, "wolfe2", 0.5)
     setattr(default_opts, "linesearch_nondescent_maxit", 0)
