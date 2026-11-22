@@ -490,6 +490,8 @@ def test_original_c_infeasibility_families(execution, dtype, case, request):
     }[case]
     assert info["status_val"] in allowed
     assert reference["status_val"] in allowed
+    if dtype == torch.float64:
+        assert info["status_val"] == reference["status_val"]
     if case == "feasible":
         assert_observables(qp, x, info, reference, dtype, use_sparse)
     else:

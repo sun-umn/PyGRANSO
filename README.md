@@ -93,6 +93,8 @@ matched the retained native C output bitwise, including infeasibility
 certificates where applicable. The checked-in reference stores the original
 inputs and little-endian binary64 output bytes.
 
+The [upstream test audit](docs/OSQP_UPSTREAM_TEST_COVERAGE.md) lists all 71 native cases, 144 named sections, the CPU/CUDA double results, and the native CUDA nonconvex status mismatch.
+
 ### Reproduce the 18 double-precision results
 
 With Git and Python 3.10+ available, fetch the implementation under review:
