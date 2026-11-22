@@ -43,7 +43,7 @@ def _solve_with_clock(monkeypatch, problem, settings, workspace, ticks):
 
 @pytest.mark.parametrize("updated", [False, True], ids=["setup", "changed-q"])
 def test_native_timeout_status_survives_compatible_retry(monkeypatch, updated):
-    # Phase 3.29 R02 froze the native status sequence and the clock schedule.
+    # Native status sequence and clock schedule recorded from pinned C.
     problem = _timeout_problem()
     workspace = TorchOSQPWorkspace()
     settings = _timeout_settings(3.0 if updated else 2.75)
@@ -91,7 +91,7 @@ def test_native_prior_iteration_cap_skips_approximate_retry(monkeypatch):
     ids=["checked-cap", "unchecked-cap", "periodic-disabled"],
 )
 def test_native_footer_check_order(monkeypatch, max_iter, interval, exact_calls, metric_calls):
-    # Phase 3.28 used the same natural caps and measured check/refresh counts.
+    # Check and refresh counts recorded from pinned C at the same natural caps.
     P = torch.tensor([[4.0, 1.0], [1.0, 2.0]], dtype=torch.float64)
     q = P.new_ones(2)
     A = P.new_tensor([[1.0, 1.0], [1.0, 0.0], [0.0, 1.0], [0.0, 1.0]])
