@@ -23,5 +23,6 @@ setuptools.setup(
     },
     package_dir={"": "."},
     packages=setuptools.find_packages(where="."),
+    package_data={"pygranso.private": ["licenses/*.txt"]},
     python_requires=">=3.9",
 )

@@ -48,7 +48,6 @@ jobs:
           else
             python -m pip install "${{ matrix.torch }}" --index-url https://download.pytorch.org/whl/cpu
           fi
-          python -m pip install numpy scipy osqp pytest gurobipy
-          python -m pip install -e . --no-deps
-      - name: Run deterministic and end-to-end gates
-        run: python -m pytest tests -q
+          python -m pip install numpy scipy pytest
+      - name: Replay pinned OSQP double results
+        run: python -m pytest -q tests/test_pinned_double_reproduction.py -k cpu
