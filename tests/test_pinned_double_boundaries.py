@@ -127,6 +127,35 @@ def test_infeasible_solve_retains_native_public_dual_buffer():
     _same_bits(info["prim_inf_cert"], native["prim_inf_cert"], "primal certificate")
 
 
+def test_rejected_polishing_reports_native_candidate_kkt_error():
+    # Phase 3.32 R01-N1. Natural rejection leaves the selected ADMM state.
+    problem = ([[1.0]], [-2.0], [[1.0]], [1.0], [1.0])
+    c_settings, torch_settings = paired_settings(
+        scaling=0, adaptive_rho=0, rho=0.125, sigma=0.125, alpha=1.0,
+        eps_abs=1e-8, eps_rel=1e-8, check_dualgap=0, check_termination=25,
+        max_iter=1000, warm_starting=0, polishing=1, polish_refine_iter=0,
+    )
+    workspace = TorchOSQPWorkspace()
+    with PinnedOSQPSession(*problem, **(c_settings | {"polishing": 0})) as session:
+        assert session.setup_code == 0
+        admm_only = session.solve()
+    with PinnedOSQPSession(*problem, **c_settings) as session:
+        assert session.setup_code == 0
+        native = session.solve()
+        x, info = _solve(problem, torch_settings, workspace)
+        _compare_iterates(session, workspace)
+
+    assert native["solve_code"] == admm_only["solve_code"] == 0
+    assert (native["status_val"], native["iter"], native["status_polish"]) == (1, 25, -1)
+    assert info["polishing_status"] == "rejected_no_improvement"
+    _compare_public(native, x, info)
+    for name in ("x", "y", "primal_residual", "dual_residual", "objective", "duality_gap"):
+        _same_bits(native[name], admm_only[name], f"retained ADMM {name}")
+    assert native["rel_kkt_error"].hex() == "0x1.88c46231188c0p-4"
+    assert admm_only["rel_kkt_error"] < 1e-12
+    _same_bits(workspace.last_info["rel_kkt_error"], native["rel_kkt_error"], "retained info")
+
+
 def test_polish_failure_and_retry_leave_the_native_public_and_working_state():
     P, A, l, u = np.diag([1.0, -0.05]), np.eye(2), -np.ones(2), np.ones(2)
     q = np.array([5.0, 0.0])
