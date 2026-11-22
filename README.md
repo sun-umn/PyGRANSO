@@ -58,9 +58,57 @@ Set `opts.torch_device = torch.device("cuda")` when calling PyGRANSO to use the 
 
 ### Torch OSQP backend
 
-The default QP backend is a PyTorch translation of [OSQP C](https://github.com/osqp/osqp/tree/1572ae068e9ce9ca723cf8223548ade1ff7acc29) with AMD/QDLDL. Set `opts.double_precision = True`. Factorization and triangular solves run on CPU, including for CUDA tensors.
+PyGRANSO solves its QP subproblems with a PyTorch translation of [OSQP C](https://github.com/osqp/osqp/tree/1572ae068e9ce9ca723cf8223548ade1ff7acc29). It is the default, so there is nothing to switch on. The `osqp` Python package is not needed.
 
-PyGRANSO callers use IEEE `-inf` and `+inf` for missing bounds. Direct callers of `solve_torch_osqp_direct` pass `-1e30` and `+1e30`, as with the C API.
+**Inside PyGRANSO.** Use double precision. OSQP settings for the subproblems are optional and go in `opts.osqp_settings`.
+
+```python
+import torch
+from pygranso.pygranso import pygranso
+from pygranso.pygransoStruct import pygransoStruct
+
+# minimize (x+1)^2 + (y-3)^2  subject to  x >= 0,  y = 2
+def combined_fn(X):
+    x, y = X.x[0], X.x[1]
+    f = (x + 1) ** 2 + (y - 3) ** 2
+    ci = pygransoStruct()
+    ci.c1 = -x            # inequality: ci <= 0
+    ce = pygransoStruct()
+    ce.c1 = y - 2         # equality: ce == 0
+    return f, ci, ce
+
+opts = pygransoStruct()
+opts.torch_device = torch.device("cpu")
+opts.double_precision = True
+opts.x0 = torch.tensor([[-2.0], [-2.0]], dtype=torch.float64)
+opts.print_level = 0
+opts.osqp_settings = {"eps_abs": 1e-8, "eps_rel": 1e-8, "max_iter": 4000}  # optional
+
+soln = pygranso({"x": [2, 1]}, combined_fn, opts)
+print(soln.final.x.flatten())   # close to [0, 2]
+```
+
+**As a standalone QP solver.** `solve_torch_osqp_direct` solves `min 0.5 x'Px + q'x` subject to `l <= Ax <= u`. Start from the default settings and change what you need. As in the C API, `-1e30` and `+1e30` mean "no bound".
+
+```python
+import torch
+from pygranso.private.osqpTorchAdapter import DEFAULT_TORCH_OSQP_SETTINGS
+from pygranso.private.torchOSQP import solve_torch_osqp_direct
+
+P = torch.tensor([[4.0, 1.0], [1.0, 2.0]], dtype=torch.float64)
+q = torch.tensor([1.0, 1.0], dtype=torch.float64)
+A = torch.tensor([[1.0, 1.0], [1.0, 0.0], [0.0, 1.0]], dtype=torch.float64)
+l = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float64)
+u = torch.tensor([1.0, 0.7, 1e30], dtype=torch.float64)
+
+settings = dict(DEFAULT_TORCH_OSQP_SETTINGS) | {"return_info": True}
+x, info = solve_torch_osqp_direct(P, q, A, l, u, settings)
+print(info["status"], x.flatten())   # solved, close to [0.25, 0.75]
+```
+
+To reuse the factorization and warm start across solves of the same problem shape, create one `TorchOSQPWorkspace` (from `pygranso.private.osqpWorkspace`) and pass it as the last argument each time.
+
+CUDA tensors are accepted; the factorization and triangular solves run on the CPU.
 
 ### Verify installation
 
