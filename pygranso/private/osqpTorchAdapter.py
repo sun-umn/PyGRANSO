@@ -13,6 +13,7 @@ from scipy import sparse
 
 from pygranso.private.osqpWorkspace import TorchOSQPWorkspace
 from pygranso.private.torchOSQP import (
+    _osqp_infinity,
     _restore_workspace,
     _snapshot_workspace,
     solve_torch_osqp_direct,
@@ -506,6 +507,13 @@ def _solve_torch_osqp_path(
         dtype,
         allow_device_move,
     )
+    # Adapter policy, not part of the C translation: the solver core multiplies
+    # IEEE-infinite bounds as C does (Inf * 0 = NaN in the duality gap).  Bounds
+    # beyond the OSQP infinity sentinel are replaced by the sentinel here, so
+    # PyGRANSO callers can keep passing +-inf for "no bound".
+    infinity = _osqp_infinity(q)
+    l_osqp = torch.clamp(l_osqp, min=-infinity)
+    u_osqp = torch.clamp(u_osqp, max=infinity)
     solve_settings = dict(settings)
     solve_settings["return_info"] = True
     equality_rows = 0 if A is None or b is None else int(A_osqp.shape[0] - n)

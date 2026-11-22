@@ -58,6 +58,10 @@ def dense_to_csc(matrix, pattern, *, upper_triangular=False):
     return {"m": rows, "n": columns, "p": p, "i": i, "x": x, "nzmax": len(i)}
 
 
+class _QDLDLNumericError(TorchLinearSolveError):
+    """``QDLDL_factor`` returned a negative status (a zero pivot)."""
+
+
 class QDLDLSolver:
     """Cache the AMD-ordered LDL' factors of the OSQP KKT matrix."""
 
@@ -164,7 +168,7 @@ class QDLDLSolver:
             size, Kp, Ki, Kx, Lnz, etree, sum_lnz, zero=zero, one=one
         )
         if positive < 0:
-            raise TorchLinearSolveError(
+            raise _QDLDLNumericError(
                 "Error in KKT matrix LDL factorization when computing the nonzero "
                 "elements. There are zeros in the diagonal matrix."
             )

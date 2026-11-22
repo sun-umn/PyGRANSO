@@ -16,6 +16,8 @@ class TorchOSQPWorkspace:
 
     state: dict | None = None
     work_iterates: dict | None = None
+    # solver->solution as last written by store_solution (x, y).
+    public_solution: tuple | None = None
     problem_signature: tuple | None = None
     constraint_order_signature: tuple | None = None
     constraint_rows: torch.Tensor | None = None
@@ -53,6 +55,7 @@ class TorchOSQPWorkspace:
     def reset_torch(self) -> None:
         self.state = None
         self.work_iterates = None
+        self.public_solution = None
         self.problem_signature = None
         self.constraint_order_signature = None
         self.constraint_rows = None

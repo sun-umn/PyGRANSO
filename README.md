@@ -60,6 +60,8 @@ Set `opts.torch_device = torch.device("cuda")` when calling PyGRANSO to use the 
 
 The default QP backend uses the PyTorch translation of [OSQP C](https://github.com/osqp/osqp/tree/1572ae068e9ce9ca723cf8223548ade1ff7acc29) with AMD/QDLDL. Set `opts.double_precision = True`. The default factorization and triangular solves run on CPU, including for CUDA tensors.
 
+Pass `-1e30` for a missing lower bound and `+1e30` for a missing upper bound when calling `solve_torch_osqp_direct`, as with the C API. PyGRANSO callers can pass IEEE infinities. The adapter clips bounds to the finite OSQP sentinel range before calling the solver.
+
 From a clone of this repository, fetch the PR and compare against the recorded native double results:
 
 ```sh
@@ -69,7 +71,9 @@ python -m pip install torch numpy scipy pytest
 python -m pytest -q tests/test_pinned_double_reproduction.py -k cpu
 ```
 
-Expect 18 passes (nine upstream QPs, polishing off/on). With CUDA-enabled PyTorch, repeat with `-k cuda`. To check live C results and the original vector, matrix and nonconvex tests, set `PYGRANSO_OSQP_DLL` to the pinned double/64-bit-index Windows DLL and run `python -m pytest -q tests`. The test bridge verifies its SHA-256 before loading it.
+Expect 18 passes (nine upstream QPs, polishing off/on). With CUDA-enabled PyTorch, repeat with `-k cuda`. To run the live C comparisons, set `PYGRANSO_OSQP_DLL` to the pinned double/64-bit-index Windows DLL and run `python -m pytest -q tests`. The test bridge verifies its SHA-256 before loading it. The boundary tests compare raw binary64 values for signed zeros, an IEEE infinity, public dual storage after infeasibility, and a polishing failure and recovery.
+
+The adaptive-rho refactorization failure exit was translated from the pinned C source. The retained DLL has not reproduced that failure, so this exit has no live native verification.
 
 ### Verify installation
 
