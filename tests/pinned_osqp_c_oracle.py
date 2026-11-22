@@ -4,15 +4,13 @@ from __future__ import annotations
 
 import ctypes as ct
 import hashlib
+import os
 from pathlib import Path
 
 import numpy as np
 
 OSQP_COMMIT = "1572ae068e9ce9ca723cf8223548ade1ff7acc29"
 OSQP_DLL_SHA256 = "97d14c66f40b471e3220454374d3bcfc429c64e6297b0062b6f60a0264e043c9"
-OSQP_DLL_RELATIVE_PATH = Path(
-    "tmp/phase54-osqp-c-build-release-20260904/out/osqp.dll"
-)
 
 OSQPInt = ct.c_longlong
 OSQPFloat = ct.c_double
@@ -108,12 +106,8 @@ class OSQPCscMatrix(ct.Structure):
     ]
 
 
-def repository_root() -> Path:
-    return Path(__file__).resolve().parents[1]
-
-
 def pinned_dll_path() -> Path:
-    return repository_root() / OSQP_DLL_RELATIVE_PATH
+    return Path(os.environ.get("PYGRANSO_OSQP_DLL", ""))
 
 
 def _sha256(path: Path) -> str:
@@ -168,39 +162,6 @@ def load_pinned_library(path: Path | None = None):
     return library
 
 
-def default_settings(library=None) -> dict[str, int | float | str]:
-    library = load_pinned_library() if library is None else library
-    settings = library.OSQPSettings_new()
-    if not settings:
-        raise MemoryError("Pinned OSQP could not allocate default settings.")
-    try:
-        values = settings.contents
-        return {
-            "version": library.osqp_version().decode(),
-            "rho": float(values.rho),
-            "sigma": float(values.sigma),
-            "alpha": float(values.alpha),
-            "max_iter": int(values.max_iter),
-            "eps_abs": float(values.eps_abs),
-            "eps_rel": float(values.eps_rel),
-            "eps_prim_inf": float(values.eps_prim_inf),
-            "eps_dual_inf": float(values.eps_dual_inf),
-            "scaling": int(values.scaling),
-            "polishing": int(values.polishing),
-            "adaptive_rho": int(values.adaptive_rho),
-            "adaptive_rho_interval": int(values.adaptive_rho_interval),
-            "adaptive_rho_fraction": float(values.adaptive_rho_fraction),
-            "adaptive_rho_tolerance": float(values.adaptive_rho_tolerance),
-            "check_termination": int(values.check_termination),
-            "check_dualgap": int(values.check_dualgap),
-            "time_limit": float(values.time_limit),
-            "delta": float(values.delta),
-            "polish_refine_iter": int(values.polish_refine_iter),
-        }
-    finally:
-        library.OSQPSettings_free(settings)
-
-
 def _as_float(values) -> np.ndarray:
     return np.ascontiguousarray(values, dtype=np.float64)
 
@@ -230,164 +191,216 @@ def dense_to_csc(matrix, *, upper_triangular: bool = False):
     return _as_float(values), _as_index(rows), _as_index(pointers)
 
 
-def solve_dense_qp(
-    P,
-    q,
-    A,
-    l,
-    u,
-    *,
-    settings_overrides: dict[str, int | float] | None = None,
-    library=None,
-):
-    library = load_pinned_library() if library is None else library
-    P = np.asarray(P, dtype=np.float64)
-    q = _as_float(q).reshape(-1)
-    A = np.asarray(A, dtype=np.float64)
-    l = _as_float(l).reshape(-1)
-    u = _as_float(u).reshape(-1)
-    n = q.size
-    m = l.size
-    if P.shape != (n, n) or A.shape != (m, n) or u.size != m:
-        raise ValueError("Pinned oracle received incompatible dense QP shapes.")
+def _bind(library):
+    library.osqp_update_data_vec.restype = OSQPInt
+    library.osqp_update_data_vec.argtypes = [
+        ct.POINTER(OSQPSolver),
+        ct.POINTER(OSQPFloat),
+        ct.POINTER(OSQPFloat),
+        ct.POINTER(OSQPFloat),
+    ]
+    library.osqp_update_data_mat.restype = OSQPInt
+    library.osqp_update_data_mat.argtypes = [
+        ct.POINTER(OSQPSolver),
+        ct.POINTER(OSQPFloat),
+        ct.POINTER(OSQPInt),
+        OSQPInt,
+        ct.POINTER(OSQPFloat),
+        ct.POINTER(OSQPInt),
+        OSQPInt,
+    ]
+    return library
 
-    P_values, P_rows, P_pointers = dense_to_csc(P, upper_triangular=True)
-    A_values, A_rows, A_pointers = dense_to_csc(A)
-    P_csc = library.OSQPCscMatrix_new(
-        n,
-        n,
-        P_values.size,
-        _pointer(P_values, OSQPFloat),
-        _pointer(P_rows, OSQPInt),
-        _pointer(P_pointers, OSQPInt),
-    )
-    A_csc = library.OSQPCscMatrix_new(
-        m,
-        n,
-        A_values.size,
-        _pointer(A_values, OSQPFloat),
-        _pointer(A_rows, OSQPInt),
-        _pointer(A_pointers, OSQPInt),
-    )
-    settings = library.OSQPSettings_new()
-    if not P_csc or not A_csc or not settings:
-        if settings:
-            library.OSQPSettings_free(settings)
-        if P_csc:
-            library.OSQPCscMatrix_free(P_csc)
-        if A_csc:
-            library.OSQPCscMatrix_free(A_csc)
-        raise MemoryError("Pinned OSQP could not allocate oracle inputs.")
 
-    settings.contents.verbose = 0
-    for name, value in (settings_overrides or {}).items():
-        if name not in dict(OSQPSettings._fields_):
-            raise ValueError(f"Unknown pinned OSQP setting {name!r}.")
-        setattr(settings.contents, name, value)
+class PinnedOSQPSession:
+    """One ``osqp_setup`` followed by any number of solves and updates."""
 
-    solver = ct.POINTER(OSQPSolver)()
-    setup_code = library.osqp_setup(
-        ct.byref(solver),
-        P_csc,
-        _pointer(q, OSQPFloat),
-        A_csc,
-        _pointer(l, OSQPFloat),
-        _pointer(u, OSQPFloat),
-        m,
-        n,
-        settings,
-    )
-    try:
-        if setup_code:
-            return {"setup_code": int(setup_code)}
-        solve_code = library.osqp_solve(solver)
-        info = solver.contents.info.contents
-        solution = solver.contents.solution.contents
-        x = np.ctypeslib.as_array(solution.x, shape=(n,)).copy()
-        y = np.ctypeslib.as_array(solution.y, shape=(m,)).copy()
-        Ax = A @ x
-        z = np.clip(Ax, l, u)
-        Px = P @ x
-        ATy = A.T @ y
-        primal_residual = float(np.max(np.abs(Ax - z))) if m else 0.0
-        dual_residual = float(np.max(np.abs(Px + q + ATy)))
-        eps_primal = float(
-            settings.contents.eps_abs
-            + settings.contents.eps_rel
-            * max(
-                float(np.max(np.abs(Ax))) if m else 0.0,
-                float(np.max(np.abs(z))) if m else 0.0,
+    def __init__(self, P, q, A, l, u, **settings_overrides):
+        self.library = _bind(load_pinned_library())
+        self.n = int(np.asarray(q).size)
+        self.m = int(np.asarray(l).size)
+        self._q = _as_float(q).reshape(-1).copy()
+        self._l = _as_float(l).reshape(-1).copy()
+        self._u = _as_float(u).reshape(-1).copy()
+        self._P = dense_to_csc(np.asarray(P, dtype=np.float64), upper_triangular=True)
+        self._A = dense_to_csc(np.asarray(A, dtype=np.float64).reshape(self.m, self.n))
+        library = self.library
+        self._P_csc = library.OSQPCscMatrix_new(
+            self.n,
+            self.n,
+            self._P[0].size,
+            _pointer(self._P[0], OSQPFloat),
+            _pointer(self._P[1], OSQPInt),
+            _pointer(self._P[2], OSQPInt),
+        )
+        self._A_csc = library.OSQPCscMatrix_new(
+            self.m,
+            self.n,
+            self._A[0].size,
+            _pointer(self._A[0], OSQPFloat),
+            _pointer(self._A[1], OSQPInt),
+            _pointer(self._A[2], OSQPInt),
+        )
+        self._settings = library.OSQPSettings_new()
+        self._settings.contents.verbose = 0
+        known = dict(OSQPSettings._fields_)
+        for name, value in settings_overrides.items():
+            if name not in known:
+                raise ValueError(f"Unknown pinned OSQP setting {name!r}.")
+            setattr(self._settings.contents, name, value)
+        self._solver = ct.POINTER(OSQPSolver)()
+        self.setup_code = int(
+            library.osqp_setup(
+                ct.byref(self._solver),
+                self._P_csc,
+                _pointer(self._q, OSQPFloat),
+                self._A_csc,
+                _pointer(self._l, OSQPFloat),
+                _pointer(self._u, OSQPFloat),
+                self.m,
+                self.n,
+                self._settings,
             )
         )
-        eps_dual = float(
-            settings.contents.eps_abs
-            + settings.contents.eps_rel
-            * max(
-                float(np.max(np.abs(Px))),
-                float(np.max(np.abs(ATy))),
-                float(np.max(np.abs(q))),
-            )
-        )
+
+    def update(self, q=None, l=None, u=None):
+        """``osqp_update_data_vec``; returns the C exit flag."""
+
+        arrays = [
+            None if v is None else _as_float(v).reshape(-1).copy() for v in (q, l, u)
+        ]
+        pointers = [None if a is None else _pointer(a, OSQPFloat) for a in arrays]
+        return int(self.library.osqp_update_data_vec(self._solver, *pointers))
+
+    @staticmethod
+    def _values_in_stored_order(dense, stored):
+        _, rows, pointers = stored
+        dense = np.asarray(dense, dtype=np.float64)
+        values = [
+            dense[rows[k], column]
+            for column in range(len(pointers) - 1)
+            for k in range(pointers[column], pointers[column + 1])
+        ]
+        return _as_float(values)
+
+    def problem_vectors(self):
+        # First workspace field in the pinned builtin ABI is OSQPData *data.
+        data = ct.cast(self._solver.contents.work, ct.POINTER(ct.POINTER(_Data)))[
+            0
+        ].contents
+        vectors = {}
+        for key in ("q", "l", "u"):
+            vector = getattr(data, key).contents
+            vectors[key] = np.ctypeslib.as_array(
+                vector.values, shape=(vector.length,)
+            ).copy()
+        return vectors
+
+    def solve(self):
+        solve_code = int(self.library.osqp_solve(self._solver))
+        info = self._solver.contents.info.contents
+        solution = self._solver.contents.solution.contents
+        settings = self._solver.contents.settings.contents
+
+        def vector(pointer, size):
+            return np.ctypeslib.as_array(pointer, shape=(size,)).copy()
+
         return {
-            "setup_code": int(setup_code),
-            "solve_code": int(solve_code),
+            "solve_code": solve_code,
             "status": info.status.split(b"\0", 1)[0].decode(),
             "status_val": int(info.status_val),
             "status_polish": int(info.status_polish),
             "iter": int(info.iter),
             "rho_updates": int(info.rho_updates),
             "rho_estimate": float(info.rho_estimate),
-            "rel_kkt_error": float(info.rel_kkt_error),
-            "adaptive_rho": int(solver.contents.settings.contents.adaptive_rho),
-            "adaptive_rho_interval": int(
-                solver.contents.settings.contents.adaptive_rho_interval
-            ),
-            "adaptive_rho_fraction": float(
-                solver.contents.settings.contents.adaptive_rho_fraction
-            ),
-            "setup_time": float(info.setup_time),
-            "run_time": float(info.run_time),
+            "rho": float(settings.rho),
             "objective": float(info.obj_val),
-            "reported_primal_residual": float(info.prim_res),
-            "reported_dual_residual": float(info.dual_res),
-            "independent_primal_residual": primal_residual,
-            "independent_dual_residual": dual_residual,
-            "eps_primal": eps_primal,
-            "eps_dual": eps_dual,
-            "x": x,
-            "y": y,
+            "dual_objective": float(info.dual_obj_val),
+            "duality_gap": float(info.duality_gap),
+            "primal_residual": float(info.prim_res),
+            "dual_residual": float(info.dual_res),
+            "rel_kkt_error": float(info.rel_kkt_error),
+            "x": vector(solution.x, self.n),
+            "y": vector(solution.y, self.m),
+            "prim_inf_cert": vector(solution.prim_inf_cert, self.m),
+            "dual_inf_cert": vector(solution.dual_inf_cert, self.n),
         }
-    finally:
-        if solver:
-            library.osqp_cleanup(solver)
-        library.OSQPSettings_free(settings)
-        library.OSQPCscMatrix_free(P_csc)
-        library.OSQPCscMatrix_free(A_csc)
+
+    def close(self):
+        library = self.library
+        if self._solver:
+            library.osqp_cleanup(self._solver)
+            self._solver = ct.POINTER(OSQPSolver)()
+        if self._settings:
+            library.OSQPSettings_free(self._settings)
+            self._settings = None
+        if self._P_csc:
+            library.OSQPCscMatrix_free(self._P_csc)
+            self._P_csc = None
+        if self._A_csc:
+            library.OSQPCscMatrix_free(self._A_csc)
+            self._A_csc = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
+        return False
 
 
-def solve_saved_pygranso_problem(
-    problem,
-    *,
-    settings_overrides: dict[str, int | float] | None = None,
-    library=None,
-):
-    H, q, equality, rhs, lower, upper = problem
-    H = H.detach().cpu().numpy()
-    q = q.detach().cpu().reshape(-1).numpy()
-    equality = equality.detach().cpu().numpy()
-    rhs = np.asarray(rhs.detach().cpu()).reshape(-1)
-    lower = lower.detach().cpu().reshape(-1).numpy()
-    upper = upper.detach().cpu().reshape(-1).numpy()
-    n = H.shape[0]
-    A = np.concatenate((equality, np.eye(n)), axis=0)
-    l = np.concatenate((rhs, lower))
-    u = np.concatenate((rhs, upper))
-    return solve_dense_qp(
-        H,
-        q,
-        A,
-        l,
-        u,
-        settings_overrides=settings_overrides,
-        library=library,
-    )
+# C setting name -> Torch setting name, for the settings that both sides share.
+_TORCH_NAMES = {
+    "adaptive_rho_interval": "rho_update_interval",
+    "adaptive_rho_tolerance": "rho_update_tolerance",
+    "warm_starting": "warm_start",
+}
+
+
+def paired_settings(**c_overrides):
+    """Return ``(c_settings, torch_settings)`` describing the same configuration."""
+
+    c_settings = {
+        "rho": 0.1,
+        "sigma": 1e-6,
+        "alpha": 1.6,
+        "max_iter": 4000,
+        "eps_abs": 1e-3,
+        "eps_rel": 1e-3,
+        "eps_prim_inf": 1e-4,
+        "eps_dual_inf": 1e-4,
+        "scaling": 10,
+        "adaptive_rho": 1,
+        "adaptive_rho_interval": 50,
+        "adaptive_rho_fraction": 0.4,
+        "adaptive_rho_tolerance": 5.0,
+        "check_termination": 25,
+        "check_dualgap": 1,
+        "scaled_termination": 0,
+        "warm_starting": 1,
+        "polishing": 0,
+        "polish_refine_iter": 3,
+    }
+    c_settings.update(c_overrides)
+    torch_settings = {_TORCH_NAMES.get(k, k): v for k, v in c_settings.items()}
+    for key in ("check_dualgap", "scaled_termination", "warm_start", "polishing"):
+        torch_settings[key] = bool(torch_settings[key])
+    torch_settings["return_info"] = True
+    torch_settings["return_state"] = True
+    return c_settings, torch_settings
+
+
+class _Vector(ct.Structure):
+    _fields_ = [("values", ct.POINTER(OSQPFloat)), ("length", OSQPInt)]
+
+
+class _Data(ct.Structure):
+    _fields_ = [
+        ("n", OSQPInt),
+        ("m", OSQPInt),
+        ("P", ct.c_void_p),
+        ("A", ct.c_void_p),
+        ("q", ct.POINTER(_Vector)),
+        ("l", ct.POINTER(_Vector)),
+        ("u", ct.POINTER(_Vector)),
+    ]

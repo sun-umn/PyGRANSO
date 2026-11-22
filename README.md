@@ -9,21 +9,6 @@ Please check https://ncvx.org for detailed instructions (introduction, installat
 
 PyGRANSO is AGPL v3.0 licensed, but it also contains a small portion of GPL code.  Please see the LICENSE_INFO folder for more information.
 
-<!-- BEGIN portfolio-project-animations -->
-## Recorded project interactions
-
-These previews record interaction with original project figures, saved notebook outputs, source tests, or the actual project interface. They do not represent new experiments, model inference, or benchmark runs. Pointer-driven inspection, saved-result selection, and browser controls are captured below.
-
-### Inspect the actual solver tests
-
-![Inspect the actual solver tests - recorded project interaction](docs/portfolio-previews/osqp-method-in-torch.gif)
-
-Original test functions from the Torch-OSQP branch. Select a test to inspect its numerical contract; this browser does not execute PyTorch or certify solver readiness.
-
-[Original project material](https://github.com/Ztang-Yit-Xiaang/PyGRANSO/blob/b47640303a0e2d00b340ac9def0fcc9b020b6eba/tests/test_torch_osqp_direct.py)
-
-<!-- END portfolio-project-animations -->
-
 ## Brief Introduction
 
 Optimizing nonconvex (NCVX) problems, especially nonsmooth and constrained ones, is an essential part of machine learning. However, it can be hard to reliably solve such problems without optimization expertise. Existing general-purpose NCVX optimization packages are powerful but typically cannot handle nonsmoothness. GRANSO is among the first optimization solvers targeting general nonsmooth NCVX problems with nonsmooth constraints, but, as it is implemented in MATLAB and requires the user to provide analytical gradients, GRANSO is often not a convenient choice in machine learning (especially deep learning) applications. To greatly lower the technical barrier, we introduce a new software package called NCVX, whose initial release contains the solver PyGRANSO, a PyTorch-enabled port of GRANSO incorporating auto-differentiation, GPU acceleration, tensor input, and support for new QP solvers. NCVX is built on freely available and widely used open-source frameworks, and as a highlight, can solve general constrained deep learning problems, the first of its kind.
@@ -57,7 +42,7 @@ PyGRANSO requires **Python 3.10+** (3.13+ recommended). Dependencies are managed
 
         pip install -e .
 
-   Dependencies (including PyTorch, SciPy, OSQP, etc.) will be installed from `pyproject.toml`.
+   Dependencies (including PyTorch, SciPy, etc.) will be installed from `pyproject.toml`.
 
 ### PyTorch with CUDA
 
@@ -71,71 +56,25 @@ By default, `pip` or `uv` may install a CPU-only build of PyTorch. For **GPU (CU
 
 Set `opts.torch_device = torch.device("cuda")` when calling PyGRANSO to use the GPU.
 
-### OSQP backend options
+### Reproduce the Torch OSQP double-precision results
 
-The default `opts.osqp_algebra = "torch"` uses AMD ordering and QDLDL to
-solve the internal QPs. Set `opts.double_precision = True` for reproduction
-against the pinned OSQP C double implementation. CUDA inputs and outputs are
-supported on the tested NVIDIA configuration. The default factorization and
-triangular solves run on the CPU even when the input tensors live on CUDA.
+The default QP backend uses the PyTorch translation of [OSQP C](https://github.com/osqp/osqp/tree/1572ae068e9ce9ca723cf8223548ade1ff7acc29) with AMD/QDLDL. Set `opts.double_precision = True`. The default factorization and triangular solves run on CPU, including for CUDA tensors.
 
-The default Torch route runs independently of the Python OSQP package.
-For the optional `"builtin"` or `"auto"` policies install the `reference`
-extra with `python -m pip install -e ".[reference]"`. The experimental
-`opts.osqp_settings = {"use_sparse": True}` route requires a CUDA-enabled
-PyTorch build with cuDSS. Polishing defaults to disabled.
-
-The double-precision comparison used OSQP C commit
-`1572ae068e9ce9ca723cf8223548ade1ff7acc29` and QDLDL commit
-`138fdac58b9cd1c4137ff1b99152c8108a6cff5b`. The 18 double-precision cases cover nine problems with polishing off and
-on. On the tested Windows CPU and NVIDIA GTX 1650, every compared field
-matched the retained native C output bitwise, including infeasibility
-certificates where applicable. The checked-in reference stores the original
-inputs and little-endian binary64 output bytes.
-
-The [upstream test audit](docs/OSQP_UPSTREAM_TEST_COVERAGE.md) lists all 71 native cases, 144 named sections, the CPU/CUDA double results, and the native CUDA nonconvex status mismatch.
-
-### Reproduce the 18 double-precision results
-
-With Git and Python 3.10+ available, fetch the implementation under review:
+From a clone of this repository, fetch the PR and compare against the recorded native double results:
 
 ```sh
-git clone https://github.com/sun-umn/PyGRANSO.git
-cd PyGRANSO
 git fetch origin pull/63/head
 git switch --detach FETCH_HEAD
-python -m venv .venv
-```
-
-Activate with `.venv\Scripts\Activate.ps1` in PowerShell or
-`source .venv/bin/activate` on Linux/macOS. From the repository root run:
-
-```sh
 python -m pip install torch numpy scipy pytest
 python -m pytest -q tests/test_pinned_double_reproduction.py -k cpu
 ```
 
-Expect **18 passed**. For CUDA, install a CUDA-enabled PyTorch build, verify
-`python -c "import torch; assert torch.cuda.is_available()"`, and repeat with
-`-k cuda`. Expect **18 passed** on the validated configuration. These commands
-compare against the recorded C bytes. With the verified DLL installed, run
-the same test with `-k native` to compare its live output to those bytes.
-
-The native comparison suites in `tests/test_c_bitwise_parity.py` and
-`tests/test_c_amd_kkt_parity.py` require the retained double/64-bit-index
-Windows DLL. The path and required SHA-256 are in
-`tests/pinned_osqp_c_oracle.py`. The suites explicitly skip when it is absent.
-
-PyGRANSO does not differentiate through the OSQP QP solve; autograd is used to
-compute the objective and constraint gradients before QP construction.
+Expect 18 passes (nine upstream QPs, polishing off/on). With CUDA-enabled PyTorch, repeat with `-k cuda`. To check live C results and the original vector, matrix and nonconvex tests, set `PYGRANSO_OSQP_DLL` to the pinned double/64-bit-index Windows DLL and run `python -m pytest -q tests`. The test bridge verifies its SHA-256 before loading it.
 
 ### Verify installation
 
 - **CPU:** `python test_cpu.py`
 - **CUDA:** `python test_cuda.py`
-- **Torch OSQP core:** `python -m pytest tests -q`
-- **Stability evidence:** `python torch_osqp_stability.py --seeds 100`
-- **Dense reference benchmark:** `python bench_osqp_dense_reference.py`
 
 Then check the [example folder](./examples) or the [example section](https://ncvx.org/examples) on the documentation website to get started.
 
@@ -146,7 +85,7 @@ Core dependencies (see `pyproject.toml` for full list and versions):
 - **Python** 3.10+ (3.13+ recommended)
 - **PyTorch** >= 2.8.0 (install with CUDA support separately if needed)
 - **SciPy** >= 1.16
-- **OSQP** >= 1.0.4 (QP solver)
+- **OSQP** >= 1.0.4 (optional Python reference backend)
 - **NumPy** (compatible with NumPy 2.x)
 - **Jupyter** (for examples)
 - **Gurobi** (optional; `gurobipy` for alternative QP solver)

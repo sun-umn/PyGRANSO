@@ -8,7 +8,6 @@ from pygranso.private.osqpWorkspace import TorchOSQPWorkspace
 
 QP_REQUESTS = 0
 QP_ERRORS = 0
-OSQP_TRACE = None
 
 
 def solveQP(
@@ -105,7 +104,6 @@ def solveQP(
     QP_REQUESTS += 1
 
     if QPsolver == "osqp":
-        _record_osqp_qp(H, f, A, b, LB, UB)
         try:
             return _solve_osqp_with_warm_state(
                 H, f, A, b, LB, UB, torch_device, double_precision, osqp_options
@@ -185,104 +183,6 @@ def resetQPCounters():
 
 def getLastOSQPInfo(workspace=None):
     return None if workspace is None else workspace.last_info
-
-
-def beginOSQPTrace(capture_data=True):
-    global OSQP_TRACE
-    OSQP_TRACE = {"capture_data": bool(capture_data), "records": []}
-
-
-def endOSQPTrace():
-    global OSQP_TRACE
-    trace = [] if OSQP_TRACE is None else OSQP_TRACE["records"]
-    OSQP_TRACE = None
-    return trace
-
-
-def _record_osqp_qp(H, f, A, b, LB, UB):
-    if OSQP_TRACE is None:
-        return
-    tensors = {"H": H, "f": f, "A": A, "b": b, "LB": LB, "UB": UB}
-    previous = OSQP_TRACE["records"][-1] if OSQP_TRACE["records"] else None
-    record = {
-        "index": len(OSQP_TRACE["records"]),
-        "n": int(f.numel()),
-        "H": _trace_tensor_metadata(H),
-        "A": _trace_tensor_metadata(A),
-    }
-    if OSQP_TRACE["capture_data"]:
-        record["qp"] = tuple(
-            None
-            if tensor is None
-            else tensor.detach().cpu().clone()
-            if torch.is_tensor(tensor)
-            else torch.as_tensor(tensor).detach().cpu().clone()
-            for tensor in tensors.values()
-        )
-    if previous is None or "qp" not in previous or "qp" not in record:
-        record["structure_changed"] = previous is not None
-        record["matrix_values_changed"] = previous is not None
-    else:
-        previous_H, _previous_f, previous_A, _previous_b, _previous_LB, _previous_UB = (
-            previous["qp"]
-        )
-        current_H, _current_f, current_A, _current_b, _current_LB, _current_UB = record[
-            "qp"
-        ]
-        structure_same = _same_tensor_structure(previous_H, current_H) and (
-            (previous_A is None and current_A is None)
-            or _same_tensor_structure(previous_A, current_A)
-        )
-        record["structure_changed"] = not structure_same
-        record["matrix_values_changed"] = not (
-            _same_tensor_values(previous_H, current_H)
-            and (
-                (previous_A is None and current_A is None)
-                or _same_tensor_values(previous_A, current_A)
-            )
-        )
-    OSQP_TRACE["records"].append(record)
-
-
-def _trace_tensor_metadata(tensor):
-    if tensor is None:
-        return None
-    nnz = (
-        int(torch.count_nonzero(tensor).item())
-        if tensor.layout == torch.strided
-        else int(tensor._nnz())
-    )
-    return {
-        "shape": tuple(tensor.shape),
-        "layout": str(tensor.layout),
-        "dtype": str(tensor.dtype),
-        "device": str(tensor.device),
-        "nnz": nnz,
-    }
-
-
-def _same_tensor_structure(left, right):
-    if left is None or right is None:
-        return left is right
-    if left.shape != right.shape or left.layout != right.layout:
-        return False
-    if left.layout == torch.strided:
-        return True
-    left_csr = left if left.layout == torch.sparse_csr else left.to_sparse_csr()
-    right_csr = right if right.layout == torch.sparse_csr else right.to_sparse_csr()
-    return torch.equal(left_csr.crow_indices(), right_csr.crow_indices()) and torch.equal(
-        left_csr.col_indices(), right_csr.col_indices()
-    )
-
-
-def _same_tensor_values(left, right):
-    if not _same_tensor_structure(left, right):
-        return False
-    if left.layout == torch.strided:
-        return torch.equal(left, right)
-    left_csr = left if left.layout == torch.sparse_csr else left.to_sparse_csr()
-    right_csr = right if right.layout == torch.sparse_csr else right.to_sparse_csr()
-    return torch.equal(left_csr.values(), right_csr.values())
 
 
 def resetOSQPWarmState(workspace=None):

@@ -1,15 +1,28 @@
 """Replay double-precision public outputs recorded from the pinned C oracle."""
+
 import json
 from pathlib import Path
 
 import numpy as np
 import pytest
 import torch
-from c_parity_support import INFO_FIELDS, paired_settings
-from pinned_osqp_c_oracle import pinned_dll_path
-from pinned_osqp_c_session import PinnedOSQPSession
+from pinned_osqp_c_oracle import PinnedOSQPSession, paired_settings, pinned_dll_path
 
 from pygranso.private.torchOSQP import solve_torch_osqp_direct
+
+INFO_FIELDS = (
+    ("status_val", "status_val"),
+    ("iter", "admm_iterations"),
+    ("rho_updates", "rho_updates"),
+    ("rho", "rho_bar"),
+    ("rho_estimate", "rho_estimate"),
+    ("objective", "objective"),
+    ("dual_objective", "dual_objective"),
+    ("duality_gap", "duality_gap"),
+    ("primal_residual", "primal_residual"),
+    ("dual_residual", "dual_residual"),
+    ("rel_kkt_error", "rel_kkt_error"),
+)
 
 
 CASES = json.loads(Path(__file__).with_name("pinned_double_results.json").read_text())
