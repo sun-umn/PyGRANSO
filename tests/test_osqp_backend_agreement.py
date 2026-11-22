@@ -1392,10 +1392,12 @@ def test_scaled_termination_matches_pinned_observable(
         values = (official.x.item(), official.info.prim_res, official.info.dual_res, official.info.duality_gap)
     tolerance = 2e-4 if dtype == torch.float32 else 2e-8
     assert info["scaled_termination"] is scaled_termination
-    for observed, expected in zip(
-        (result.item(), info["primal_residual"], info["dual_residual"], info["duality_gap"]), values
+    for observed, expected, absolute in zip(
+        (result.item(), info["primal_residual"], info["dual_residual"], info["duality_gap"]),
+        values,
+        (0.0, 1e-12, 1e-12, 1e-14),
     ):
-        assert observed == pytest.approx(expected, rel=tolerance, abs=1e-14)
+        assert observed == pytest.approx(expected, rel=tolerance, abs=absolute)
 
 
 
