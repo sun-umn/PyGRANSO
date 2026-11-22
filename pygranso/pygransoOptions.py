@@ -332,14 +332,18 @@ def pygransoOptions(n, options):
 
         osqp_algebra
         --------------------------------
-        String in {'auto','builtin','torch'}. Default value: 'auto'
+        String in {'auto','builtin','torch'}. Default value: 'torch'
 
         Selects the OSQP algebra policy for PyGRANSO's QP subproblems.
-        The 'auto' policy follows torch_device: CPU uses builtin OSQP and a
+        The default 'torch' policy uses the dense Torch translation directly.
+        The optional 'auto' policy follows torch_device: CPU uses builtin OSQP and a
         validated accelerator uses the dense Torch reference route inside its
         supported KKT and memory envelope. Unsupported or unsuccessful Torch
-        solves fall back to builtin OSQP with a warning and diagnostics.
-        The Torch route exposes no nested linear-solver selector.
+        solves fall back to the optional builtin OSQP package with a warning and
+        diagnostics.
+        Set osqp_settings['use_sparse']=True to opt into experimental CUDA/cuDSS
+        sparse direct solves. This requires explicit 'torch' algebra; the
+        default remains dense. Assembly and scaling still use dense tensors.
         Builtin workspaces and structurally compatible warm starts are reused
         automatically within one BFGS-SQP run.
 
@@ -347,7 +351,9 @@ def pygransoOptions(n, options):
         --------------------------------
         Dict of common builtin/Torch OSQP settings. The adapter supplies
         dtype-aware defaults (1e-8 for float64 and 1e-5 for float32), Ruiz
-        scaling, adaptive rho, polishing, and warm starts.
+        scaling, iteration-based adaptive rho, disabled polishing, and warm
+        starts. adaptive_rho accepts False/True or source modes 0/1/2/3;
+        adaptive_rho_fraction defaults to 0.4.
 
         torch_device
         --------------------------------
@@ -685,7 +691,7 @@ def getDefaults(n):
     setattr(default_opts, "regularize_max_eigenvalues", False)
     setattr(default_opts, "quadprog_info_msg", True)
     setattr(default_opts, "QPsolver", "osqp")
-    setattr(default_opts, "osqp_algebra", "auto")
+    setattr(default_opts, "osqp_algebra", "torch")
     setattr(
         default_opts,
         "osqp_settings",

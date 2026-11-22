@@ -33,6 +33,33 @@ def test_factorization_is_reused():
     assert solver.solve_count == 1
 
 
+def test_factorization_info_does_not_call_tensor_cpu(monkeypatch):
+    def forbidden_cpu(*args, **kwargs):
+        pytest.fail("DenseLUSolver must not migrate factorization info to CPU")
+
+    monkeypatch.setattr(torch.Tensor, "cpu", forbidden_cpu)
+    solver = DenseLUSolver()
+    solver.factorize(torch.eye(2, dtype=torch.float64))
+    assert solver.ready
+
+
+def test_refactorization_updates_factors_and_failure_preserves_last_valid_factors():
+    solver = DenseLUSolver()
+    solver.factorize(torch.eye(2, dtype=torch.float64))
+    updated = 2.0 * torch.eye(2, dtype=torch.float64)
+    solver.refactorize(updated)
+    assert solver.factorization_count == 2
+
+    singular = torch.tensor([[1.0, 2.0], [2.0, 4.0]], dtype=torch.float64)
+    with pytest.raises(TorchLinearSolveError, match="singular|invalid"):
+        solver.refactorize(singular)
+
+    solution, _ = solver.solve(torch.ones(2, dtype=torch.float64))
+    assert solver.factorization_count == 2
+    assert torch.equal(solver.matrix, updated)
+    assert torch.allclose(solution, 0.5 * torch.ones(2, dtype=torch.float64))
+
+
 def test_vector_rhs_is_normalized_internally_and_shape_is_restored():
     matrix = torch.tensor([[3.0, 1.0], [1.0, 2.0]], dtype=torch.float64)
     solver = DenseLUSolver()
@@ -42,6 +69,21 @@ def test_vector_rhs_is_normalized_internally_and_shape_is_restored():
     assert vector_solution.shape == (2,)
     assert column_solution.shape == (2, 1)
     assert torch.allclose(vector_solution, column_solution.reshape(-1))
+
+
+def test_rhs_dtype_must_match_factorized_matrix():
+    solver = DenseLUSolver()
+    solver.factorize(torch.eye(2, dtype=torch.float64))
+    with pytest.raises(ValueError, match="same dtype"):
+        solver.solve(torch.ones(2, dtype=torch.float32))
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is unavailable")
+def test_rhs_device_must_match_factorized_matrix():
+    solver = DenseLUSolver()
+    solver.factorize(torch.eye(2, device="cuda", dtype=torch.float64))
+    with pytest.raises(ValueError, match="same device"):
+        solver.solve(torch.ones(2, device="cpu", dtype=torch.float64))
 
 
 @pytest.mark.parametrize(

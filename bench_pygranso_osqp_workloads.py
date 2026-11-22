@@ -1,5 +1,6 @@
 import argparse
 import csv
+import math
 import statistics
 import time
 from pathlib import Path
@@ -33,6 +34,7 @@ RESULT_COLUMNS = (
     "qp_structure_changes",
     "qp_matrix_value_changes",
     "qp_shapes",
+    "qp_trace_devices",
 )
 
 
@@ -117,43 +119,41 @@ def make_workload(name, device, seed, maxit, method, args):
 
         opts.x0 = x0
 
-    if method == "cpu_warm":
-        opts.osqp_algebra = "builtin"
-        opts.osqp_settings = {
-            "eps_abs": args.eps_abs,
-            "eps_rel": args.eps_rel,
-            "polishing": False,
-            "verbose": False,
-        }
-    else:
-        opts.osqp_algebra = "torch"
-        opts.osqp_settings = {
-            "max_iter": args.qp_max_iter,
-            "check_termination": min(25, args.qp_max_iter),
-            "eps_abs": args.eps_abs,
-            "eps_rel": args.eps_rel,
-            "warm_start": True,
-            "adaptive_rho": True,
-            "rho_update_interval": 50,
-            "scaling": 10,
-            "polishing": True,
-            "verbose": False,
-        }
+    opts.osqp_algebra = "builtin" if method == "cpu_warm" else "torch"
+    opts.osqp_settings = {
+        "max_iter": args.qp_max_iter,
+        "check_termination": min(25, args.qp_max_iter),
+        "eps_abs": args.eps_abs,
+        "eps_rel": args.eps_rel,
+        "warm_start": True,
+        "adaptive_rho": True,
+        "rho_update_interval": 50,
+        "scaling": 10,
+        "polishing": False,
+        "verbose": False,
+    }
     return var_spec, combined_fn, opts
 
 
 def run_workload(name, method, args):
-    device = "cpu" if method == "cpu_warm" else "cuda"
-    var_spec, combined_fn, opts = make_workload(
-        name, device, args.seed, args.maxit, method, args
-    )
-    if device == "cuda":
-        torch.cuda.synchronize()
-    start = time.perf_counter()
-    solution = pygranso(var_spec=var_spec, combined_fn=combined_fn, user_opts=opts)
-    if device == "cuda":
-        torch.cuda.synchronize()
-    elapsed_ms = (time.perf_counter() - start) * 1000.0
+    rng_state = torch.random.get_rng_state()
+    try:
+        torch.random.default_generator.manual_seed(int(args.seed))
+        device = "cpu" if method == "cpu_warm" else "cuda"
+        var_spec, combined_fn, opts = make_workload(
+            name, device, args.seed, args.maxit, method, args
+        )
+        if device == "cuda":
+            torch.cuda.synchronize()
+        start = time.perf_counter()
+        solution = pygranso(
+            var_spec=var_spec, combined_fn=combined_fn, user_opts=opts
+        )
+        if device == "cuda":
+            torch.cuda.synchronize()
+        elapsed_ms = (time.perf_counter() - start) * 1000.0
+    finally:
+        torch.random.set_rng_state(rng_state)
     return elapsed_ms, solution
 
 
@@ -167,13 +167,10 @@ def solution_metrics(solution):
     }
 
 
-def trace_workload(name, args):
-    var_spec, combined_fn, opts = make_workload(
-        name, "cpu", args.seed, min(args.maxit, 5), "cpu_warm", args
-    )
+def trace_workload(name, method, args):
     beginOSQPTrace(capture_data=True)
     try:
-        pygranso(var_spec=var_spec, combined_fn=combined_fn, user_opts=opts)
+        run_workload(name, method, args)
     finally:
         trace = endOSQPTrace()
     return summarize_trace(trace)
@@ -195,6 +192,15 @@ def summarize_trace(trace):
             bool(record["matrix_values_changed"]) for record in trace
         ),
         "qp_shapes": "; ".join(shapes),
+        "qp_trace_devices": "; ".join(
+            sorted(
+                {
+                    record["H"]["device"]
+                    for record in trace
+                    if record["H"] is not None
+                }
+            )
+        ),
     }
 
 
@@ -202,39 +208,56 @@ def equivalent_metrics(cpu, cuda, tolerance=1e-4):
     if cpu["termination_code"] != cuda["termination_code"]:
         return False
     for key in ("objective", "feasibility", "stationarity"):
-        scale = max(1.0, abs(cpu[key]))
-        if abs(cpu[key] - cuda[key]) / scale > tolerance:
+        cpu_value = cpu[key]
+        cuda_value = cuda[key]
+        if not math.isfinite(cpu_value) or not math.isfinite(cuda_value):
+            return False
+        scale = max(1.0, abs(cpu_value))
+        if abs(cpu_value - cuda_value) / scale > tolerance:
             return False
     return True
 
 
 def benchmark(args):
+    if args.repeats < 1:
+        raise ValueError("--repeats must be at least 1.")
     if not torch.cuda.is_available():
         raise SystemExit("CUDA is required for the real PyGRANSO comparison.")
     rows = []
     gate_failed = False
     for workload in args.workloads:
-        trace = trace_workload(workload, args)
         method_data = {}
         for method in ("cpu_warm", "torch_cuda"):
             for _ in range(args.warmups):
                 run_workload(workload, method, args)
             timings = []
-            last_solution = None
+            metrics = []
             for _ in range(args.repeats):
-                elapsed_ms, last_solution = run_workload(workload, method, args)
+                elapsed_ms, solution = run_workload(workload, method, args)
                 timings.append(elapsed_ms)
+                metrics.append(solution_metrics(solution))
             method_data[method] = {
                 "timings": timings,
-                "metrics": solution_metrics(last_solution),
+                "metrics": metrics,
             }
+        for method in ("cpu_warm", "torch_cuda"):
+            method_data[method]["trace"] = trace_workload(workload, method, args)
 
         cpu = method_data["cpu_warm"]
         cuda = method_data["torch_cuda"]
         ci = bootstrap_speedup_interval(cpu["timings"], cuda["timings"])
         cpu_median = statistics.median(cpu["timings"])
         cuda_median = statistics.median(cuda["timings"])
-        equivalent = equivalent_metrics(cpu["metrics"], cuda["metrics"])
+        equivalent = (
+            len(cpu["metrics"]) == len(cuda["metrics"])
+            and bool(cpu["metrics"])
+            and all(
+                equivalent_metrics(cpu_metrics, cuda_metrics)
+                for cpu_metrics, cuda_metrics in zip(
+                    cpu["metrics"], cuda["metrics"]
+                )
+            )
+        )
         slowdown = cuda_median / cpu_median
         passed = equivalent and slowdown <= args.maximum_slowdown
         gate_failed |= not passed
@@ -256,8 +279,8 @@ def benchmark(args):
                     "baseline" if method == "cpu_warm" else "pass" if passed else "fail"
                 ),
                 "equivalent_to_cpu": True if method == "cpu_warm" else equivalent,
-                **data["metrics"],
-                **trace,
+                **data["metrics"][-1],
+                **data["trace"],
             }
             rows.append(row)
     args.gate_failed = gate_failed

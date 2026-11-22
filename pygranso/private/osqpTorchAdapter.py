@@ -3,15 +3,20 @@
 from __future__ import annotations
 
 import importlib
+import math
 import warnings
-from numbers import Integral, Number
+from numbers import Integral, Number, Real
 
 import numpy as np
 import torch
 from scipy import sparse
 
 from pygranso.private.osqpWorkspace import TorchOSQPWorkspace
-from pygranso.private.torchOSQP import _polish_solution, solve_torch_osqp_direct
+from pygranso.private.torchOSQP import (
+    _restore_workspace,
+    _snapshot_workspace,
+    solve_torch_osqp_direct,
+)
 
 MAX_SUPPORTED_KKT_DIM = 2400
 MAX_AUTO_ESTIMATED_MEMORY_MB = 512.0
@@ -37,19 +42,27 @@ LEGACY_TORCH_SETTINGS = {
 }
 
 DEFAULT_OSQP_SETTINGS = {
+    "use_sparse": False,
     "rho": 0.1,
     "sigma": 1e-6,
     "alpha": 1.6,
     "max_iter": 4000,
+    "time_limit": 1e10,
     "eps_abs": 1e-8,
     "eps_rel": 1e-8,
+    "eps_prim_inf": 1e-4,
+    "eps_dual_inf": 1e-4,
     "check_termination": 25,
+    "check_dualgap": True,
+    "scaled_termination": False,
     "scaling": 10,
     "adaptive_rho": True,
     "rho_update_interval": 50,
+    "adaptive_rho_fraction": 0.4,
     "rho_update_tolerance": 5.0,
+    "rho_update_safeguard": False,
     "warm_start": True,
-    "polishing": True,
+    "polishing": False,
     "polish_delta": 1e-6,
     "polish_refine_iter": 3,
     "check_linear_residual": False,
@@ -77,13 +90,13 @@ def solve_osqp_torch_qp(
 ):
     """Solve PyGRANSO's QP form and return a Torch column vector."""
 
+    torch_dtype = torch.float64 if double_precision else torch.float32
+    opts = _normalize_options(options, torch_dtype)
     workspace = workspace or TorchOSQPWorkspace()
     target_device = _canonical_device(torch_device)
-    torch_dtype = torch.float64 if double_precision else torch.float32
-    _validate_torch_input_compatibility(
-        H, f, A, b, LB, UB, expected_dtype=torch_dtype
-    )
-    opts = _normalize_options(options, torch_dtype)
+    _validate_torch_input_compatibility(H, f, A, b, LB, UB, expected_dtype=torch_dtype)
+    if (A is None) != (b is None):
+        raise ValueError("A and b must either both be provided or both be None.")
     settings = opts["settings"]
     selection = _select_backend(
         opts["algebra"],
@@ -96,31 +109,47 @@ def solve_osqp_torch_qp(
     )
 
     if selection["backend"] == "builtin":
+        workspace_snapshot = _snapshot_workspace(workspace)
+        mutation_state = {"cached_problem": False}
         backend_changed = workspace.ensure_backend("builtin")
-        result_device = _builtin_result_device(
-            target_device,
-            torch_dtype,
-            selection["selection_reason"],
-        )
-        solution, info = _solve_builtin_osqp_path(
-            H,
-            f,
-            A,
-            b,
-            LB,
-            UB,
-            result_device,
-            target_device,
-            torch_dtype,
-            settings,
-            workspace,
-        )
+        try:
+            result_device = _builtin_result_device(
+                target_device,
+                torch_dtype,
+                selection["selection_reason"],
+            )
+            solution, info = _solve_builtin_osqp_path(
+                H,
+                f,
+                A,
+                b,
+                LB,
+                UB,
+                result_device,
+                target_device,
+                torch_dtype,
+                settings,
+                workspace,
+                mutation_state,
+            )
+        except BaseException:
+            _restore_workspace(workspace, workspace_snapshot)
+            if mutation_state["cached_problem"]:
+                workspace.builtin_cache = None
+            raise
         selection["workspace_invalidated_for_backend_change"] = backend_changed
         info.update(selection)
+        _raise_if_builtin_interrupted(
+            info,
+            workspace,
+            workspace_snapshot,
+            mutation_state,
+        )
         workspace.last_info = dict(info)
         return (solution, info) if settings["return_info"] else solution
 
     torch_failure = None
+    workspace_snapshot = _snapshot_workspace(workspace)
     backend_changed = workspace.ensure_backend("torch")
     try:
         solution, torch_info = _solve_torch_osqp_path(
@@ -147,7 +176,11 @@ def solve_osqp_torch_qp(
             "message": "Torch OSQP did not return a solved-compatible status.",
             "torch_info": torch_info,
         }
-    except Exception as exc:
+        _restore_workspace(workspace, workspace_snapshot)
+    except BaseException as exc:
+        _restore_workspace(workspace, workspace_snapshot)
+        if not isinstance(exc, Exception):
+            raise
         if opts["algebra"] != "auto":
             raise
         torch_failure = {
@@ -169,24 +202,33 @@ def solve_osqp_torch_qp(
         RuntimeWarning,
         stacklevel=2,
     )
+    workspace_snapshot = _snapshot_workspace(workspace)
+    mutation_state = {"cached_problem": False}
     backend_changed = workspace.ensure_backend("builtin")
-    solution, builtin_info = _solve_builtin_osqp_path(
-        H,
-        f,
-        A,
-        b,
-        LB,
-        UB,
-        _builtin_result_device(
+    try:
+        solution, builtin_info = _solve_builtin_osqp_path(
+            H,
+            f,
+            A,
+            b,
+            LB,
+            UB,
+            _builtin_result_device(
+                target_device,
+                torch_dtype,
+                "torch_failed_or_unsolved",
+            ),
             target_device,
             torch_dtype,
-            "torch_failed_or_unsolved",
-        ),
-        target_device,
-        torch_dtype,
-        settings,
-        workspace,
-    )
+            settings,
+            workspace,
+            mutation_state,
+        )
+    except BaseException:
+        _restore_workspace(workspace, workspace_snapshot)
+        if mutation_state["cached_problem"]:
+            workspace.builtin_cache = None
+        raise
     builtin_info["fallback"] = {
         "occurred": True,
         "requested_backend": "auto",
@@ -202,16 +244,39 @@ def solve_osqp_torch_qp(
             "selection_reason": "torch_failed_or_unsolved",
         }
     )
+    _raise_if_builtin_interrupted(
+        builtin_info,
+        workspace,
+        workspace_snapshot,
+        mutation_state,
+    )
     workspace.last_info = dict(builtin_info)
     return (solution, builtin_info) if settings["return_info"] else solution
 
 
+def _raise_if_builtin_interrupted(
+    info,
+    workspace,
+    workspace_snapshot,
+    mutation_state,
+):
+    if info.get("status") != "interrupted":
+        return
+    _restore_workspace(workspace, workspace_snapshot)
+    if mutation_state["cached_problem"]:
+        workspace.builtin_cache = None
+    workspace.last_info = dict(info)
+    raise KeyboardInterrupt("Builtin OSQP solve was interrupted by the user.")
+
+
 def _select_backend(algebra, target_device, dtype, H, f, A, b):
-    kkt_dim, memory_mb = estimate_dense_kkt(H, f, A, b, dtype)
+    kkt_dim, memory_components = _dense_kkt_memory_estimate(H, f, A, b, dtype)
+    memory_mb = sum(memory_components.values())
     metadata = {
         "requested_backend": algebra,
         "estimated_kkt_dim": kkt_dim,
         "estimated_dense_working_memory_mb": memory_mb,
+        "estimated_dense_memory_components_mb": memory_components,
     }
     if algebra == "builtin":
         return {
@@ -221,7 +286,9 @@ def _select_backend(algebra, target_device, dtype, H, f, A, b):
             "fallback": {"occurred": False},
         }
     if algebra == "torch":
-        if kkt_dim > MAX_SUPPORTED_KKT_DIM or memory_mb > _memory_limit_mb(target_device):
+        if kkt_dim > MAX_SUPPORTED_KKT_DIM or memory_mb > _memory_limit_mb(
+            target_device
+        ):
             warnings.warn(
                 "Explicit Torch OSQP exceeds the validated dense envelope "
                 f"(KKT dimension {kkt_dim}, estimated {memory_mb:.1f} MiB); "
@@ -294,15 +361,31 @@ def _selection_fallback(metadata, reason, target_device):
 
 
 def estimate_dense_kkt(H, f, A, b, dtype):
+    kkt_dim, components = _dense_kkt_memory_estimate(H, f, A, b, dtype)
+    return kkt_dim, float(sum(components.values()))
+
+
+def _dense_kkt_memory_estimate(H, f, A, b, dtype):
     n = int(_shape_length(f))
     n_eq = 0
     if A is not None and b is not None:
         shape = tuple(A.shape) if hasattr(A, "shape") else np.asarray(A).shape
         n_eq = 1 if len(shape) == 1 else int(shape[0])
-    kkt_dim = 2 * n + n_eq
+    constraint_rows = n_eq + n
+    kkt_dim = n + constraint_rows
     dtype_bytes = torch.empty((), dtype=dtype).element_size()
-    memory_mb = 3.0 * kkt_dim * kkt_dim * dtype_bytes / (1024 * 1024)
-    return int(kkt_dim), float(memory_mb)
+    mib = 1024 * 1024
+    element_counts = {
+        "source_matrices": n * n + n_eq * n,
+        "bound_identity": n * n,
+        "canonical_constraint_matrix": constraint_rows * n,
+        "kkt_matrix": kkt_dim * kkt_dim,
+        "kkt_factorization_workspace": 2 * kkt_dim * kkt_dim,
+    }
+    components = {
+        name: float(count * dtype_bytes / mib) for name, count in element_counts.items()
+    }
+    return int(kkt_dim), components
 
 
 def _shape_length(value):
@@ -345,7 +428,9 @@ def _memory_limit_mb(device):
     limit = MAX_AUTO_ESTIMATED_MEMORY_MB
     if device.type == "cuda" and torch.cuda.is_available():
         try:
-            total_mb = torch.cuda.get_device_properties(device).total_memory / (1024 * 1024)
+            total_mb = torch.cuda.get_device_properties(device).total_memory / (
+                1024 * 1024
+            )
             limit = min(limit, 0.25 * total_mb)
         except (AssertionError, RuntimeError):
             pass
@@ -384,6 +469,28 @@ def _solve_torch_osqp_path(
     workspace,
     allow_device_move,
 ):
+    sparse_to_dense = _sparse_to_dense_diagnostics(
+        {"H": H, "f": f, "A": A, "b": b, "LB": LB, "UB": UB},
+        target_device,
+    )
+    if sparse_to_dense["occurred"]:
+        names = ", ".join(sparse_to_dense["inputs"])
+        warnings.warn(
+            "Torch OSQP's dense compatibility route will convert sparse "
+            f"input(s) {names} to strided tensors on {target_device}; "
+            + ("the KKT solve then uses sparse CSR." if settings["use_sparse"]
+               else "no sparse solver is selected."),
+            RuntimeWarning,
+            stacklevel=3,
+        )
+    if allow_device_move and sparse_to_dense["device_transfer"]:
+        names = ", ".join(sparse_to_dense["device_transfers"])
+        warnings.warn(
+            "Automatic Torch OSQP will move input(s) "
+            f"{names} to {target_device}; the transfer is recorded in diagnostics.",
+            RuntimeWarning,
+            stacklevel=3,
+        )
     P = _torch_tensor(H, "H", target_device, dtype, allow_device_move)
     q = _torch_tensor(f, "f", target_device, dtype, allow_device_move).reshape(-1)
     n = q.numel()
@@ -417,7 +524,75 @@ def _solve_torch_osqp_path(
         solve_settings,
         workspace,
     )
+    info["sparse_to_dense"] = sparse_to_dense
+    info["input_device_transfer"] = {
+        "occurred": sparse_to_dense["device_transfer"],
+        "inputs": sparse_to_dense["device_transfers"],
+        "target_device": str(target_device),
+    }
     return solution.to(device=target_device, dtype=dtype), info
+
+
+def _sparse_to_dense_diagnostics(values, target_device):
+    tensor_inputs = {
+        name: value for name, value in values.items() if torch.is_tensor(value)
+    }
+    inputs = {
+        name: {
+            "layout": str(value.layout),
+            "source_device": str(value.device),
+        }
+        for name, value in values.items()
+        if torch.is_tensor(value) and value.layout != torch.strided
+    }
+    device_transfers = {
+        name: {
+            "source_device": str(value.device),
+            "target_device": str(target_device),
+        }
+        for name, value in tensor_inputs.items()
+        if value.device != target_device
+    }
+    return {
+        "occurred": bool(inputs),
+        "inputs": inputs,
+        "conversion_device": str(target_device),
+        "device_transfer": bool(device_transfers),
+        "device_transfers": device_transfers,
+        "method": "Tensor.to(device).to_dense" if inputs else None,
+    }
+
+
+def _normalize_builtin_status(raw_status):
+    normalized = raw_status.strip().lower().replace(" ", "_")
+    return {
+        "solved": "solved",
+        "solved_inaccurate": "solved_inaccurate",
+        "primal_infeasible": "primal_infeasible",
+        "primal_infeasible_inaccurate": "primal_infeasible_inaccurate",
+        "dual_infeasible": "dual_infeasible",
+        "dual_infeasible_inaccurate": "dual_infeasible_inaccurate",
+        "maximum_iterations_reached": "max_iter_reached",
+        "run_time_limit_reached": "time_limit_reached",
+        "problem_non_convex": "non_convex",
+        "interrupted_by_user": "interrupted",
+        "unsolved": "unsolved",
+    }.get(normalized, normalized)
+
+
+def _builtin_certificate(value, device, dtype):
+    if value is None:
+        return None
+    certificate = np.asarray(value, dtype=np.float64).reshape(-1)
+    if certificate.size == 0 or not np.all(np.isfinite(certificate)):
+        return None
+    certificate_norm = np.linalg.norm(certificate, ord=np.inf)
+    if not np.isfinite(certificate_norm) or certificate_norm <= 0.0:
+        return None
+    return torch.from_numpy(certificate / certificate_norm).to(
+        device=device,
+        dtype=dtype,
+    )
 
 
 def _solve_builtin_osqp_path(
@@ -432,6 +607,7 @@ def _solve_builtin_osqp_path(
     dtype,
     settings,
     workspace,
+    mutation_state,
 ):
     osqp = _import_osqp()
     H_np = _to_numpy(H).astype(np.float64, copy=False)
@@ -447,9 +623,7 @@ def _solve_builtin_osqp_path(
         raise ValueError("H and f must contain finite values.")
     asymmetry = np.linalg.norm(H_np - H_np.T, ord=np.inf)
     scale = max(1.0, np.linalg.norm(H_np, ord=np.inf))
-    input_epsilon = np.finfo(
-        np.float64 if dtype == torch.float64 else np.float32
-    ).eps
+    input_epsilon = np.finfo(np.float64 if dtype == torch.float64 else np.float32).eps
     tolerance = settings["symmetry_tolerance_multiplier"] * input_epsilon * scale
     if asymmetry > tolerance:
         raise ValueError("H is materially asymmetric for the builtin OSQP route.")
@@ -459,14 +633,17 @@ def _solve_builtin_osqp_path(
     if np.any(np.isnan(l_osqp)) or np.any(np.isnan(u_osqp)) or np.any(l_osqp > u_osqp):
         raise ValueError("Constraint bounds are invalid.")
 
+    builtin_settings = _builtin_settings(settings)
+    settings_signature = tuple(sorted(builtin_settings.items()))
     cache = workspace.builtin_cache
     cache_hit = bool(
         cache
         and _same_csc_structure(cache["P"], P)
         and _same_csc_structure(cache["A"], A_osqp)
+        and cache.get("settings_signature") == settings_signature
     )
-    builtin_settings = _builtin_settings(settings)
     if cache_hit:
+        mutation_state["cached_problem"] = True
         problem = cache["problem"]
         updates = {"q": f_np, "l": l_osqp, "u": u_osqp}
         if not np.array_equal(cache["P"].data, P.data):
@@ -475,8 +652,17 @@ def _solve_builtin_osqp_path(
             updates["Ax"] = A_osqp.data
         problem.update(**updates)
         previous = cache.get("result")
-        if previous is not None and previous.x is not None and previous.y is not None:
-            problem.warm_start(x=previous.x, y=previous.y)
+        warm_start_x = cache.get("warm_start_x")
+        warm_start_y = cache.get("warm_start_y")
+        if warm_start_x is None or warm_start_y is None:
+            warm_start_x = None if previous is None else previous.x
+            warm_start_y = None if previous is None else previous.y
+        if (
+            settings["warm_start"]
+            and warm_start_x is not None
+            and warm_start_y is not None
+        ):
+            problem.warm_start(x=warm_start_x, y=warm_start_y)
         workspace.builtin_stats["updates"] += 1
     else:
         problem = osqp.OSQP(algebra="builtin")
@@ -484,101 +670,106 @@ def _solve_builtin_osqp_path(
         workspace.builtin_stats["setups"] += 1
         if cache is not None:
             workspace.builtin_stats["rebuilds"] += 1
-    try:
-        result = problem.solve(raise_error=False)
-    except TypeError:
-        result = problem.solve()
-    workspace.builtin_cache = {
+    result = problem.solve(raise_error=False)
+    candidate_cache = {
         "problem": problem,
         "P": P,
         "A": A_osqp,
         "result": result,
+        "settings_signature": settings_signature,
     }
     workspace.builtin_stats["last_cache_hit"] = cache_hit
 
-    primal = getattr(result, "x", None)
-    if primal is None or np.asarray(primal).size == 0:
-        raise RuntimeError("Builtin OSQP did not return a primal solution.")
-    primal = np.asarray(primal).reshape(n, 1)
-    if not np.all(np.isfinite(primal)):
-        raise RuntimeError("Builtin OSQP returned a non-finite solution.")
-    dual_solution = getattr(result, "y", None)
-    if dual_solution is None:
-        raise RuntimeError("Builtin OSQP did not return a dual solution.")
-    dual_solution = np.asarray(dual_solution, dtype=np.float64).reshape(-1)
-    if not np.all(np.isfinite(dual_solution)):
-        raise RuntimeError("Builtin OSQP returned a non-finite dual solution.")
-    x_vector = primal.reshape(-1)
-    ax = np.asarray(A_osqp @ x_vector).reshape(-1)
-    z = np.maximum(np.minimum(ax, u_osqp), l_osqp)
     osqp_info = getattr(result, "info", None)
     raw_status = str(getattr(osqp_info, "status", "unknown"))
-    status = raw_status.lower().replace(" ", "_")
-    status_compatible = status.startswith("solved")
-    polish_status = getattr(osqp_info, "status_polish", None)
-    polish_fallback = None
-    if (
-        settings["polishing"]
-        and status_compatible
-        and polish_status is not None
-        and int(polish_status) < 0
-    ):
-        x_vector, z, dual_solution, polish_fallback = _dense_polish_builtin(
-            H_np,
-            f_np,
-            A_osqp,
-            l_osqp,
-            u_osqp,
-            x_vector,
-            z,
-            dual_solution,
-            settings,
-        )
-        primal = x_vector.reshape(n, 1)
-        ax = np.asarray(A_osqp @ x_vector).reshape(-1)
-    metrics = _builtin_common_metrics(
-        H_np, f_np, A_osqp, x_vector, z, dual_solution, settings
+    status = _normalize_builtin_status(raw_status)
+    status_val = int(getattr(osqp_info, "status_val", 11))
+    primal_infeasible = status.startswith("primal_infeasible")
+    dual_infeasible = status.startswith("dual_infeasible")
+    status_compatible = status in {"solved", "solved_inaccurate"}
+    workspace.builtin_cache = candidate_cache if status_compatible else None
+    primal_certificate = (
+        _builtin_certificate(getattr(result, "prim_inf_cert", None), result_device, dtype)
+        if primal_infeasible
+        else None
     )
-    if (
-        settings["polishing"]
-        and status_compatible
-        and polish_fallback is None
-        and (
-            metrics["primal_residual"] > metrics["eps_primal"]
-            or metrics["dual_residual"] > metrics["eps_dual"]
-        )
+    dual_certificate = (
+        _builtin_certificate(getattr(result, "dual_inf_cert", None), result_device, dtype)
+        if dual_infeasible
+        else None
+    )
+    polish_status = getattr(osqp_info, "status_polish", None)
+    infeasible = primal_infeasible or dual_infeasible
+    no_iterate = infeasible or status == "non_convex"
+    if primal_infeasible and (
+        primal_certificate is None or primal_certificate.numel() != A_osqp.shape[0]
     ):
-        x_vector, z, dual_solution, polish_fallback = _dense_polish_builtin(
-            H_np,
-            f_np,
-            A_osqp,
-            l_osqp,
-            u_osqp,
-            x_vector,
-            z,
-            dual_solution,
-            settings,
+        raise RuntimeError(
+            "Builtin OSQP reported primal infeasibility without a valid certificate."
         )
-        primal = x_vector.reshape(n, 1)
+    if dual_infeasible and (
+        dual_certificate is None or dual_certificate.numel() != n
+    ):
+        raise RuntimeError(
+            "Builtin OSQP reported dual infeasibility without a valid certificate."
+        )
+
+    if no_iterate:
+        primal = np.full((n, 1), np.nan, dtype=np.float64)
+        metrics = {
+            "primal_residual": float(getattr(osqp_info, "prim_res", np.nan)),
+            "dual_residual": float(getattr(osqp_info, "dual_res", np.nan)),
+            "eps_primal": float("nan"),
+            "eps_dual": float("nan"),
+            "objective": (
+                float("inf")
+                if primal_infeasible
+                else -float("inf")
+                if dual_infeasible
+                else float("nan")
+            ),
+        }
+    else:
+        primal = getattr(result, "x", None)
+        if primal is None or np.asarray(primal).size == 0:
+            raise RuntimeError("Builtin OSQP did not return a primal solution.")
+        primal = np.asarray(primal).reshape(n, 1)
+        if not np.all(np.isfinite(primal)):
+            raise RuntimeError("Builtin OSQP returned a non-finite solution.")
+        dual_solution = getattr(result, "y", None)
+        if dual_solution is None:
+            raise RuntimeError("Builtin OSQP did not return a dual solution.")
+        dual_solution = np.asarray(dual_solution, dtype=np.float64).reshape(-1)
+        if not np.all(np.isfinite(dual_solution)):
+            raise RuntimeError("Builtin OSQP returned a non-finite dual solution.")
+        x_vector = primal.reshape(-1)
+        ax = np.asarray(A_osqp @ x_vector).reshape(-1)
+        z = np.maximum(np.minimum(ax, u_osqp), l_osqp)
         metrics = _builtin_common_metrics(
             H_np, f_np, A_osqp, x_vector, z, dual_solution, settings
         )
-    if (
-        status_compatible
-        and (
-            metrics["primal_residual"] > metrics["eps_primal"]
-            or metrics["dual_residual"] > metrics["eps_dual"]
-        )
-    ):
-        raise RuntimeError(
-            "Builtin OSQP returned a solved status outside the common adapter "
-            "residual contract."
-        )
+    residual_contract_satisfied = not status_compatible or (
+        metrics["primal_residual"] <= metrics["eps_primal"]
+        and metrics["dual_residual"] <= metrics["eps_dual"]
+    )
     info = {
         "status": status,
+        "status_val": status_val,
         "status_compatible": status_compatible,
         "backend": "builtin",
-        "objective": metrics["objective"],
+        "rho_update_safeguard": False,
+        "status_polish": polish_status,
+        "objective": (
+            float("inf")
+            if primal_infeasible
+            else -float("inf")
+            if dual_infeasible
+            else metrics["objective"]
+        ),
+        "primal_infeasibility_certificate": primal_certificate,
+        "dual_infeasibility_certificate": dual_certificate,
+        "prim_inf_cert": primal_certificate,
+        "dual_inf_cert": dual_certificate,
         "primal_residual": metrics["primal_residual"],
         "dual_residual": metrics["dual_residual"],
         "eps_primal": metrics["eps_primal"],
@@ -586,6 +777,7 @@ def _solve_builtin_osqp_path(
         "solver_objective": float(getattr(osqp_info, "obj_val", np.nan)),
         "solver_primal_residual": float(getattr(osqp_info, "prim_res", np.nan)),
         "solver_dual_residual": float(getattr(osqp_info, "dual_res", np.nan)),
+        "adapter_residual_contract_satisfied": residual_contract_satisfied,
         "admm_iterations": int(getattr(osqp_info, "iter", 0)),
         "device": str(result_device),
         "requested_device": str(requested_device),
@@ -594,14 +786,8 @@ def _solve_builtin_osqp_path(
         "builtin_workspace": dict(workspace.builtin_stats),
         "fallback": {"occurred": False},
         "polishing": bool(settings["polishing"]),
-        "polishing_status": (
-            "dense_lu_fallback_accepted"
-            if polish_fallback is not None
-            else None
-            if polish_status is None
-            else int(polish_status)
-        ),
-        "polishing_fallback": polish_fallback,
+        "polishing_status": None if polish_status is None else int(polish_status),
+        "polishing_fallback": None,
     }
     return torch.from_numpy(primal).to(device=result_device, dtype=dtype), info
 
@@ -631,34 +817,18 @@ def _builtin_common_metrics(H, f, A, x, z, y, settings):
     }
 
 
-def _dense_polish_builtin(H, f, A, l, u, x, z, y, settings):
-    polish_settings = dict(settings)
-    x_t, z_t, y_t, info = _polish_solution(
-        torch.from_numpy(H.copy()),
-        torch.from_numpy(f.copy()),
-        torch.from_numpy(A.toarray()),
-        torch.from_numpy(l.copy()),
-        torch.from_numpy(u.copy()),
-        torch.from_numpy(x.copy()),
-        torch.from_numpy(z.copy()),
-        torch.from_numpy(y.copy()),
-        polish_settings,
-    )
-    if not info["polishing_success"]:
-        raise RuntimeError(
-            "Requested builtin OSQP polishing failed and the validated "
-            "dense-LU polish fallback did not succeed."
-        )
-    return x_t.numpy(), z_t.numpy(), y_t.numpy(), info
-
-
 def _normalize_options(options, dtype):
-    options = options or {}
-    algebra = options.get("algebra", "auto")
+    if options is None:
+        options = {}
+    elif not isinstance(options, dict):
+        raise ValueError("osqp options must be a dict.")
+    algebra = options.get("algebra", "torch")
     if algebra not in {"auto", "builtin", "torch"}:
         raise ValueError("osqp_algebra must be 'auto', 'builtin', or 'torch'.")
-    user_settings = options.get("settings") or {}
-    if not isinstance(user_settings, dict):
+    user_settings = options.get("settings")
+    if user_settings is None:
+        user_settings = {}
+    elif not isinstance(user_settings, dict):
         raise ValueError("osqp settings must be a dict.")
     legacy = sorted(LEGACY_TORCH_SETTINGS.intersection(user_settings))
     if legacy:
@@ -686,6 +856,8 @@ def _normalize_options(options, dtype):
             raise ValueError(f"Unsupported common OSQP setting {key!r}.")
         settings[normalized] = value
     _validate_settings(settings)
+    if settings["use_sparse"] and algebra != "torch":
+        raise ValueError("use_sparse=True requires osqp_algebra='torch'.")
     return {"algebra": algebra, "settings": settings}
 
 
@@ -694,6 +866,7 @@ def _default_settings(dtype):
     tolerance = 1e-8 if dtype == torch.float64 else 1e-5
     settings["eps_abs"] = tolerance
     settings["eps_rel"] = tolerance
+    settings["check_dualgap"] = dtype == torch.float64
     return settings
 
 
@@ -704,21 +877,31 @@ def _validate_settings(settings):
     if settings["alpha"] >= 2:
         raise ValueError("alpha must be in (0, 2).")
     settings["max_iter"] = _positive_int(settings["max_iter"], "max_iter")
+    settings["time_limit"] = _positive_float(settings["time_limit"], "time_limit")
     settings["eps_abs"] = _nonnegative_float(settings["eps_abs"], "eps_abs")
     settings["eps_rel"] = _nonnegative_float(settings["eps_rel"], "eps_rel")
-    settings["check_termination"] = _positive_int(
+    if settings["eps_abs"] == 0.0 and settings["eps_rel"] == 0.0:
+        raise ValueError("At least one of eps_abs and eps_rel must be positive.")
+    settings["eps_prim_inf"] = _positive_float(settings["eps_prim_inf"], "eps_prim_inf")
+    settings["eps_dual_inf"] = _positive_float(settings["eps_dual_inf"], "eps_dual_inf")
+    settings["check_termination"] = _nonnegative_int(
         settings["check_termination"], "check_termination"
     )
     settings["scaling"] = _nonnegative_int(settings["scaling"], "scaling")
-    settings["adaptive_rho"] = bool(settings["adaptive_rho"])
-    settings["rho_update_interval"] = _positive_int(
+    settings["adaptive_rho"] = _adaptive_rho_mode(settings["adaptive_rho"])
+    settings["rho_update_interval"] = _nonnegative_int(
         settings["rho_update_interval"], "rho_update_interval"
+    )
+    settings["adaptive_rho_fraction"] = _positive_float(
+        settings["adaptive_rho_fraction"], "adaptive_rho_fraction"
     )
     settings["rho_update_tolerance"] = _positive_float(
         settings["rho_update_tolerance"], "rho_update_tolerance"
     )
-    settings["warm_start"] = bool(settings["warm_start"])
-    settings["polishing"] = bool(settings["polishing"])
+    if settings["rho_update_tolerance"] < 1.0:
+        raise ValueError("rho_update_tolerance must be at least 1.0.")
+    settings["warm_start"] = _bool(settings["warm_start"], "warm_start")
+    settings["polishing"] = _bool(settings["polishing"], "polishing")
     settings["polish_delta"] = _positive_float(settings["polish_delta"], "polish_delta")
     settings["polish_refine_iter"] = _nonnegative_int(
         settings["polish_refine_iter"], "polish_refine_iter"
@@ -727,14 +910,20 @@ def _validate_settings(settings):
         settings["symmetry_tolerance_multiplier"], "symmetry_tolerance_multiplier"
     )
     for key in (
+        "use_sparse",
+        "rho_update_safeguard",
         "check_linear_residual",
+        "check_dualgap",
+        "scaled_termination",
         "check_convexity",
         "check_condition",
         "return_state",
         "return_info",
         "verbose",
     ):
-        settings[key] = bool(settings[key])
+        settings[key] = _bool(settings[key], key)
+    if settings["rho_update_safeguard"]:
+        raise ValueError("The pinned C rho update requires rho_update_safeguard=False.")
 
 
 def _builtin_settings(settings):
@@ -743,15 +932,23 @@ def _builtin_settings(settings):
         "sigma": settings["sigma"],
         "alpha": settings["alpha"],
         "max_iter": settings["max_iter"],
+        "time_limit": settings["time_limit"],
         "eps_abs": settings["eps_abs"],
         "eps_rel": settings["eps_rel"],
+        "eps_prim_inf": settings["eps_prim_inf"],
+        "eps_dual_inf": settings["eps_dual_inf"],
         "check_termination": settings["check_termination"],
+        "check_dualgap": settings["check_dualgap"],
+        "scaled_termination": settings["scaled_termination"],
         "scaling": settings["scaling"],
         "adaptive_rho": settings["adaptive_rho"],
         "adaptive_rho_interval": settings["rho_update_interval"],
+        "adaptive_rho_fraction": settings["adaptive_rho_fraction"],
         "adaptive_rho_tolerance": settings["rho_update_tolerance"],
         "warm_starting": settings["warm_start"],
         "polishing": settings["polishing"],
+        "delta": settings["polish_delta"],
+        "polish_refine_iter": settings["polish_refine_iter"],
         "verbose": settings["verbose"],
     }
 
@@ -806,14 +1003,14 @@ def _torch_tensor(value, name, device, dtype, allow_device_move):
     if not torch.is_tensor(value):
         raise TypeError(f"{name} must be a Torch tensor for the Torch OSQP route.")
     tensor = value.detach()
-    if tensor.layout != torch.strided:
-        tensor = tensor.to_dense()
+    if tensor.dtype != dtype:
+        raise ValueError(f"{name} must use {dtype}, got {tensor.dtype}.")
     if tensor.device != device:
         if not allow_device_move:
             raise ValueError(f"{name} must be on {device}, got {tensor.device}.")
         tensor = tensor.to(device=device)
-    if tensor.dtype != dtype:
-        raise ValueError(f"{name} must use {dtype}, got {tensor.dtype}.")
+    if tensor.layout != torch.strided:
+        tensor = tensor.to_dense()
     return tensor
 
 
@@ -884,7 +1081,9 @@ def _import_osqp():
     try:
         return importlib.import_module("osqp")
     except ModuleNotFoundError as exc:
-        raise ModuleNotFoundError("Install the OSQP Python package for builtin solves.") from exc
+        raise ModuleNotFoundError(
+            "Install the OSQP Python package for builtin solves."
+        ) from exc
 
 
 def reset_builtin_osqp_workspace(workspace=None):
@@ -913,9 +1112,26 @@ def _nonnegative_float(value, name):
 
 
 def _float(value, name):
-    if isinstance(value, bool) or not isinstance(value, Number):
-        raise ValueError(f"{name} must be numeric.")
-    return float(value)
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise ValueError(f"{name} must be a real number.")
+    value = float(value)
+    if not math.isfinite(value):
+        raise ValueError(f"{name} must be finite.")
+    return value
+
+
+def _bool(value, name):
+    if not isinstance(value, bool):
+        raise ValueError(f"{name} must be a bool.")
+    return value
+
+
+def _adaptive_rho_mode(value):
+    if isinstance(value, bool):
+        return value
+    if not isinstance(value, Integral) or int(value) not in {0, 1, 2, 3}:
+        raise ValueError("adaptive_rho must be a bool or an integer mode in {0,1,2,3}.")
+    return int(value)
 
 
 def _positive_int(value, name):

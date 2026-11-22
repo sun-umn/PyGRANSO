@@ -7,6 +7,7 @@ from pygranso.private.osqpTorchAdapter import solve_osqp_torch_qp
 from pygranso.private.osqpWorkspace import TorchOSQPWorkspace
 
 QP_REQUESTS = 0
+QP_ERRORS = 0
 OSQP_TRACE = None
 
 
@@ -100,14 +101,18 @@ def solveQP(
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    global QP_REQUESTS
+    global QP_ERRORS, QP_REQUESTS
     QP_REQUESTS += 1
 
     if QPsolver == "osqp":
         _record_osqp_qp(H, f, A, b, LB, UB)
-        return _solve_osqp_with_warm_state(
-            H, f, A, b, LB, UB, torch_device, double_precision, osqp_options
-        )
+        try:
+            return _solve_osqp_with_warm_state(
+                H, f, A, b, LB, UB, torch_device, double_precision, osqp_options
+            )
+        except Exception:
+            QP_ERRORS += 1
+            raise
 
     if QPsolver == "gurobi":
         H = H.cpu().numpy()
@@ -169,10 +174,13 @@ def solveQP(
 
 
 def getErr():
-    # getErr NOT used
-    global QP_REQUESTS
-    errors = 0
-    return [QP_REQUESTS, errors]
+    return [QP_REQUESTS, QP_ERRORS]
+
+
+def resetQPCounters():
+    global QP_ERRORS, QP_REQUESTS
+    QP_REQUESTS = 0
+    QP_ERRORS = 0
 
 
 def getLastOSQPInfo(workspace=None):
@@ -300,7 +308,9 @@ def _solve_osqp_with_warm_state(
     if not isinstance(workspace, TorchOSQPWorkspace):
         raise TypeError("osqp_options['workspace'] must be a TorchOSQPWorkspace.")
     settings = options.setdefault("settings", {})
-    requested_return_info = bool(settings.get("return_info", False))
+    requested_return_info = settings.get("return_info", False)
+    if not isinstance(requested_return_info, bool):
+        raise ValueError("return_info must be a bool.")
     settings["return_info"] = True
     result = solve_osqp_torch_qp(
         H,

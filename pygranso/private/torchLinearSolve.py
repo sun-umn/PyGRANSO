@@ -58,6 +58,11 @@ class DenseLUSolver:
         self._pivots = None
         self._info = 0
 
+    def reset(self) -> None:
+        self.clear()
+        self.factorization_count = 0
+        self.solve_count = 0
+
     def is_factorized_for(self, matrix: torch.Tensor) -> bool:
         if not self.ready or self._matrix is None:
             return False
@@ -81,7 +86,7 @@ class DenseLUSolver:
                 f"{matrix.device}: {exc}"
             ) from exc
 
-        info_value = int(info.detach().cpu().item())
+        info_value = int(info.detach().item())
         if info_value != 0:
             raise TorchLinearSolveError(
                 "PyTorch LU factorization reported a singular or invalid "

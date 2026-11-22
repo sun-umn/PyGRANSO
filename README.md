@@ -73,41 +73,36 @@ Set `opts.torch_device = torch.device("cuda")` when calling PyGRANSO to use the 
 
 ### OSQP backend options
 
-PyGRANSO uses OSQP for its internal quadprog-compatible QP subproblems. The
-Torch route is a correctness-first dense reference implementation with a
-replaceable linear-solver boundary. It is not a sparse large-scale solver.
+The default `opts.osqp_algebra = "torch"` uses AMD ordering and QDLDL to
+solve the internal QPs. Set `opts.double_precision = True` for reproduction
+against the pinned OSQP C double implementation. CUDA inputs and outputs are
+supported on the tested NVIDIA configuration. The default factorization and
+triangular solves run on the CPU even when the input tensors live on CUDA.
 
-- `opts.osqp_algebra = "auto"` follows `opts.torch_device`: CPU uses builtin
-  OSQP; a validated accelerator uses Torch inside the supported KKT and memory
-  envelope. Unsupported or unsuccessful Torch solves visibly fall back to
-  builtin OSQP and retain structured fallback diagnostics.
-- `opts.osqp_algebra = "builtin"` forces CPU OSQP.
-- `opts.osqp_algebra = "torch"` explicitly requests the dense Torch reference
-  route on `opts.torch_device`. Above the validated `n + m <= 2400` KKT limit,
-  it warns and attempts the solve rather than silently changing backend.
-- `opts.osqp_settings` overrides common settings shared by builtin and Torch.
-  Defaults are dtype-aware (`1e-8` for float64 and `1e-5` for float32) and
-  enable 10-pass Ruiz scaling, deterministic adaptive rho, polishing, and
-  structurally compatible warm starts.
+The default Torch route runs independently of the Python OSQP package.
+For the optional `"builtin"` or `"auto"` policies install the `reference`
+extra with `python -m pip install -e ".[reference]"`. The experimental
+`opts.osqp_settings = {"use_sparse": True}` route requires a CUDA-enabled
+PyTorch build with cuDSS. Polishing defaults to disabled.
 
-Float64 is authoritative through estimated KKT conditioning around `1e8`.
-Float32 is a qualified route with a conservative conditioning envelope around
-`1e2`; harder float32 cases are retained as stress evidence rather than
-claimed support.
+The double-precision comparison used OSQP C commit
+`1572ae068e9ce9ca723cf8223548ade1ff7acc29` and QDLDL commit
+`138fdac58b9cd1c4137ff1b99152c8108a6cff5b`. Across 18 paired runs,
+the selected CPU fields matched bitwise in 18 and the CUDA fields in 16.
+Both CUDA differences occurred on the matrix-update fixture. All 18 CUDA
+statuses and iteration counts agreed. These measurements cover the tested
+fixtures and hardware. GPU speedups and general bitwise equivalence remain open.
 
-Archived sparse-CG and CUDA Graph settings are recognized for one migration
-release but raise an actionable deprecation error. The research implementation
-is preserved on `archive/sparse-cg-cuda-graph`.
+From the repository root, run the portable double-precision end-to-end check:
 
-Torch support is promoted backend-by-backend. CPU and CUDA require their own
-release gates. ROCm remains unclaimed until real-hardware CI is available. MPS
-is float32-only and remains unclaimed until reusable LU is validated on Apple
-hardware; float64 MPS auto requests return the builtin CPU float64 solution.
+```sh
+python -m pytest tests/test_pygranso_osqp_end_to_end.py::test_default_torch_optimizer_reaches_known_constrained_solution -k floating_dtype1
+```
 
-The current local NVIDIA run passed the fixed-seed correctness buckets but
-failed the end-to-end promotion gate at 12.48x, 21.33x, and 43.46x builtin CPU
-runtime on representative B1/B2/B3 workloads, so CUDA remains unpromoted and
-`auto` falls back visibly to builtin OSQP.
+The native comparison suites in `tests/test_c_bitwise_parity.py` and
+`tests/test_c_amd_kkt_parity.py` require the retained double/64-bit-index
+Windows DLL. The path and required SHA-256 are in
+`tests/pinned_osqp_c_oracle.py`. The suites explicitly skip when it is absent.
 
 PyGRANSO does not differentiate through the OSQP QP solve; autograd is used to
 compute the objective and constraint gradients before QP construction.

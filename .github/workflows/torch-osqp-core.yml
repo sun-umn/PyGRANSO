@@ -48,7 +48,7 @@ jobs:
           else
             python -m pip install "${{ matrix.torch }}" --index-url https://download.pytorch.org/whl/cpu
           fi
-          python -m pip install numpy scipy osqp pytest gurobipy
+          python -m pip install numpy scipy osqp pytest gurobipy tomli
           python -m pip install -e . --no-deps
       - name: Run deterministic and end-to-end gates
         run: python -m pytest tests -q

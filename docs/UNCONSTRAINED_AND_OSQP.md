@@ -84,25 +84,11 @@ The QP dimension is on the order of `l` for unconstrained stationarity checks
 or `q + l + p` in general. It is usually much smaller than the original model
 dimension, but can still reach the low thousands.
 
-- The Torch-direct route is a correctness-first **dense reference solver**, not
-  a scalable sparse solver.
-- `opts.osqp_algebra = "auto"` keeps CPU-targeted work on builtin OSQP and uses
-  Torch only for independently promoted accelerator backends.
-- `opts.osqp_algebra = "torch"` explicitly requests the dense Torch route.
-- Automatic Torch selection is limited to `n + m <= 2400` plus a conservative
-  dense-memory preflight. Explicit Torch requests above the envelope warn and
-  attempt the requested backend.
-- Torch reuses `torch.linalg.lu_factor_ex`/`lu_solve` factors and includes Ruiz
-  scaling, deterministic adaptive rho, strict polishing, and per-run warm state.
-- Automatic exceptions or unsolved statuses produce a warned builtin retry with
-  causal telemetry. MPS float64 requests return a builtin CPU float64 result.
-- Sparse-CG, Jacobi, sparse operators, and CUDA Graph execution exist only on
-  the research archive branch; their former settings produce a migration error.
-
-Local NVIDIA correctness evidence passed, but representative B1/B2/B3 runs
-were 12.48x, 21.33x, and 43.46x slower than builtin CPU OSQP. CUDA therefore
-remains unpromoted for `auto`. Sparse acceleration and performance-oriented
-backends are later milestones behind the same private factorization boundary.
+PyGRANSO selects the Torch solver by default. The direct route forms a KKT
+system and uses AMD and QDLDL. Its factors and triangular solves live on the
+CPU. An explicit CUDA sparse solve requires a cuDSS-enabled PyTorch build.
+The optional builtin and auto policies require the Python OSQP reference
+package. See the [solver options and reproduction checks](../README.md#osqp-backend-options).
 
 PyGRANSO does not differentiate through a QP solve. Autograd forms objective
 and constraint gradients before QP construction.

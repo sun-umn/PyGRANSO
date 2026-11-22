@@ -6,6 +6,7 @@ import argparse
 import csv
 import hashlib
 import importlib.metadata
+import importlib.util
 import json
 import math
 import platform
@@ -186,6 +187,7 @@ def evaluate(family, seed, device, dtype):
         "return_info": True,
         "check_linear_residual": True,
         "check_condition": False,
+        "polishing": True,
         "eps_abs": 1e-8 if dtype == torch.float64 else 1e-5,
         "eps_rel": 1e-8 if dtype == torch.float64 else 1e-5,
     }
@@ -303,6 +305,7 @@ def environment_manifest(args):
     if requested_device.type == "cuda" and torch.cuda.is_available():
         hardware = torch.cuda.get_device_name(requested_device)
     source_sha256, source_file_count = source_tree_fingerprint()
+    osqp_spec = importlib.util.find_spec("osqp")
     return {
         "created_utc": datetime.now(timezone.utc).isoformat(),
         "git_commit": commit,
@@ -314,6 +317,8 @@ def environment_manifest(args):
         "python": sys.version,
         "torch": torch.__version__,
         "osqp": importlib.metadata.version("osqp"),
+        "osqp_file": None if osqp_spec is None else osqp_spec.origin,
+        "pinned_osqp_c_commit": "1572ae068e9ce9ca723cf8223548ade1ff7acc29",
         "device": args.device,
         "backends": ["builtin", "torch"],
         "hardware": hardware,

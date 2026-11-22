@@ -36,6 +36,21 @@ def test_manifest_records_exact_source_provenance():
     assert isinstance(manifest["git_status_entries"], (list, type(None)))
 
 
+def test_stability_evaluator_explicitly_enables_reported_polishing(monkeypatch):
+    observed = []
+
+    def capture_settings(problem, algebra, settings):
+        del problem, algebra
+        observed.append(dict(settings))
+        raise RuntimeError("captured stability settings")
+
+    monkeypatch.setattr(stability, "solve", capture_settings)
+    with pytest.raises(RuntimeError, match="captured stability settings"):
+        stability.evaluate("randomized_bounds", 0, torch.device("cpu"), torch.float64)
+
+    assert observed[0]["polishing"] is True
+
+
 def test_time_limit_exit_writes_partial_artifacts(tmp_path, monkeypatch):
     def fake_evaluate(family, seed, device, dtype):
         row = {column: None for column in CSV_COLUMNS}

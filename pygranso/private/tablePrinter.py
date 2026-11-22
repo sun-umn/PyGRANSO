@@ -2,7 +2,6 @@ import math
 from itertools import compress
 
 import numpy as np
-from numpy.core.defchararray import isspace
 
 from pygranso.private import formatOrange as fO
 from pygranso.private import truncate as TR
@@ -519,7 +518,9 @@ def findOverlap(labels, spanned_indx):
     #  don't allow the last line to overlap
     for j in range(lines - 1):
         line_labels = labels[j, spanned_indx]
-        nonempty_indx = [np.any(not isspace(line_label)) for line_label in line_labels]
+        nonempty_indx = [
+            np.any(not np.char.isspace(line_label)) for line_label in line_labels
+        ]
         if np.any(nonempty_indx != 0):
             break
         line = j
