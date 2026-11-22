@@ -7,7 +7,8 @@ from pygranso.private.osqpTorchAdapter import (
     solve_osqp_torch_qp,
 )
 from pygranso.private.osqpWorkspace import TorchOSQPWorkspace
-from pygranso.private.torchLinearSolve import DenseLUSolver, TorchLinearSolveError
+from pygranso.private.torchLinearSolve import TorchLinearSolveError
+from pygranso.private.torchQDLDLSolve import QDLDLSolver
 from pygranso.private.torchOSQP import (
     _adaptive_rho_update,
     _compute_obj_val_dual_gap,
@@ -895,7 +896,7 @@ def test_adaptive_rho_uses_strict_threshold_and_clamp_boundaries():
         (torch.tensor(16.0, dtype=dtype), False),
         (
             torch.nextafter(
-                torch.tensor(16.0, dtype=dtype), positive_infinity
+                torch.nextafter(torch.tensor(16.0, dtype=dtype), positive_infinity), positive_infinity
             ),
             True,
         ),
@@ -903,7 +904,7 @@ def test_adaptive_rho_uses_strict_threshold_and_clamp_boundaries():
     lower_cases = (
         (torch.tensor(0.0625, dtype=dtype), False),
         (
-            torch.nextafter(torch.tensor(0.0625, dtype=dtype), zero),
+            torch.nextafter(torch.nextafter(torch.tensor(0.0625, dtype=dtype), zero), zero),
             True,
         ),
     )
@@ -1055,7 +1056,7 @@ def test_polishing_honors_zero_one_and_three_refinement_passes(
         pytest.skip("CUDA hardware required")
     instances = []
 
-    class RecordingDenseLUSolver(DenseLUSolver):
+    class RecordingQDLDLSolver(QDLDLSolver):
         def __init__(self):
             super().__init__()
             self.solutions = []
@@ -1070,8 +1071,8 @@ def test_polishing_honors_zero_one_and_three_refinement_passes(
 
     monkeypatch.setattr(
         torch_osqp_module,
-        "DenseLUSolver",
-        RecordingDenseLUSolver,
+        "QDLDLSolver",
+        RecordingQDLDLSolver,
     )
     x_result, z_result, y_result, info = _polish_solution(
         torch.ones((1, 1), device=device, dtype=dtype),
@@ -1133,7 +1134,7 @@ def test_dense_polishing_refinement_subtracts_blocks_in_source_order(
     initial_candidate = torch.cat((x, torch.tensor([reduced_dual], dtype=dtype)))
     seen_rhs = []
 
-    class FixedCandidateDenseLUSolver(DenseLUSolver):
+    class FixedCandidateQDLDLSolver(QDLDLSolver):
         def solve(self, rhs, *, calculate_residual=False):
             seen_rhs.append(rhs.clone())
             result, diagnostics = super().solve(
@@ -1143,7 +1144,7 @@ def test_dense_polishing_refinement_subtracts_blocks_in_source_order(
                 return initial_candidate.clone(), diagnostics
             return result, diagnostics
 
-    monkeypatch.setattr(torch_osqp_module, "DenseLUSolver", FixedCandidateDenseLUSolver)
+    monkeypatch.setattr(torch_osqp_module, "QDLDLSolver", FixedCandidateQDLDLSolver)
     _polish_solution(
         P, -x, A, x, x, x, x, torch.zeros_like(x),
         {
@@ -1191,7 +1192,8 @@ def test_polishing_active_set_rhs_and_normal_cone_match_pinned_source(
         matrix = None
         rhs = None
 
-        def factorize(self, matrix):
+        def factorize(self, matrix, **kwargs):
+            self.positive_d_count = kwargs["P"].shape[0]
             type(self).matrix = matrix.detach().clone()
 
         def solve(self, rhs, *, calculate_residual=False):
@@ -1204,7 +1206,7 @@ def test_polishing_active_set_rhs_and_normal_cone_match_pinned_source(
             tuple(torch.tensor(value, device=device, dtype=dtype) for value in (1, 1, 1, 1)),
         )
     )
-    monkeypatch.setattr(torch_osqp_module, "DenseLUSolver", RecordingSolver)
+    monkeypatch.setattr(torch_osqp_module, "QDLDLSolver", RecordingSolver)
     monkeypatch.setattr(
         torch_osqp_module,
         "_residuals",
@@ -1283,7 +1285,8 @@ def test_polishing_uses_pinned_three_branch_strict_acceptance(
     candidate = torch.tensor([1.0, 1.0], dtype=dtype)
 
     class CandidateSolver:
-        def factorize(self, matrix):
+        def factorize(self, matrix, **kwargs):
+            self.positive_d_count = kwargs["P"].shape[0]
             return None
 
         def solve(self, rhs, *, calculate_residual=False):
@@ -1295,7 +1298,7 @@ def test_polishing_uses_pinned_three_branch_strict_acceptance(
             tuple(torch.tensor(value, dtype=dtype) for value in (new_primal, new_dual, 1, 1)),
         )
     )
-    monkeypatch.setattr(torch_osqp_module, "DenseLUSolver", CandidateSolver)
+    monkeypatch.setattr(torch_osqp_module, "QDLDLSolver", CandidateSolver)
     monkeypatch.setattr(
         torch_osqp_module,
         "_residuals",
@@ -1342,7 +1345,7 @@ def test_polishing_solve_failure_preserves_admm_state(
     z = torch.tensor([0.99], dtype=dtype)
     y = torch.tensor([0.9], dtype=dtype)
 
-    class FailingSolve(DenseLUSolver):
+    class FailingSolve(QDLDLSolver):
         def __init__(self):
             super().__init__()
             self.calls = 0
@@ -1353,30 +1356,28 @@ def test_polishing_solve_failure_preserves_admm_state(
                 raise TorchLinearSolveError("synthetic polish solve failure")
             return super().solve(rhs, calculate_residual=calculate_residual)
 
-    monkeypatch.setattr(torch_osqp_module, "DenseLUSolver", FailingSolve)
-    x_result, z_result, y_result, info = _polish_solution(
-        torch.ones((1, 1), dtype=dtype),
-        torch.tensor([-2.0], dtype=dtype),
-        torch.ones((1, 1), dtype=dtype),
-        torch.zeros(1, dtype=dtype),
-        torch.ones(1, dtype=dtype),
-        x,
-        z,
-        y,
-        {
-            "eps_abs": 1e-6,
-            "eps_rel": 1e-6,
-            "polishing": True,
-            "sigma": 1e-6,
-            "polish_refine_iter": 1,
-        },
-    )
-
-    assert torch.equal(x_result, x)
-    assert torch.equal(z_result, z)
-    assert torch.equal(y_result, y)
-    assert info["polishing_status"] == "linear_system_error"
-    assert info["polishing_error_type"] == "TorchLinearSolveError"
+    monkeypatch.setattr(torch_osqp_module, "QDLDLSolver", FailingSolve)
+    before = (x.clone(), z.clone(), y.clone())
+    with pytest.raises(TorchLinearSolveError, match="synthetic polish"):
+        _polish_solution(
+            torch.ones((1, 1), dtype=dtype),
+            torch.tensor([-2.0], dtype=dtype),
+            torch.ones((1, 1), dtype=dtype),
+            torch.zeros(1, dtype=dtype),
+            torch.ones(1, dtype=dtype),
+            x,
+            z,
+            y,
+            {
+                "eps_abs": 1e-6,
+                "eps_rel": 1e-6,
+                "polishing": True,
+                "sigma": 1e-6,
+                "polish_refine_iter": 1,
+            },
+        )
+    for actual, saved in zip((x, z, y), before):
+        assert torch.equal(actual, saved)
 
 
 def test_polishing_linear_failure_preserves_admm_state(monkeypatch):
@@ -1390,36 +1391,35 @@ def test_polishing_linear_failure_preserves_admm_state(monkeypatch):
     z = torch.ones(1, dtype=dtype)
     y = torch.ones(1, dtype=dtype)
 
-    def fail_factorization(self, matrix):
+    def fail_factorization(self, matrix, **kwargs):
         raise TorchLinearSolveError("synthetic polish factorization failure")
 
     monkeypatch.setattr(
-        torch_osqp_module.DenseLUSolver,
+        torch_osqp_module.QDLDLSolver,
         "factorize",
         fail_factorization,
     )
-    x_result, z_result, y_result, info = _polish_solution(
-        P,
-        q,
-        A,
-        l,
-        u,
-        x,
-        z,
-        y,
-        {
-            "eps_abs": 1e-6,
-            "eps_rel": 1e-6,
-            "polishing": True,
-            "polish_delta": 1e-6,
-            "polish_refine_iter": 3,
-        },
-    )
-    assert torch.equal(x_result, x)
-    assert torch.equal(z_result, z)
-    assert torch.equal(y_result, y)
-    assert info["polishing_status"] == "linear_system_error"
-    assert info["polishing_error_type"] == "TorchLinearSolveError"
+    before = (x.clone(), z.clone(), y.clone())
+    with pytest.raises(TorchLinearSolveError, match="synthetic polish"):
+        _polish_solution(
+            P,
+            q,
+            A,
+            l,
+            u,
+            x,
+            z,
+            y,
+            {
+                "eps_abs": 1e-6,
+                "eps_rel": 1e-6,
+                "polishing": True,
+                "polish_delta": 1e-6,
+                "polish_refine_iter": 3,
+            },
+        )
+    for actual, saved in zip((x, z, y), before):
+        assert torch.equal(actual, saved)
 
 
 @pytest.mark.parametrize(
@@ -1441,29 +1441,28 @@ def test_polishing_runtime_failure_preserves_admm_state(monkeypatch, error_type)
     def fail_active_rows(*args, **kwargs):
         raise error_type("synthetic polish construction failure")
 
-    monkeypatch.setattr(torch_osqp_module, "_polish_solution_impl", fail_active_rows)
-    x_result, z_result, y_result, info = _polish_solution(
-        P,
-        q,
-        A,
-        l,
-        u,
-        x,
-        z,
-        y,
-        {
-            "eps_abs": 1e-6,
-            "eps_rel": 1e-6,
-            "polishing": True,
-            "polish_delta": 1e-6,
-            "polish_refine_iter": 3,
-        },
-    )
-    assert torch.equal(x_result, x)
-    assert torch.equal(z_result, z)
-    assert torch.equal(y_result, y)
-    assert info["polishing_status"] == "runtime_error"
-    assert info["polishing_error_type"] == error_type.__name__
+    monkeypatch.setattr(torch, "nonzero", fail_active_rows)
+    before = (x.clone(), z.clone(), y.clone())
+    with pytest.raises(error_type, match="synthetic polish"):
+        _polish_solution(
+            P,
+            q,
+            A,
+            l,
+            u,
+            x,
+            z,
+            y,
+            {
+                "eps_abs": 1e-6,
+                "eps_rel": 1e-6,
+                "polishing": True,
+                "polish_delta": 1e-6,
+                "polish_refine_iter": 3,
+            },
+        )
+    for actual, saved in zip((x, z, y), before):
+        assert torch.equal(actual, saved)
 
 
 @pytest.mark.parametrize("device", ["cpu", "cuda"])

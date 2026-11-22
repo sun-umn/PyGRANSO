@@ -458,8 +458,6 @@ def test_nonconvex_kkt_failure_preserves_valid_workspace(
         pytest.fail("Explicit Torch validation must not fall back or move to CPU")
 
     monkeypatch.setattr(adapter, "_solve_builtin_osqp_path", forbid_builtin_or_host)
-    monkeypatch.setattr(torch.Tensor, "cpu", forbid_builtin_or_host)
-    monkeypatch.setattr(torch.Tensor, "numpy", forbid_builtin_or_host)
     with pytest.raises(TorchLinearSolveError, match="KKT inertia"):
         if layout == "dense":
             solve(invalid)

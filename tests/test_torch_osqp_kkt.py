@@ -3,7 +3,7 @@ import torch
 
 from pygranso.private import torchOSQP as runtime
 from pygranso.private.osqpWorkspace import TorchOSQPWorkspace
-from pygranso.private.torchLinearSolve import DenseLUSolver
+from pygranso.private.torchQDLDLSolve import QDLDLSolver
 from pygranso.private.torchOSQP import (
     _residuals,
     admm_vector_update,
@@ -654,14 +654,14 @@ def test_c03_first_dense_rhs_uses_stored_vector_reciprocal(
         workspace.state = {"x": tensor([x0]), "z": A[:, 0] * x0, "y": tensor([y0, y1, 0.0])}
 
     seen = []
-    solve = DenseLUSolver.solve
+    solve = QDLDLSolver.solve
 
     def capture(self, rhs, **kwargs):
-        assert type(self) is DenseLUSolver
+        assert type(self) is QDLDLSolver
         seen.append((rhs.tolist(), (-self.matrix.diag()[1:]).tolist()))
         return solve(self, rhs, **kwargs)
 
-    monkeypatch.setattr(DenseLUSolver, "solve", capture)
+    monkeypatch.setattr(QDLDLSolver, "solve", capture)
     _, info = solve_torch_osqp_direct(P, q, A, l, u, settings, workspace)
     assert info["factorizations_this_solve"] == int(x0 == 0)
     assert len(seen) == 1
@@ -704,8 +704,10 @@ def test_c03_dense_ztilde_uses_saved_rhs_and_inverse(z0, nu0, expected, monkeypa
         "z": tensor([z0, 0.125, -0.0625]),
         "y": tensor([float.fromhex("0x1.3333333333333p-2"), -0.5, 0.0]),
     }
+    # This fixture specifies retained internal iterates, including independent z.
+    workspace.work_iterates = {**workspace.state, "source": workspace.state}
     solution_nu = tensor([nu0, -0.25, 0.0])
-    solve = DenseLUSolver.solve
+    solve = QDLDLSolver.solve
     update = runtime.admm_vector_update
     recorded = []
 
@@ -719,7 +721,7 @@ def test_c03_dense_ztilde_uses_saved_rhs_and_inverse(z0, nu0, expected, monkeypa
         recorded.append([v.hex() for v in z_tilde.tolist()])
         return update(x_tilde, x, z_tilde, *args, **kwargs)
 
-    monkeypatch.setattr(DenseLUSolver, "solve", fixed_nu)
+    monkeypatch.setattr(QDLDLSolver, "solve", fixed_nu)
     monkeypatch.setattr(runtime, "admm_vector_update", capture)
     _, info = solve_torch_osqp_direct(P, q, A, l, u, settings, workspace)
     assert info["factorizations_this_solve"] == 0
@@ -783,7 +785,7 @@ def test_c03_dense_projection_uses_stored_reciprocal(
     monkeypatch.setattr(runtime, "admm_vector_update", capture_update)
     _, info = solve_torch_osqp_direct(P, q, A, l, u, settings, workspace)
 
-    assert type(workspace.linear_solver) is DenseLUSolver
+    assert type(workspace.linear_solver) is QDLDLSolver
     assert info["factorizations_this_solve"] == 0
     assert (-workspace.linear_solver.matrix.diag()[1:]).tolist() == [10.0, 0.01, 1e6]
     assert (preclamp, clamped) == (["0x1.7333333333333p+1"], [projected])

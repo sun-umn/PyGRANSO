@@ -1172,12 +1172,8 @@ def _scaling_for_problem(workspace, P, q, A, settings):
 
 
 def _cost_column_norm_sum(column_norms):
-    if column_norms.device.type == "cpu" and column_norms.dtype == torch.float64:
-        # Match the pinned norm-1 loop, rounding each index-ordered addition.
-        total = 0.0
-        for norm in column_norms.tolist():
-            total += norm
-        return column_norms.new_tensor(total)
+    if column_norms.dtype == torch.float64:
+        return _seq_sum(column_norms)
     return torch.sum(column_norms)
 
 

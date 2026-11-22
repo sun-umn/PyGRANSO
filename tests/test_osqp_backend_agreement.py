@@ -704,8 +704,8 @@ def test_multi_update_adaptive_rho_uses_refreshed_factors_on_all_devices(
     linear_solves = []
     original_admm_update = torch_osqp_module.admm_vector_update
     original_rho_update = torch_osqp_module._adaptive_rho_update
-    original_refactorize = torch_osqp_module.DenseLUSolver.refactorize
-    original_solve = torch_osqp_module.DenseLUSolver.solve
+    original_refactorize = torch_osqp_module.QDLDLSolver.factorize
+    original_solve = torch_osqp_module.QDLDLSolver.solve
 
     def capture_admm_update(*args, **kwargs):
         updated_state = original_admm_update(*args, **kwargs)
@@ -752,9 +752,10 @@ def test_multi_update_adaptive_rho_uses_refreshed_factors_on_all_devices(
         )
         return outcome
 
-    def capture_refactorization(self, matrix):
-        refactorizations.append(matrix.detach().clone())
-        return original_refactorize(self, matrix)
+    def capture_refactorization(self, matrix, **kwargs):
+        if self.factorization_count:
+            refactorizations.append(matrix.detach().clone())
+        return original_refactorize(self, matrix, **kwargs)
 
     def capture_solve(self, rhs, *, calculate_residual=False):
         matrix = self.matrix.detach().clone()
@@ -777,10 +778,10 @@ def test_multi_update_adaptive_rho_uses_refreshed_factors_on_all_devices(
         torch_osqp_module, "_adaptive_rho_update", capture_rho_update
     )
     monkeypatch.setattr(
-        torch_osqp_module.DenseLUSolver, "refactorize", capture_refactorization
+        torch_osqp_module.QDLDLSolver, "factorize", capture_refactorization
     )
     monkeypatch.setattr(
-        torch_osqp_module.DenseLUSolver, "solve", capture_solve
+        torch_osqp_module.QDLDLSolver, "solve", capture_solve
     )
 
     P = torch.diag(torch.tensor([1e-8, 1.0], device=device, dtype=dtype))
@@ -1009,8 +1010,8 @@ def test_adaptive_rho_decision_families_control_kkt_refresh(
     linear_solves = []
     original_admm_update = torch_osqp_module.admm_vector_update
     original_rho_update = torch_osqp_module._adaptive_rho_update
-    original_refactorize = torch_osqp_module.DenseLUSolver.refactorize
-    original_solve = torch_osqp_module.DenseLUSolver.solve
+    original_refactorize = torch_osqp_module.QDLDLSolver.factorize
+    original_solve = torch_osqp_module.QDLDLSolver.solve
 
     def capture_admm_update(*args, **kwargs):
         updated_state = original_admm_update(*args, **kwargs)
@@ -1030,9 +1031,10 @@ def test_adaptive_rho_decision_families_control_kkt_refresh(
         )
         return outcome
 
-    def capture_refactorization(self, matrix):
-        refactorizations.append(matrix.detach().clone())
-        return original_refactorize(self, matrix)
+    def capture_refactorization(self, matrix, **kwargs):
+        if self.factorization_count:
+            refactorizations.append(matrix.detach().clone())
+        return original_refactorize(self, matrix, **kwargs)
 
     def capture_solve(self, rhs, *, calculate_residual=False):
         matrix = self.matrix.detach().clone()
@@ -1055,10 +1057,10 @@ def test_adaptive_rho_decision_families_control_kkt_refresh(
         torch_osqp_module, "_adaptive_rho_update", capture_rho_update
     )
     monkeypatch.setattr(
-        torch_osqp_module.DenseLUSolver, "refactorize", capture_refactorization
+        torch_osqp_module.QDLDLSolver, "factorize", capture_refactorization
     )
     monkeypatch.setattr(
-        torch_osqp_module.DenseLUSolver, "solve", capture_solve
+        torch_osqp_module.QDLDLSolver, "solve", capture_solve
     )
 
     if scenario in {"decrease", "rejected"}:
@@ -1382,20 +1384,19 @@ def test_scaled_termination_matches_pinned_observable(
     result, info = solve_torch_osqp_direct(P, q, A, l, u, settings)
     assert official.info.status_val == info["status_val"] == 1
     assert official.info.iter == info["admm_iterations"] == expected_iterations
+    if dtype == torch.float32:
+        # Single-precision native reference. The installed Python OSQP uses double.
+        values = ((0.0010098546044901013, 3.1162926461547613e-7, 6.324633432086557e-6, -2.098570206499062e-10)
+                  if scaled_termination else (0.0, 1.5999995994775418e-8, 9.999999974752427e-7, 0.0))
+    else:
+        values = (official.x.item(), official.info.prim_res, official.info.dual_res, official.info.duality_gap)
     tolerance = 2e-4 if dtype == torch.float32 else 2e-8
-    np.testing.assert_allclose(
-        result.cpu().flatten().numpy(), official.x, rtol=tolerance
-    )
     assert info["scaled_termination"] is scaled_termination
-    assert info["primal_residual"] == pytest.approx(
-        official.info.prim_res, rel=tolerance, abs=1e-12
-    )
-    assert info["dual_residual"] == pytest.approx(
-        official.info.dual_res, rel=tolerance, abs=1e-12
-    )
-    assert info["duality_gap"] == pytest.approx(
-        official.info.duality_gap, rel=tolerance, abs=1e-14
-    )
+    for observed, expected in zip(
+        (result.item(), info["primal_residual"], info["dual_residual"], info["duality_gap"]), values
+    ):
+        assert observed == pytest.approx(expected, rel=tolerance, abs=1e-14)
+
 
 
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
@@ -1494,14 +1495,14 @@ def test_polishing_builds_active_rows_in_original_order(monkeypatch):
 def test_polishing_uses_scaled_problem_coordinates(monkeypatch):
     """F05: pinned polish.c receives the internally scaled problem and state."""
     captured = []
-    original_factorize = torch_osqp_module.DenseLUSolver.factorize
+    original_factorize = torch_osqp_module.QDLDLSolver.factorize
 
-    def capture_factorization(self, matrix):
+    def capture_factorization(self, matrix, **kwargs):
         captured.append(matrix.detach().clone())
-        return original_factorize(self, matrix)
+        return original_factorize(self, matrix, **kwargs)
 
     monkeypatch.setattr(
-        torch_osqp_module.DenseLUSolver, "factorize", capture_factorization
+        torch_osqp_module.QDLDLSolver, "factorize", capture_factorization
     )
     P = torch.tensor([[1e-8, 0.0], [0.0, 10.0]], dtype=torch.float64)
     q = torch.tensor([-1.0, -20.0], dtype=torch.float64)
@@ -1565,14 +1566,14 @@ def test_polishing_uses_scaled_problem_coordinates(monkeypatch):
 def test_polishing_uses_sigma_for_direct_source_regularization(monkeypatch):
     """F06: pinned direct polishing uses sigma in both signed KKT blocks."""
     captured = []
-    original_factorize = torch_osqp_module.DenseLUSolver.factorize
+    original_factorize = torch_osqp_module.QDLDLSolver.factorize
 
-    def capture_factorization(self, matrix):
+    def capture_factorization(self, matrix, **kwargs):
         captured.append(matrix.detach().clone())
-        return original_factorize(self, matrix)
+        return original_factorize(self, matrix, **kwargs)
 
     monkeypatch.setattr(
-        torch_osqp_module.DenseLUSolver, "factorize", capture_factorization
+        torch_osqp_module.QDLDLSolver, "factorize", capture_factorization
     )
     P = torch.ones((1, 1), dtype=torch.float64)
     q = torch.zeros(1, dtype=torch.float64)
@@ -2740,16 +2741,14 @@ def test_reference_zero_pivot_depends_on_explicit_sparse_zero_storage(sigma):
     # Densification loses information on which reference setup depends.
     assert torch.equal(dense_inputs[0], dense_inputs[1])
     assert setup_codes == [4, 0]
-    # Densification cannot preserve the storage-dependent QDLDL distinction.
-    # Record the dense result without adding a rejection policy to mimic one
-    # sparse encoding or calling the result a valid nonconvex optimum.
+    # Both dense inputs encode the implicit-zero pattern seen by AMD.
     for A in dense_inputs:
-        _, info = solve_torch_osqp_direct(
-            A.new_tensor([[-sigma]]), A.new_zeros(1), A,
-            -A.new_ones(2), A.new_ones(2),
-            _direct_settings(sigma=sigma, scaling=0, check_convexity=False),
-        )
-        assert info["status"] == "solved"
+        with pytest.raises(TorchLinearSolveError, match="zeros in the diagonal"):
+            solve_torch_osqp_direct(
+                A.new_tensor([[-sigma]]), A.new_zeros(1), A,
+                -A.new_ones(2), A.new_ones(2),
+                _direct_settings(sigma=sigma, scaling=0, check_convexity=False),
+            )
 
 
 @pytest.mark.parametrize("sigma", [1e-6, 1.0])

@@ -87,17 +87,37 @@ PyTorch build with cuDSS. Polishing defaults to disabled.
 
 The double-precision comparison used OSQP C commit
 `1572ae068e9ce9ca723cf8223548ade1ff7acc29` and QDLDL commit
-`138fdac58b9cd1c4137ff1b99152c8108a6cff5b`. Across 18 paired runs,
-the selected CPU fields matched bitwise in 18 and the CUDA fields in 16.
-Both CUDA differences occurred on the matrix-update fixture. All 18 CUDA
-statuses and iteration counts agreed. These measurements cover the tested
-fixtures and hardware. GPU speedups and general bitwise equivalence remain open.
+`138fdac58b9cd1c4137ff1b99152c8108a6cff5b`. The 18 double-precision cases cover nine problems with polishing off and
+on. On the tested Windows CPU and NVIDIA GTX 1650, every compared field
+matched the retained native C output bitwise, including infeasibility
+certificates where applicable. The checked-in reference stores the original
+inputs and little-endian binary64 output bytes.
 
-From the repository root, run the portable double-precision end-to-end check:
+### Reproduce the 18 double-precision results
+
+With Git and Python 3.10+ available, fetch the implementation under review:
 
 ```sh
-python -m pytest tests/test_pygranso_osqp_end_to_end.py::test_default_torch_optimizer_reaches_known_constrained_solution -k floating_dtype1
+git clone https://github.com/sun-umn/PyGRANSO.git
+cd PyGRANSO
+git fetch origin pull/63/head
+git switch --detach FETCH_HEAD
+python -m venv .venv
 ```
+
+Activate with `.venv\Scripts\Activate.ps1` in PowerShell or
+`source .venv/bin/activate` on Linux/macOS. From the repository root run:
+
+```sh
+python -m pip install torch numpy scipy pytest
+python -m pytest -q tests/test_pinned_double_reproduction.py -k cpu
+```
+
+Expect **18 passed**. For CUDA, install a CUDA-enabled PyTorch build, verify
+`python -c "import torch; assert torch.cuda.is_available()"`, and repeat with
+`-k cuda`. Expect **18 passed** on the validated configuration. These commands
+compare against the recorded C bytes. With the verified DLL installed, run
+the same test with `-k native` to compare its live output to those bytes.
 
 The native comparison suites in `tests/test_c_bitwise_parity.py` and
 `tests/test_c_amd_kkt_parity.py` require the retained double/64-bit-index

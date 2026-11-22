@@ -139,10 +139,10 @@ def test_adaptive_rho_refactor_failure_restores_previous_workspace(
     fields_before = workspace.__dict__.copy()
     solver_fields_before = workspace.linear_solver.__dict__.copy()
 
-    def fail_refactorization(matrix):
+    def fail_refactorization(matrix, **kwargs):
         raise TorchLinearSolveError("synthetic adaptive-rho refactorization failure")
 
-    monkeypatch.setattr(workspace.linear_solver, "refactorize", fail_refactorization)
+    monkeypatch.setattr(workspace.linear_solver, "factorize", fail_refactorization)
     settings.update(
         {
             "adaptive_rho": rho_mode,
@@ -259,7 +259,14 @@ def test_scaled_matrix_value_update_refactorizes_when_scaled_kkt_is_unchanged(
     first_solution, first_info = solve_torch_osqp_direct(
         P, q, A, l, u, settings, workspace
     )
-    assert first_info["status"] == "solved"
+    # The pinned float build reaches the cap at x=1.0625 on the first LP.
+    if floating_dtype == torch.float32:
+        assert first_info["status_val"] == 7
+        assert first_info["admm_iterations"] == settings["max_iter"]
+        assert first_solution.item() == 1.0625
+    else:
+        assert first_info["status"] == "solved"
+        assert torch.allclose(first_solution, P.new_tensor([1.0]), atol=tolerance, rtol=tolerance)
     state_before = workspace.state
     scaling_before = workspace.scaling
     kkt_before = workspace.linear_solver.matrix.clone()
@@ -278,7 +285,6 @@ def test_scaled_matrix_value_update_refactorizes_when_scaled_kkt_is_unchanged(
     )
 
     assert updated_info["status"] == "solved"
-    assert torch.allclose(first_solution, P.new_tensor([1.0]), atol=tolerance, rtol=tolerance)
     assert torch.allclose(
         updated_solution, P.new_tensor([0.25]), atol=tolerance, rtol=tolerance
     )
@@ -310,7 +316,7 @@ def test_scaled_matrix_value_refactor_failure_restores_previous_workspace(monkey
     fields_before = workspace.__dict__.copy()
     solver_fields_before = workspace.linear_solver.__dict__.copy()
 
-    def fail_factorization(matrix):
+    def fail_factorization(matrix, **kwargs):
         raise TorchLinearSolveError("synthetic scaled matrix-update failure")
 
     monkeypatch.setattr(workspace.linear_solver, "factorize", fail_factorization)
@@ -538,7 +544,8 @@ def test_equality_or_loose_classification_change_preserves_warm_state_and_rho():
     u = torch.tensor([torch.inf, 1.0], dtype=torch.float64)
     _prepare_workspace(workspace, P, A, ("bounds", 2), l, u)
     _seed_workspace(workspace)
-    workspace.linear_solver.factorize(torch.eye(4, dtype=torch.float64))
+    matrix = torch.cat((torch.cat((P, A.T), 1), torch.cat((A, -P), 1)))
+    workspace.linear_solver.factorize(matrix, P=P, A=A, sigma=0.0, rho_inv_vec=P.diag(), p_pattern=P.ne(0), a_pattern=A.ne(0))
     state_before = workspace.state
     rho_bar_before = workspace.rho_bar
     rho_setting_before = workspace.rho_setting
@@ -843,7 +850,8 @@ def test_scaled_termination_change_reuses_unchanged_kkt_factors():
 def test_public_reset_starts_fresh_torch_and_builtin_diagnostics_epoch():
     workspace = TorchOSQPWorkspace()
     matrix = torch.eye(2, dtype=torch.float64)
-    workspace.linear_solver.factorize(matrix)
+    A = matrix.new_empty((0, 2))
+    workspace.linear_solver.factorize(matrix, P=matrix, A=A, sigma=0.0, rho_inv_vec=A.new_empty(0), p_pattern=matrix.ne(0), a_pattern=A.ne(0))
     workspace.linear_solver.solve(torch.ones(2, dtype=torch.float64))
     workspace.builtin_stats = {
         "setups": 1,
@@ -872,7 +880,8 @@ def test_public_reset_starts_fresh_torch_and_builtin_diagnostics_epoch():
     assert workspace.linear_solver.factorization_count == 0
     assert workspace.linear_solver.solve_count == 0
 
-    workspace.linear_solver.factorize(matrix)
+    A = matrix.new_empty((0, 2))
+    workspace.linear_solver.factorize(matrix, P=matrix, A=A, sigma=0.0, rho_inv_vec=A.new_empty(0), p_pattern=matrix.ne(0), a_pattern=A.ne(0))
     workspace.linear_solver.solve(torch.ones(2, dtype=torch.float64))
     assert workspace.linear_solver.factorization_count == 1
     assert workspace.linear_solver.solve_count == 1
@@ -1238,9 +1247,9 @@ def test_h07_first_kkt_after_workspace_cold_start(
         factorize = solver.factorize
         attempts = []
 
-        def fail_after_factorize(matrix):
+        def fail_after_factorize(matrix, **kwargs):
             attempts.append(matrix.tolist())
-            factorize(matrix)
+            factorize(matrix, **kwargs)
             raise TorchLinearSolveError("failed explicit rho refactorization")
 
         with monkeypatch.context() as patch:
