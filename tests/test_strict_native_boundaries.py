@@ -36,7 +36,7 @@ def _solve(problem, settings, workspace=None):
 @pytest.mark.parametrize("scaling", [0, 10])
 @pytest.mark.parametrize("check_dualgap", [0, 1])
 def test_raw_ieee_bound_gap_decision_matches_retained_c(scaling, check_dualgap):
-    # Phase 3.24 pinned input representations. Keep raw infinities.
+    # Pinned input representations. Keep raw infinities.
     bound = struct.unpack("<d", bytes.fromhex("666666666666e63f"))[0]
     problem = (
         [[4.0, 1.0], [1.0, 2.0]], [1.0, 1.0],
@@ -89,7 +89,7 @@ def test_infeasible_public_buffers_and_certificate_match_retained_c(scaling, kin
 
 @needs_dll
 def test_admm_projection_tie_matches_retained_c_sign_bit():
-    # Phase 3.50 verified this private vector ABI and routine RVA for the
+    # This private vector ABI and routine RVA were verified for the
     # hash-checked DLL. Swapping the equal zero operands changes the result.
     class Vector(ctypes.Structure):
         _fields_ = [("values", ctypes.POINTER(ctypes.c_double)), ("length", ctypes.c_int64)]

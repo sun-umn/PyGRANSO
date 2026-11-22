@@ -128,7 +128,7 @@ def test_infeasible_solve_retains_native_public_dual_buffer():
 
 
 def test_rejected_polishing_reports_native_candidate_kkt_error():
-    # Phase 3.32 R01-N1. Natural rejection leaves the selected ADMM state.
+    # Natural rejection leaves the selected ADMM state.
     problem = ([[1.0]], [-2.0], [[1.0]], [1.0], [1.0])
     c_settings, torch_settings = paired_settings(
         scaling=0, adaptive_rho=0, rho=0.125, sigma=0.125, alpha=1.0,

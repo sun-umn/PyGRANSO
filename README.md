@@ -56,26 +56,11 @@ By default, `pip` or `uv` may install a CPU-only build of PyTorch. For **GPU (CU
 
 Set `opts.torch_device = torch.device("cuda")` when calling PyGRANSO to use the GPU.
 
-### Reproduce the Torch OSQP double-precision results
+### Torch OSQP backend
 
-The default QP backend uses the PyTorch translation of [OSQP C](https://github.com/osqp/osqp/tree/1572ae068e9ce9ca723cf8223548ade1ff7acc29) with AMD/QDLDL. Set `opts.double_precision = True`. The default factorization and triangular solves run on CPU, including for CUDA tensors.
+The default QP backend is a PyTorch translation of [OSQP C](https://github.com/osqp/osqp/tree/1572ae068e9ce9ca723cf8223548ade1ff7acc29) with AMD/QDLDL. Set `opts.double_precision = True`. Factorization and triangular solves run on CPU, including for CUDA tensors.
 
-Pass `-1e30` for a missing lower bound and `+1e30` for a missing upper bound when calling `solve_torch_osqp_direct`, as with the C API. PyGRANSO callers can use IEEE `-inf` and `+inf` for missing lower and upper bounds. The adapter converts those infinities to the OSQP sentinels and forwards finite bounds unchanged.
-
-On the CPU Float64 direct path, a failed factorization during a matrix, rho, or bound update preserves the data and status reached at the pinned C failure boundary. The PyGRANSO adapter restores its last valid workspace and retains the failed attempt's diagnostics. If the backend returns a status that PyGRANSO cannot use as a QP solution, `solveQP` raises an error so the optimizer can apply its failure handling.
-
-From a clone of this repository, fetch the PR and compare against the recorded native double results:
-
-```sh
-git fetch origin pull/63/head
-git switch --detach FETCH_HEAD
-python -m pip install torch numpy scipy pytest
-python -m pytest -q tests/test_pinned_double_reproduction.py -k cpu
-```
-
-Expect 18 passes (nine upstream QPs, polishing off/on). The core GitHub Actions workflow runs this CPU replay against the recorded results. With CUDA-enabled PyTorch, repeat with `-k cuda`. To run the live C comparisons, set `PYGRANSO_OSQP_DLL` to the pinned double/64-bit-index Windows DLL and run `python -m pytest -q tests`. The test bridge verifies its SHA-256 before loading it. Tests that require the live DLL skip when it is absent. The live comparisons include failed updates and recovery, sign bits, infeasible public dual storage, and solution vectors after upstream updates.
-
-A controlled test injects the adaptive-rho refactorization failure on both sides and compares the resulting state. A naturally occurring failure of that callback remains unverified. The failure lifecycle comparisons are scoped to CPU Float64.
+PyGRANSO callers use IEEE `-inf` and `+inf` for missing bounds. Direct callers of `solve_torch_osqp_direct` pass `-1e30` and `+1e30`, as with the C API.
 
 ### Verify installation
 
@@ -184,3 +169,4 @@ Thanks to other contributors and bug reporters:
 - [Ying Cui](https://sites.google.com/site/optyingcui/home): Advised the adversarial robustness problems.
 
 - [Chen Jiang](https://github.com/shoopshoop): Tested perceptual attack example (ex6). Tested PyGRANSO on Win10. Debugged updatePenaltyParameter function.
+
