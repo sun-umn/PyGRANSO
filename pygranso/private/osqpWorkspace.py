@@ -16,8 +16,6 @@ class TorchOSQPWorkspace:
 
     state: dict | None = None
     work_iterates: dict | None = None
-    # solver->solution as last written by store_solution (x, y).
-    public_solution: tuple | None = None
     problem_signature: tuple | None = None
     constraint_order_signature: tuple | None = None
     constraint_rows: torch.Tensor | None = None
@@ -36,10 +34,11 @@ class TorchOSQPWorkspace:
     adaptive_rho_setup_time: float | None = None
     last_rel_kkt: float | None = None
     rho_updates_committed: int = field(default=0, init=False)
-    status_polish: int = field(default=0, init=False)
     active_backend: str | None = None
     linear_solver: QDLDLSolver | SparseDirectSolver = field(default_factory=QDLDLSolver)
     last_info: dict | None = None
+    # The adapter can publish a failed attempt while restoring this solver epoch.
+    solver_info: dict | None = None
     status: str = "unsolved"
     status_problem: tuple | None = None
     builtin_cache: dict | None = None
@@ -55,7 +54,6 @@ class TorchOSQPWorkspace:
     def reset_torch(self) -> None:
         self.state = None
         self.work_iterates = None
-        self.public_solution = None
         self.problem_signature = None
         self.constraint_order_signature = None
         self.constraint_rows = None
@@ -74,9 +72,9 @@ class TorchOSQPWorkspace:
         self.adaptive_rho_setup_time = None
         self.last_rel_kkt = None
         self.rho_updates_committed = 0
-        self.status_polish = 0
         self.linear_solver.reset()
         self.last_info = None
+        self.solver_info = None
         self.status = "unsolved"
         self.status_problem = None
 

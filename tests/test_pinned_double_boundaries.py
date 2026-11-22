@@ -123,7 +123,7 @@ def test_infeasible_solve_retains_native_public_dual_buffer():
         assert native["solve_code"] == 0 and native["status_val"] == 3
         x, info = _solve(problem, torch_settings, workspace)
     _compare_public(native, x, info)
-    _same_bits(workspace.public_solution[1], native["y"], "retained public y")
+    _same_bits(workspace.solver_info["public_y"], native["y"], "retained public y")
     _same_bits(info["prim_inf_cert"], native["prim_inf_cert"], "primal certificate")
 
 

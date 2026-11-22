@@ -35,7 +35,7 @@ _SOLUTION_STATUSES = {
     "time_limit_reached",
 }
 _COMPATIBLE_STATUSES = {"solved", "solved_inaccurate"}
-# osqp_api_constants.h casts the integer literal to OSQPFloat.
+# The pinned header casts an integer literal to OSQPFloat.
 _OSQP_NAN = float(0x7FC00000)
 
 _RHO_DISABLED = 0
@@ -59,6 +59,23 @@ def build_kkt_rhs(x, z, y, q, sigma, rho_inv_vec):
 
 def recover_z_tilde(rhs_lower, nu, rho_inv_vec):
     return rhs_lower + rho_inv_vec * nu
+
+
+def _c_max(a, b):
+    return torch.where(a > b, a, b)
+
+
+def _c_min(a, b):
+    return torch.where(a < b, a, b)
+
+
+def _c_absval(value):
+    return torch.where(value < 0.0, -value, value)
+
+
+def _ew_bound_vec(value, lower, upper):
+    # OSQPVectorf_ew_bound_vec applies c_min(c_max(value, lower), upper).
+    return _c_min(_c_max(value, lower), upper)
 
 
 def admm_vector_update(
@@ -119,17 +136,8 @@ def _kkt_rho_eligible(relative_kkt_error, fraction, last_relative_kkt_error):
     )
 
 
-class _PolishLinsysError(TorchLinearSolveError):
-    """``osqp_algebra_init_linsys_solver`` failed inside ``polish()``."""
-
-
 class _OSQPCallbackError(TorchLinearSolveError):
-    """``osqp_solve`` returned a nonzero exit flag after changing solver state.
-
-    C leaves through ``goto exit`` without ``store_solution``: the info of the
-    last ``update_info``, the working iterates and rho stay as they are.  The
-    workspace holds that state and ``info`` reports it.
-    """
+    """A translated native callback exit with its observed info boundary."""
 
     def __init__(self, message, stage, exit_code, info):
         super().__init__(message)
@@ -138,25 +146,56 @@ class _OSQPCallbackError(TorchLinearSolveError):
         self.info = info
 
 
-def _stale_public_solution(workspace, n, m, like):
-    """``solver->solution`` when ``store_solution`` did not run: its last content.
+def _callback_error(workspace, stage, exit_code, message, **updates):
+    if stage != "polishing":
+        workspace.linear_solver.invalidate()
+    info = {
+        **(workspace.solver_info or {}),
+        **updates,
+        "backend": "torch",
+        "status": workspace.status,
+        "status_val": _STATUS_VALUES[workspace.status],
+        "status_compatible": False,
+        "rho_updates": workspace.rho_updates_committed,
+        "rho_bar": workspace.rho_bar,
+        "failure_stage": stage,
+        "native_exit_code": exit_code,
+    }
+    workspace.solver_info = workspace.last_info = info
+    return _OSQPCallbackError(message, stage, exit_code, info)
 
-    ``osqp_setup`` allocates the solution vectors zero-initialized.
-    """
 
-    if workspace.public_solution is not None:
-        return tuple(value.clone() for value in workspace.public_solution)
-    return (
-        torch.zeros(n, device=like.device, dtype=like.dtype),
-        torch.zeros(m, device=like.device, dtype=like.dtype),
-    )
-
-
-def _attempt_polish(*args, **kwargs):
-    try:
-        return _polish_solution(*args, **kwargs), None
-    except _PolishLinsysError as exc:
-        return None, exc
+def _failed_solve_info(
+    workspace, iterates, status, updates, iteration, rho_estimate,
+    residuals, objective_values,
+):
+    workspace.work_iterates = {
+        **dict(zip(("x", "z", "y"), iterates, strict=True)),
+        "source": workspace.state,
+    }
+    workspace.status = status
+    workspace.rho_updates_committed = updates
+    primal, dual = residuals[:2]
+    gap = objective_values["duality_gap"]
+    published = workspace.solver_info or {}
+    # osqp_setup allocates zeroed solution buffers. A solve callback can
+    # return before the first store_solution, leaving those buffers intact.
+    initial_public_solution = {
+        key: torch.zeros_like(value)
+        for key, value in (("public_x", iterates[0]), ("public_y", iterates[2]))
+        if key not in published
+    }
+    return {
+        **initial_public_solution,
+        "admm_iterations": iteration,
+        "primal_residual": primal.item(),
+        "dual_residual": dual.item(),
+        "objective": objective_values["objective"].item(),
+        "dual_objective": objective_values["dual_objective"].item(),
+        "duality_gap": gap.item(),
+        "rel_kkt_error": _relative_kkt_error(primal, dual, gap).item(),
+        "rho_estimate": rho_estimate.item(),
+    }
 
 
 def solve_torch_osqp_direct(P, q, A, l, u, settings, workspace=None):
@@ -167,7 +206,8 @@ def solve_torch_osqp_direct(P, q, A, l, u, settings, workspace=None):
     try:
         result = _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace)
     except _OSQPCallbackError:
-        # osqp_solve exits with the state it reached; nothing is undone.
+        # The pinned callback paths commit state before returning a failure.
+        # PyGRANSO rolls these attempts back at the adapter boundary.
         raise
     except BaseException:
         _restore_workspace(workspace, snapshot)
@@ -186,6 +226,9 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
         if not isinstance(use_sparse, bool):
             raise ValueError("use_sparse must be a bool.")
         solver_type = SparseDirectSolver if use_sparse else QDLDLSolver
+        native_failures = (
+            not use_sparse and q.device.type == "cpu" and q.dtype == torch.float64
+        )
         if type(workspace.linear_solver) is not solver_type:
             # A package change is a fresh setup, not a reuse of foreign factors.
             workspace.reset_torch()
@@ -219,11 +262,17 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
         )
         # Repeated solves supply implicit value-changing data updates.
         problem = (P, q, A, l, u)
+        previous_problem = workspace.status_problem
+        changed = (
+            tuple(
+                not torch.equal(old, new)
+                for old, new in zip(previous_problem, problem, strict=True)
+            )
+            if previous_problem is not None
+            else (True,) * len(problem)
+        )
         rho_updates_base = workspace.rho_updates_committed
-        if workspace.status_problem is None or any(
-            not torch.equal(previous, current)
-            for previous, current in zip(workspace.status_problem, problem)
-        ):
+        if any(changed):
             workspace.status = "unsolved"
             rho_updates_base = 0
             workspace.status_problem = tuple(value.detach().clone() for value in problem)
@@ -244,6 +293,9 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
             constraint_types = workspace.constraint_types
         # A type change clears the factors but can leave the validated top rows unchanged.
         previous_k = workspace.linear_solver.matrix
+        types_changed = workspace.constraint_types is not None and not torch.equal(
+            workspace.constraint_types, constraint_types
+        )
         _reconcile_workspace_constraint_types(workspace, constraint_types)
 
         n = q.numel()
@@ -260,6 +312,21 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
         )
         # A cold start clears the iterates but keeps the active rho.
         requested_rho = float(settings["rho"])
+        callback_stage = None
+        if native_failures and previous_problem is not None:
+            # The combined matrix/vector resubmission has no single C callback.
+            matrix_changed = changed[0] or changed[2]
+            vectors_changed = changed[1] or changed[3] or changed[4]
+            pending = (workspace.solver_info or {}).get("failure_stage")
+            if matrix_changed and not vectors_changed and requested_rho == workspace.rho_setting:
+                callback_stage = "matrix_update"
+            elif not matrix_changed:
+                if types_changed and requested_rho == workspace.rho_setting:
+                    callback_stage = "bounds_update"
+                elif not vectors_changed and requested_rho != workspace.rho_setting:
+                    callback_stage = "rho_update"
+                elif not vectors_changed and pending in ("matrix_update", "bounds_update", "rho_update"):
+                    callback_stage = pending
         initial_rho = (
             workspace.rho_bar
             if workspace.rho_bar is not None and workspace.rho_setting == requested_rho
@@ -322,19 +389,34 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
             if not factorization_reused:
                 # init_linsys_solver_qdldl / update_linsys_solver_*_qdldl:
                 # form_KKT, AMD-permute, QDLDL_etree, QDLDL_factor.
-                solver.factorize(
-                    K,
-                    P=P_s,
-                    A=A_s,
-                    sigma=sigma,
-                    rho_inv_vec=rho_inv_vec,
-                    p_pattern=workspace.p_pattern,
-                    a_pattern=workspace.a_pattern,
-                )
+                try:
+                    solver.factorize(
+                        K,
+                        P=P_s,
+                        A=A_s,
+                        sigma=sigma,
+                        rho_inv_vec=rho_inv_vec,
+                        p_pattern=workspace.p_pattern,
+                        a_pattern=workspace.a_pattern,
+                    )
+                except _QDLDLNumericError as exc:
+                    if callback_stage is None:
+                        raise
+                    workspace.rho_bar, workspace.rho_setting = rho_bar.item(), requested_rho
+                    workspace.rho_updates_committed = rho_updates_base
+                    raise _callback_error(workspace, callback_stage, 1, str(exc)) from exc
             # LDL_factor (setup) rejects fewer than n positive pivots and
             # update_linsys_solver_matrices_qdldl any count other than n;
             # update_linsys_solver_rho_vec_qdldl only checks factor failure.
-            if matrix_data_changed and (
+            if callback_stage == "matrix_update" and solver.positive_d_count != n:
+                workspace.rho_bar, workspace.rho_setting = rho_bar.item(), requested_rho
+                workspace.rho_updates_committed = rho_updates_base
+                raise _callback_error(
+                    workspace, callback_stage, 1,
+                    "KKT inertia does not have the required positive/negative "
+                    "sign counts; the problem may be non-convex.",
+                )
+            if callback_stage not in ("rho_update", "bounds_update") and matrix_data_changed and (
                 solver.positive_d_count < n
                 if previous_k is None
                 else solver.positive_d_count != n
@@ -545,62 +627,20 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
                                     a_pattern=workspace.a_pattern,
                                 )
                             except _QDLDLNumericError as exc:
-                                # adapt_rho: info->rho_estimate and settings->rho
-                                # are written, rho_updates is incremented, then
-                                # osqp_solve leaves ("Failed rho update") with
-                                # exitflag 1.  No store_solution, no status
-                                # change, last_rel_kkt untouched.
-                                x_f, z_f, y_f = _unscale_state(x, z, y, scaling)
-                                workspace.state = {
-                                    "x": x_f.detach().clone(),
-                                    "z": z_f.detach().clone(),
-                                    "y": y_f.detach().clone(),
-                                }
-                                workspace.work_iterates = {
-                                    "x": x.detach().clone(),
-                                    "z": z.detach().clone(),
-                                    "y": y.detach().clone(),
-                                    "source": workspace.state,
-                                }
-                                workspace.rho_bar = float(rho_candidate.item())
-                                workspace.rho_setting = float(settings["rho"])
-                                workspace.rho_updates_committed = (
-                                    rho_updates_base + rho_updates + 1
+                                if not native_failures:
+                                    raise
+                                # adapt_rho writes rho and counts the attempted
+                                # update before osqp_solve exits, without updating
+                                # last_rel_kkt or publishing a new solution.
+                                workspace.rho_bar = rho_candidate.item()
+                                workspace.rho_setting = requested_rho
+                                updates = _failed_solve_info(
+                                    workspace, (x, z, y), status,
+                                    rho_updates_base + rho_updates + 1, iteration,
+                                    rho_candidate, last_residuals, objective_values,
                                 )
-                                workspace.status = status
-                                stale_x, stale_y = _stale_public_solution(workspace, n, m, q)
-                                failure_info = {
-                                    "status": status,
-                                    "status_val": _STATUS_VALUES[status],
-                                    "status_compatible": False,
-                                    "admm_iterations": int(iteration),
-                                    "primal_residual": float(primal.item()),
-                                    "dual_residual": float(dual.item()),
-                                    "objective": float(objective_values["objective"].item()),
-                                    "dual_objective": float(
-                                        objective_values["dual_objective"].item()
-                                    ),
-                                    "duality_gap": float(
-                                        objective_values["duality_gap"].item()
-                                    ),
-                                    "rel_kkt_error": float(
-                                        _relative_kkt_error(
-                                            primal, dual, objective_values["duality_gap"]
-                                        ).item()
-                                    ),
-                                    "rho_updates": workspace.rho_updates_committed,
-                                    "rho_bar": workspace.rho_bar,
-                                    "rho_estimate": workspace.rho_bar,
-                                    "status_polish": workspace.status_polish,
-                                    "backend": "torch",
-                                    "public_x": stale_x,
-                                    "public_y": stale_y,
-                                    "failure_stage": "adaptive_rho",
-                                    "native_exit_code": 1,
-                                }
-                                workspace.last_info = dict(failure_info)
-                                raise _OSQPCallbackError(
-                                    str(exc), "adaptive_rho", 1, failure_info
+                                raise _callback_error(
+                                    workspace, "adaptive_rho", 1, str(exc), rho_updated=True, **updates
                                 ) from exc
                         K = candidate_k
                         rho_bar = rho_candidate
@@ -743,32 +783,37 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
 
         polish_info = _default_polish_info(settings)
         # osqp_setup initializes status_polish. reset_info preserves it on updates.
+        status_polish = (workspace.solver_info or {}).get("status_polish", 0)
         x_work, z_work, y_work = x, z, y
-        polished = polish_error = None
         if bool(settings.get("polishing", False)) and status == "solved":
-            polished, polish_error = _attempt_polish(
-                P_s,
-                q_s,
-                A_s,
-                l_s,
-                u_s,
-                x,
-                z,
-                y,
-                settings,
-                scaling=scaling,
-                p_pattern=workspace.p_pattern,
-                a_pattern=workspace.a_pattern,
-            )
-        if polish_error is not None:
-            # polish(): info->status_polish = OSQP_POLISH_LINSYS_ERROR and the
-            # exit flag goes back to osqp_solve, which leaves ("Failed
-            # polishing") before store_solution.  The ADMM iterates, info and
-            # rho stay in place.
-            polish_info["polishing_status"] = "linsys_error"
-            workspace.status_polish = -2
-        elif polished is not None:
-            x_polished_s, z_polished_s, y_polished_s, polish_info = polished
+            try:
+                x_polished_s, z_polished_s, y_polished_s, polish_info = _polish_solution(
+                    P_s,
+                    q_s,
+                    A_s,
+                    l_s,
+                    u_s,
+                    x,
+                    z,
+                    y,
+                    settings,
+                    scaling=scaling,
+                    p_pattern=workspace.p_pattern,
+                    a_pattern=workspace.a_pattern,
+                )
+            except _QDLDLNumericError as exc:
+                if not native_failures:
+                    raise
+                workspace.rho_bar, workspace.rho_setting = rho_bar.item(), requested_rho
+                updates = _failed_solve_info(
+                    workspace, (x, z, y), status, rho_updates_base + rho_updates,
+                    reported_iteration, rho_estimate, last_residuals, objective_values,
+                )
+                # OSQP_NONCVX_ERROR from reduced KKT initialization, before store_solution.
+                raise _callback_error(
+                    workspace, "polishing", 4, str(exc), status_polish=-2,
+                    polishing_status="linsys_error", **updates,
+                ) from exc
             x_work, z_work, y_work = x_polished_s, z_polished_s, y_polished_s
             x_o, z_o, y_o = _unscale_state(
                 x_polished_s, z_polished_s, y_polished_s, scaling
@@ -784,7 +829,7 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
                 float(settings["eps_rel"]),
                 scaling=None if scaled_termination else scaling,
             )
-            workspace.status_polish = {
+            status_polish = {
                 "accepted": 1,
                 "rejected_no_improvement": -1,
                 "skipped_no_active_constraints": 2,
@@ -907,7 +952,7 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
             "device": str(q.device),
             "dtype": str(q.dtype),
             "estimated_kkt_dim": int(n + m),
-            "status_polish": workspace.status_polish,
+            "status_polish": status_polish,
             **polish_info,
         }
         if bool(settings.get("check_condition", False)):
@@ -919,34 +964,21 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
             info["state"] = {
                 key: value.detach().clone() for key, value in workspace.state.items()
             }
-        # store_solution: solution->y is the unscaled dual, or OSQP_NAN in
-        # every entry when there is no solution (as solution->x below).
-        info["public_y"] = (
-            y_o.detach().clone()
-            if has_iterate
-            else torch.full((m,), _OSQP_NAN, device=q.device, dtype=q.dtype)
-        )
         workspace.status = status
         workspace.rho_updates_committed = info["rho_updates"]
-        if polish_error is not None:
-            # store_solution did not run: solver->solution keeps its content.
-            info["public_x"], info["public_y"] = _stale_public_solution(workspace, n, m, q)
-            info["failure_stage"] = "polishing"
-            info["native_exit_code"] = 4
-            workspace.last_info = dict(info)
-            raise _OSQPCallbackError(
-                str(polish_error), "polishing", 4, info
-            ) from polish_error
-        workspace.last_info = dict(info)
         solution = (
             x_o.reshape(n, 1)
             if has_iterate
-            else torch.full((n, 1), _OSQP_NAN, device=q.device, dtype=q.dtype)
+            else q.new_full((n, 1), _OSQP_NAN)
         )
-        workspace.public_solution = (
-            solution.reshape(-1).detach().clone(),
-            info["public_y"].detach().clone(),
+        public_y = y_o.detach().clone() if has_iterate else q.new_full((m,), _OSQP_NAN)
+        if bool(settings.get("return_info", False)):
+            # The C public y buffer is populated even when the iterates are reset.
+            info["public_y"] = public_y
+        workspace.solver_info = dict(
+            info, public_x=solution.reshape(-1).detach().clone(), public_y=public_y
         )
+        workspace.last_info = dict(info)
         return (
             (solution, info) if bool(settings.get("return_info", False)) else solution
         )
@@ -1215,7 +1247,11 @@ def _scale_data(P, q, A, passes):
         E = E * e_step
 
         cost_column_norms = torch.amax(torch.abs(torch.triu(P_work)), dim=0)
-        average_p_norm = _cost_column_norm_sum(cost_column_norms) / P.shape[0]
+        # OSQPVectorf_mean: sum / length.  The divisor is a tensor because CUDA
+        # evaluates tensor / Python number as a product with the reciprocal.
+        average_p_norm = _cost_column_norm_sum(cost_column_norms) / P.new_tensor(
+            P.shape[0]
+        )
         q_norm = _limit_scaling(_inf_norm(q_work))
         cost_step = _limit_scaling(torch.maximum(average_p_norm, q_norm)).reciprocal()
         P_work = cost_step * P_work
@@ -1275,7 +1311,9 @@ def _scaling_for_problem(workspace, P, q, A, settings):
         source_q = previous.get("source_q")
         if source_q is not None and torch.equal(source_q, q):
             # No new q: osqp_update_data_vec leaves work->data->q untouched.
-            return previous
+            # _scale_problem writes bounds and flags into this mapping.
+            workspace.scaling = dict(previous)
+            return workspace.scaling
         # osqp_update_data_vec(q_new): q <- (q_new * D) * c.
         workspace.scaling = {
             **previous,
@@ -1465,7 +1503,8 @@ def _adaptive_rho_update(
         dual_scale,
     )
     should_update = (candidate > tolerance * rho_bar) | (
-        candidate < rho_bar / tolerance
+        # Tensor divisor: CUDA turns tensor / Python number into a product.
+        candidate < rho_bar / rho_bar.new_tensor(tolerance)
     )
     changed = candidate != rho_bar
     if not bool((should_update & changed & torch.isfinite(candidate)).item()):
@@ -1553,15 +1592,9 @@ def _compute_obj_val_dual_gap(P, q, l, u, x, y, cost, eps_abs, eps_rel, *, Px=No
     quad_term = _dot(_matvec(P, x) if Px is None else Px, x)
     lin_term = _dot(q, x)
     projected = _project_polar_reccone(y, l, u)
-    # OSQPVectorf_round_to_zero with OSQP_ZERO_DEADZONE.
     deadzone = 1e-10 if y.dtype == torch.float32 else 1e-15
-    projected = torch.where(
-        _c_absval(projected) < deadzone, torch.zeros_like(projected), projected
-    )
-    # The products are formed for every entry, as in C: an IEEE-infinite bound
-    # times a zero part is NaN there too.
-    sup_term = _dot_prod_signed(u, projected, 1)
-    sup_term = sup_term + _dot_prod_signed(l, projected, -1)
+    projected = torch.where(projected.abs() < deadzone, 0.0, projected)
+    sup_term = _signed_bound_support(l, u, projected)
     max_term = _c_absval(quad_term)
     max_term = _c_max(max_term, _c_absval(lin_term))
     max_term = _c_max(max_term, _c_absval(sup_term))
@@ -1696,38 +1729,6 @@ def _termination_status(
     return None
 
 
-def _c_max(a, b):
-    """``c_max(a, b)``: ``(a > b) ? a : b``."""
-
-    return torch.where(a > b, a, b)
-
-
-def _c_min(a, b):
-    """``c_min(a, b)``: ``(a < b) ? a : b``."""
-
-    return torch.where(a < b, a, b)
-
-
-def _c_absval(x):
-    """``c_absval(x)``: ``(x < 0) ? -x : x``."""
-
-    return torch.where(x < 0, -x, x)
-
-
-def _ew_bound_vec(z, l, u):
-    """``OSQPVectorf_ew_bound_vec``: ``c_min(c_max(z, l), u)``."""
-
-    return _c_min(_c_max(z, l), u)
-
-
-def _dot_prod_signed(a, b, sign):
-    """``OSQPVectorf_dot_prod_signed`` for ``sign`` = +1 or -1."""
-
-    zero = torch.zeros_like(b)
-    part = _c_max(b, zero) if sign == 1 else _c_min(b, zero)
-    return _dot(a, part)
-
-
 def _project_polar_reccone(delta_y, l, u):
     """``OSQPVectorf_project_polar_reccone`` with ``OSQP_INFTY * OSQP_MIN_SCALING``."""
 
@@ -1739,6 +1740,13 @@ def _project_polar_reccone(delta_y, l, u):
         torch.where(lower_infinite, zero, _c_min(delta_y, zero)),
         torch.where(lower_infinite, _c_max(delta_y, zero), delta_y),
     )
+
+
+def _signed_bound_support(l, u, direction):
+    """Builtin OSQPVectorf_dot_prod_signed for the two bound contributions."""
+    positive = torch.where(direction > 0.0, direction, 0.0)
+    negative = torch.where(direction < 0.0, direction, 0.0)
+    return _dot(u, positive) + _dot(l, negative)
 
 
 def _primal_infeasibility_certificate(
@@ -1758,8 +1766,7 @@ def _primal_infeasibility_certificate(
     norm = _inf_norm(norm_direction)
     if not bool((norm > _division_tolerance(projected)).item()):
         return None
-    support = _dot_prod_signed(u, projected, 1)
-    support = support + _dot_prod_signed(l, projected, -1)
+    support = _signed_bound_support(l, u, projected)
     if not bool((support < 0.0).item()):
         return None
     at_delta_y = _rmatvec(A, projected)
@@ -1869,8 +1876,11 @@ def _dot(a, b):
 
 
 def _inf_norm(value):
+    # OSQPVectorf_norm_inf starts at +0 and updates only on a strict >, so a
+    # NaN entry never becomes the norm.  Same rule on every device and dtype.
     if value.numel() == 0:
         return torch.zeros((), device=value.device, dtype=value.dtype)
+    # torch.abs gives +0 for -0: the C result for an all-zero vector is its +0 start.
     magnitude = torch.abs(value)
     magnitude = torch.where(torch.isnan(magnitude), torch.zeros_like(magnitude), magnitude)
     return torch.amax(magnitude)
@@ -1994,21 +2004,17 @@ def _polish_solution(
         # init_linsys_solver_qdldl(..., polishing=1): form_KKT(P, Ared, sigma,
         # NULL, sigma), AMD, LDL_factor with the same positive-pivot check.
         polish_solver = QDLDLSolver()
-        try:
-            polish_solver.factorize(
-                K_regularized,
-                P=P,
-                A=A_active,
-                sigma=regularization,
-                rho_inv_vec=None,
-                p_pattern=P.ne(0) if p_pattern is None else p_pattern,
-                a_pattern=(A.ne(0) if a_pattern is None else a_pattern)[indices],
-            )
-        except _QDLDLNumericError as exc:
-            # LDL_factor < 0 -> init_linsys_solver_qdldl returns OSQP_NONCVX_ERROR.
-            raise _PolishLinsysError(str(exc)) from exc
+        polish_solver.factorize(
+            K_regularized,
+            P=P,
+            A=A_active,
+            sigma=regularization,
+            rho_inv_vec=None,
+            p_pattern=P.ne(0) if p_pattern is None else p_pattern,
+            a_pattern=(A.ne(0) if a_pattern is None else a_pattern)[indices],
+        )
         if polish_solver.positive_d_count < n:
-            raise _PolishLinsysError(
+            raise _QDLDLNumericError(
                 "Error in KKT matrix LDL factorization when computing the "
                 "nonzero elements. The problem seems to be non-convex."
             )

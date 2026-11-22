@@ -22,12 +22,20 @@ from pygranso.private.torchLinearSolve import (
 from pygranso.private.torchQDLDL import ldl_solve, qdldl_etree, qdldl_factor
 
 
+class _QDLDLNumericError(TorchLinearSolveError):
+    """QDLDL_factor returned a negative status."""
+
+
 def _scalars(tensor):
     """Entries as scalars whose arithmetic rounds in the tensor's own precision."""
 
+    tensor = tensor.detach()
+    if tensor.device.type != "cpu":
+        tensor = tensor.cpu()
+    values = tensor.reshape(-1).tolist()
     if tensor.dtype == torch.float64:
-        return tensor.detach().cpu().tolist()
-    return list(tensor.detach().cpu().numpy().reshape(-1))
+        return values
+    return [np.float32(value) for value in values]
 
 
 def dense_to_csc(matrix, pattern, *, upper_triangular=False):
@@ -38,14 +46,16 @@ def dense_to_csc(matrix, pattern, *, upper_triangular=False):
     """
 
     rows, columns = matrix.shape
-    mask = pattern.detach().cpu()
+    mask = pattern.detach()
+    if mask.device.type != "cpu":
+        mask = mask.cpu()
     if upper_triangular:
         mask = torch.triu(mask)
     mask_columns = mask.T.tolist()
-    if matrix.dtype == torch.float64:
-        value_columns = matrix.detach().cpu().T.tolist()
-    else:
-        value_columns = [list(column) for column in matrix.detach().cpu().numpy().T]
+    values = matrix.detach()
+    if values.device.type != "cpu":
+        values = values.cpu()
+    value_columns = [_scalars(column) for column in values.T]
     p, i, x = [0], [], []
     for column in range(columns):
         mask_column = mask_columns[column]
@@ -56,10 +66,6 @@ def dense_to_csc(matrix, pattern, *, upper_triangular=False):
                 x.append(value_column[row])
         p.append(len(i))
     return {"m": rows, "n": columns, "p": p, "i": i, "x": x, "nzmax": len(i)}
-
-
-class _QDLDLNumericError(TorchLinearSolveError):
-    """``QDLDL_factor`` returned a negative status (a zero pivot)."""
 
 
 class QDLDLSolver:
@@ -87,6 +93,11 @@ class QDLDLSolver:
         self._factors = None
         self._info = 0
         self.positive_d_count = None
+
+    def invalidate(self) -> None:
+        """Retain the attempted KKT but require a rebuild before using it."""
+        self._factors = None
+        self._info = 1
 
     def reset(self) -> None:
         self.clear()
@@ -168,6 +179,11 @@ class QDLDLSolver:
             size, Kp, Ki, Kx, Lnz, etree, sum_lnz, zero=zero, one=one
         )
         if positive < 0:
+            self._matrix = matrix.detach().clone()
+            self._kkt = (Kp, Ki, Kx)
+            self._symbolic = (Lnz, etree)
+            self.positive_d_count = None
+            self.invalidate()
             raise _QDLDLNumericError(
                 "Error in KKT matrix LDL factorization when computing the nonzero "
                 "elements. There are zeros in the diagonal matrix."

@@ -226,6 +226,11 @@ def _solve_osqp_with_warm_state(
     )
     solution, info = result
     workspace.last_info = info
+    if info.get("status_compatible") is False:
+        raise RuntimeError(
+            "OSQP did not produce a solved-compatible result: "
+            f"{info.get('status', 'unknown')}."
+        )
     return (solution, info) if requested_return_info else solution
 
 

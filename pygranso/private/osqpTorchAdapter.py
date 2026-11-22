@@ -14,6 +14,7 @@ from scipy import sparse
 from pygranso.private.osqpWorkspace import TorchOSQPWorkspace
 from pygranso.private.torchOSQP import (
     _osqp_infinity,
+    _OSQPCallbackError,
     _restore_workspace,
     _snapshot_workspace,
     solve_torch_osqp_direct,
@@ -182,13 +183,24 @@ def solve_osqp_torch_qp(
         _restore_workspace(workspace, workspace_snapshot)
         if not isinstance(exc, Exception):
             raise
+        failure_info = None
+        if isinstance(exc, _OSQPCallbackError):
+            failure_info = {
+                **exc.info,
+                **selection,
+                "workspace_invalidated_for_backend_change": backend_changed,
+            }
         if opts["algebra"] != "auto":
+            if failure_info is not None:
+                workspace.last_info = failure_info
             raise
         torch_failure = {
             "trigger": "exception",
             "exception_type": type(exc).__name__,
             "message": str(exc),
         }
+        if failure_info is not None:
+            torch_failure.update(status=failure_info["status"], torch_info=failure_info)
 
     if opts["algebra"] != "auto":
         workspace.last_info = dict(torch_info)
@@ -507,13 +519,6 @@ def _solve_torch_osqp_path(
         dtype,
         allow_device_move,
     )
-    # Adapter policy, not part of the C translation: the solver core multiplies
-    # IEEE-infinite bounds as C does (Inf * 0 = NaN in the duality gap).  Bounds
-    # beyond the OSQP infinity sentinel are replaced by the sentinel here, so
-    # PyGRANSO callers can keep passing +-inf for "no bound".
-    infinity = _osqp_infinity(q)
-    l_osqp = torch.clamp(l_osqp, min=-infinity)
-    u_osqp = torch.clamp(u_osqp, max=infinity)
     solve_settings = dict(settings)
     solve_settings["return_info"] = True
     equality_rows = 0 if A is None or b is None else int(A_osqp.shape[0] - n)
@@ -966,6 +971,10 @@ def _build_constraints_torch(A, b, LB, UB, n, device, dtype, allow_device_move):
     upper = _torch_tensor(UB, "UB", device, dtype, allow_device_move).reshape(-1)
     if lower.numel() != n or upper.numel() != n:
         raise ValueError("LB and UB must have len(f) entries.")
+    # Encode the caller's open bounds with the core's finite OSQP sentinel.
+    sentinel = _osqp_infinity(lower)
+    lower = lower.masked_fill(torch.isneginf(lower), -sentinel)
+    upper = upper.masked_fill(torch.isposinf(upper), sentinel)
     identity = torch.eye(n, device=device, dtype=dtype)
     if A is None or b is None:
         return identity, lower, upper
