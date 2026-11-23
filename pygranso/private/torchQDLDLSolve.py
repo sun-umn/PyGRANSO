@@ -16,7 +16,6 @@ from pygranso.private.torchKKTForm import form_KKT, permute_KKT
 from pygranso.private.torchLinearSolve import (
     LinearSolveDiagnostics,
     TorchLinearSolveError,
-    _validate_matrix,
     _validate_rhs,
 )
 from pygranso.private.torchQDLDL import ldl_solve, qdldl_etree, qdldl_factor
@@ -38,34 +37,15 @@ def _scalars(tensor):
     return [np.float32(value) for value in values]
 
 
-def dense_to_csc(matrix, pattern, *, upper_triangular=False):
-    """CSC storage of the entries selected by ``pattern`` (rows ascending).
+def _csc_dict(matrix):
+    """``OSQPCscMatrix`` fields of a stored matrix, values as scalars."""
 
-    OSQP receives ``P`` (upper triangle) and ``A`` in CSC form; the stored
-    pattern, not the current values, defines the KKT sparsity structure.
-    """
-
-    rows, columns = matrix.shape
-    mask = pattern.detach()
-    if mask.device.type != "cpu":
-        mask = mask.cpu()
-    if upper_triangular:
-        mask = torch.triu(mask)
-    mask_columns = mask.T.tolist()
-    values = matrix.detach()
-    if values.device.type != "cpu":
-        values = values.cpu()
-    value_columns = [_scalars(column) for column in values.T]
-    p, i, x = [0], [], []
-    for column in range(columns):
-        mask_column = mask_columns[column]
-        value_column = value_columns[column]
-        for row in range(rows):
-            if mask_column[row]:
-                i.append(row)
-                x.append(value_column[row])
-        p.append(len(i))
-    return {"m": rows, "n": columns, "p": p, "i": i, "x": x, "nzmax": len(i)}
+    pointers, rows = matrix.pattern.lists()
+    m, n = matrix.shape
+    return {
+        "m": m, "n": n, "p": pointers, "i": rows,
+        "x": _scalars(matrix.values), "nzmax": len(rows),
+    }
 
 
 class QDLDLSolver:
@@ -85,7 +65,8 @@ class QDLDLSolver:
         return self._factors is not None
 
     @property
-    def matrix(self) -> torch.Tensor | None:
+    def matrix(self):
+        """The ``KKTSystem`` of the last factorization attempt."""
         return self._matrix
 
     def clear(self) -> None:
@@ -106,39 +87,27 @@ class QDLDLSolver:
         self.factorization_count = 0
         self.solve_count = 0
 
-    def is_factorized_for(self, matrix: torch.Tensor) -> bool:
+    def is_factorized_for(self, matrix) -> bool:
         if not self.ready or self._matrix is None:
             return False
-        return (
-            self._matrix.shape == matrix.shape
-            and self._matrix.device == matrix.device
-            and self._matrix.dtype == matrix.dtype
-            and torch.equal(self._matrix, matrix)
-        )
+        return self._matrix.equal(matrix)
 
-    def factorize(
-        self,
-        matrix: torch.Tensor,
-        *,
-        P: torch.Tensor,
-        A: torch.Tensor,
-        sigma: float,
-        rho_inv_vec: torch.Tensor | None,
-        p_pattern: torch.Tensor,
-        a_pattern: torch.Tensor,
-    ) -> None:
-        """``form_KKT`` -> ``permute_KKT`` -> ``LDL_factor`` for ``[P+sigma I, A'; A, -rho_inv]``.
+    def factorize(self, matrix) -> None:
+        """``form_KKT`` -> ``permute_KKT`` -> ``LDL_factor`` for a ``KKTSystem``.
 
-        ``matrix`` is the dense form of the same KKT matrix; it is retained only
-        to recognise an unchanged system on the next call.  ``rho_inv_vec`` is
-        ``None`` for the polishing system, where C passes the scalar ``sigma``.
+        The system is built from the stored CSC entries of ``P`` and ``A``; it
+        is retained to recognise an unchanged system on the next call.
         """
 
-        matrix = _validate_matrix(matrix)
+        P, A = matrix.P, matrix.A
+        sigma, rho_inv_vec = matrix.sigma, matrix.rho_inv_vec
+        for values in (P.values, A.values, rho_inv_vec):
+            if values is not None and not bool(torch.all(torch.isfinite(values)).item()):
+                raise ValueError("The linear-system matrix contains NaN or Inf.")
         n = P.shape[0]
         m = A.shape[0]
-        P_csc = dense_to_csc(P, p_pattern, upper_triangular=True)
-        A_csc = dense_to_csc(A, a_pattern)
+        P_csc = _csc_dict(P)
+        A_csc = _csc_dict(A)
         if matrix.dtype == torch.float64:
             zero, one = 0.0, 1.0
             sigma_value = float(sigma)
@@ -179,7 +148,7 @@ class QDLDLSolver:
             size, Kp, Ki, Kx, Lnz, etree, sum_lnz, zero=zero, one=one
         )
         if positive < 0:
-            self._matrix = matrix.detach().clone()
+            self._matrix = matrix
             self._kkt = (Kp, Ki, Kx)
             self._symbolic = (Lnz, etree)
             self.positive_d_count = None
@@ -188,7 +157,7 @@ class QDLDLSolver:
                 "Error in KKT matrix LDL factorization when computing the nonzero "
                 "elements. There are zeros in the diagonal matrix."
             )
-        self._matrix = matrix.detach().clone()
+        self._matrix = matrix
         self._factors = (Lp, Li, Lx, D, Dinv)
         self._kkt = (Kp, Ki, Kx)
         self._symbolic = (Lnz, etree)
@@ -224,7 +193,9 @@ class QDLDLSolver:
         residual_norm = None
         relative_residual = None
         if calculate_residual:
-            residual = self._matrix @ solution - rhs
+            residual = torch.stack(
+                [self._matrix.matvec(column) for column in solution.unbind(1)], dim=1
+            ) - rhs
             residual_value = torch.linalg.vector_norm(residual)
             denominator = torch.linalg.vector_norm(rhs).clamp_min(1)
             residual_norm = float(residual_value.item())

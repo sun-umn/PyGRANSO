@@ -99,7 +99,7 @@ def test_failing_matrix_callback_keeps_attempted_data_and_repairs(scaling, bad):
     with pytest.raises(TorchLinearSolveError) as failure:
         _solve(([[bad]], *original[1:]), cfg, ws)
     _failure(failure.value, ws, c["failed"], "matrix_update")
-    assert ws.status_problem[0].item() == bad
+    assert ws.status_problem[0].to_dense().item() == bad
     assert not ws.linear_solver.ready
     solution, info = _solve(original, cfg, ws)
     assert info["factorizations_this_solve"] == 1

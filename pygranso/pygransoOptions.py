@@ -335,7 +335,7 @@ def pygransoOptions(n, options):
         String in {'auto','builtin','torch'}. Default value: 'torch'
 
         Selects the OSQP algebra policy for PyGRANSO's QP subproblems.
-        The default 'torch' policy uses the dense Torch translation directly.
+        The default 'torch' policy uses the Torch translation directly.
         The optional 'auto' policy follows torch_device: CPU uses builtin OSQP and a
         validated accelerator uses the dense Torch reference route inside its
         supported KKT and memory envelope. Unsupported or unsuccessful Torch

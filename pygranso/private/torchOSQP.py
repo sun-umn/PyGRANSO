@@ -1,4 +1,4 @@
-"""Dense Torch reference implementation of OSQP's ADMM equations."""
+"""Torch translation of OSQP's ADMM solver on CSC-stored problem data."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ import time
 import torch
 
 from pygranso.private.osqpWorkspace import TorchOSQPWorkspace
+from pygranso.private.torchCSC import CSCMatrix, KKTSystem
 from pygranso.private.torchLinearSolve import TorchLinearSolveError
 from pygranso.private.torchQDLDLSolve import QDLDLSolver, _QDLDLNumericError
 
@@ -44,11 +45,9 @@ _RHO_KKT_ERROR = 3
 
 
 def build_kkt_matrix(P, A, sigma, rho_vec):
-    n = P.shape[0]
-    identity = torch.eye(n, device=P.device, dtype=P.dtype)
-    top = torch.cat((P + float(sigma) * identity, A.T), dim=1)
-    bottom = torch.cat((A, -torch.diag(rho_vec.reciprocal())), dim=1)
-    return torch.cat((top, bottom), dim=0)
+    """``[P + sigma I, A'; A, -diag(1 / rho)]`` on the stored entries of P and A."""
+
+    return KKTSystem(P, A, sigma, rho_vec.reciprocal())
 
 
 def build_kkt_rhs(x, z, y, q, sigma, rho_inv_vec):
@@ -239,7 +238,7 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
             # The pinned update-settings API ignores these setup-only fields.
             # A direct Torch request for different values is a fresh setup.
             workspace.reset_torch()
-        _prepare_workspace(
+        P, A = _prepare_workspace(
             workspace,
             P,
             A,
@@ -254,7 +253,7 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
         previous_problem = workspace.status_problem
         changed = (
             tuple(
-                not torch.equal(old, new)
+                not _same(old, new)
                 for old, new in zip(previous_problem, problem, strict=True)
             )
             if previous_problem is not None
@@ -264,7 +263,7 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
         if any(changed):
             workspace.status = "unsolved"
             rho_updates_base = 0
-            workspace.status_problem = tuple(value.detach().clone() for value in problem)
+            workspace.status_problem = tuple(_keep(value) for value in problem)
         fresh_rho_setup = workspace.rho_setup_signature is None
         if fresh_rho_setup:
             workspace.adaptive_rho_interval = _setup_rho_interval(
@@ -340,29 +339,14 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
         factors_before = solver.factorization_count
         solves_before = solver.solve_count
         K = build_kkt_matrix(P_s, A_s, sigma, rho_vec)
-        # Use the represented reciprocals already stored in the KKT diagonal.
-        rho_inv_vec = -K.diagonal()[n:]
-        matrix_data_changed = (
-            previous_k is None
-            or previous_k.shape != K.shape
-            or previous_k.device != K.device
-            or previous_k.dtype != K.dtype
-            or not torch.equal(previous_k[:n], K[:n])
-        )
+        rho_inv_vec = K.rho_inv_vec
+        matrix_data_changed = previous_k is None or not previous_k.top_equal(K)
         factorization_reused = solver.is_factorized_for(K)
         if not factorization_reused:
             # init_linsys_solver_qdldl / update_linsys_solver_*_qdldl:
             # form_KKT, AMD-permute, QDLDL_etree, QDLDL_factor.
             try:
-                solver.factorize(
-                    K,
-                    P=P_s,
-                    A=A_s,
-                    sigma=sigma,
-                    rho_inv_vec=rho_inv_vec,
-                    p_pattern=workspace.p_pattern,
-                    a_pattern=workspace.a_pattern,
-                )
+                solver.factorize(K)
             except _QDLDLNumericError as exc:
                 if callback_stage is None:
                     raise
@@ -578,15 +562,7 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
                         # update_linsys_solver_rho_vec_qdldl: new rho
                         # values, then QDLDL_factor on the same pattern.
                         try:
-                            solver.factorize(
-                                candidate_k,
-                                P=P_s,
-                                A=A_s,
-                                sigma=sigma,
-                                rho_inv_vec=-candidate_k.diagonal()[n:],
-                                p_pattern=workspace.p_pattern,
-                                a_pattern=workspace.a_pattern,
-                            )
+                            solver.factorize(candidate_k)
                         except _QDLDLNumericError as exc:
                             if not native_failures:
                                 raise
@@ -606,7 +582,7 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
                         K = candidate_k
                         rho_bar = rho_candidate
                         rho_vec = rho_vec_candidate
-                        rho_inv_vec = -K.diagonal()[n:]
+                        rho_inv_vec = K.rho_inv_vec
                         rho_updates += 1
                         if rho_mode != _RHO_KKT_ERROR:
                             rel_kkt_error = _relative_kkt_error(
@@ -759,8 +735,6 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
                     y,
                     settings,
                     scaling=scaling,
-                    p_pattern=workspace.p_pattern,
-                    a_pattern=workspace.a_pattern,
                 )
             except _QDLDLNumericError as exc:
                 if not native_failures:
@@ -918,7 +892,7 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
         }
         if bool(settings.get("check_condition", False)):
             try:
-                info["estimated_kkt_condition"] = float(torch.linalg.cond(K).item())
+                info["estimated_kkt_condition"] = float(torch.linalg.cond(K.to_dense()).item())
             except (NotImplementedError, RuntimeError):
                 info["estimated_kkt_condition"] = None
         if bool(settings.get("return_state", False)) and has_iterate:
@@ -970,10 +944,12 @@ def _restore_workspace(workspace, snapshot):
 
 
 def _validate_qp(P, q, A, l, u, settings):
+    """Checked inputs.  ``P`` and ``A`` stay as given: strided or ``CSCMatrix``."""
+
     tensors = {
-        "P": _dense_tensor(P, "P"),
+        "P": _matrix_input(P, "P"),
         "q": _dense_tensor(q, "q").reshape(-1),
-        "A": _dense_tensor(A, "A"),
+        "A": _matrix_input(A, "A"),
         "l": _dense_tensor(l, "l").reshape(-1),
         "u": _dense_tensor(u, "u").reshape(-1),
     }
@@ -989,14 +965,15 @@ def _validate_qp(P, q, A, l, u, settings):
     m = l.numel()
     if n == 0:
         raise ValueError("Torch OSQP requires at least one variable.")
-    if P.shape != (n, n):
+    if tuple(P.shape) != (n, n):
         raise ValueError(f"P must have shape {(n, n)}, got {tuple(P.shape)}.")
-    if A.ndim != 2 or A.shape != (m, n):
+    if tuple(A.shape) != (m, n):
         raise ValueError(f"A must have shape {(m, n)}, got {tuple(A.shape)}.")
     if u.numel() != m:
         raise ValueError("l and u must have the same number of entries.")
     for name, tensor in (("P", P), ("q", q), ("A", A)):
-        if not bool(torch.all(torch.isfinite(tensor)).item()):
+        entries = tensor.values if isinstance(tensor, CSCMatrix) else tensor
+        if not bool(torch.all(torch.isfinite(entries)).item()):
             raise ValueError(f"{name} contains NaN or Inf.")
     if bool(torch.any(torch.isnan(l)).item()) or bool(torch.any(torch.isnan(u)).item()):
         raise ValueError("l and u must not contain NaN.")
@@ -1006,24 +983,36 @@ def _validate_qp(P, q, A, l, u, settings):
         )
     eps = torch.finfo(q.dtype).eps
     multiplier = float(settings.get("symmetry_tolerance_multiplier", 100.0))
-    scale = max(1.0, float(torch.linalg.matrix_norm(P, ord=float("inf")).item()))
-    tolerance = multiplier * eps * scale
-    lower_triangle = torch.tril(P, diagonal=-1)
-    if bool(torch.any(lower_triangle != 0).item()):
-        asymmetry = float(torch.linalg.matrix_norm(P - P.T, ord=float("inf")).item())
-        if asymmetry > tolerance:
-            raise ValueError(
-                "P is materially asymmetric: "
-                f"||P-P.T||_inf={asymmetry:.3e} exceeds {tolerance:.3e}."
-            )
-        P = 0.5 * (P + P.T)
+    if isinstance(P, CSCMatrix) and not P.pattern.is_upper_triangular():
+        # Pinned OSQP rejects stored entries below the diagonal.  A sparse P
+        # that has them is read as a full symmetric matrix, like a strided one.
+        P = P.to_dense()
+    if isinstance(P, CSCMatrix):
+        # Upper-triangular storage, taken as given: stored zeros stay stored.
+        P = CSCMatrix(P.pattern, P.values, symmetric=True)
     else:
-        # Pinned OSQP accepts upper-triangular storage and interprets it as
-        # the symmetric matrix used by products and the KKT system.
-        rows = torch.arange(n, device=P.device)
-        P = torch.where(rows[:, None] > rows, P.T, P)
+        scale = max(1.0, float(torch.linalg.matrix_norm(P, ord=float("inf")).item()))
+        tolerance = multiplier * eps * scale
+        lower_triangle = torch.tril(P, diagonal=-1)
+        if bool(torch.any(lower_triangle != 0).item()):
+            asymmetry = float(
+                torch.linalg.matrix_norm(P - P.T, ord=float("inf")).item()
+            )
+            if asymmetry > tolerance:
+                raise ValueError(
+                    "P is materially asymmetric: "
+                    f"||P-P.T||_inf={asymmetry:.3e} exceeds {tolerance:.3e}."
+                )
+            P = 0.5 * (P + P.T)
+        else:
+            # Pinned OSQP accepts upper-triangular storage and interprets it as
+            # the symmetric matrix used by products and the KKT system.
+            rows = torch.arange(n, device=P.device)
+            P = torch.where(rows[:, None] > rows, P.T, P)
     if bool(settings.get("check_convexity", False)):
-        eigenvalues = torch.linalg.eigvalsh(P)
+        eigenvalues = torch.linalg.eigvalsh(
+            P.to_dense() if isinstance(P, CSCMatrix) else P
+        )
         spectral_scale = max(1.0, float(torch.max(torch.abs(eigenvalues)).item()))
         psd_tolerance = multiplier * eps * spectral_scale
         minimum = float(torch.min(eigenvalues).item())
@@ -1042,6 +1031,47 @@ def _dense_tensor(value, name):
     return tensor.to_dense() if tensor.layout != torch.strided else tensor
 
 
+def _matrix_input(value, name):
+    """A strided matrix as given; a sparse one as its stored CSC entries."""
+
+    if isinstance(value, CSCMatrix):
+        return value
+    if not torch.is_tensor(value):
+        raise TypeError(f"{name} must be a Torch tensor.")
+    tensor = value.detach()
+    if tensor.layout == torch.strided:
+        return tensor
+    return CSCMatrix.from_sparse(tensor)
+
+
+def _as_matrix(value, symmetric):
+    """Setup-time storage: the given CSC entries, or the nonzeros of a strided matrix."""
+
+    if isinstance(value, CSCMatrix):
+        return CSCMatrix(value.pattern, value.values, symmetric)
+    return CSCMatrix.from_dense(value, symmetric=symmetric)
+
+
+def _fit(pattern, value, symmetric):
+    """``value`` as an update of the stored pattern, or ``None`` if it is not one."""
+
+    if isinstance(value, CSCMatrix):
+        if not value.pattern.same(pattern):
+            return None
+        return CSCMatrix(pattern, value.values, symmetric)
+    return CSCMatrix(pattern, value.new_empty(0), symmetric).fit_dense(value)
+
+
+def _same(old, new):
+    if isinstance(old, CSCMatrix):
+        return old.equal(new)
+    return torch.equal(old, new)
+
+
+def _keep(value):
+    return value if isinstance(value, CSCMatrix) else value.detach().clone()
+
+
 def _prepare_workspace(
     workspace,
     P,
@@ -1053,9 +1083,23 @@ def _prepare_workspace(
     *,
     track_constraint_types=True,
 ):
+    """Bind ``P`` and ``A`` to the workspace pattern and return them as ``CSCMatrix``.
+
+    ``osqp_update_data_mat`` replaces stored values only, so data that fits the
+    pattern fixed by the setup is an update on that pattern (an entry that
+    became zero stays stored).  Anything else is a new setup.
+    """
+
     signature = (tuple(P.shape), tuple(A.shape), str(P.device), str(P.dtype), "torch")
-    p_pattern = P.ne(0)
-    a_pattern = A.ne(0)
+    fitted_p = fitted_a = None
+    if (
+        workspace.problem_signature == signature
+        and workspace.p_pattern is not None
+        and workspace.a_pattern is not None
+    ):
+        fitted_p = _fit(workspace.p_pattern, P, True)
+        fitted_a = _fit(workspace.a_pattern, A, False)
+    fits = fitted_p is not None and fitted_a is not None
     constraint_types = (
         None
         if not track_constraint_types or l is None or u is None
@@ -1064,8 +1108,7 @@ def _prepare_workspace(
     # Pinned l/u updates are vector updates. Bound values can change without
     # reordering the unchanged A rows or invalidating their KKT factorization;
     # equality/loose transitions are handled separately by constraint_types.
-    constraint_rows = A
-    rows_reordered = _rows_reordered(workspace.constraint_rows, constraint_rows)
+    rows_reordered = fits and _rows_reordered(workspace.constraint_rows, fitted_a)
     types_compatible = (
         constraint_types is None
         or workspace.constraint_types is None
@@ -1077,33 +1120,26 @@ def _prepare_workspace(
         or workspace.scaling_setting == scaling_setting
     )
     compatible = (
-        workspace.problem_signature == signature
+        fits
         and workspace.constraint_order_signature == constraint_order_signature
-        and workspace.p_pattern is not None
-        and workspace.a_pattern is not None
-        # osqp_update_data_mat replaces stored values only: an entry that
-        # becomes zero stays in the CSC pattern fixed by osqp_setup.  A nonzero
-        # outside that pattern cannot be an update, so it is a new setup.
-        and workspace.p_pattern.shape == p_pattern.shape
-        and workspace.a_pattern.shape == a_pattern.shape
-        and not bool(torch.any(p_pattern & ~workspace.p_pattern).item())
-        and not bool(torch.any(a_pattern & ~workspace.a_pattern).item())
         and not rows_reordered
         and scaling_compatible
     )
     if not compatible:
         workspace.reset_torch()
+        P, A = _as_matrix(P, True), _as_matrix(A, False)
         workspace.problem_signature = signature
         workspace.constraint_order_signature = constraint_order_signature
-        workspace.p_pattern = p_pattern.detach().clone()
-        workspace.a_pattern = a_pattern.detach().clone()
-        workspace.constraint_rows = constraint_rows.detach().clone()
+        workspace.p_pattern = P.pattern
+        workspace.a_pattern = A.pattern
+        workspace.constraint_rows = A
         workspace.constraint_types = (
             None if constraint_types is None else constraint_types.detach().clone()
         )
         workspace.scaling_setting = scaling_setting
-        return
-    workspace.constraint_rows = constraint_rows.detach().clone()
+        return P, A
+    P, A = fitted_p, fitted_a
+    workspace.constraint_rows = A
     if track_constraint_types:
         if not types_compatible:
             workspace.linear_solver.clear()
@@ -1117,8 +1153,8 @@ def _prepare_workspace(
     )
     scaling_matches = (
         has_scaling_source
-        and torch.equal(workspace.scaling_source_p, P)
-        and torch.equal(workspace.scaling_source_a, A)
+        and workspace.scaling_source_p.equal(P)
+        and workspace.scaling_source_a.equal(A)
     )
     if has_scaling_source and not scaling_matches:
         workspace.linear_solver.clear()
@@ -1134,8 +1170,8 @@ def _prepare_workspace(
             workspace.scaling = {
                 **workspace.scaling,
                 "matrix_update": (
-                    not torch.equal(workspace.scaling_source_p, P),
-                    not torch.equal(workspace.scaling_source_a, A),
+                    not workspace.scaling_source_p.equal(P),
+                    not workspace.scaling_source_a.equal(A),
                 ),
             }
         else:
@@ -1143,6 +1179,7 @@ def _prepare_workspace(
             workspace.scaling_source_p = None
             workspace.scaling_source_a = None
             workspace.scaling_passes = 0
+    return P, A
 
 
 def _reconcile_workspace_constraint_types(workspace, constraint_types):
@@ -1155,13 +1192,23 @@ def _reconcile_workspace_constraint_types(workspace, constraint_types):
 
 
 def _rows_reordered(previous, current):
+    """Whether the rows of ``current`` are a reordering of those of ``previous``."""
+
     if (
         previous is None
         or previous.shape != current.shape
         or previous.shape[0] < 2
-        or torch.equal(previous, current)
+        or previous.equal(current)
     ):
         return False
+    # Rows with different contents have different hashes except by collision,
+    # so differing hash multisets settle the common case on stored entries.
+    if not torch.equal(
+        torch.sort(previous.row_hashes()).values,
+        torch.sort(current.row_hashes()).values,
+    ):
+        return False
+    previous, current = previous.to_dense(), current.to_dense()
     _, inverse = torch.unique(
         torch.cat((previous, current), dim=0),
         dim=0,
@@ -1179,52 +1226,43 @@ def _rows_reordered(previous, current):
 def _scale_data(P, q, A, passes):
     """``scaling.c::scale_data`` on the given (unscaled) ``P``, ``q``, ``A``.
 
-    Returns ``D``, ``E``, ``c`` and the scaled ``P`` (upper triangle mirrored),
-    ``A`` and ``q``.  The bounds are scaled by the caller (``l * E``, ``u * E``).
+    Returns ``D``, ``E``, ``c`` and the scaled ``P`` (upper triangle), ``A``
+    and ``q``.  The bounds are scaled by the caller (``l * E``, ``u * E``).
     """
 
     D = torch.ones(P.shape[0], device=P.device, dtype=P.dtype)
     E = torch.ones(A.shape[0], device=A.device, dtype=A.dtype)
     cost = torch.ones((), device=P.device, dtype=P.dtype)
-    P_work = P.clone()
-    A_work = A.clone()
+    P_work = P
+    A_work = A
     q_work = q.clone()
     for _ in range(passes):
-        p_upper = torch.triu(P_work)
-        p_norm = torch.amax(torch.abs(p_upper), dim=0)
-        a_col = (
-            torch.amax(torch.abs(A_work), dim=0)
-            if A_work.shape[0]
-            else torch.zeros_like(p_norm)
-        )
-        a_row = (
-            torch.amax(torch.abs(A_work), dim=1)
-            if A_work.shape[0]
-            else torch.empty(0, device=A.device, dtype=A.dtype)
-        )
+        # compute_inf_norm_cols_KKT: csc_col_norm_inf of the stored upper
+        # triangle of P and of A, and csc_row_norm_inf of A.
+        p_norm = P_work.col_norm_inf()
+        a_col = A_work.col_norm_inf()
+        a_row = A_work.row_norm_inf()
         d_norm = _limit_scaling(torch.maximum(p_norm, a_col))
         e_norm = _limit_scaling(a_row)
         d_step = _ruiz_sqrt(d_norm).reciprocal()
         e_step = _ruiz_sqrt(e_norm).reciprocal()
-        P_work = d_step[:, None] * P_work * d_step[None, :]
-        A_work = e_step[:, None] * A_work * d_step[None, :]
+        P_work = P_work.scale(d_step, d_step)
+        A_work = A_work.scale(e_step, d_step)
         q_work = d_step * q_work
         D = D * d_step
         E = E * e_step
 
-        cost_column_norms = torch.amax(torch.abs(torch.triu(P_work)), dim=0)
+        cost_column_norms = P_work.col_norm_inf()
         # OSQPVectorf_mean: sum / length.  The divisor is a tensor because CUDA
         # evaluates tensor / Python number as a product with the reciprocal.
-        average_p_norm = _cost_column_norm_sum(cost_column_norms) / P.new_tensor(
+        average_p_norm = _cost_column_norm_sum(cost_column_norms) / q.new_tensor(
             P.shape[0]
         )
         q_norm = _limit_scaling(_inf_norm(q_work))
         cost_step = _limit_scaling(torch.maximum(average_p_norm, q_norm)).reciprocal()
-        P_work = cost_step * P_work
+        P_work = P_work.times(cost_step)
         q_work = cost_step * q_work
         cost = cost * cost_step
-    # C stores only P's upper triangle; mirror those scaled entries.
-    P_work = torch.triu(P_work) + torch.triu(P_work, diagonal=1).T
     return D, E, cost, P_work, A_work, q_work
 
 
@@ -1247,9 +1285,9 @@ def _scaling_for_problem(workspace, P, q, A, settings):
         p_changed, a_changed = previous["matrix_update"]
         D_old, E_old, c_old = previous["D"], previous["E"], previous["cost"]
         Dinv, Einv, cinv = D_old.reciprocal(), E_old.reciprocal(), c_old.reciprocal()
-        P_unscaled = ((cinv * previous["scaled_P"]) * Dinv[:, None]) * Dinv[None, :]
+        P_unscaled = previous["scaled_P"].times(cinv).scale(Dinv, Dinv)
         q_unscaled = (previous["scaled_q"] * cinv) * Dinv
-        A_unscaled = (Einv[:, None] * previous["scaled_A"]) * Dinv[None, :]
+        A_unscaled = previous["scaled_A"].scale(Einv, Dinv)
         P_new = P if p_changed else P_unscaled
         A_new = A if a_changed else A_unscaled
         D, E, cost, P_work, A_work, q_work = _scale_data(P_new, q_unscaled, A_new, passes)
@@ -1270,8 +1308,8 @@ def _scaling_for_problem(workspace, P, q, A, settings):
             scaling["source_l"] = previous["source_l"]
             scaling["source_u"] = previous["source_u"]
         workspace.scaling = scaling
-        workspace.scaling_source_p = P.detach().clone()
-        workspace.scaling_source_a = A.detach().clone()
+        workspace.scaling_source_p = P
+        workspace.scaling_source_a = A
         previous = scaling
     if previous is not None and workspace.scaling_passes == passes:
         source_q = previous.get("source_q")
@@ -1299,8 +1337,8 @@ def _scaling_for_problem(workspace, P, q, A, settings):
         "source_q": q.detach().clone(),
     }
     workspace.scaling = scaling
-    workspace.scaling_source_p = P.detach().clone()
-    workspace.scaling_source_a = A.detach().clone()
+    workspace.scaling_source_p = P
+    workspace.scaling_source_a = A
     workspace.scaling_passes = passes
     return scaling
 
@@ -1824,15 +1862,19 @@ def _matvec(M, x, start=None, subtract=False):
     ``csc_Axpy_sym_triu`` for the symmetric ``P`` stored as its upper triangle.
     """
 
-    products = M * x.unsqueeze(0)
-    return _seq_sum(-products if subtract else products, dim=1, start=start)
+    if torch.is_tensor(M):
+        # A strided matrix: every nonzero is a stored entry.
+        M = CSCMatrix.from_dense(M)
+    return M.matvec(x, start=start, subtract=subtract)
 
 
 def _rmatvec(A, y, start=None, subtract=False):
     """``csc_Atxpy``: column ``j`` accumulates ``A[k, j] * y[k]`` for increasing ``k``."""
 
-    products = A * y.unsqueeze(1)
-    return _seq_sum(-products if subtract else products, dim=0, start=start)
+    if torch.is_tensor(A):
+        # A strided matrix: every nonzero is a stored entry.
+        A = CSCMatrix.from_dense(A)
+    return A.rmatvec(y, start=start, subtract=subtract)
 
 
 def _dot(a, b):
@@ -1900,9 +1942,8 @@ def _polish_solution(
     settings,
     *,
     scaling=None,
-    p_pattern=None,
-    a_pattern=None,
 ):
+    P, A = _as_matrix(P, True), _as_matrix(A, False)
     info = _default_polish_info(settings)
     started = _clock()
     equality = torch.isfinite(l) & torch.isfinite(u) & (l == u)
@@ -1917,64 +1958,21 @@ def _polish_solution(
         info["polishing_time_ms"] = (_clock() - started) * 1000
         return x, z, y, info
 
-    A_active = A[indices]
+    # form_Ared: the stored entries of the active rows, in their order.
+    A_active = A.select_rows(indices)
     rhs_active = torch.where(
         lower_active[indices], l[indices], u[indices],
     )
     # The pinned direct backend uses sigma for both signed polish blocks.
     regularization = float(settings.get("sigma", 1e-6))
-    n, p = q.numel(), indices.numel()
-    K_exact = torch.cat(
-        (
-            torch.cat(
-                (P, A_active.T),
-                dim=1,
-            ),
-            torch.cat(
-                (
-                    A_active,
-                    torch.zeros((p, p), device=q.device, dtype=q.dtype),
-                ),
-                dim=1,
-            ),
-        ),
-        dim=0,
-    )
-    regularizer = torch.cat(
-        (
-            torch.cat(
-                (
-                    regularization * torch.eye(n, device=q.device, dtype=q.dtype),
-                    torch.zeros((n, p), device=q.device, dtype=q.dtype),
-                ),
-                dim=1,
-            ),
-            torch.cat(
-                (
-                    torch.zeros((p, n), device=q.device, dtype=q.dtype),
-                    -regularization * torch.eye(p, device=q.device, dtype=q.dtype),
-                ),
-                dim=1,
-            ),
-        ),
-        dim=0,
-    )
-    K_regularized = K_exact + regularizer
+    n = q.numel()
     rhs = torch.cat((-q, rhs_active))
     # polish.c returns the linear-system exit flag and osqp_solve then exits
     # with "Failed polishing" before store_solution; errors propagate here too.
     # init_linsys_solver_qdldl(..., polishing=1): form_KKT(P, Ared, sigma,
     # NULL, sigma), AMD, LDL_factor with the same positive-pivot check.
     polish_solver = QDLDLSolver()
-    polish_solver.factorize(
-        K_regularized,
-        P=P,
-        A=A_active,
-        sigma=regularization,
-        rho_inv_vec=None,
-        p_pattern=P.ne(0) if p_pattern is None else p_pattern,
-        a_pattern=(A.ne(0) if a_pattern is None else a_pattern)[indices],
-    )
+    polish_solver.factorize(KKTSystem(P, A_active, regularization, None))
     if polish_solver.positive_d_count < n:
         raise _QDLDLNumericError(
             "Error in KKT matrix LDL factorization when computing the "
