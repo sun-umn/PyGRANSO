@@ -106,12 +106,14 @@ x, info = solve_torch_osqp_direct(P, q, A, l, u, settings)
 print(info["status"], x.flatten())   # solved, close to [0.25, 0.75]
 ```
 
-`P` and `A` can also be sparse tensors (CSC, CSR or COO). The solver works on the stored entries, as OSQP does: `P` is given by its upper triangle, and every stored entry stays in the sparsity pattern, explicit zeros included. A strided matrix is read as storing its nonzeros.
+`P` and `A` can also be sparse tensors (CSC, CSR or COO). By default they are converted to ordinary matrices first. With `"sparse": True` in the settings the solver works on the stored entries, as OSQP does with CSC input: `P` is given by its upper triangle, and every stored entry stays in the sparsity pattern, explicit zeros included.
 
 ```python
 P = torch.tensor([[4.0, 1.0], [0.0, 2.0]], dtype=torch.float64).to_sparse_csc()
-x, info = solve_torch_osqp_direct(P, q, A.to_sparse_csc(), l, u, settings)
+x, info = solve_torch_osqp_direct(P, q, A.to_sparse_csc(), l, u, settings | {"sparse": True})
 ```
+
+Inside PyGRANSO the same switch is `opts.osqp_settings = {"sparse": True}`; PyGRANSO's own QP subproblems are ordinary matrices, so it changes nothing there.
 
 To reuse the factorization and warm start across solves, create one `TorchOSQPWorkspace` (from `pygranso.private.osqpWorkspace`) and pass it as the last argument each time. The sparsity pattern is fixed by the first solve; later solves with new values on that pattern are updates, and a matrix with a nonzero outside it starts a new setup.
 

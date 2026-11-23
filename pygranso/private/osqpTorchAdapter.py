@@ -44,6 +44,7 @@ LEGACY_TORCH_SETTINGS = {
 }
 
 DEFAULT_OSQP_SETTINGS = {
+    "sparse": False,
     "rho": 0.1,
     "sigma": 1e-6,
     "alpha": 1.6,
@@ -866,6 +867,8 @@ def _normalize_options(options, dtype):
             raise ValueError(f"Unsupported common OSQP setting {key!r}.")
         settings[normalized] = value
     _validate_settings(settings)
+    if settings["sparse"] and algebra != "torch":
+        raise ValueError("sparse=True requires osqp_algebra='torch'.")
     return {"algebra": algebra, "settings": settings}
 
 
@@ -918,6 +921,7 @@ def _validate_settings(settings):
         settings["symmetry_tolerance_multiplier"], "symmetry_tolerance_multiplier"
     )
     for key in (
+        "sparse",
         "rho_update_safeguard",
         "check_linear_residual",
         "check_dualgap",

@@ -125,6 +125,8 @@ def _torch_solve(data, stored, layout, device, settings, workspace):
     def vector(key):
         return torch.tensor(data[key], dtype=torch.float64, device=device)
 
+    settings = dict(settings, sparse=True)
+
     return solve_torch_osqp_direct(
         _sparse(data["P"], stored["P"], layout, device),
         vector("q"),
@@ -232,4 +234,24 @@ def test_per_rank_accumulation_matches_native(seed, monkeypatch):
         reference = session.solve()
     monkeypatch.setattr(torch_csc, "FORCE_LEVEL_LOOP", True)
     x, info = _torch_solve(data, stored, "csc", "cpu", t, TorchOSQPWorkspace())
+    _assert_same(reference, x, info)
+
+
+@pytest.mark.parametrize("seed", range(12))
+def test_without_the_sparse_setting_stored_zeros_are_dropped(seed, monkeypatch):
+    """The default reads a sparse matrix as the strided matrix with the same values."""
+
+    data, stored = _problem(seed)
+    nonzeros = {"P": np.triu(data["P"] != 0), "A": data["A"] != 0}
+    c, t = paired_settings()
+    with _StoredSession(data, nonzeros, monkeypatch, **c) as session:
+        reference = session.solve()
+    x, info = solve_torch_osqp_direct(
+        _sparse(data["P"], stored["P"], "csc", "cpu"),
+        torch.tensor(data["q"], dtype=torch.float64),
+        _sparse(data["A"], stored["A"], "csc", "cpu"),
+        torch.tensor(data["l"], dtype=torch.float64),
+        torch.tensor(data["u"], dtype=torch.float64),
+        t,
+    )
     _assert_same(reference, x, info)

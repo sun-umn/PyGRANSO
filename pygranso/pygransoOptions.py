@@ -341,6 +341,11 @@ def pygransoOptions(n, options):
         supported KKT and memory envelope. Unsupported or unsuccessful Torch
         solves fall back to the optional builtin OSQP package with a warning and
         diagnostics.
+        Set osqp_settings['sparse']=True (with 'torch' algebra) to make the
+        Torch solver keep the stored entries of sparse P and A, explicit zeros
+        included, as OSQP does with CSC input. The default converts sparse
+        matrices to strided ones first. PyGRANSO's own QP subproblems are
+        strided either way.
         Builtin workspaces and structurally compatible warm starts are reused
         automatically within one BFGS-SQP run.
 

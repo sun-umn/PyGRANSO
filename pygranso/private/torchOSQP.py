@@ -944,12 +944,15 @@ def _restore_workspace(workspace, snapshot):
 
 
 def _validate_qp(P, q, A, l, u, settings):
-    """Checked inputs.  ``P`` and ``A`` stay as given: strided or ``CSCMatrix``."""
+    """Checked inputs.  ``P`` and ``A`` are strided, or ``CSCMatrix`` with ``sparse``."""
 
+    sparse = settings.get("sparse", False)
+    if not isinstance(sparse, bool):
+        raise ValueError("sparse must be a bool.")
     tensors = {
-        "P": _matrix_input(P, "P"),
+        "P": _matrix_input(P, "P", sparse),
         "q": _dense_tensor(q, "q").reshape(-1),
-        "A": _matrix_input(A, "A"),
+        "A": _matrix_input(A, "A", sparse),
         "l": _dense_tensor(l, "l").reshape(-1),
         "u": _dense_tensor(u, "u").reshape(-1),
     }
@@ -1031,17 +1034,18 @@ def _dense_tensor(value, name):
     return tensor.to_dense() if tensor.layout != torch.strided else tensor
 
 
-def _matrix_input(value, name):
-    """A strided matrix as given; a sparse one as its stored CSC entries."""
+def _matrix_input(value, name, sparse):
+    """A strided matrix as given.  A sparse one is kept as its stored CSC
+    entries when ``sparse`` is set and converted to a strided matrix otherwise."""
 
     if isinstance(value, CSCMatrix):
-        return value
+        return value if sparse else value.to_dense()
     if not torch.is_tensor(value):
         raise TypeError(f"{name} must be a Torch tensor.")
     tensor = value.detach()
     if tensor.layout == torch.strided:
         return tensor
-    return CSCMatrix.from_sparse(tensor)
+    return CSCMatrix.from_sparse(tensor) if sparse else tensor.to_dense()
 
 
 def _as_matrix(value, symmetric):
