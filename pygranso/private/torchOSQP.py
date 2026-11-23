@@ -1120,8 +1120,13 @@ def _prepare_workspace(
         and workspace.constraint_order_signature == constraint_order_signature
         and workspace.p_pattern is not None
         and workspace.a_pattern is not None
-        and torch.equal(workspace.p_pattern, p_pattern)
-        and torch.equal(workspace.a_pattern, a_pattern)
+        # osqp_update_data_mat replaces stored values only: an entry that
+        # becomes zero stays in the CSC pattern fixed by osqp_setup.  A nonzero
+        # outside that pattern cannot be an update, so it is a new setup.
+        and workspace.p_pattern.shape == p_pattern.shape
+        and workspace.a_pattern.shape == a_pattern.shape
+        and not bool(torch.any(p_pattern & ~workspace.p_pattern).item())
+        and not bool(torch.any(a_pattern & ~workspace.a_pattern).item())
         and not rows_reordered
         and scaling_compatible
     )
