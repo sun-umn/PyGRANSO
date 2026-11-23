@@ -25,7 +25,6 @@ def test_pygranso_default_torch_route_solves_constrained_problem(monkeypatch):
     def observe(P, q, A, lower, upper, settings, workspace=None):
         for value in (P, q, A, lower, upper):
             assert value.dtype == torch.float64 and value.device.type == "cpu"
-        assert not settings["use_sparse"]
         x, info = core(P, q, A, lower, upper, settings, workspace)
         statuses.append(info["status_val"])
         return x, info

@@ -341,9 +341,6 @@ def pygransoOptions(n, options):
         supported KKT and memory envelope. Unsupported or unsuccessful Torch
         solves fall back to the optional builtin OSQP package with a warning and
         diagnostics.
-        Set osqp_settings['use_sparse']=True to opt into experimental CUDA/cuDSS
-        sparse direct solves. This requires explicit 'torch' algebra; the
-        default remains dense. Assembly and scaling still use dense tensors.
         Builtin workspaces and structurally compatible warm starts are reused
         automatically within one BFGS-SQP run.
 

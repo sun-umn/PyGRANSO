@@ -10,7 +10,6 @@ import torch
 from pygranso.private.osqpWorkspace import TorchOSQPWorkspace
 from pygranso.private.torchLinearSolve import TorchLinearSolveError
 from pygranso.private.torchQDLDLSolve import QDLDLSolver, _QDLDLNumericError
-from pygranso.private.torchSparseSolve import SparseDirectSolver
 
 _clock = time.perf_counter
 
@@ -222,17 +221,7 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
         P, q, A, l, u = _validate_qp(P, q, A, l, u, settings)
         if settings.get("rho_update_safeguard", False):
             raise ValueError("The pinned C rho update requires rho_update_safeguard=False.")
-        use_sparse = settings.get("use_sparse", False)
-        if not isinstance(use_sparse, bool):
-            raise ValueError("use_sparse must be a bool.")
-        solver_type = SparseDirectSolver if use_sparse else QDLDLSolver
-        native_failures = (
-            not use_sparse and q.device.type == "cpu" and q.dtype == torch.float64
-        )
-        if type(workspace.linear_solver) is not solver_type:
-            # A package change is a fresh setup, not a reuse of foreign factors.
-            workspace.reset_torch()
-            workspace.linear_solver = solver_type()
+        native_failures = q.device.type == "cpu" and q.dtype == torch.float64
         rho_mode = int(settings.get("adaptive_rho", True))
         requested_rho_interval = int(settings.get("rho_update_interval", 50))
         rho_fraction = float(settings.get("adaptive_rho_fraction", 0.4))
@@ -360,71 +349,46 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
             or previous_k.dtype != K.dtype
             or not torch.equal(previous_k[:n], K[:n])
         )
-        if use_sparse:
-            factorization_reused = not solver.factorize_if_needed(K)
-            # Pinned rho-only updates check factor failure, not positive-D count.
-            if matrix_data_changed:
-                # A positive variable block and negative rho block establish the
-                # expected KKT inertia without losing small signs in a full solve.
-                eigenvalues = torch.linalg.eigvalsh(K[:n, :n])
-                if not bool(torch.all(torch.isfinite(eigenvalues)).item()):
-                    raise TorchLinearSolveError("KKT inertia check returned non-finite values.")
-                if bool(torch.any(eigenvalues <= 0).item()):
-                    # P alone is not the QDLDL setup/update criterion: constraints
-                    # can change the inertia even when P + sigma I is indefinite.
-                    eigenvalues = torch.linalg.eigvalsh(K)
-                    if not bool(torch.all(torch.isfinite(eigenvalues)).item()):
-                        raise TorchLinearSolveError(
-                            "KKT inertia check returned non-finite values."
-                        )
-                if int(torch.count_nonzero(eigenvalues > 0).item()) != n or bool(
-                    torch.any(eigenvalues == 0).item()
-                ):
-                    raise TorchLinearSolveError(
-                        "KKT inertia does not have the required positive/negative "
-                        "sign counts; the problem may be non-convex."
-                    )
-        else:
-            factorization_reused = solver.is_factorized_for(K)
-            if not factorization_reused:
-                # init_linsys_solver_qdldl / update_linsys_solver_*_qdldl:
-                # form_KKT, AMD-permute, QDLDL_etree, QDLDL_factor.
-                try:
-                    solver.factorize(
-                        K,
-                        P=P_s,
-                        A=A_s,
-                        sigma=sigma,
-                        rho_inv_vec=rho_inv_vec,
-                        p_pattern=workspace.p_pattern,
-                        a_pattern=workspace.a_pattern,
-                    )
-                except _QDLDLNumericError as exc:
-                    if callback_stage is None:
-                        raise
-                    workspace.rho_bar, workspace.rho_setting = rho_bar.item(), requested_rho
-                    workspace.rho_updates_committed = rho_updates_base
-                    raise _callback_error(workspace, callback_stage, 1, str(exc)) from exc
-            # LDL_factor (setup) rejects fewer than n positive pivots and
-            # update_linsys_solver_matrices_qdldl any count other than n;
-            # update_linsys_solver_rho_vec_qdldl only checks factor failure.
-            if callback_stage == "matrix_update" and solver.positive_d_count != n:
+        factorization_reused = solver.is_factorized_for(K)
+        if not factorization_reused:
+            # init_linsys_solver_qdldl / update_linsys_solver_*_qdldl:
+            # form_KKT, AMD-permute, QDLDL_etree, QDLDL_factor.
+            try:
+                solver.factorize(
+                    K,
+                    P=P_s,
+                    A=A_s,
+                    sigma=sigma,
+                    rho_inv_vec=rho_inv_vec,
+                    p_pattern=workspace.p_pattern,
+                    a_pattern=workspace.a_pattern,
+                )
+            except _QDLDLNumericError as exc:
+                if callback_stage is None:
+                    raise
                 workspace.rho_bar, workspace.rho_setting = rho_bar.item(), requested_rho
                 workspace.rho_updates_committed = rho_updates_base
-                raise _callback_error(
-                    workspace, callback_stage, 1,
-                    "KKT inertia does not have the required positive/negative "
-                    "sign counts; the problem may be non-convex.",
-                )
-            if callback_stage not in ("rho_update", "bounds_update") and matrix_data_changed and (
-                solver.positive_d_count < n
-                if previous_k is None
-                else solver.positive_d_count != n
-            ):
-                raise TorchLinearSolveError(
-                    "KKT inertia does not have the required positive/negative "
-                    "sign counts; the problem may be non-convex."
-                )
+                raise _callback_error(workspace, callback_stage, 1, str(exc)) from exc
+        # LDL_factor (setup) rejects fewer than n positive pivots and
+        # update_linsys_solver_matrices_qdldl any count other than n;
+        # update_linsys_solver_rho_vec_qdldl only checks factor failure.
+        if callback_stage == "matrix_update" and solver.positive_d_count != n:
+            workspace.rho_bar, workspace.rho_setting = rho_bar.item(), requested_rho
+            workspace.rho_updates_committed = rho_updates_base
+            raise _callback_error(
+                workspace, callback_stage, 1,
+                "KKT inertia does not have the required positive/negative "
+                "sign counts; the problem may be non-convex.",
+            )
+        if callback_stage not in ("rho_update", "bounds_update") and matrix_data_changed and (
+            solver.positive_d_count < n
+            if previous_k is None
+            else solver.positive_d_count != n
+        ):
+            raise TorchLinearSolveError(
+                "KKT inertia does not have the required positive/negative "
+                "sign counts; the problem may be non-convex."
+            )
         solve_clock_started = _clock()
         if fresh_rho_setup or workspace.adaptive_rho_setup_time is None:
             workspace.adaptive_rho_setup_time = solve_clock_started - solve_started
@@ -611,37 +575,34 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
                         candidate_k = build_kkt_matrix(
                             P_s, A_s, sigma, rho_vec_candidate
                         )
-                        if use_sparse:
-                            solver.refactorize(candidate_k)
-                        else:
-                            # update_linsys_solver_rho_vec_qdldl: new rho
-                            # values, then QDLDL_factor on the same pattern.
-                            try:
-                                solver.factorize(
-                                    candidate_k,
-                                    P=P_s,
-                                    A=A_s,
-                                    sigma=sigma,
-                                    rho_inv_vec=-candidate_k.diagonal()[n:],
-                                    p_pattern=workspace.p_pattern,
-                                    a_pattern=workspace.a_pattern,
-                                )
-                            except _QDLDLNumericError as exc:
-                                if not native_failures:
-                                    raise
-                                # adapt_rho writes rho and counts the attempted
-                                # update before osqp_solve exits, without updating
-                                # last_rel_kkt or publishing a new solution.
-                                workspace.rho_bar = rho_candidate.item()
-                                workspace.rho_setting = requested_rho
-                                updates = _failed_solve_info(
-                                    workspace, (x, z, y), status,
-                                    rho_updates_base + rho_updates + 1, iteration,
-                                    rho_candidate, last_residuals, objective_values,
-                                )
-                                raise _callback_error(
-                                    workspace, "adaptive_rho", 1, str(exc), rho_updated=True, **updates
-                                ) from exc
+                        # update_linsys_solver_rho_vec_qdldl: new rho
+                        # values, then QDLDL_factor on the same pattern.
+                        try:
+                            solver.factorize(
+                                candidate_k,
+                                P=P_s,
+                                A=A_s,
+                                sigma=sigma,
+                                rho_inv_vec=-candidate_k.diagonal()[n:],
+                                p_pattern=workspace.p_pattern,
+                                a_pattern=workspace.a_pattern,
+                            )
+                        except _QDLDLNumericError as exc:
+                            if not native_failures:
+                                raise
+                            # adapt_rho writes rho and counts the attempted
+                            # update before osqp_solve exits, without updating
+                            # last_rel_kkt or publishing a new solution.
+                            workspace.rho_bar = rho_candidate.item()
+                            workspace.rho_setting = requested_rho
+                            updates = _failed_solve_info(
+                                workspace, (x, z, y), status,
+                                rho_updates_base + rho_updates + 1, iteration,
+                                rho_candidate, last_residuals, objective_values,
+                            )
+                            raise _callback_error(
+                                workspace, "adaptive_rho", 1, str(exc), rho_updated=True, **updates
+                            ) from exc
                         K = candidate_k
                         rho_bar = rho_candidate
                         rho_vec = rho_vec_candidate
@@ -927,7 +888,7 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
             "dual_inf_cert": dual_certificate_result,
             "backend": "torch",
             "linear_solver": solver.solver_name,
-            "factorization_reused": factorization_reused and not use_sparse,
+            "factorization_reused": factorization_reused,
             "factorizations_this_solve": solver.factorization_count - factors_before,
             "linear_solves_this_solve": solver.solve_count - solves_before,
             "factorization_count": solver.factorization_count,
@@ -2002,27 +1963,23 @@ def _polish_solution(
     rhs = torch.cat((-q, rhs_active))
     # polish.c returns the linear-system exit flag and osqp_solve then exits
     # with "Failed polishing" before store_solution; errors propagate here too.
-    if settings.get("use_sparse", False):
-        polish_solver = SparseDirectSolver()
-        polish_solver.factorize(K_regularized)
-    else:
-        # init_linsys_solver_qdldl(..., polishing=1): form_KKT(P, Ared, sigma,
-        # NULL, sigma), AMD, LDL_factor with the same positive-pivot check.
-        polish_solver = QDLDLSolver()
-        polish_solver.factorize(
-            K_regularized,
-            P=P,
-            A=A_active,
-            sigma=regularization,
-            rho_inv_vec=None,
-            p_pattern=P.ne(0) if p_pattern is None else p_pattern,
-            a_pattern=(A.ne(0) if a_pattern is None else a_pattern)[indices],
+    # init_linsys_solver_qdldl(..., polishing=1): form_KKT(P, Ared, sigma,
+    # NULL, sigma), AMD, LDL_factor with the same positive-pivot check.
+    polish_solver = QDLDLSolver()
+    polish_solver.factorize(
+        K_regularized,
+        P=P,
+        A=A_active,
+        sigma=regularization,
+        rho_inv_vec=None,
+        p_pattern=P.ne(0) if p_pattern is None else p_pattern,
+        a_pattern=(A.ne(0) if a_pattern is None else a_pattern)[indices],
+    )
+    if polish_solver.positive_d_count < n:
+        raise _QDLDLNumericError(
+            "Error in KKT matrix LDL factorization when computing the "
+            "nonzero elements. The problem seems to be non-convex."
         )
-        if polish_solver.positive_d_count < n:
-            raise _QDLDLNumericError(
-                "Error in KKT matrix LDL factorization when computing the "
-                "nonzero elements. The problem seems to be non-convex."
-            )
     polished, _ = polish_solver.solve(
         rhs,
         calculate_residual=bool(settings.get("check_linear_residual", False)),

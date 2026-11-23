@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 import torch
 
 from pygranso.private.torchQDLDLSolve import QDLDLSolver
-from pygranso.private.torchSparseSolve import SparseDirectSolver
 
 
 @dataclass
@@ -35,7 +34,7 @@ class TorchOSQPWorkspace:
     last_rel_kkt: float | None = None
     rho_updates_committed: int = field(default=0, init=False)
     active_backend: str | None = None
-    linear_solver: QDLDLSolver | SparseDirectSolver = field(default_factory=QDLDLSolver)
+    linear_solver: QDLDLSolver = field(default_factory=QDLDLSolver)
     last_info: dict | None = None
     # The adapter can publish a failed attempt while restoring this solver epoch.
     solver_info: dict | None = None

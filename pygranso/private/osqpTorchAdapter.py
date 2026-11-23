@@ -44,7 +44,6 @@ LEGACY_TORCH_SETTINGS = {
 }
 
 DEFAULT_OSQP_SETTINGS = {
-    "use_sparse": False,
     "rho": 0.1,
     "sigma": 1e-6,
     "alpha": 1.6,
@@ -490,9 +489,7 @@ def _solve_torch_osqp_path(
         names = ", ".join(sparse_to_dense["inputs"])
         warnings.warn(
             "Torch OSQP's dense compatibility route will convert sparse "
-            f"input(s) {names} to strided tensors on {target_device}; "
-            + ("the KKT solve then uses sparse CSR." if settings["use_sparse"]
-               else "no sparse solver is selected."),
+            f"input(s) {names} to strided tensors on {target_device}.",
             RuntimeWarning,
             stacklevel=3,
         )
@@ -869,8 +866,6 @@ def _normalize_options(options, dtype):
             raise ValueError(f"Unsupported common OSQP setting {key!r}.")
         settings[normalized] = value
     _validate_settings(settings)
-    if settings["use_sparse"] and algebra != "torch":
-        raise ValueError("use_sparse=True requires osqp_algebra='torch'.")
     return {"algebra": algebra, "settings": settings}
 
 
@@ -923,7 +918,6 @@ def _validate_settings(settings):
         settings["symmetry_tolerance_multiplier"], "symmetry_tolerance_multiplier"
     )
     for key in (
-        "use_sparse",
         "rho_update_safeguard",
         "check_linear_residual",
         "check_dualgap",
