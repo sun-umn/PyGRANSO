@@ -28,8 +28,6 @@ class _Plan:
         order = torch.argsort(out * max(int(n_in), 1) + inp, stable=True)
         self.out, self.inp, self.val = out[order], inp[order], val[order]
         self.n_out, self.n_in = int(n_out), int(n_in)
-        # Row-major, columns ascending: the index order of a coalesced COO tensor.
-        self.indices = torch.stack((self.out, self.inp))
         counts = torch.bincount(self.out, minlength=self.n_out)
         starts = torch.cumsum(counts, 0) - counts
         self.rank = (
@@ -248,22 +246,11 @@ class CSCMatrix:
         return self._product(self.pattern.plan("Atx"), y, start, subtract)
 
     def _product(self, plan, vector, start, subtract):
+        # The product and the sum are separate operations, as in C built without
+        # floating-point contraction.  torch.sparse.mm is not used: its kernels
+        # either add in another order or, depending on the PyTorch build, fuse
+        # the multiply and the add into one rounding.
         values = self.values[plan.val]
-        if (
-            start is None
-            and not subtract
-            and not FORCE_LEVEL_LOOP
-            and plan.width > 0
-            and values.device.type == "cpu"
-            and values.dtype == torch.float64
-        ):
-            # torch.sparse.mm on a coalesced COO tensor adds value * x[column]
-            # to its row entry by entry in index order, which is the C order.
-            # The CSR and CSC kernels and every CUDA kernel use another order.
-            matrix = torch.sparse_coo_tensor(
-                plan.indices, values, (plan.n_out, plan.n_in), is_coalesced=True
-            )
-            return torch.sparse.mm(matrix, vector.unsqueeze(1)).squeeze(1)
         products = values * vector[plan.inp]
         return plan.accumulate(-products if subtract else products, start)
 
