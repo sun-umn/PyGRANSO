@@ -76,3 +76,38 @@ def test_gpu_factorization_setting_selects_the_device(seed, monkeypatch):
         _assert_same(reference, x, info)
     with pytest.raises(ValueError, match="gpu_factorization must be a bool"):
         _torch_solve(data, stored, "csc", "cuda", dict(t, gpu_factorization=1), None)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA unavailable")
+@pytest.mark.parametrize("change", ["none", "q"])
+@pytest.mark.parametrize("first", [True, False])
+@pytest.mark.parametrize("seed", range(3))
+def test_gpu_factorization_switch_on_a_reused_workspace(seed, first, change):
+    """A changed setting takes effect although the KKT matrix is unchanged."""
+
+    data, stored = _problem(seed)
+    _, t = paired_settings()
+    second = dict(data)
+    if change == "q":
+        second["q"] = data["q"] * 1.01
+
+    def run(settings_first, settings_second):
+        workspace = TorchOSQPWorkspace()
+        _torch_solve(data, stored, "csc", "cuda", settings_first, workspace)
+        made_on_gpu = torch.is_tensor(workspace.linear_solver.factors[2])
+        x, info = _torch_solve(second, stored, "csc", "cuda", settings_second, workspace)
+        return made_on_gpu, torch.is_tensor(workspace.linear_solver.factors[2]), x, info
+
+    before, after = dict(t, gpu_factorization=first), dict(t, gpu_factorization=not first)
+    made, used, x, info = run(before, after)
+    assert (made, used) == (first, not first)
+    # Same numbers as without the switch; that sequence is compared with C above.
+    _, kept, x_ref, info_ref = run(before, before)
+    assert kept == first
+    assert info["status_val"] == info_ref["status_val"]
+    assert info["admm_iterations"] == info_ref["admm_iterations"]
+    assert x.cpu().numpy().tobytes() == x_ref.cpu().numpy().tobytes()
+    assert (
+        info["public_y"].cpu().numpy().tobytes()
+        == info_ref["public_y"].cpu().numpy().tobytes()
+    )

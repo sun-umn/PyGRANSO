@@ -107,7 +107,15 @@ class QDLDLSolver:
     def is_factorized_for(self, matrix) -> bool:
         if not self.ready or self._matrix is None:
             return False
+        # Factors made on the other device (the gpu_factorization setting
+        # changed since) are not reused.
+        if torch.is_tensor(self._factors[2]) != self._uses_device_program(matrix):
+            return False
         return self._matrix.equal(matrix)
+
+    def _uses_device_program(self, matrix) -> bool:
+        on_gpu = matrix.device.type != "cpu" and self.gpu_factorization
+        return on_gpu or DEVICE_PROGRAM
 
     def factorize(self, matrix) -> None:
         """``form_KKT`` -> ``permute_KKT`` -> ``LDL_factor`` for a ``KKTSystem``.
@@ -121,8 +129,7 @@ class QDLDLSolver:
         for values in (P.values, A.values, rho_inv_vec):
             if values is not None and not bool(torch.all(torch.isfinite(values)).item()):
                 raise ValueError("The linear-system matrix contains NaN or Inf.")
-        on_gpu = matrix.device.type != "cpu" and self.gpu_factorization
-        if on_gpu or DEVICE_PROGRAM:
+        if self._uses_device_program(matrix):
             self._factorize_on_device(matrix)
             return
         n = P.shape[0]
