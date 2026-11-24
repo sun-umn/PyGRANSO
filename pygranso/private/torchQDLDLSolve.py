@@ -5,6 +5,12 @@
 tree and the LDL' factors (``LDL_factor``), and ``solve_linsys_qdldl`` applies
 ``LDLSolve``.  The same sequence is used here so that every stored factor entry
 and every solution entry is produced by the same rounded operations as in C.
+
+For CPU tensors the factorization and solves are the scalar loops of
+``torchQDLDL``.  For CUDA tensors they are the tensor programs of
+``torchQDLDLDevice``, which perform the same operations on the GPU; only the
+pattern analysis (KKT pattern, AMD ordering, elimination tree) is done on the
+CPU, on integers.
 """
 
 from __future__ import annotations
@@ -12,13 +18,18 @@ from __future__ import annotations
 import numpy as np
 import torch
 
-from pygranso.private.torchKKTForm import form_KKT, permute_KKT
+from pygranso.private.torchKKTForm import csc_pinv, csc_symperm, form_KKT, permute_KKT
 from pygranso.private.torchLinearSolve import (
     LinearSolveDiagnostics,
     TorchLinearSolveError,
     _validate_rhs,
 )
 from pygranso.private.torchQDLDL import ldl_solve, qdldl_etree, qdldl_factor
+from pygranso.private.torchQDLDLDevice import FactorProgram, SolveProgram
+
+# Test hook: use the tensor programs of torchQDLDLDevice for CPU tensors too.
+# CUDA tensors always use them, so their values stay on the GPU.
+DEVICE_PROGRAM = False
 
 
 class _QDLDLNumericError(TorchLinearSolveError):
@@ -58,6 +69,7 @@ class QDLDLSolver:
         self.solve_count = 0
         self._symbolic_key = None
         self._perm = None
+        self._device_symbolic = None
         self.clear()
 
     @property
@@ -84,6 +96,7 @@ class QDLDLSolver:
         self.clear()
         self._symbolic_key = None
         self._perm = None
+        self._device_symbolic = None
         self.factorization_count = 0
         self.solve_count = 0
 
@@ -104,6 +117,9 @@ class QDLDLSolver:
         for values in (P.values, A.values, rho_inv_vec):
             if values is not None and not bool(torch.all(torch.isfinite(values)).item()):
                 raise ValueError("The linear-system matrix contains NaN or Inf.")
+        if matrix.device.type != "cpu" or DEVICE_PROGRAM:
+            self._factorize_on_device(matrix)
+            return
         n = P.shape[0]
         m = A.shape[0]
         P_csc = _csc_dict(P)
@@ -129,8 +145,6 @@ class QDLDLSolver:
             self._pinv = None
         else:
             # The ordering depends only on the pattern, as in the C update paths.
-            from pygranso.private.torchKKTForm import csc_pinv, csc_symperm
-
             if self._pinv is None:
                 self._pinv = csc_pinv(self._perm)
             permuted = csc_symperm(KKT, self._pinv, None, 1)
@@ -164,6 +178,109 @@ class QDLDLSolver:
         self.positive_d_count = int(positive)
         self.factorization_count += 1
 
+    def _device_symbolic_for(self, matrix):
+        """Pattern-only setup: KKT pattern and maps, AMD ordering, etree, programs."""
+
+        P, A = matrix.P, matrix.A
+        cached = self._device_symbolic
+        if (
+            cached is not None
+            and cached["device"] == matrix.device
+            and cached["P"].same(P.pattern)
+            and cached["A"].same(A.pattern)
+        ):
+            return cached
+        n, m = P.shape[0], A.shape[0]
+        device = matrix.device
+
+        def pattern_only(stored):
+            pointers, rows = stored.pattern.lists()
+            return {
+                "m": stored.shape[0], "n": stored.shape[1], "p": pointers,
+                "i": rows, "x": [0.0] * len(rows), "nzmax": len(rows),
+            }
+
+        KKT, PtoKKT, AtoKKT, rhotoKKT = form_KKT(
+            pattern_only(P), pattern_only(A), 0, 0.0, None, 0.0, return_maps=True
+        )
+        symbolic_key = (n, m, tuple(KKT["p"]), tuple(KKT["i"]))
+        if self._symbolic_key != symbolic_key or self._perm is None:
+            # permute_KKT: AMD ordering of the KKT pattern.
+            amd_status, perm, permuted = permute_KKT(KKT)
+            if amd_status < 0 or permuted is None:
+                raise TorchLinearSolveError("Error forming and permuting KKT matrix.")
+            self._symbolic_key = symbolic_key
+            self._perm = list(perm)
+            self._pinv = None
+        if self._pinv is None:
+            self._pinv = csc_pinv(self._perm)
+        KtoPKPt = [0] * len(KKT["i"])
+        permuted = csc_symperm(KKT, self._pinv, KtoPKPt, 0)
+        size = n + m
+        Kp = [int(v) for v in permuted["p"]]
+        Ki = [int(v) for v in permuted["i"]]
+        sum_lnz, Lnz, etree = qdldl_etree(size, Kp, Ki)
+        if sum_lnz < 0:
+            raise TorchLinearSolveError(
+                "Error in KKT matrix LDL factorization when computing the "
+                "elimination tree."
+            )
+
+        def index(values):
+            return torch.tensor(values, dtype=torch.int64, device=device)
+
+        factor = FactorProgram(size, Kp, Ki, Lnz, etree, sum_lnz, device)
+        cached = {
+            "device": device, "P": P.pattern, "A": A.pattern,
+            "nnz": len(KKT["i"]),
+            "PtoKKT": index(PtoKKT), "AtoKKT": index(AtoKKT),
+            "rhotoKKT": index(rhotoKKT),
+            # _kkt_shifts_param1: the diagonal is the last entry of each column.
+            "diagonal": index([KKT["p"][i + 1] - 1 for i in range(n)]),
+            "KtoPKPt": index(KtoPKPt),
+            "Kp": Kp, "Ki": Ki, "Lnz": Lnz, "etree": etree,
+            "factor": factor,
+            "solve": SolveProgram(size, factor.Lp, factor.Li, self._perm, device),
+        }
+        self._device_symbolic = cached
+        return cached
+
+    def _factorize_on_device(self, matrix) -> None:
+        """``factorize`` with every value kept on the device of ``matrix``."""
+
+        P, A = matrix.P, matrix.A
+        symbolic = self._device_symbolic_for(matrix)
+        # form_KKT: P, structural zeros on the diagonal, A', then the shifts.
+        values = P.values.new_zeros(symbolic["nnz"])
+        values[symbolic["PtoKKT"]] = P.values
+        values[symbolic["AtoKKT"]] = A.values
+        diagonal = symbolic["diagonal"]
+        values[diagonal] = values[diagonal] + matrix.sigma
+        rho = symbolic["rhotoKKT"]
+        values[rho] = values[rho] - (
+            matrix.sigma if matrix.rho_inv_vec is None else matrix.rho_inv_vec
+        )
+        # csc_symperm
+        Kx = torch.empty_like(values)
+        Kx[symbolic["KtoPKPt"]] = values
+        Lx, D, Dinv = symbolic["factor"].run(Kx)
+        factor = symbolic["factor"]
+        self._matrix = matrix
+        self._kkt = (symbolic["Kp"], symbolic["Ki"], Kx)
+        self._symbolic = (symbolic["Lnz"], symbolic["etree"])
+        if bool((D == 0).any().item()):
+            # QDLDL_factor returns -1 at the first zero entry of D.
+            self.positive_d_count = None
+            self.invalidate()
+            raise _QDLDLNumericError(
+                "Error in KKT matrix LDL factorization when computing the nonzero "
+                "elements. There are zeros in the diagonal matrix."
+            )
+        self._factors = (factor.Lp, factor.Li, Lx, D, Dinv)
+        self._program = (symbolic["solve"], symbolic["solve"].bind(Lx))
+        self.positive_d_count = int((D > 0).sum().item())
+        self.factorization_count += 1
+
     def solve(self, rhs: torch.Tensor, *, calculate_residual: bool = False):
         if not self.ready or self._matrix is None:
             raise TorchLinearSolveError(
@@ -172,7 +289,12 @@ class QDLDLSolver:
         rhs, vector_rhs = _validate_rhs(rhs, self._matrix)
         Lp, Li, Lx, _, Dinv = self._factors
         columns = []
+        on_device = torch.is_tensor(Lx)
         for column in rhs.unbind(1):
+            if on_device:
+                program, bound = self._program
+                columns.append(program.run(bound, Dinv, column))
+                continue
             values = ldl_solve(_scalars(column), Lp, Li, Lx, Dinv, self._perm)
             columns.append(
                 torch.tensor(

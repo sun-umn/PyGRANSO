@@ -15,6 +15,20 @@ import torch
 FORCE_LEVEL_LOOP = False
 
 
+def sequential_sum(buffer):
+    """``acc += term`` down the rows of a float64 ``buffer``, one sum per column.
+
+    ``torch.cumsum`` along the first dimension adds the terms one after another
+    on CPU and on CUDA.  On CUDA this holds only when there is more than one
+    column (a single column is summed by a parallel scan), so callers keep a
+    spare column.
+    """
+
+    if buffer.shape[1] < 2:
+        raise ValueError("sequential_sum needs at least two columns.")
+    return torch.cumsum(buffer, dim=0)[-1]
+
+
 class _Plan:
     """Accumulation order of one product: ``out[k] += value[k] * x[inp[k]]``.
 
@@ -44,22 +58,21 @@ class _Plan:
             if start is not None:
                 return start.clone()
             return products.new_zeros(self.n_out)
-        padded = self.n_out * (self.width + 1)
+        padded = (self.n_out + 1) * (self.width + 1)
         if (
             not FORCE_LEVEL_LOOP
-            and products.device.type == "cpu"
             and products.dtype == torch.float64
             and padded <= 4 * products.numel() + 4096
         ):
-            # torch.cumsum is the recurrence acc += term for CPU float64.  Rows
-            # shorter than the widest one are padded with -0.0, whose addition
-            # leaves every value unchanged, signed zeros included.
+            # One row of the buffer per term, one column per output.  Outputs
+            # with fewer terms are padded with -0.0, whose addition leaves
+            # every value unchanged, signed zeros included.
             if self._ell is None:
-                self._ell = self.out * (self.width + 1) + self.rank + 1
-            buffer = products.new_full((self.n_out, self.width + 1), -0.0)
-            buffer[:, 0] = 0.0 if start is None else start
+                self._ell = (self.rank + 1) * (self.n_out + 1) + self.out
+            buffer = products.new_full((self.width + 1, self.n_out + 1), -0.0)
+            buffer[0, : self.n_out] = 0.0 if start is None else start
             buffer.view(-1)[self._ell] = products
-            return torch.cumsum(buffer, dim=1)[:, -1]
+            return sequential_sum(buffer)[: self.n_out]
         if self._levels is None:
             order = torch.argsort(self.rank, stable=True)
             sizes = torch.bincount(self.rank, minlength=self.width).tolist()

@@ -117,7 +117,7 @@ Inside PyGRANSO the same switch is `opts.osqp_settings = {"sparse": True}`; PyGR
 
 To reuse the factorization and warm start across solves, create one `TorchOSQPWorkspace` (from `pygranso.private.osqpWorkspace`) and pass it as the last argument each time. The sparsity pattern is fixed by the first solve; later solves with new values on that pattern are updates, and a matrix with a nonzero outside it starts a new setup.
 
-CUDA tensors are accepted; the factorization and triangular solves run on the CPU.
+With CUDA tensors all values stay on the GPU: the KKT matrix, the LDL' factorization and the triangular solves are tensor operations on the device. Only the analysis of the sparsity pattern (ordering and elimination tree, which involve no floating-point values) runs on the CPU, once per pattern.
 
 ### Verify installation
 
