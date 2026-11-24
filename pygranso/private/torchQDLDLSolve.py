@@ -10,7 +10,8 @@ For CPU tensors the factorization and solves are the scalar loops of
 ``torchQDLDL``.  For CUDA tensors they are the tensor programs of
 ``torchQDLDLDevice``, which perform the same operations on the GPU; only the
 pattern analysis (KKT pattern, AMD ordering, elimination tree) is done on the
-CPU, on integers.
+CPU, on integers.  With the setting ``gpu_factorization=False`` CUDA tensors
+use the scalar loops on the CPU instead; the results are the same.
 """
 
 from __future__ import annotations
@@ -70,6 +71,9 @@ class QDLDLSolver:
         self._symbolic_key = None
         self._perm = None
         self._device_symbolic = None
+        # Setting ``gpu_factorization``: False sends CUDA values through the
+        # scalar loops on the CPU.
+        self.gpu_factorization = True
         self.clear()
 
     @property
@@ -117,7 +121,8 @@ class QDLDLSolver:
         for values in (P.values, A.values, rho_inv_vec):
             if values is not None and not bool(torch.all(torch.isfinite(values)).item()):
                 raise ValueError("The linear-system matrix contains NaN or Inf.")
-        if matrix.device.type != "cpu" or DEVICE_PROGRAM:
+        on_gpu = matrix.device.type != "cpu" and self.gpu_factorization
+        if on_gpu or DEVICE_PROGRAM:
             self._factorize_on_device(matrix)
             return
         n = P.shape[0]

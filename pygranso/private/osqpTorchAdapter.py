@@ -45,6 +45,7 @@ LEGACY_TORCH_SETTINGS = {
 
 DEFAULT_OSQP_SETTINGS = {
     "sparse": False,
+    "gpu_factorization": True,
     "rho": 0.1,
     "sigma": 1e-6,
     "alpha": 1.6,
@@ -922,6 +923,7 @@ def _validate_settings(settings):
     )
     for key in (
         "sparse",
+        "gpu_factorization",
         "rho_update_safeguard",
         "check_linear_residual",
         "check_dualgap",

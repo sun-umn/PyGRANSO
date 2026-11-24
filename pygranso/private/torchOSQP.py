@@ -336,6 +336,7 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
         check_linear_residual = bool(settings.get("check_linear_residual", False))
 
         solver = workspace.linear_solver
+        solver.gpu_factorization = _gpu_factorization(settings)
         factors_before = solver.factorization_count
         solves_before = solver.solve_count
         K = build_kkt_matrix(P_s, A_s, sigma, rho_vec)
@@ -943,9 +944,19 @@ def _restore_workspace(workspace, snapshot):
     workspace.__dict__.update(fields)
 
 
+def _gpu_factorization(settings):
+    """Setting ``gpu_factorization``: where CUDA problems are factorized and solved."""
+
+    value = settings.get("gpu_factorization", True)
+    if not isinstance(value, bool):
+        raise ValueError("gpu_factorization must be a bool.")
+    return value
+
+
 def _validate_qp(P, q, A, l, u, settings):
     """Checked inputs.  ``P`` and ``A`` are strided, or ``CSCMatrix`` with ``sparse``."""
 
+    _gpu_factorization(settings)
     sparse = settings.get("sparse", False)
     if not isinstance(sparse, bool):
         raise ValueError("sparse must be a bool.")
@@ -1976,6 +1987,7 @@ def _polish_solution(
     # init_linsys_solver_qdldl(..., polishing=1): form_KKT(P, Ared, sigma,
     # NULL, sigma), AMD, LDL_factor with the same positive-pivot check.
     polish_solver = QDLDLSolver()
+    polish_solver.gpu_factorization = _gpu_factorization(settings)
     polish_solver.factorize(KKTSystem(P, A_active, regularization, None))
     if polish_solver.positive_d_count < n:
         raise _QDLDLNumericError(

@@ -59,3 +59,20 @@ def test_cuda_solve_keeps_the_values_on_the_gpu(seed, monkeypatch):
     with _StoredSession(data, stored, monkeypatch, **c) as session:
         _assert_same(session.solve(), x, info)
     assert reference["iter"] == info["admm_iterations"]
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA unavailable")
+@pytest.mark.parametrize("seed", range(6))
+def test_gpu_factorization_setting_selects_the_device(seed, monkeypatch):
+    data, stored = _problem(seed)
+    c, t = paired_settings(polishing=1)
+    with _StoredSession(data, stored, monkeypatch, **c) as session:
+        reference = session.solve()
+    for on_gpu in (True, False):
+        workspace = TorchOSQPWorkspace()
+        settings = dict(t, gpu_factorization=on_gpu)
+        x, info = _torch_solve(data, stored, "csc", "cuda", settings, workspace)
+        assert torch.is_tensor(workspace.linear_solver.factors[2]) == on_gpu
+        _assert_same(reference, x, info)
+    with pytest.raises(ValueError, match="gpu_factorization must be a bool"):
+        _torch_solve(data, stored, "csc", "cuda", dict(t, gpu_factorization=1), None)

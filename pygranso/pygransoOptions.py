@@ -346,6 +346,10 @@ def pygransoOptions(n, options):
         included, as OSQP does with CSC input. The default converts sparse
         matrices to strided ones first. PyGRANSO's own QP subproblems are
         strided either way.
+        With CUDA tensors the Torch solver factorizes and solves the KKT system
+        on the GPU. Set osqp_settings['gpu_factorization']=False to do these
+        two steps on the CPU instead, which can be faster for small problems;
+        the results are the same.
         Builtin workspaces and structurally compatible warm starts are reused
         automatically within one BFGS-SQP run.
 
