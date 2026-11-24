@@ -147,9 +147,6 @@ def _assert_same(reference, x, info):
         (x.flatten(), reference["x"]),
         (info["public_y"], reference["y"]),
     ):
-        if actual.is_cuda:
-            np.testing.assert_allclose(actual.cpu().numpy(), expected, atol=1e-7, rtol=1e-7)
-            continue
         actual = np.asarray(actual.cpu(), dtype="<f8")
         assert actual.tobytes() == np.asarray(expected, dtype="<f8").tobytes()
 

@@ -49,10 +49,8 @@ def solve(data, device, options, workspace):
     )
 
 
-def _compare_output(actual, expected):
-    if actual.is_cuda:
-        np.testing.assert_allclose(actual.cpu().numpy(), expected, atol=1e-7, rtol=1e-7)
-        return
+def _same_bits(actual, expected):
+    """Binary64 bytes, including the sign bit of zero."""
     a, b = (np.asarray(value, dtype="<f8") for value in (actual, expected))
     assert a.shape == b.shape
     assert a.tobytes() == b.tobytes(), (a, b)
@@ -112,8 +110,8 @@ def test_vector_update(oracle, available_device, change):
         reference = session.solve()
         x, info = solve(target, available_device, t, workspace)
         assert info["status_val"] == reference["status_val"]
-        _compare_output(x.flatten(), reference["x"])
-        _compare_output(info["state"]["y"], reference["y"])
+        _same_bits(x.cpu().flatten(), reference["x"])
+        _same_bits(info["state"]["y"].cpu(), reference["y"])
 
 
 @pytest.mark.parametrize("which", ["P", "A", "PA"])
@@ -128,7 +126,7 @@ def test_matrix_update(oracle, available_device, which, encoding):
         original = session.solve()
         x, info = solve(data, available_device, t, workspace)
         assert info["status_val"] == original["status_val"] == 1
-        _compare_output(x.flatten(), original["x"])
+        _same_bits(x.cpu().flatten(), original["x"])
         args, owners = [], []
         for key, stored in (("P", session._P), ("A", session._A)):
             if key not in which:
@@ -151,8 +149,8 @@ def test_matrix_update(oracle, available_device, which, encoding):
         reference = session.solve()
         x, info = solve(data, available_device, t, workspace)
         assert info["status_val"] == reference["status_val"] == 1
-        _compare_output(x.flatten(), reference["x"])
-        _compare_output(info["state"]["y"], reference["y"])
+        _same_bits(x.cpu().flatten(), reference["x"])
+        _same_bits(info["state"]["y"].cpu(), reference["y"])
 
 
 @pytest.mark.parametrize("sigma,code", [(1e-6, 4), (5.0, 0)])

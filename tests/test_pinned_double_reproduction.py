@@ -57,26 +57,8 @@ def test_pinned_double_result(name, polish, device):
         for cert in ("prim_inf_cert", "dual_inf_cert"):
             if cert in run["native"]:
                 actual[cert] = info[cert]
-    if device == "cuda" and info["status_val"] == 1:
-        P, q, A, l, u = inputs
-        point = x.cpu().numpy().ravel()
-        y = info["public_y"].cpu().numpy().ravel()
-        z = info["state"]["z"].cpu().numpy().ravel()
-        ax = A @ point
-        assert np.max(np.abs(ax - np.clip(ax, l, u)), initial=0) <= info["eps_primal"]
-        assert np.max(np.abs(ax - z), initial=0) <= info["eps_primal"]
-        assert np.max(np.abs(P @ point + q + A.T @ y)) <= info["eps_dual"]
     for field, expected in run["native"].items():
         value = actual[field]
         if torch.is_tensor(value):
             value = value.detach().cpu().numpy()
-        if device == "cuda":
-            reference = np.frombuffer(bytes.fromhex(expected), dtype="<f8")
-            if field == "rho_estimate":
-                # A residual ratio at convergence may have a nearly zero denominator.
-                assert 1e-6 <= value <= 1e6
-            else:
-                np.testing.assert_allclose(np.asarray(value).ravel(), reference,
-                                           rtol=1e-7, atol=1e-7, err_msg=field)
-        else:
-            assert np.asarray(value, dtype="<f8").tobytes().hex() == expected, field
+        assert np.asarray(value, dtype="<f8").tobytes().hex() == expected, field
