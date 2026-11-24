@@ -9,6 +9,7 @@ import torch
 
 from pygranso.private.osqpWorkspace import TorchOSQPWorkspace
 from pygranso.private.torchCSC import CSCMatrix, KKTSystem
+from pygranso.private.torchCUDACholesky import CUDACholeskySolver
 from pygranso.private.torchLinearSolve import TorchLinearSolveError
 from pygranso.private.torchQDLDLSolve import QDLDLSolver, _QDLDLNumericError
 
@@ -248,6 +249,8 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
             int(settings.get("scaling", 0)),
             track_constraint_types=False,
         )
+        if q.is_cuda != isinstance(workspace.linear_solver, CUDACholeskySolver):
+            workspace.linear_solver = CUDACholeskySolver() if q.is_cuda else QDLDLSolver()
         # Repeated solves supply implicit value-changing data updates.
         problem = (P, q, A, l, u)
         previous_problem = workspace.status_problem
@@ -373,6 +376,19 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
                 "KKT inertia does not have the required positive/negative "
                 "sign counts; the problem may be non-convex."
             )
+        device_rho = q.is_cuda and rho_mode != _RHO_DISABLED and (
+            not check_termination or not rho_interval or rho_interval % check_termination != 0
+        )
+        if q.is_cuda:
+            # Sparse arithmetic plans may inspect row counts on their first use.
+            # Prepare these before entering ADMM, including optional diagnostics.
+            P_s.matvec(x)
+            A_s.matvec(x)
+            A_s.rmatvec(y)
+        if device_rho:
+            solver.prepare_rho_shifts(rho_bar, equality, loose)
+            rho_history = rho_bar.new_tensor(workspace.last_rel_kkt)
+            device_tolerance = rho_bar.new_tensor(rho_tolerance)
         solve_clock_started = _clock()
         if fresh_rho_setup or workspace.adaptive_rho_setup_time is None:
             workspace.adaptive_rho_setup_time = solve_clock_started - solve_started
@@ -404,11 +420,12 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
             latest_linear_diagnostics = linear_diagnostics
             observed = linear_diagnostics.get("relative_linear_residual")
             if observed is not None:
-                maximum_linear_residual = (
-                    observed
-                    if maximum_linear_residual is None
-                    else max(maximum_linear_residual, observed)
-                )
+                if maximum_linear_residual is None:
+                    maximum_linear_residual = observed
+                elif q.is_cuda:
+                    maximum_linear_residual = torch.maximum(maximum_linear_residual, observed)
+                else:
+                    maximum_linear_residual = max(maximum_linear_residual, observed)
 
             x_tilde = solution[:n]
             nu = solution[n:]
@@ -528,7 +545,7 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
                         status, primal_certificate, dual_certificate = termination
                         status_written = True
                         break
-                if can_adapt_rho and rho_mode == _RHO_KKT_ERROR:
+                if can_adapt_rho and rho_mode == _RHO_KKT_ERROR and not device_rho:
                     rel_kkt_error = _relative_kkt_error(
                         primal, dual, objective_values["duality_gap"]
                     )
@@ -543,6 +560,22 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
                     primal_normalizer, dual_normalizer = _residual_normalizers(
                         P_s, q_s, A_s, x, z, y
                     )
+                    if device_rho:
+                        rel = _relative_kkt_error(primal, dual, objective_values["duality_gap"])
+                        candidate = _compute_rho_estimate(
+                            rho_bar, scaled_primal, scaled_dual, primal_normalizer, dual_normalizer
+                        )
+                        accepted = _rho_accepted(candidate, rho_bar, device_tolerance)
+                        if rho_mode == _RHO_KKT_ERROR:
+                            accepted = accepted & (rel <= rho_fraction * rho_history)
+                        rho_history = torch.where(accepted, rel, rho_history)
+                        rho_bar = torch.where(accepted, candidate, rho_bar)
+                        rho_vec = _rho_vector(rho_bar, equality, loose)
+                        K = build_kkt_matrix(P_s, A_s, sigma, rho_vec)
+                        rho_inv_vec = K.rho_inv_vec
+                        solver.set_shift(K, rho_bar, accepted)
+                        rho_updates = rho_updates + accepted.to(torch.int64)
+                        continue
                     updated, rho_candidate, rho_vec_candidate = _adaptive_rho_update(
                         rho_bar,
                         equality,
@@ -591,6 +624,17 @@ def _solve_torch_osqp_direct_impl(P, q, A, l, u, settings, workspace):
                         workspace.last_rel_kkt = float(rel_kkt_error.item())
         else:
             iteration = max_iter
+
+        if device_rho:
+            solver.check_shifts()
+            workspace.last_rel_kkt = float(rho_history)
+            rho_updates = int(rho_updates)
+            solver.factorization_count += rho_updates
+            latest_linear_diagnostics["factorization_count"] = solver.factorization_count
+        if q.is_cuda and maximum_linear_residual is not None:
+            maximum_linear_residual = float(maximum_linear_residual)
+            for key in ("linear_residual_norm", "relative_linear_residual"):
+                latest_linear_diagnostics[key] = float(latest_linear_diagnostics[key])
 
         x_o, z_o, y_o = _unscale_state(x, z, y, scaling)
         if scaled_termination:
@@ -1476,6 +1520,9 @@ def _constraint_types(l, u):
 
 
 def _rho_vector(rho_bar, equality, loose=None):
+    if rho_bar.is_cuda:
+        rho_vec = torch.where(equality, 1000.0 * rho_bar, rho_bar)
+        return rho_vec if loose is None else torch.where(loose, 1e-6, rho_vec)
     rho_vec = torch.full(
         equality.shape,
         float(rho_bar.item()),
@@ -1510,14 +1557,14 @@ def _adaptive_rho_update(
         primal_scale,
         dual_scale,
     )
-    should_update = (candidate > tolerance * rho_bar) | (
-        # Tensor divisor: CUDA turns tensor / Python number into a product.
-        candidate < rho_bar / rho_bar.new_tensor(tolerance)
-    )
-    changed = candidate != rho_bar
-    if not bool((should_update & changed & torch.isfinite(candidate)).item()):
+    if not bool(_rho_accepted(candidate, rho_bar, rho_bar.new_tensor(tolerance)).item()):
         return False, rho_bar, _rho_vector(rho_bar, equality, loose)
     return True, candidate, _rho_vector(candidate, equality, loose)
+
+
+def _rho_accepted(candidate, rho_bar, tolerance):
+    outside = (candidate > tolerance * rho_bar) | (candidate < rho_bar / tolerance)
+    return outside & (candidate != rho_bar) & torch.isfinite(candidate)
 
 
 def _compute_rho_estimate(
@@ -1527,6 +1574,11 @@ def _compute_rho_estimate(
     primal_normalizer,
     dual_normalizer,
 ):
+    if rho_bar.is_cuda:
+        tiny = _division_tolerance(rho_bar)
+        ratio = (primal / (primal_normalizer + tiny)) / (dual / (dual_normalizer + tiny))
+        estimate = rho_bar * torch.sqrt(ratio)
+        return torch.nan_to_num(estimate, nan=1e-6).clamp(1e-6, 1e6)
     division_tolerance = torch.as_tensor(
         _division_tolerance(rho_bar), device=rho_bar.device, dtype=rho_bar.dtype
     )
@@ -1837,9 +1889,13 @@ def _seq_sum(values, dim=0, start=None):
     The C loops (``csc_Axpy``, ``csc_Atxpy``, ``csc_Axpy_sym_triu``,
     ``OSQPVectorf_dot_prod``) accumulate ``acc += term`` from ``acc = 0.0`` (or
     from the existing entry when ``beta == 1``).  ``torch.cumsum`` performs
-    exactly that recurrence for CPU float64; other devices and dtypes use the
-    explicit recurrence because their ``cumsum`` does not.
+    that recurrence for CPU float64. CUDA uses a parallel reduction under its
+    tolerance-based numerical contract.
     """
+
+    if values.is_cuda:
+        total = values.sum(dim=dim)
+        return total if start is None else start + total
 
     first = (
         torch.zeros_like(values.select(dim, 0)) if values.shape[dim] else None
@@ -1975,7 +2031,7 @@ def _polish_solution(
     # with "Failed polishing" before store_solution; errors propagate here too.
     # init_linsys_solver_qdldl(..., polishing=1): form_KKT(P, Ared, sigma,
     # NULL, sigma), AMD, LDL_factor with the same positive-pivot check.
-    polish_solver = QDLDLSolver()
+    polish_solver = CUDACholeskySolver() if q.is_cuda else QDLDLSolver()
     polish_solver.factorize(KKTSystem(P, A_active, regularization, None))
     if polish_solver.positive_d_count < n:
         raise _QDLDLNumericError(

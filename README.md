@@ -117,7 +117,14 @@ Inside PyGRANSO the same switch is `opts.osqp_settings = {"sparse": True}`; PyGR
 
 To reuse the factorization and warm start across solves, create one `TorchOSQPWorkspace` (from `pygranso.private.osqpWorkspace`) and pass it as the last argument each time. The sparsity pattern is fixed by the first solve; later solves with new values on that pattern are updates, and a matrix with a nonzero outside it starts a new setup.
 
-CUDA tensors are accepted; the factorization and triangular solves run on the CPU.
+CPU double precision uses the pinned C algorithm's sparse QDLDL factorization and
+is the bitwise reference. CUDA factorizes a dense reduced system by Cholesky on
+the GPU, including for polishing. Each KKT right-hand side and solution stays on
+the GPU. When rho can change between termination checks, the solver diagonalizes
+the rho-dependent part once and updates its diagonal on device. A change to q
+alone can reuse the factors. The GPU checks compare final status, solution and
+residual by tolerance because the operation order differs. Dense storage grows
+as O(n*n + m*n), including for sparse input.
 
 ### Verify installation
 
