@@ -8,6 +8,7 @@ import time
 import torch
 
 from pygranso.private.osqpWorkspace import TorchOSQPWorkspace
+import pygranso.private.torchCSC as torch_csc
 from pygranso.private.torchCSC import CSCMatrix, KKTSystem
 from pygranso.private.torchLinearSolve import TorchLinearSolveError
 from pygranso.private.torchQDLDLSolve import QDLDLSolver, _QDLDLNumericError
@@ -1848,8 +1849,9 @@ def _seq_sum(values, dim=0, start=None):
     The C loops (``csc_Axpy``, ``csc_Atxpy``, ``csc_Axpy_sym_triu``,
     ``OSQPVectorf_dot_prod``) accumulate ``acc += term`` from ``acc = 0.0`` (or
     from the existing entry when ``beta == 1``).  ``torch.cumsum`` performs
-    exactly that recurrence for CPU float64; other devices and dtypes use the
-    explicit recurrence because their ``cumsum`` does not.
+    that recurrence for float64 along the first dimension of a buffer with a
+    spare column (``torchCSC.sequential_sum``, which also keeps the sign of a
+    zero sum); other dtypes use the explicit recurrence.
     """
 
     first = (
@@ -1861,9 +1863,18 @@ def _seq_sum(values, dim=0, start=None):
         shape = list(values.shape)
         del shape[dim]
         return torch.zeros(shape, device=values.device, dtype=values.dtype)
-    if values.device.type == "cpu" and values.dtype == torch.float64:
-        stacked = torch.cat((first.unsqueeze(dim), values), dim=dim)
-        return torch.cumsum(stacked, dim=dim).select(dim, -1)
+    if values.dtype == torch.float64 and (
+        values.device.type == "cpu" or not torch_csc.FORCE_LEVEL_LOOP
+    ):
+        # One column per result and a spare column of -0.0.  A sum can only
+        # be -0.0 when it starts from an existing entry.
+        terms = torch.cat((first.unsqueeze(dim), values), dim=dim).movedim(dim, 0)
+        columns = terms.reshape(terms.shape[0], -1)
+        spare = columns.new_full((columns.shape[0], 1), -0.0)
+        total = torch_csc.sequential_sum(
+            torch.cat((columns, spare), dim=1), start is not None
+        )
+        return total[:-1].reshape(first.shape)
     total = first
     for index in range(values.shape[dim]):
         total = total + values.select(dim, index)

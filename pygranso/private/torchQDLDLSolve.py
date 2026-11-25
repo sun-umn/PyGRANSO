@@ -32,6 +32,18 @@ from pygranso.private.torchQDLDLDevice import FactorProgram, SolveProgram
 # CUDA tensors always use them, so their values stay on the GPU.
 DEVICE_PROGRAM = False
 
+# The pattern-only setup of the tensor programs (ordering, elimination tree,
+# index tables) is the same for every solver with the same patterns of P and A
+# on the same device, so the most recent ones are shared.  0 disables this.
+SYMBOLIC_CACHE_SIZE = 4
+_SYMBOLIC_CACHE = []
+
+
+def clear_symbolic_cache() -> None:
+    """Release the shared pattern-only setups (and their device memory)."""
+
+    _SYMBOLIC_CACHE.clear()
+
 
 class _QDLDLNumericError(TorchLinearSolveError):
     """QDLDL_factor returned a negative status."""
@@ -202,6 +214,20 @@ class QDLDLSolver:
             and cached["A"].same(A.pattern)
         ):
             return cached
+        for position, cached in enumerate(_SYMBOLIC_CACHE):
+            if (
+                cached["device"] == matrix.device
+                and cached["P"].same(P.pattern)
+                and cached["A"].same(A.pattern)
+            ):
+                # The ordering depends only on the pattern, so it is the one
+                # this solver would compute.
+                _SYMBOLIC_CACHE.insert(0, _SYMBOLIC_CACHE.pop(position))
+                self._symbolic_key = cached["key"]
+                self._perm = list(cached["perm"])
+                self._pinv = None
+                self._device_symbolic = cached
+                return cached
         n, m = P.shape[0], A.shape[0]
         device = matrix.device
 
@@ -244,6 +270,7 @@ class QDLDLSolver:
         factor = FactorProgram(size, Kp, Ki, Lnz, etree, sum_lnz, device)
         cached = {
             "device": device, "P": P.pattern, "A": A.pattern,
+            "key": symbolic_key, "perm": list(self._perm),
             "nnz": len(KKT["i"]),
             "PtoKKT": index(PtoKKT), "AtoKKT": index(AtoKKT),
             "rhotoKKT": index(rhotoKKT),
@@ -255,6 +282,9 @@ class QDLDLSolver:
             "solve": SolveProgram(size, factor.Lp, factor.Li, self._perm, device),
         }
         self._device_symbolic = cached
+        if SYMBOLIC_CACHE_SIZE > 0:
+            _SYMBOLIC_CACHE.insert(0, cached)
+            del _SYMBOLIC_CACHE[SYMBOLIC_CACHE_SIZE:]
         return cached
 
     def _factorize_on_device(self, matrix) -> None:

@@ -15,18 +15,51 @@ import torch
 FORCE_LEVEL_LOOP = False
 
 
-def sequential_sum(buffer):
-    """``acc += term`` down the rows of a float64 ``buffer``, one sum per column.
+_NEGATIVE_ZERO_BITS = -(2**63)
+
+
+def negative_zero_columns(buffer):
+    """The columns of a float64 ``buffer`` whose entries are all -0.0.
+
+    -0.0 is the smallest 64-bit integer when its bits are read as one, so a
+    column consists of -0.0 only when the largest such integer is that one.
+    """
+
+    return buffer.view(torch.int64).amax(dim=0) == _NEGATIVE_ZERO_BITS
+
+
+def sequential_sum(buffer, signed_zero=True):
+    """``acc = row 0; acc += term`` down a float64 ``buffer``, one sum per column.
 
     ``torch.cumsum`` along the first dimension adds the terms one after another
     on CPU and on CUDA.  On CUDA this holds only when there is more than one
     column (a single column is summed by a parallel scan), so callers keep a
     spare column.
+
+    ``cumsum`` starts from +0.0, that is, it computes ``+0.0 + row 0 + ...``.
+    This differs from the C recurrence in one case only: when row 0 and every
+    term are -0.0, C keeps -0.0 and ``cumsum`` gives +0.0.  With
+    ``signed_zero`` those columns are set to -0.0.  A caller whose row 0 is
+    never -0.0, or that handles the case itself, passes ``False``.
     """
 
     if buffer.shape[1] < 2:
         raise ValueError("sequential_sum needs at least two columns.")
-    return torch.cumsum(buffer, dim=0)[-1]
+    if not signed_zero:
+        return torch.cumsum(buffer, dim=0)[-1]
+    negative_zero = negative_zero_columns(buffer)
+    return torch.cumsum(buffer, dim=0)[-1].masked_fill_(negative_zero, -0.0)
+
+
+def sequential_sum_(buffer, signed_zero=True):
+    """``sequential_sum`` that overwrites ``buffer`` with its partial sums."""
+
+    if buffer.shape[1] < 2:
+        raise ValueError("sequential_sum needs at least two columns.")
+    if not signed_zero:
+        return buffer.cumsum_(dim=0)[-1]
+    negative_zero = negative_zero_columns(buffer)
+    return buffer.cumsum_(dim=0)[-1].masked_fill_(negative_zero, -0.0)
 
 
 class _Plan:
@@ -72,7 +105,8 @@ class _Plan:
             buffer = products.new_full((self.width + 1, self.n_out + 1), -0.0)
             buffer[0, : self.n_out] = 0.0 if start is None else start
             buffer.view(-1)[self._ell] = products
-            return sequential_sum(buffer)[: self.n_out]
+            # Row 0 is +0.0 without a start, so no sum can be -0.0 then.
+            return sequential_sum(buffer, start is not None)[: self.n_out]
         if self._levels is None:
             order = torch.argsort(self.rank, stable=True)
             sizes = torch.bincount(self.rank, minlength=self.width).tolist()
