@@ -82,6 +82,7 @@ class _Plan:
         )
         self.width = int(counts.max().item()) if self.out.numel() else 0
         self._ell = None
+        self._groups = None
         self._levels = None
 
     def accumulate(self, products, start):
@@ -107,6 +108,33 @@ class _Plan:
             buffer.view(-1)[self._ell] = products
             # Row 0 is +0.0 without a start, so no sum can be -0.0 then.
             return sequential_sum(buffer, start is not None)[: self.n_out]
+        if not FORCE_LEVEL_LOOP and products.dtype == torch.float64:
+            # A few long rows would make that buffer mostly padding.  The
+            # outputs are grouped by the bit length of their number of terms
+            # and every group gets a buffer of its own, at most half padding.
+            if self._groups is None:
+                counts = torch.bincount(self.out, minlength=self.n_out)
+                length = torch.frexp(counts.to(torch.float64))[1]
+                self._groups = []
+                for value in torch.unique(length[counts > 0]).tolist():
+                    outputs = torch.nonzero(length == value).view(-1)
+                    column = torch.empty_like(counts)
+                    column[outputs] = torch.arange(
+                        outputs.numel(), device=outputs.device
+                    )
+                    terms = torch.nonzero(length[self.out] == value).view(-1)
+                    width = int(counts[outputs].max().item())
+                    ell = (self.rank[terms] + 1) * (outputs.numel() + 1) + column[
+                        self.out[terms]
+                    ]
+                    self._groups.append((outputs, terms, ell, width))
+            total = products.new_zeros(self.n_out) if start is None else start.clone()
+            for outputs, terms, ell, width in self._groups:
+                buffer = products.new_full((width + 1, outputs.numel() + 1), -0.0)
+                buffer[0, :-1] = 0.0 if start is None else start[outputs]
+                buffer.view(-1)[ell] = products[terms]
+                total[outputs] = sequential_sum(buffer, start is not None)[:-1]
+            return total
         if self._levels is None:
             order = torch.argsort(self.rank, stable=True)
             sizes = torch.bincount(self.rank, minlength=self.width).tolist()

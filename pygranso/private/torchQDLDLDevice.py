@@ -93,7 +93,6 @@ class FactorProgram:
         Li = np.zeros(sumLnz, dtype=np.int64)
         Li_list = [0] * sumLnz  # the same, for the scalar loop of short columns
         yMarkers = [QDLDL_UNUSED] * n
-        used = np.zeros(n, dtype=bool)
         yIdx = [0] * n
         elimBuffer = [0] * n
         LNextSpaceInCol = np.zeros(n, dtype=np.int64)
@@ -127,7 +126,6 @@ class FactorProgram:
                 nextIdx = bidx
                 if yMarkers[nextIdx] == QDLDL_UNUSED:
                     yMarkers[nextIdx] = QDLDL_USED
-                    used[nextIdx] = True
                     elimBuffer[0] = nextIdx
                     nnzE = 1
                     nextIdx = etree[bidx]
@@ -135,7 +133,6 @@ class FactorProgram:
                         if yMarkers[nextIdx] == QDLDL_USED:
                             break
                         yMarkers[nextIdx] = QDLDL_USED
-                        used[nextIdx] = True
                         elimBuffer[nnzE] = nextIdx
                         nnzE += 1
                         nextIdx = etree[nextIdx]
@@ -160,8 +157,6 @@ class FactorProgram:
                     # yVals[Li[j]] -= Lx[j] * yVals_cidx, one term at a time
                     for j in range(first, tmpIdx):
                         row = Li_list[j]
-                        if yMarkers[row] != QDLDL_USED:
-                            raise RuntimeError("QDLDL elimination order is inconsistent.")
                         target = y0 + next_list[row]
                         step = max(ready.item(l0 + j), y_ready, ready.item(target)) + 1
                         ready[target] = step
@@ -172,8 +167,6 @@ class FactorProgram:
                 else:
                     # The same for j = first .. tmpIdx - 1 at once.
                     rows = Li[first:tmpIdx]
-                    if not used[rows].all():
-                        raise RuntimeError("QDLDL elimination order is inconsistent.")
                     targets = y0 + LNextSpaceInCol[rows]
                     steps = (
                         np.maximum(
@@ -208,7 +201,6 @@ class FactorProgram:
                 next_list[cidx] += 1
                 ySource[cidx] = zero_slot
                 yMarkers[cidx] = QDLDL_UNUSED
-                used[cidx] = False
             ready[d_slot] = d_ready
             reciprocal(k)
 
@@ -508,9 +500,10 @@ class SolveProgram:
 
     def run(self, bound, Dinv, b):
         # The sums are first done without the correction for sums that C
-        # leaves at -0.0.  Such a sum comes out as +0.0, and every row is
-        # written once per sweep, so when neither sweep produced a zero no
-        # correction was needed.  Otherwise the solve is repeated with it.
+        # leaves at -0.0.  Such a sum starts from an entry that is -0.0, and
+        # every row is written once per sweep, so when no entry is -0.0 before
+        # either sweep no correction was needed.  Otherwise the solve is
+        # repeated with it.
         if torch_csc.FORCE_LEVEL_LOOP or b.dtype != torch.float64:
             return self._run(bound, Dinv, b, True)[0]
         result, zero = self._run(bound, Dinv, b, False)
@@ -523,22 +516,26 @@ class SolveProgram:
         # bp[j] = b[P[j]], followed by the entry that stays 1.0 and the entry
         # for the spare column.
         x = torch.cat((b[self.perm], tail))
+        zero = None if signed_zero else self._negative_zero(x)
         if self.forward_by_rows:
             self.forward.run(x, forward_values, signed_zero)
-            zero = None if signed_zero else (x[: self.n] == 0).any()
         else:
-            zero = None
             for (target, _, source), negative in zip(self.forward, forward_values):
                 # x[Li[j]] -= Lx[j] * x[i]; each target occurs once per step.
                 x.index_add_(0, target, negative * torch.take(x, source))
         # x[i] *= Dinv[i]; the two extra entries are multiplied by 1.0.
         x *= torch.cat((Dinv, Dinv.new_ones(2)))
+        if not signed_zero:
+            zero = zero | self._negative_zero(x)
         # val -= Lx[j] * x[Li[j]], j ascending, for every row of a group.
         self.backward.run(x, backward_values, signed_zero)
         # x[P[j]] = bp[j]
         result = torch.empty_like(b)
         result[self.perm] = x[: self.n]
-        if not signed_zero:
-            zero_result = (result == 0).any()
-            zero = zero_result if zero is None else zero | zero_result
         return result, zero
+
+    def _negative_zero(self, x):
+        """Whether one of the first ``n`` entries of ``x`` is -0.0."""
+
+        bits = x[: self.n].view(torch.int64)
+        return (bits == torch_csc._NEGATIVE_ZERO_BITS).any()

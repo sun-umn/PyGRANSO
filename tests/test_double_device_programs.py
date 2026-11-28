@@ -134,6 +134,35 @@ def test_solve_keeps_the_sign_of_zero(seed, forward_by_rows, loop, device, monke
 
 
 @pytest.mark.parametrize("device", DEVICES)
+@pytest.mark.parametrize("forward_by_rows", [None, True, False])
+@pytest.mark.parametrize(
+    "diagonal, b",
+    [
+        # -0.0 only in b: the forward sweep leaves x[1] at -0.0.
+        (2.0, [0.0, -0.0]),
+        # No -0.0 in b: D is negative, so the backward sweep starts from -0.0.
+        (-2.0, [0.0, 0.0]),
+    ],
+)
+def test_solve_keeps_a_single_negative_zero(diagonal, b, forward_by_rows, device, monkeypatch):
+    """Each sweep alone has to notice that a sum stays at -0.0."""
+
+    monkeypatch.setattr(device_programs, "FORWARD_BY_ROWS", forward_by_rows)
+    n, Ap, Ai, Ax, perm = 2, [0, 1, 3], [0, 0, 1], [diagonal, 1.0, diagonal], [0, 1]
+    sumLnz, Lnz, etree = qdldl_etree(n, Ap, Ai)
+    positive, Lp, Li, Lx, D, Dinv = qdldl_factor(n, Ap, Ai, Ax, Lnz, etree, sumLnz)
+    expected = ldl_solve(list(b), Lp, Li, Lx, Dinv, perm)
+    assert _bits(expected) != _bits([abs(v) for v in expected])  # contains -0.0
+    solve = SolveProgram(n, Lp, Li, perm, device)
+    x = solve.run(
+        solve.bind(torch.tensor(Lx, dtype=torch.float64, device=device)),
+        torch.tensor(Dinv, dtype=torch.float64, device=device),
+        torch.tensor(b, dtype=torch.float64, device=device),
+    )
+    assert _bits(x) == _bits(expected)
+
+
+@pytest.mark.parametrize("device", DEVICES)
 @pytest.mark.parametrize("loop", [False, True])
 @pytest.mark.parametrize("seed", range(20))
 def test_accumulate_from_a_start_keeps_the_sign_of_zero(seed, loop, device, monkeypatch):
@@ -168,3 +197,46 @@ def test_accumulate_from_a_start_keeps_the_sign_of_zero(seed, loop, device, monk
                 torch.tensor(start, dtype=torch.float64, device=device) if use_start else None,
             )
             assert _bits(result) == _bits(expected)
+
+
+@pytest.mark.parametrize("device", DEVICES)
+@pytest.mark.parametrize("loop", [False, True])
+@pytest.mark.parametrize("seed", range(12))
+def test_accumulate_with_a_few_long_rows(seed, loop, device, monkeypatch):
+    """A matrix with dense rows among short and empty ones is summed in groups."""
+
+    monkeypatch.setattr(torch_csc, "FORCE_LEVEL_LOOP", loop)
+    rng = np.random.default_rng(seed)
+    n_out, n_in = 150, 400
+    stored = rng.random((n_out, n_in)) < 0.01
+    stored[rng.integers(0, n_out, 2)] = True  # dense rows
+    stored[rng.integers(0, n_out, 5)] |= rng.random((5, n_in)) < 0.3
+    stored[rng.integers(0, n_out, 10)] = False  # rows without terms
+    out, inp = np.nonzero(stored)
+    signed = np.array([-0.0, 0.0])
+    val = np.where(rng.random(out.size) < 0.2, rng.choice(signed, out.size), rng.standard_normal(out.size))
+    x = np.where(rng.random(n_in) < 0.2, rng.choice(signed, n_in), rng.standard_normal(n_in))
+    if seed % 3 == 0:
+        x = rng.choice(signed, n_in)  # every term is a signed zero
+    start = np.where(rng.random(n_out) < 0.5, rng.choice(signed, n_out), rng.standard_normal(n_out))
+    plan = torch_csc._Plan(
+        torch.tensor(out, device=device),
+        torch.tensor(inp, device=device),
+        torch.tensor(val, dtype=torch.float64, device=device),
+        n_out,
+        n_in,
+    )
+    t_x = torch.tensor(x, dtype=torch.float64, device=device)
+    for subtract in (False, True):
+        for use_start in (True, False):
+            expected = [float(v) for v in start] if use_start else [0.0] * n_out
+            for i, j, v in sorted(zip(out.tolist(), inp.tolist(), val.tolist())):
+                term = v * float(x[j])
+                expected[i] = expected[i] - term if subtract else expected[i] + term
+            products = plan.val * t_x[plan.inp]
+            result = plan.accumulate(
+                -products if subtract else products,
+                torch.tensor(start, dtype=torch.float64, device=device) if use_start else None,
+            )
+            assert _bits(result) == _bits(expected)
+    assert (plan._groups is not None) == (not loop)
