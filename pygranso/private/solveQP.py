@@ -1,14 +1,27 @@
 import gurobipy as gp
 import numpy as np
-import osqp
 import torch
 from gurobipy import GRB
-from scipy import sparse
+
+from pygranso.private.osqpTorchAdapter import solve_osqp_torch_qp
+from pygranso.private.osqpWorkspace import TorchOSQPWorkspace
 
 QP_REQUESTS = 0
+QP_ERRORS = 0
 
 
-def solveQP(H, f, A, b, LB, UB, QPsolver, torch_device, double_precision):
+def solveQP(
+    H,
+    f,
+    A,
+    b,
+    LB,
+    UB,
+    QPsolver,
+    torch_device,
+    double_precision,
+    osqp_options=None,
+):
     """
     solveQP:
         Convenience wrapper for any quadprog interface QP solver.  This
@@ -87,74 +100,17 @@ def solveQP(H, f, A, b, LB, UB, QPsolver, torch_device, double_precision):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
-    global QP_REQUESTS
+    global QP_ERRORS, QP_REQUESTS
     QP_REQUESTS += 1
 
     if QPsolver == "osqp":
-        # H,f always exist
-        nvar = len(f)
-        # H and A has to be sparse
-        H = H.cpu().numpy()
-        f = f.cpu().numpy()
-        if A is not None:
-            A = A.cpu().numpy()
-        # b = b.cpu().numpy()
-        LB = LB.cpu().numpy()
-        UB = UB.cpu().numpy()
-        H_sparse = sparse.csc_matrix(H)
-        # LB and UB always exist
-
-        if np.any(A is not None) and np.any(b is not None):
-            Aeq = A
-            beq = b
-            speye = sparse.eye(nvar)
-            LB_new = np.vstack((beq, LB))
-            UB_new = np.vstack((beq, UB))
-            A_new = sparse.vstack([Aeq, speye])
-            A_new = sparse.csc_matrix(A_new)
-        else:
-            #  no constraint A*x == b
-            A_new = sparse.eye(nvar)
-            A_new = sparse.csc_matrix(A_new)
-            LB_new = LB
-            UB_new = UB
-
-        # # Create an OSQP object
-        # # Set algebra based on device type
-        # if str(torch_device).startswith("cuda"):
-        #     algebra_type = "cuda"
-        # else:
-        #     algebra_type = "builtin"
-        # prob = osqp.OSQP(algebra=algebra_type)
-
-        prob = osqp.OSQP(algebra="builtin")
-
-        # Setup workspace and change alpha parameter
-        prob.setup(
-            H_sparse,
-            f,
-            A_new,
-            LB_new,
-            UB_new,
-            eps_abs=1e-12,
-            eps_rel=1e-12,
-            polish=True,
-            verbose=False,
-        )
-        # prob.setup(H_sparse, f, A_new, LB_new, UB_new, alpha=1.0,verbose=False)
-
-        # Solve problem
-        res = prob.solve()
-
-        solution = res.x
-        sol_len = solution.size
-        solution = solution.reshape((sol_len, 1))
-        if double_precision:
-            torch_dtype = torch.double
-        else:
-            torch_dtype = torch.float
-        solution = torch.from_numpy(solution).to(device=torch_device, dtype=torch_dtype)
-        return solution
+        try:
+            return _solve_osqp_with_warm_state(
+                H, f, A, b, LB, UB, torch_device, double_precision, osqp_options
+            )
+        except Exception:
+            QP_ERRORS += 1
+            raise
 
     if QPsolver == "gurobi":
         H = H.cpu().numpy()
@@ -216,7 +172,72 @@ def solveQP(H, f, A, b, LB, UB, QPsolver, torch_device, double_precision):
 
 
 def getErr():
-    # getErr NOT used
-    global QP_REQUESTS
-    errors = 0
-    return [QP_REQUESTS, errors]
+    return [QP_REQUESTS, QP_ERRORS]
+
+
+def resetQPCounters():
+    global QP_ERRORS, QP_REQUESTS
+    QP_REQUESTS = 0
+    QP_ERRORS = 0
+
+
+def getLastOSQPInfo(workspace=None):
+    return None if workspace is None else workspace.last_info
+
+
+def resetOSQPWarmState(workspace=None):
+    if workspace is not None:
+        workspace.reset()
+
+
+def _solve_osqp_with_warm_state(
+    H,
+    f,
+    A,
+    b,
+    LB,
+    UB,
+    torch_device,
+    double_precision,
+    osqp_options,
+):
+    options = _copy_osqp_options(osqp_options)
+    workspace = options.pop("workspace", None)
+    if workspace is None:
+        workspace = TorchOSQPWorkspace()
+    if not isinstance(workspace, TorchOSQPWorkspace):
+        raise TypeError("osqp_options['workspace'] must be a TorchOSQPWorkspace.")
+    settings = options.setdefault("settings", {})
+    requested_return_info = settings.get("return_info", False)
+    if not isinstance(requested_return_info, bool):
+        raise ValueError("return_info must be a bool.")
+    settings["return_info"] = True
+    result = solve_osqp_torch_qp(
+        H,
+        f,
+        A,
+        b,
+        LB,
+        UB,
+        torch_device,
+        double_precision,
+        options,
+        workspace,
+    )
+    solution, info = result
+    workspace.last_info = info
+    if info.get("status_compatible") is False:
+        raise RuntimeError(
+            "OSQP did not produce a solved-compatible result: "
+            f"{info.get('status', 'unknown')}."
+        )
+    return (solution, info) if requested_return_info else solution
+
+
+def _copy_osqp_options(osqp_options):
+    if osqp_options is None:
+        return {}
+    options = dict(osqp_options)
+    if isinstance(options.get("settings"), dict):
+        options["settings"] = dict(options["settings"])
+    return options

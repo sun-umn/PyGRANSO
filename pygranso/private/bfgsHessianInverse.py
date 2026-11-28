@@ -185,8 +185,8 @@ class H_obj_struct:
             + sscaled @ torch.conj(sscaled.t())
         )
         H_vec = torch.reshape(H_new, (torch.numel(H_new), 1))
-        notInf_flag = torch.all(not torch.isinf(H_vec))
-        notNan_flag = torch.all(not torch.isnan(H_vec))
+        notInf_flag = torch.all(torch.logical_not(torch.isinf(H_vec)))
+        notNan_flag = torch.all(torch.logical_not(torch.isnan(H_vec)))
 
         if notInf_flag and notNan_flag:
             self.H = H_new

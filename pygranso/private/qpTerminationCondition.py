@@ -16,6 +16,7 @@ class qpTC:
         QPsolver,
         torch_device,
         double_precision,
+        osqp_options=None,
     ):
         """
         qpTerminationCondition:
@@ -176,7 +177,7 @@ class qpTC:
                 torch.zeros((1, p), device=torch_device, dtype=torch_dtype),
             )
         )
-        beq = mu
+        beq = torch.as_tensor(mu, device=torch_device, dtype=torch_dtype)
 
         # Choose solver
         if QPsolver == "gurobi":
@@ -187,7 +188,16 @@ class qpTC:
         elif QPsolver == "osqp":
             #  formulation of QP has no 1/2
             self.solveQP_fn = lambda H: solveQP(
-                H, f, Aeq, beq, LB, UB, QPsolver, torch_device, double_precision
+                H,
+                f,
+                Aeq,
+                beq,
+                LB,
+                UB,
+                QPsolver,
+                torch_device,
+                double_precision,
+                osqp_options,
             )
 
         [y, _, qps_solved, ME] = self.solveQPRobust(torch_dtype)
@@ -206,17 +216,17 @@ class qpTC:
     def solveQPRobust(self, torch_dtype):
         x = None
         lambdas = None  # not used here
-        ME = None  # ignore other 3 Fall back strategies for now
+        ME = []
 
         #  Attempt to solve QP
         try:
             stat_type = 1
             x = self.solveQP_fn(self.H)
             return [x, lambdas, stat_type, ME]
-        except Exception:
+        except Exception as exc:
             # print("PyGRANSO:qpTerminationCondition type 1 failure")
             # print(traceback.format_exc())
-            pass
+            ME.append(exc)
 
         #  QP solver failed, possibly because H was numerically nonconvex,
         #  i.e. H may have tiny negative eigenvalues close to zero because
@@ -229,10 +239,10 @@ class qpTC:
             R = (R + torch.conj(R.T)) / 2
             x = self.solveQP_fn(R)
             return [x, lambdas, stat_type, ME]
-        except Exception:
+        except Exception as exc:
             # print("PyGRANSO:qpTerminationCondition type 2 failure")
             # print(traceback.format_exc())
-            pass
+            ME.append(exc)
 
         # % Fall back strategy #2: revert to MATLAB's quadprog, if user is
         # % using a different quadprog solver and reattempt with original H
@@ -256,7 +266,12 @@ class qpTC:
             Hreg = torch.conj(V.T) @ torch.diag(dvec) @ torch.conj(V.T)
             x = self.solveQP_fn(Hreg)
             return [x, lambdas, stat_type, ME]
-        except Exception:
+        except Exception as exc:
             # print("PyGRANSO:qpTerminationCondition type 4 failure")
             # print(traceback.format_exc())
-            pass
+            ME.append(exc)
+
+        # Preserve PyGRANSO's outer stationarity fallback contract. Returning
+        # x=None causes qpTerminationCondition() to construct an infinite
+        # stationarity vector instead of leaking a secondary unpacking error.
+        return [None, lambdas, 0, ME]

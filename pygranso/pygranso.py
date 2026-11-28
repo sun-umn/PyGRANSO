@@ -16,7 +16,7 @@ from pygranso.private.getNvar import getNvar, getNvarTorch
 from pygranso.private.makePenaltyFunction import PanaltyFuctions
 from pygranso.private.processVarSpec import processVarSpec
 from pygranso.private.pygransoPrinter import pgP
-from pygranso.private.solveQP import getErr
+from pygranso.private.solveQP import getErr, resetQPCounters
 from pygranso.private.tensor2vec import tensor2vec
 from pygranso.private.wrapToLines import wrapToLines
 from pygranso.pygransoOptions import pygransoOptions
@@ -452,6 +452,8 @@ def pygranso(var_spec, combined_fn, user_opts=None):
         |  <http://www.gnu.org/licenses/agpl.html>.                             |
         =========================================================================
     """
+
+    resetQPCounters()
 
     # Initialization
     #  - process arguments

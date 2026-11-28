@@ -42,7 +42,7 @@ PyGRANSO requires **Python 3.10+** (3.13+ recommended). Dependencies are managed
 
         pip install -e .
 
-   Dependencies (including PyTorch, SciPy, OSQP, etc.) will be installed from `pyproject.toml`.
+   Dependencies (including PyTorch, SciPy, etc.) will be installed from `pyproject.toml`.
 
 ### PyTorch with CUDA
 
@@ -55,6 +55,69 @@ By default, `pip` or `uv` may install a CPU-only build of PyTorch. For **GPU (CU
     pip install -e .   # or: uv pip install -e .
 
 Set `opts.torch_device = torch.device("cuda")` when calling PyGRANSO to use the GPU.
+
+### Torch OSQP backend
+
+PyGRANSO solves its QP subproblems with a PyTorch translation of [OSQP C](https://github.com/osqp/osqp/tree/1572ae068e9ce9ca723cf8223548ade1ff7acc29). It is the default, so there is nothing to switch on. The `osqp` Python package is not needed.
+
+**Inside PyGRANSO.** Use double precision. OSQP settings for the subproblems are optional and go in `opts.osqp_settings`.
+
+```python
+import torch
+from pygranso.pygranso import pygranso
+from pygranso.pygransoStruct import pygransoStruct
+
+# minimize (x+1)^2 + (y-3)^2  subject to  x >= 0,  y = 2
+def combined_fn(X):
+    x, y = X.x[0], X.x[1]
+    f = (x + 1) ** 2 + (y - 3) ** 2
+    ci = pygransoStruct()
+    ci.c1 = -x            # inequality: ci <= 0
+    ce = pygransoStruct()
+    ce.c1 = y - 2         # equality: ce == 0
+    return f, ci, ce
+
+opts = pygransoStruct()
+opts.torch_device = torch.device("cpu")
+opts.double_precision = True
+opts.x0 = torch.tensor([[-2.0], [-2.0]], dtype=torch.float64)
+opts.print_level = 0
+opts.osqp_settings = {"eps_abs": 1e-8, "eps_rel": 1e-8, "max_iter": 4000}  # optional
+
+soln = pygranso({"x": [2, 1]}, combined_fn, opts)
+print(soln.final.x.flatten())   # close to [0, 2]
+```
+
+**As a standalone QP solver.** `solve_torch_osqp_direct` solves `min 0.5 x'Px + q'x` subject to `l <= Ax <= u`. Start from the default settings and change what you need. As in the C API, `-1e30` and `+1e30` mean "no bound".
+
+```python
+import torch
+from pygranso.private.osqpTorchAdapter import DEFAULT_TORCH_OSQP_SETTINGS
+from pygranso.private.torchOSQP import solve_torch_osqp_direct
+
+P = torch.tensor([[4.0, 1.0], [1.0, 2.0]], dtype=torch.float64)
+q = torch.tensor([1.0, 1.0], dtype=torch.float64)
+A = torch.tensor([[1.0, 1.0], [1.0, 0.0], [0.0, 1.0]], dtype=torch.float64)
+l = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float64)
+u = torch.tensor([1.0, 0.7, 1e30], dtype=torch.float64)
+
+settings = dict(DEFAULT_TORCH_OSQP_SETTINGS) | {"return_info": True}
+x, info = solve_torch_osqp_direct(P, q, A, l, u, settings)
+print(info["status"], x.flatten())   # solved, close to [0.25, 0.75]
+```
+
+`P` and `A` can also be sparse tensors (CSC, CSR or COO). By default they are converted to ordinary matrices first. With `"sparse": True` in the settings the solver works on the stored entries, as OSQP does with CSC input: `P` is given by its upper triangle, and every stored entry stays in the sparsity pattern, explicit zeros included.
+
+```python
+P = torch.tensor([[4.0, 1.0], [0.0, 2.0]], dtype=torch.float64).to_sparse_csc()
+x, info = solve_torch_osqp_direct(P, q, A.to_sparse_csc(), l, u, settings | {"sparse": True})
+```
+
+Inside PyGRANSO the same switch is `opts.osqp_settings = {"sparse": True}`; PyGRANSO's own QP subproblems are ordinary matrices, so it changes nothing there.
+
+To reuse the factorization and warm start across solves, create one `TorchOSQPWorkspace` (from `pygranso.private.osqpWorkspace`) and pass it as the last argument each time. The sparsity pattern is fixed by the first solve; later solves with new values on that pattern are updates, and a matrix with a nonzero outside it starts a new setup.
+
+With CUDA tensors all values stay on the GPU: the KKT matrix, the LDL' factorization and the triangular solves are tensor operations on the device. Only the analysis of the sparsity pattern (ordering and elimination tree, which involve no floating-point values) runs on the CPU, once per pattern. `"gpu_factorization": False` in the settings moves the factorization and the triangular solves to the CPU instead; the results are the same, and for small problems this can be faster.
 
 ### Verify installation
 
@@ -70,7 +133,7 @@ Core dependencies (see `pyproject.toml` for full list and versions):
 - **Python** 3.10+ (3.13+ recommended)
 - **PyTorch** >= 2.8.0 (install with CUDA support separately if needed)
 - **SciPy** >= 1.16
-- **OSQP** >= 1.0.4 (QP solver)
+- **OSQP** >= 1.0.4 (optional Python reference backend)
 - **NumPy** (compatible with NumPy 2.x)
 - **Jupyter** (for examples)
 - **Gurobi** (optional; `gurobipy` for alternative QP solver)
